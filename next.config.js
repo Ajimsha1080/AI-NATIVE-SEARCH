@@ -13,12 +13,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  modularizeImports: {
-    'lucide-react': {
-      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
-      skipDefaultConversion: true,
-    },
-  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'clsx', 'tailwind-merge'],
   },

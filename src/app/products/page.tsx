@@ -20,11 +20,18 @@ export default function ProductsPage() {
   const [previewImage, setPreviewImage] = useState<any | null>(null);
   const [zoomScale, setZoomScale] = useState(1);
 
-  const loadProducts = async () => {
+  const loadProducts = async (forceFresh = false) => {
     try {
-      const res = await fetch('/api/commerce/products', { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
+      if (forceFresh) {
+        const res = await fetch('/api/commerce/products', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.products) {
+            setProducts(data.products);
+          }
+        }
+      } else {
+        const data = await fetchWithCache<{ products: any[] }>('/api/commerce/products');
         if (data?.products) {
           setProducts(data.products);
         }

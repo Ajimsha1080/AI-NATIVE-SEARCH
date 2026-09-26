@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -12,6 +12,25 @@ import { fetchWithCache } from '@/lib/client-cache';
 
 export default function Sidebar() {
   const pathname = usePathname();
+
+  useEffect(() => {
+    // Background pre-warm core endpoints on idle for instant 0ms feature switching
+    const prewarm = () => {
+      fetchWithCache('/api/commerce/products');
+      fetchWithCache('/api/conversations');
+      fetchWithCache('/api/analytics');
+      fetchWithCache('/api/knowledge');
+      fetchWithCache('/api/deployments');
+      fetchWithCache('/api/agents');
+      fetchWithCache('/api/settings');
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(prewarm);
+    } else {
+      setTimeout(prewarm, 400);
+    }
+  }, []);
 
   const navigation = [
     { 
