@@ -46,20 +46,20 @@ async def seed_database_if_empty(session: AsyncSession):
         return
 
     # =========================================================================
-    # TENANT A: Acme Footwear & Apparel (ws_acme_corp)
+    # TENANT A: Blue Tyga Store (ws_acme_corp)
     # =========================================================================
     ws_acme = WorkspaceModel(
         id="ws_acme_corp",
-        name="Acme Footwear & Apparel",
-        slug="acme-footwear",
-        tier="ENTERPRISE"
+        name="Blue Tyga Store",
+        slug="blue-tyga-store",
+        tier="GROWTH"
     )
     session.add(ws_acme)
 
     user_acme = UserModel(
         id="usr_acme_admin",
-        email="admin@acmefootwear.com",
-        name="Acme Store Admin",
+        email="admin@bluetyga.com",
+        name="Blue Tyga Store Admin",
         role="ADMIN"
     )
     session.add(user_acme)
@@ -74,8 +74,8 @@ async def seed_database_if_empty(session: AsyncSession):
     agent_acme = AgentModel(
         id="agent_shopmate_01",
         workspace_id=ws_acme.id,
-        name="Acme ShopMate Assistant",
-        description="Official shopping and support agent for Acme Footwear.",
+        name="Blue Tyga AI Concierge",
+        description="Official shopping and support agent for Blue Tyga Techwear.",
         status="ACTIVE"
     )
     session.add(agent_acme)
@@ -83,71 +83,71 @@ async def seed_database_if_empty(session: AsyncSession):
     session.add(AgentConfigModel(
         id="cfg_acme_01",
         agent_id=agent_acme.id,
-        model="claude-3-5-sonnet",
+        model="sarvam-105b-conversations",
         temperature=0.3,
-        system_prompt="You are the Acme Footwear AI Shopping Assistant.",
+        system_prompt="You are the Blue Tyga AI Shopping Concierge. Help shoppers discover techwear apparel, check orders, and explain return policies.",
         tools_enabled=["search_products", "check_inventory", "calculate_cart", "apply_discount", "lookup_order"],
         rag_enabled=True
     ))
 
-    # Acme Products
+    # Blue Tyga Products
     acme_prods = [
         ProductModel(
             id="prod_01",
             workspace_id=ws_acme.id,
-            title="AeroPulse Velocity Running Shoes",
-            price=149.99,
+            title="UPF 50+ Sunscreen Performance Jacket",
+            price=2499.00,
             stock=42,
-            category="Footwear",
-            description="Ultra-breathable carbon-plated running shoes with responsive foam cushioning."
+            category="Outerwear",
+            description="Ultra-lightweight UV-blocking techwear jacket with quick-dry cooling mesh."
         ),
         ProductModel(
             id="prod_02",
             workspace_id=ws_acme.id,
-            title="StormShield All-Weather Trail Jacket",
-            price=189.50,
-            stock=18,
-            category="Outerwear",
-            description="3-layer GORE-TEX waterproof shell with reinforced storm seams."
+            title="No-Sweat Anti-Odour Tech Tee",
+            price=999.00,
+            stock=55,
+            category="T-Shirts",
+            description="Seamless breathable bamboo-elastane blend with silver-ion antimicrobial finish."
         ),
         ProductModel(
             id="prod_03",
             workspace_id=ws_acme.id,
-            title="HydroPulse 32oz Insulated Flask",
-            price=34.00,
-            stock=0,
-            category="Accessories",
-            description="Double-wall vacuum insulated stainless steel bottle with leakproof lid."
+            title="All-Day 4-Way Stretch Commuter Joggers",
+            price=1899.00,
+            stock=30,
+            category="Bottoms",
+            description="Water-repellent 4-way stretch joggers with zippered concealed security pockets."
         )
     ]
     session.add_all(acme_prods)
 
-    # Acme Orders
+    # Blue Tyga Orders
     session.add(OrderModel(
         id="ord_acme_10482",
         workspace_id=ws_acme.id,
         customer_email="sarah.connor@example.com",
-        total_amount=149.99,
-        currency="USD",
+        total_amount=2499.00,
+        currency="INR",
         status="DELIVERED",
-        items_json=[{"order_number": "#10482", "carrier": "FedEx Express", "tracking_number": "FX-8941039821-US", "items": ["1x AeroPulse Velocity Running Shoes (Size US 10.5)"], "shipping_address": "742 Evergreen Terrace, Springfield, OR"}]
+        items_json=[{"order_number": "#10482", "carrier": "Bluedart Express", "tracking_number": "BD-8941039821-IN", "items": ["1x UPF 50+ Sunscreen Performance Jacket (Size L)"], "shipping_address": "Indiranagar, Bengaluru, KA 560038"}]
     ))
 
-    # Acme Knowledge Base
-    ks_acme = KnowledgeSourceModel(id="ks_acme_01", workspace_id=ws_acme.id, name="Acme Policy Handbook", type="HANDBOOK")
+    # Blue Tyga Knowledge Base
+    ks_acme = KnowledgeSourceModel(id="ks_acme_01", workspace_id=ws_acme.id, name="Blue Tyga Policy Handbook", type="HANDBOOK")
     session.add(ks_acme)
 
     doc_acme_1 = KnowledgeDocModel(
         id="doc_acme_ret",
         source_id=ks_acme.id,
-        title="Acme Store Return & Warranty Policy 2026.pdf",
-        content="Acme Store Return & Refund Policy:\n1. Returns are accepted within 30 days of delivery date for unworn items with tags.\n2. Defective items are covered under a 1-year limited warranty for immediate replacement or full refund."
+        title="Blue Tyga 7-Day Exchange & Warranty Policy.pdf",
+        content="Blue Tyga Policy:\n1. 7-day hassle-free size exchanges and returns for unworn items with tags.\n2. Defective or damaged items are covered with instant free replacement."
     )
     doc_acme_2 = KnowledgeDocModel(
         id="doc_acme_ship",
         source_id=ks_acme.id,
-        title="Shipping Rates, Express Transit & International Customs.md",
-        content="Standard Ground Shipping delivers in 3 to 5 business days via FedEx/UPS. Free shipping on orders over $75. International return shipping costs $15 flat rate."
+        title="Shipping, Prepaid Discounts & Pan-India Delivery.md",
+        content="Free express shipping on all prepaid orders across India via Bluedart and Delhivery. Standard delivery takes 2 to 4 business days."
     )
     session.add_all([doc_acme_1, doc_acme_2])
 
@@ -156,15 +156,15 @@ async def seed_database_if_empty(session: AsyncSession):
             id="chk_acme_01",
             doc_id=doc_acme_1.id,
             chunk_index=0,
-            text="Acme Store Return & Refund Policy:\n1. Returns are accepted within 30 days of the delivery date for unwashed and unworn merchandise with original tags attached.\n2. Defective items are covered under a 1-year limited warranty and are eligible for immediate replacement or full refund.",
-            embedding=generate_embedding_128("Acme Store Return & Refund Policy: Returns are accepted within 30 days for unworn merchandise. 1-year limited warranty on defective items.")
+            text="Blue Tyga Return & Exchange Policy: Hassle-free 7-day exchange window for sizing and fit. Products must be unused with original tags intact.",
+            embedding=generate_embedding_128("Blue Tyga Return & Exchange Policy: Hassle-free 7-day exchange window for sizing and fit. Products must be unused with original tags intact.")
         ),
         KnowledgeChunkModel(
             id="chk_acme_02",
             doc_id=doc_acme_1.id,
             chunk_index=1,
-            text="3. Return shipping is free for all orders within the continental US. International return labels cost $15 flat rate.\n4. Refunds are processed to original payment within 3-5 days.",
-            embedding=generate_embedding_128("Return shipping is free within continental US. International return labels cost $15 flat rate. Refunds in 3-5 business days.")
+            text="Shipping Policy: Free express delivery across India for all prepaid orders above Rs 499. Cash on Delivery (COD) available with a nominal Rs 49 handling fee.",
+            embedding=generate_embedding_128("Shipping Policy: Free express delivery across India for all prepaid orders above Rs 499. Cash on Delivery available.")
         )
     ]
     session.add_all(chunks_acme)
