@@ -21,6 +21,7 @@ export default function SuperAdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const cachedAdmin = getClientCachedData('/api/admin');
   const [data, setData] = useState<any>(() => cachedAdmin || null);
+  const [forbidden, setForbidden] = useState(false);
   const [loading, setLoading] = useState(!cachedAdmin);
   const [timeRange, setTimeRange] = useState('7d');
   const [syncInterval, setSyncInterval] = useState<number>(10); // 10s auto-sync default
@@ -76,8 +77,14 @@ export default function SuperAdminPage() {
     if (!silent) setIsSyncing(true);
     try {
       const res = await fetch('/api/admin?t=' + Date.now(), { cache: 'no-store' });
+      if (res.status === 401 || res.status === 403) {
+        setForbidden(true);
+        setData(null);
+        return;
+      }
       if (res.ok) {
         const json = await res.json();
+        setForbidden(false);
         setData(json);
         setClientCachedData('/api/admin', json);
         if (json.aiModelsConfig) setAiConfig(json.aiModelsConfig);
@@ -200,6 +207,41 @@ export default function SuperAdminPage() {
     u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
     u.tenantName?.toLowerCase().includes(userSearch.toLowerCase())
   );
+
+  if (forbidden) {
+    return (
+      <div className="flex h-screen bg-[#f4f5f7] text-zinc-900 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900 items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white border border-zinc-200 rounded-3xl p-8 shadow-xl text-center space-y-5">
+          <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
+            <Lock className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-mono font-semibold">
+              <ShieldAlert className="w-3.5 h-3.5" /> 403 Access Denied
+            </div>
+            <h1 className="text-xl font-bold text-zinc-900 tracking-tight">SuperAdmin Role Required</h1>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Your account does not possess Platform SuperAdmin privileges. Multi-tenant operations, global telemetry, and root infrastructure controls are restricted exclusively to Platform SuperAdmins.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col gap-2.5">
+            <a
+              href="/dashboard"
+              className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center justify-center gap-2 shadow-xs"
+            >
+              Return to Store Dashboard <ArrowRight className="w-4 h-4" />
+            </a>
+            <a
+              href="/auth/login"
+              className="w-full py-2.5 px-4 rounded-xl bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-700 text-xs font-semibold transition"
+            >
+              Switch Account
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#f4f5f7] text-zinc-900 font-sans antialiased selection:bg-zinc-200 selection:text-zinc-900">

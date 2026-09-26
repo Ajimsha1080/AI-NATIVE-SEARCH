@@ -7,11 +7,35 @@ import {
   LayoutDashboard, ShoppingBag, ShieldAlert, 
   ChevronDown, ExternalLink, ArrowRight, Sparkles, Layers
 } from 'lucide-react';
+import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
 
-export default function PortalSwitcher() {
+interface PortalSwitcherProps {
+  isSuperAdmin?: boolean;
+}
+
+export default function PortalSwitcher({ isSuperAdmin: propIsSuperAdmin }: PortalSwitcherProps = {}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(() => {
+    if (typeof propIsSuperAdmin === 'boolean') return propIsSuperAdmin;
+    const cached = getClientCachedData<{ user: any }>('/api/auth/me');
+    return !!cached?.user?.is_super_admin;
+  });
+
+  useEffect(() => {
+    if (typeof propIsSuperAdmin === 'boolean') {
+      setIsSuperAdmin(propIsSuperAdmin);
+      return;
+    }
+    fetchWithCache<{ user: any }>('/api/auth/me')
+      .then(res => {
+        if (res?.user) {
+          setIsSuperAdmin(!!res.user.is_super_admin);
+        }
+      })
+      .catch(() => {});
+  }, [propIsSuperAdmin]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -42,7 +66,7 @@ export default function PortalSwitcher() {
       icon: ShoppingBag,
       active: pathname.startsWith('/embed')
     },
-    {
+    ...(isSuperAdmin ? [{
       id: 'superadmin',
       name: 'SuperAdmin Portal',
       badge: 'Platform Ops',
@@ -50,7 +74,7 @@ export default function PortalSwitcher() {
       href: '/admin',
       icon: ShieldAlert,
       active: pathname.startsWith('/admin')
-    }
+    }] : [])
   ];
 
   const currentPortal = portals.find(p => p.active) || portals[0];
@@ -79,7 +103,7 @@ export default function PortalSwitcher() {
               <Sparkles className="w-3 h-3 text-indigo-600" /> Switch Main UI Portal
             </span>
             <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-full font-semibold">
-              3 UIs Live
+              {portals.length} UIs Live
             </span>
           </div>
 

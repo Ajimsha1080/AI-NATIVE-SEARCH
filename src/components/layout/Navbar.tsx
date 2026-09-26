@@ -80,7 +80,7 @@ export default function Navbar() {
 
         {/* Right controls */}
         <div className="flex items-center gap-2.5">
-          <PortalSwitcher />
+          <PortalSwitcher isSuperAdmin={user ? !!user.is_super_admin : undefined} />
 
           <Link
             href="/agents/agent_shopmate_01/playground"
@@ -117,13 +117,15 @@ export default function Navbar() {
                   >
                     <User className="w-3.5 h-3.5 text-zinc-400" /> Settings
                   </Link>
-                  <Link
-                    href="/admin"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2 px-3 py-1.5 text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 transition"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-zinc-400" /> SuperAdmin
-                  </Link>
+                  {user?.is_super_admin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 transition font-medium"
+                    >
+                      <Shield className="w-3.5 h-3.5 text-red-500" /> SuperAdmin
+                    </Link>
+                  )}
                 </div>
 
                 <div className="pt-1">
