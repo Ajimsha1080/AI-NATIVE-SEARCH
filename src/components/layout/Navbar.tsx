@@ -82,13 +82,6 @@ export default function Navbar() {
         <div className="flex items-center gap-2.5">
           <PortalSwitcher isSuperAdmin={user ? !!user.is_super_admin : undefined} />
 
-          <Link
-            href="/agents/agent_shopmate_01/playground"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition shadow-xs"
-          >
-            <Bot className="w-3.5 h-3.5" /> Studio
-          </Link>
-
           {/* User dropdown */}
           <div className="relative" ref={userMenuRef}>
             <button
