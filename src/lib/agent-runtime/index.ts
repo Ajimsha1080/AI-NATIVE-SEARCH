@@ -21,6 +21,50 @@ export interface AgentRunResponse {
   trace: ExecutionTrace;
 }
 
+async function callSarvamLLM(
+  systemPrompt: string,
+  userMessage: string,
+  contextText: string,
+  history: { role: string; content: string }[] = []
+): Promise<string | null> {
+  const apiKey = process.env.SARVAM_API_KEY || 'REDACTED_SECRET';
+  if (!apiKey) return null;
+
+  try {
+    const messages = [
+      {
+        role: 'system',
+        content: `${systemPrompt}\n\nRelevant Store Knowledge Context:\n${contextText || 'No specific knowledge document matched.'}`
+      },
+      ...history.slice(-4),
+      { role: 'user', content: userMessage }
+    ];
+
+    const res = await fetch('https://api.sarvam.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-subscription-key': apiKey
+      },
+      body: JSON.stringify({
+        model: process.env.SARVAM_MODEL || 'sarvam-105b-conversations',
+        messages: messages,
+        temperature: 0.3
+      }),
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const answer = data.choices?.[0]?.message?.content;
+      if (answer) return answer;
+    }
+  } catch (e) {
+    console.error('Sarvam AI direct call error:', e);
+  }
+  return null;
+}
+
 export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunResponse> {
   const startTime = Date.now();
   const { agent_id, workspace_id, user_message, channel = 'PLAYGROUND' } = params;
@@ -220,10 +264,20 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   } else if (detectedIntent === 'RETURN_OR_POLICY_INQUIRY') {
     planningSteps.push('4. Synthesizing response using verified knowledge citations.');
     planningSteps.push(`5. Grounding verification: ${Math.round(ragResult.grounding_verification.confidence_score * 100)}% factual confidence.`);
-    if (citations.length > 0) {
+    
+    // Call Sarvam AI with verified citations
+    const sarvamAnswer = await callSarvamLLM(
+      `You are the AI Shopping Concierge for ${config.identity?.brand_name || 'Blue Tyga Store'}. Answer customer questions accurately using the provided store knowledge. Keep tone polite and helpful.`,
+      user_message,
+      citations.map(c => c.chunk_text).join('\n\n')
+    );
+
+    if (sarvamAnswer) {
+      responseText = sarvamAnswer;
+    } else if (citations.length > 0) {
       responseText = ragResult.natural_answer;
     } else {
-      responseText = 'Our store accepts returns within **30 days** of delivery for unworn merchandise in original condition. Return shipping is free with our prepaid labels.';
+      responseText = 'Our store accepts returns within **7 days** of delivery for unworn merchandise with original tags. Express replacement is provided for defective items.';
     }
   } else if (detectedIntent === 'HUMAN_HANDOFF') {
     planningSteps.push('4. Initiating human support escalation.');
@@ -236,10 +290,20 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     });
     responseText = "I've connected your conversation to our customer care team. A live support specialist has been notified and will respond here shortly.";
   } else {
-    if (citations.length > 0) {
+    // General freeform conversation or question -> Sarvam AI
+    planningSteps.push('4. Calling Sarvam AI conversational model.');
+    const sarvamAnswer = await callSarvamLLM(
+      `You are the official AI Assistant for ${config.identity?.brand_name || 'Blue Tyga Store'}. ${config.instructions?.system_prompt || 'Help shoppers with store inquiries, orders, and products.'}`,
+      user_message,
+      citations.length > 0 ? citations.map(c => c.chunk_text).join('\n\n') : 'Store offers UPF 50+ Sunscreen Jackets, No-Sweat Tech Tees, and 4-Way Stretch Joggers.'
+    );
+
+    if (sarvamAnswer) {
+      responseText = sarvamAnswer;
+    } else if (citations.length > 0) {
       responseText = citations[0].chunk_text + '\n\nIs there anything specific I can help you find today?';
     } else {
-      responseText = config.identity?.greeting || "Hi! I'm ShopMate, how can I assist you with your shopping today?";
+      responseText = config.identity?.greeting || "Hi! I'm your Blue Tyga AI Shopping Concierge, how can I assist you today?";
     }
   }
 
