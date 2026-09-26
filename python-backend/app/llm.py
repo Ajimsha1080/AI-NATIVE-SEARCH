@@ -28,9 +28,12 @@ class LLMClient:
         self.default_model = os.getenv("LLM_MODEL", "")
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "")
         self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        self.sarvam_api_key = os.getenv("SARVAM_API_KEY", "")
         self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
     def is_configured(self) -> bool:
+        if (self.provider == "sarvam" or not self.provider) and self.sarvam_api_key:
+            return True
         if self.provider == "openai" and self.openai_api_key:
             return True
         if self.provider == "anthropic" and self.anthropic_api_key:
@@ -46,9 +49,17 @@ class LLMClient:
         system_prompt: str = SYSTEM_INJECTION_DEFENSE_PROMPT
     ) -> Dict[str, Any]:
         """
-        Executes a model call against OpenAI, Anthropic, Ollama, or falls back to
+        Executes a model call against Sarvam AI, OpenAI, Anthropic, Ollama, or falls back to
         deterministic reasoning if in development mode.
         """
+        if (self.provider == "sarvam" or (not self.provider and self.sarvam_api_key)) and self.sarvam_api_key:
+            try:
+                return self._call_sarvam(messages, tools, system_prompt)
+            except Exception as e:
+                logger.error(f"Sarvam AI provider call failed: {str(e)}")
+                if self.app_env != "development":
+                    raise RuntimeError(f"Production LLM provider (Sarvam AI) failed: {str(e)}")
+
         if self.provider == "openai" and self.openai_api_key:
             try:
                 return self._call_openai(messages, tools, system_prompt)
@@ -81,6 +92,37 @@ class LLMClient:
         # Deterministic tool-intent parser fallback (Allowed in development mode)
         logger.info("Using deterministic fallback engine for development mode.")
         return self._deterministic_fallback(messages, tools)
+
+    def _call_sarvam(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]], system_prompt: str) -> Dict[str, Any]:
+        model = self.default_model or os.getenv("SARVAM_MODEL", "sarvam-105b-conversations")
+        
+        formatted_messages = [{"role": "system", "content": system_prompt}] + messages
+        
+        payload = {
+            "model": model,
+            "messages": formatted_messages,
+            "temperature": 0.3
+        }
+
+        req = urllib.request.Request(
+            "https://api.sarvam.ai/v1/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "api-subscription-key": self.sarvam_api_key
+            },
+            method="POST"
+        )
+
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            choice = data["choices"][0]["message"]
+            content = choice.get("content", "")
+            return {
+                "content": content,
+                "tool_calls": [],
+                "provider": "sarvam"
+            }
 
     def _call_openai(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]], system_prompt: str) -> Dict[str, Any]:
         formatted_tools = [
