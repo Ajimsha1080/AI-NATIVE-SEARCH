@@ -4,9 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  ArrowLeft, Bot, Palette, BookOpen, ShoppingBag, Wrench, 
-  ShieldCheck, BrainCircuit, Play, CheckCircle2, History, 
-  Rocket, MessageSquare, BarChart3, ChevronRight 
+  ArrowLeft, Bot, Palette, ShieldCheck, 
+  Play, Rocket, ChevronRight 
 } from 'lucide-react';
 
 export default function StudioSidebar({ agentId, agentName }: { agentId: string; agentName?: string; [key: string]: any }) {
@@ -15,17 +14,9 @@ export default function StudioSidebar({ agentId, agentName }: { agentId: string;
   const studioTabs = [
     { name: 'Overview', path: `/agents/${agentId}`, icon: Bot },
     { name: 'Identity & Persona', path: `/agents/${agentId}/design`, icon: Palette },
-    { name: 'Knowledge & RAG', path: `/agents/${agentId}/knowledge`, icon: BookOpen },
-    { name: 'Commerce Catalog', path: `/agents/${agentId}/commerce`, icon: ShoppingBag },
-    { name: 'Tools (15+)', path: `/agents/${agentId}/tools`, icon: Wrench },
     { name: 'Guardrails & Rules', path: `/agents/${agentId}/rules`, icon: ShieldCheck },
-    { name: 'Memory & Retention', path: `/agents/${agentId}/memory`, icon: BrainCircuit },
     { name: 'Playground', path: `/agents/${agentId}/playground`, icon: Play, highlight: true },
-    { name: 'Evaluations', path: `/agents/${agentId}/evaluations`, icon: CheckCircle2 },
-    { name: 'Version History', path: `/agents/${agentId}/versions`, icon: History },
     { name: 'Deploy & Embed', path: `/agents/${agentId}/deploy`, icon: Rocket },
-    { name: 'Live Inbox', path: `/agents/${agentId}/conversations`, icon: MessageSquare },
-    { name: 'Analytics', path: `/agents/${agentId}/analytics`, icon: BarChart3 },
   ];
 
   return (
