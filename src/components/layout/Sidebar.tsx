@@ -111,21 +111,14 @@ export default function Sidebar() {
     <aside className="w-[70px] lg:w-56 border-r border-zinc-200 bg-white flex flex-col justify-between shrink-0 select-none overflow-y-auto shadow-xs">
       <div className="flex flex-col">
         {/* Brand Header */}
-        <div className="h-14 px-3.5 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white z-10">
-          <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-zinc-950 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-            </div>
-            <div className="hidden lg:flex items-center gap-1.5">
-              <span className="font-bold text-sm text-zinc-900 tracking-tight">
-                ShopMate
-              </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 font-medium">
-                AI
-              </span>
-            </div>
+        <div className="h-14 px-4 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white z-10">
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <span className="font-bold text-sm text-zinc-900 tracking-tight">
+              ShopMate
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 font-medium">
+              AI
+            </span>
           </Link>
         </div>
 
