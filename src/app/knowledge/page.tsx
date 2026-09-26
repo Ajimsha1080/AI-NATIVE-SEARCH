@@ -744,29 +744,18 @@ export default function KnowledgeWorkspacePage() {
                 {/* Form Fields: Document Tab */}
                 {addTab === 'DOCUMENT' && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-bold text-zinc-800">
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-800 mb-1.5">
                         Document Title
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDocTitle('Acme Store Return & Warranty Policy 2026');
-                          setDocContent('Acme Store Return & Warranty Guidelines:\n- 30-day hassle-free returns for unworn items in original packaging.\n- Free size exchanges with prepaid shipping labels.\n- 2-year warranty on all electronic audio gear covering hardware defects.');
-                          setModalError(null);
-                        }}
-                        className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-                      >
-                        <Sparkles className="w-3 h-3" /> Load Sample Policy
-                      </button>
+                      <input
+                        type="text"
+                        placeholder="e.g. Product Guide, Sizing & Service Policies"
+                        value={docTitle}
+                        onChange={(e) => setDocTitle(e.target.value)}
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      placeholder="e.g. Product Guide & Service Policies"
-                      value={docTitle}
-                      onChange={(e) => setDocTitle(e.target.value)}
-                      className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition"
-                    />
 
                     <div>
                       <label className="block text-xs font-bold text-zinc-800 mb-1.5">

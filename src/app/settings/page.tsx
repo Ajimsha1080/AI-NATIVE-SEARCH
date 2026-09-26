@@ -11,9 +11,9 @@ import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
 
 export default function SettingsWorkspacePage() {
   const cachedSettings = getClientCachedData('/api/settings');
-  const [workspaceName, setWorkspaceName] = useState(() => cachedSettings?.workspace?.name || 'Acme Corp E-Commerce');
-  const [defaultCurrency, setDefaultCurrency] = useState(() => cachedSettings?.workspace?.currency || 'USD');
-  const [timezone, setTimezone] = useState(() => cachedSettings?.workspace?.timezone || 'America/New_York');
+  const [workspaceName, setWorkspaceName] = useState(() => cachedSettings?.workspace?.name || 'Blue Tyga Store');
+  const [defaultCurrency, setDefaultCurrency] = useState(() => cachedSettings?.workspace?.currency || 'INR');
+  const [timezone, setTimezone] = useState(() => cachedSettings?.workspace?.timezone || 'Asia/Kolkata');
   const [loading, setLoading] = useState(!cachedSettings);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -23,9 +23,9 @@ export default function SettingsWorkspacePage() {
       try {
         const data = await fetchWithCache('/api/settings');
         if (data?.workspace) {
-          setWorkspaceName(data.workspace.name || 'Acme Corp E-Commerce');
-          setDefaultCurrency(data.workspace.currency || 'USD');
-          setTimezone(data.workspace.timezone || 'America/New_York');
+          setWorkspaceName(data.workspace.name || 'Blue Tyga Store');
+          setDefaultCurrency(data.workspace.currency || 'INR');
+          setTimezone(data.workspace.timezone || 'Asia/Kolkata');
         }
       } catch (err) {
         console.error('Failed to load settings:', err);

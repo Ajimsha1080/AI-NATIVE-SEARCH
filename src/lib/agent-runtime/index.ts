@@ -29,7 +29,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   if (!agent) throw new Error('Agent ' + agent_id + ' not found in workspace.');
 
   const config = db.agent_configs.find(c => c.agent_id === agent_id) || ({
-    identity: { name: agent.name, greeting: 'Hello!', brand_name: 'Acme Commerce' },
+    identity: { name: agent.name, greeting: 'Hello!', brand_name: 'Blue Tyga Store' },
     instructions: { system_prompt: 'You are an AI commerce assistant.' },
     personality: { tone: 'friendly' },
   } as unknown as AgentConfig);

@@ -23,17 +23,17 @@ export default function AgentOverviewPage({ params }: { params: Promise<{ id: st
 
   // Tenant Configuration Form States
   const [agentName, setAgentName] = useState(() => cached?.agent?.name || 'ShopMate AI');
-  const [brandName, setBrandName] = useState(() => cached?.config?.brand_name || 'Acme Athletic Store');
+  const [brandName, setBrandName] = useState(() => cached?.config?.brand_name || 'Blue Tyga Store');
   const [personality, setPersonality] = useState('Helpful & Professional E-commerce Concierge');
   const [tone, setTone] = useState(() => cached?.config?.personality?.tone || 'Professional & Friendly');
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['English', 'Spanish', 'French', 'German']);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['English', 'Hindi', 'Tamil', 'Spanish']);
   const [systemInstructions, setSystemInstructions] = useState(
-    () => cached?.config?.instructions?.system_prompt || `You are ShopMate, the official AI shopping and customer service concierge for Acme Athletic Store. 
-Assist shoppers with product discovery, size recommendations, real-time inventory checks, order status tracking, return policies, and checkout guidance.
-Always be accurate, grounded in verified catalog data and return policy rules. Never invent shipping times or discounts.`
+    () => cached?.config?.instructions?.system_prompt || `You are ShopMate, the official AI shopping and customer service concierge for Blue Tyga. 
+Assist shoppers with product discovery, size recommendations, real-time inventory checks, live order tracking, return & warranty policies, and checkout guidance.
+Always be accurate, grounded in verified catalog data and official policy rules. Never invent shipping times or unauthorized discounts.`
   );
   const [greetingMessage, setGreetingMessage] = useState(
-    () => cached?.config?.greetingMessage || 'Hello! Welcome to Acme Store. How can I help you find the perfect athletic gear, check order status, or answer questions today?'
+    () => cached?.config?.greetingMessage || 'Hello! Welcome to Blue Tyga. How can I help you find techwear products, check order status, or assist with size recommendations today?'
   );
   const [fallbackResponse, setFallbackResponse] = useState(
     'I apologize, but I could not find exact details in our current catalog. Would you like me to connect you with a live specialist or explore our top categories?'
