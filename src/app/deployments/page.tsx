@@ -466,7 +466,7 @@ export default function DeploymentsWorkspacePage() {
     allowed_domains: ['shopmate.store', 'localhost:3000']
   };
 
-  const agentKey = activeDeployment.public_key || 'pk_live_shopmate_98f4e2b10a';
+  const agentKey = activeDeployment?.public_key || (deployments.length > 0 ? deployments[0].public_key : '');
   const apiUrl = origin || 'https://api.shopmate.ai';
 
   // Apply theme preset

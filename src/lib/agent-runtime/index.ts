@@ -27,7 +27,7 @@ async function callSarvamLLM(
   contextText: string,
   history: { role: string; content: string }[] = []
 ): Promise<string | null> {
-  const apiKey = process.env.SARVAM_API_KEY || 'REDACTED_SECRET';
+  const apiKey = process.env.SARVAM_API_KEY;
   if (!apiKey) return null;
 
   try {

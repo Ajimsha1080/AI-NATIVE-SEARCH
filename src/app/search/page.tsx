@@ -13,6 +13,27 @@ import {
 export default function AISearchPlaygroundPage() {
   const [currentTrace, setCurrentTrace] = useState<any>(null);
   const [debugMode, setDebugMode] = useState(false);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+  const [selectedAgentName, setSelectedAgentName] = useState<string>('ShopMate AI Concierge');
+
+  React.useEffect(() => {
+    async function loadAgents() {
+      try {
+        const res = await fetch('/api/agents');
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.agents || [];
+          setAgents(list);
+          if (list.length > 0) {
+            setSelectedAgentId(list[0].id);
+            setSelectedAgentName(list[0].name);
+          }
+        }
+      } catch {}
+    }
+    loadAgents();
+  }, []);
 
   return (
     <div className="flex h-screen bg-[#f4f5f7] text-zinc-900 font-sans antialiased selection:bg-zinc-200 selection:text-zinc-900">
@@ -34,12 +55,28 @@ export default function AISearchPlaygroundPage() {
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 </h1>
                 <p className="text-[11px] text-zinc-500">
-                  Simulate customer natural queries, product searches, image uploads, policy lookups, and live orders.
+                  Execute live customer natural queries, product searches, image uploads, policy lookups, and order status.
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
+              {agents.length > 1 && (
+                <select
+                  value={selectedAgentId}
+                  onChange={(e) => {
+                    setSelectedAgentId(e.target.value);
+                    const found = agents.find(a => a.id === e.target.value);
+                    if (found) setSelectedAgentName(found.name);
+                  }}
+                  className="bg-zinc-50 border border-zinc-200 text-xs font-semibold text-zinc-800 rounded-xl px-3 py-1.5 focus:outline-none focus:border-zinc-400"
+                >
+                  {agents.map(a => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              )}
+
               {/* Debug / Diagnostics Mode Toggle */}
               <button
                 onClick={() => setDebugMode(!debugMode)}
@@ -61,8 +98,8 @@ export default function AISearchPlaygroundPage() {
             {/* Chat Testing Window */}
             <div className={`${debugMode ? 'lg:col-span-7' : 'lg:col-span-12'} h-full min-h-0`}>
               <ChatBox
-                agentId="agent_shopmate_01"
-                agentName="ShopMate AI Concierge"
+                agentId={selectedAgentId || "agent_shopmate_01"}
+                agentName={selectedAgentName}
                 onTraceUpdate={(trace) => setCurrentTrace(trace)}
               />
             </div>
@@ -88,7 +125,7 @@ export default function AISearchPlaygroundPage() {
                       <Database className="w-8 h-8 text-zinc-400" />
                       <p className="text-xs font-bold text-zinc-900">Awaiting Search Query</p>
                       <p className="text-[11px] text-zinc-500 max-w-xs">
-                        Type a question like &quot;Show me black running shoes under $150&quot; to inspect dense/sparse ranking and grounding scores.
+                        Type a question like &quot;Show me black running shoes under ₹1,500&quot; to inspect dense/sparse ranking and grounding scores.
                       </p>
                     </div>
                   )}

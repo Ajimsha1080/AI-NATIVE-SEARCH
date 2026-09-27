@@ -22,7 +22,8 @@
     "db:test": "python python-backend/test_db.py",
     "test:multitenant": "python python-backend/test_massive_multitenancy.py",
     "benchmark": "npx tsx scripts/benchmark-speed.ts",
-    "test:stream": "npx tsx scripts/test-realtime-stream.ts"
+    "test:stream": "npx tsx scripts/test-realtime-stream.ts",
+    "check:security": "node scripts/security-audit.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

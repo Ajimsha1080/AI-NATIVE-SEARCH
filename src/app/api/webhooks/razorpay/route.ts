@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const payload = JSON.parse(bodyText);
-    const eventId = payload.event_id || payload.payload?.payment?.entity?.id || `rzp_evt_${Date.now()}`;
+    const eventId = payload.event_id || payload.payload?.payment?.entity?.id || `evt_${Date.now()}`;
 
     // Idempotency check
     const alreadyProcessed = db.processed_webhook_events.some(
