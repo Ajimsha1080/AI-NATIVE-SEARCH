@@ -16,7 +16,49 @@ export class LocalCommerceProvider {
     let list = db.commerce_products.filter(p => p.workspace_id === workspaceId);
 
     if (params.query) {
-      const q = params.query.toLowerCase();
+      const typoMap: Record<string, string> = {
+        wmoen: 'women',
+        womne: 'women',
+        wommen: 'women',
+        womans: 'women',
+        wmon: 'women',
+        womem: 'women',
+        prodcuts: 'products',
+        prodcut: 'product',
+        produts: 'products',
+        produtcs: 'products',
+        proucts: 'products',
+        porducts: 'products',
+        jaket: 'jacket',
+        jakets: 'jackets',
+        jakcet: 'jacket',
+        jackt: 'jacket',
+        sunscren: 'sunscreen',
+        suncrean: 'sunscreen',
+        suncream: 'sunscreen',
+        suncreen: 'sunscreen',
+        shrit: 'shirt',
+        shrits: 'shirts',
+        tshrit: 'tshirt',
+        tshrits: 'tshirts',
+        balclava: 'balaclava',
+        balaklava: 'balaclava',
+        viser: 'visor',
+        visors: 'visor',
+        clothe: 'clothes',
+        cloths: 'clothes',
+        trak: 'track',
+        traking: 'tracking',
+        retrn: 'return',
+        ordr: 'order',
+        oder: 'order',
+      };
+
+      let q = params.query.toLowerCase();
+      for (const [typo, fix] of Object.entries(typoMap)) {
+        q = q.replace(new RegExp(`\\b${typo}\\b`, 'gi'), fix);
+      }
+
       const isBroadQuery = /new|latest|arrival|arrivals|product|products|item|items|catalog|collection|bestseller|trending|recommend|what do you have|what you sell|all/i.test(q);
       const stopWords = new Set(['show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the', 'please', 'can', 'you', 'give', 'what', 'are', 'your', 'any', 'new', 'latest', 'product', 'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival']);
       const tokens = q.split(/[\s,?!]+/).filter(w => w.length > 2 && !stopWords.has(w) && isNaN(Number(w)));

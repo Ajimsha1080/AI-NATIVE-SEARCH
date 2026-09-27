@@ -65,9 +65,56 @@ async function callSarvamLLM(
   return null;
 }
 
+function normalizeUserMessage(text: string): string {
+  const typoMap: Record<string, string> = {
+    wmoen: 'women',
+    womne: 'women',
+    wommen: 'women',
+    womans: 'women',
+    wmon: 'women',
+    womem: 'women',
+    prodcuts: 'products',
+    prodcut: 'product',
+    produts: 'products',
+    produtcs: 'products',
+    proucts: 'products',
+    porducts: 'products',
+    jaket: 'jacket',
+    jakets: 'jackets',
+    jakcet: 'jacket',
+    jackt: 'jacket',
+    sunscren: 'sunscreen',
+    suncrean: 'sunscreen',
+    suncream: 'sunscreen',
+    suncreen: 'sunscreen',
+    shrit: 'shirt',
+    shrits: 'shirts',
+    tshrit: 'tshirt',
+    tshrits: 'tshirts',
+    balclava: 'balaclava',
+    balaklava: 'balaclava',
+    viser: 'visor',
+    visors: 'visor',
+    clothe: 'clothes',
+    cloths: 'clothes',
+    trak: 'track',
+    traking: 'tracking',
+    retrn: 'return',
+    ordr: 'order',
+    oder: 'order',
+  };
+
+  let normalized = text.toLowerCase();
+  for (const [typo, fix] of Object.entries(typoMap)) {
+    normalized = normalized.replace(new RegExp(`\\b${typo}\\b`, 'gi'), fix);
+  }
+  return normalized;
+}
+
 export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunResponse> {
   const startTime = Date.now();
   const { agent_id, workspace_id, user_message, channel = 'PLAYGROUND' } = params;
+  const cleanMessage = normalizeUserMessage(user_message);
 
   const agent = db.agents.find(a => a.id === agent_id && a.workspace_id === workspace_id);
   if (!agent) throw new Error('Agent ' + agent_id + ' not found in workspace.');
@@ -130,15 +177,15 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
 
   // Phase A: Intent Detection
   let detectedIntent = 'GENERAL_QUERY';
-  if (/talk to (?:a |an )?(?:human|agent|representative|person|operator)|speak (?:with|to) (?:a )?(?:human|person|representative)|connect me to support/i.test(user_message)) {
+  if (/talk to (?:a |an )?(?:human|agent|representative|person|operator)|speak (?:with|to) (?:a )?(?:human|person|representative)|connect me to support/i.test(cleanMessage)) {
     detectedIntent = 'HUMAN_HANDOFF';
-  } else if (/return|refund|exchange|warranty|policy|shipping policy|shipping time|delivery time|how many days|when will it arrive|shipping cost|who are you|about|contact|phone|email|address|location|headquarters|support/i.test(user_message)) {
+  } else if (/return|refund|exchange|warranty|policy|shipping policy|shipping time|delivery time|how many days|when will it arrive|shipping cost|who are you|about|contact|phone|email|address|location|headquarters|support/i.test(cleanMessage)) {
     detectedIntent = 'RETURN_OR_POLICY_INQUIRY';
-  } else if (/(?:track(?:ing)?\s+(?:my\s+)?order|where\s+is\s+my\s+order|status\s+of\s+order|order\s+status|#\d{4,6})/i.test(user_message)) {
+  } else if (/(?:track(?:ing)?\s+(?:my\s+)?order|where\s+is\s+my\s+order|status\s+of\s+order|order\s+status|#\d{4,6})/i.test(cleanMessage)) {
     detectedIntent = 'ORDER_TRACKING';
-  } else if (/cart|add to cart|add that|add this|add it|buy this|checkout|bag/i.test(user_message)) {
+  } else if (/cart|add to cart|add that|add this|add it|buy this|checkout|bag/i.test(cleanMessage)) {
     detectedIntent = 'CART_ACTION';
-  } else if (/find|search|show|look for|product|products|item|items|catalog|collection|arrival|arrivals|new|latest|best\s*seller|trending|what (?:do )?you (?:have|sell)|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|balaclava|price|cost|how much|under|buy|recommend/i.test(user_message)) {
+  } else if (/find|search|show|look for|product|products|item|items|catalog|collection|arrival|arrivals|new|latest|best\s*seller|trending|what (?:do )?you (?:have|sell)|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|balaclava|price|cost|how much|under|buy|recommend|women|woman|mens|men|outerwear|apparel/i.test(cleanMessage)) {
     detectedIntent = 'PRODUCT_SEARCH';
   }
 
@@ -146,7 +193,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
 
   // Phase B: 12-Stage Advanced RAG Pipeline Execution
   planningSteps.push('2. Running 12-Stage RAG: Query Understanding → Expansion → Hybrid Retrieval → RRF → Rerank → Context Assembly.');
-  const ragResult = await executeRAGPipeline(workspace_id, user_message, {
+  const ragResult = await executeRAGPipeline(workspace_id, cleanMessage, {
     topK: 3,
     minScore: 0.20,
     agentId: agent_id
@@ -166,24 +213,26 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     });
   }
 
+  let searchReturnedEmpty = false;
+
   // Phase D: Execution
   if (detectedIntent === 'PRODUCT_SEARCH') {
     planningSteps.push('3. Parsing search constraints (category, budget, size, color).');
 
     let maxPrice: number | undefined;
-    const priceMatch = user_message.match(/(?:under|below|less than|max)\s*(?:₹|\$)?\s*(\d+)/i);
+    const priceMatch = cleanMessage.match(/(?:under|below|less than|max)\s*(?:₹|\$)?\s*(\d+)/i);
     if (priceMatch) {
       maxPrice = parseFloat(priceMatch[1]);
     }
 
     let requestedSize: string | undefined;
-    const sizeMatch = user_message.match(/size\s*(\d+|s|m|l|xl|xxl)/i);
+    const sizeMatch = cleanMessage.match(/size\s*(\d+|s|m|l|xl|xxl)/i);
     if (sizeMatch) {
       requestedSize = sizeMatch[1].toUpperCase();
     }
 
     let color: string | undefined;
-    const colorMatch = user_message.match(/\b(black|white|red|blue|grey|silver|olive)\b/i);
+    const colorMatch = cleanMessage.match(/\b(black|white|red|blue|grey|silver|olive)\b/i);
     if (colorMatch) {
       color = colorMatch[1];
     }
@@ -192,7 +241,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     const searchRes = await executeTool({
       tool_id: 'product_search',
       parameters: {
-        query: user_message,
+        query: cleanMessage,
         max_price: maxPrice,
         size: requestedSize,
         color: color
@@ -270,6 +319,7 @@ If the customer asks about an item we don't have, explain politely what we do ha
         responseText = "We don't currently have that specific piece listed in our collection, but we carry a wide range of UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, No-Sweat Tech Tees, and cooling headwear. Let me know what you're looking for!";
       }
 
+      searchReturnedEmpty = true;
       interactivePayload = null;
     }
   } else if (detectedIntent === 'CART_ACTION') {

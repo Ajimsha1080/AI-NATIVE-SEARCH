@@ -140,14 +140,14 @@ async function runAllTests() {
     assert.strictEqual(prodResult.interactive_payload.type, 'PRODUCTS');
 
     // B. Non-existent item query must NOT attach product cards
-    const shirtResult = await runAgentCycle({
+    const shoesResult = await runAgentCycle({
       agent_id: 'agent_shopmate_01',
       workspace_id: 'ws_acme_corp',
-      user_message: 'SHIRTS',
+      user_message: 'RUNNING SHOES',
       channel: 'PLAYGROUND'
     });
-    assert(shirtResult.response_text.length > 0, 'Agent must respond about shirts');
-    assert.strictEqual(shirtResult.interactive_payload, null, 'Must NOT attach product cards when 0 products matched');
+    assert(shoesResult.response_text.length > 0, 'Agent must respond about shoes');
+    assert.strictEqual(shoesResult.interactive_payload, null, 'Must NOT attach product cards when 0 products matched');
   });
 
   // 6. Automated Evaluations Runner
