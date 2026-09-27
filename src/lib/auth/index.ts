@@ -266,26 +266,6 @@ export async function getAuthSession(req?: Request): Promise<{
     }
   }
 
-  // In development, testing, or demo mode without explicit session cookies,
-  // authenticate with the primary workspace owner to ensure all studio actions succeed seamlessly.
-  const isDevOrDemo = process.env.NODE_ENV !== 'production' || process.env.APP_ENV === 'development' || !process.env.APP_ENV;
-  if (isDevOrDemo && db.workspaces.length > 0) {
-    const defaultUser = db.users[0] || {
-      id: 'usr_owner_01',
-      email: 'alex@lumina.store',
-      name: 'Alex Rivera',
-      avatar_url: '',
-      is_super_admin: true,
-      created_at: new Date().toISOString()
-    };
-    const defaultWorkspace = db.workspaces[0];
-    return {
-      user: defaultUser as User,
-      workspaceId: defaultWorkspace.id,
-      role: 'OWNER' as WorkspaceRole
-    };
-  }
-
   return null;
 }
 

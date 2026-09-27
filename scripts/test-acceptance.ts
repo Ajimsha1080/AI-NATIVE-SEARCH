@@ -231,34 +231,40 @@ async function main() {
   // CRITERION 7: Order Lookup with Customer Email Matching
   // --------------------------------------------------------------------------
   console.log('\n--- Criterion 7: Order Lookup with Customer Email Matching ---');
-  // Test Sarah Connor's order #10482
-  const orderCorrect = await commerceEngine.getOrder('ws_acme_corp', '#10482', 'sarah.connor@example.com');
-  assert(orderCorrect !== null && orderCorrect.customer_email === 'sarah.connor@example.com', 'Order lookup with correct matching email succeeds');
+  const targetOrder = db.commerce_orders.find(o => o.order_number === '#10482') || db.commerce_orders[0];
+  const targetWs = targetOrder.workspace_id;
+  const targetEmail = targetOrder.customer_email;
+  const targetNum = targetOrder.order_number;
 
-  const orderWrongEmail = await commerceEngine.getOrder('ws_acme_corp', '#10482', 'attacker@evil.com');
+  // Test correct email lookup
+  const orderCorrect = await commerceEngine.getOrder(targetWs, targetNum, targetEmail);
+  assert(orderCorrect !== null && orderCorrect.customer_email.toLowerCase() === targetEmail.toLowerCase(), 'Order lookup with correct matching email succeeds');
+
+  const orderWrongEmail = await commerceEngine.getOrder(targetWs, targetNum, 'attacker@evil.com');
   assert(orderWrongEmail === null, 'Order lookup with mismatched email returns null (identical 404, prevents enumeration)');
 
-  const orderMissingEmail = await commerceEngine.getOrder('ws_acme_corp', '#10482', '');
+  const orderMissingEmail = await commerceEngine.getOrder(targetWs, targetNum, '');
   assert(orderMissingEmail === null, 'Order lookup with missing email returns null');
 
   // Test tool execution requiring customer_email
+  const agent = db.agents.find(a => a.workspace_id === targetWs) || db.agents[0];
   const toolResultWrong = await executeTool({
     tool_id: 'order_lookup',
-    workspace_id: 'ws_acme_corp',
-    agent_id: 'agent_shopmate_01',
+    workspace_id: targetWs,
+    agent_id: agent.id,
     conversation_id: 'conv_1',
-    parameters: { order_number: '#10482', customer_email: 'wrong@mail.com' }
+    parameters: { order_number: targetNum, customer_email: 'wrong@mail.com' }
   });
   assert(toolResultWrong.status === 'FAILED', 'Tool execution with mismatched email fails with order not found message');
 
   const toolResultCorrect = await executeTool({
     tool_id: 'order_lookup',
-    workspace_id: 'ws_acme_corp',
-    agent_id: 'agent_shopmate_01',
+    workspace_id: targetWs,
+    agent_id: agent.id,
     conversation_id: 'conv_1',
-    parameters: { order_number: '#10482', customer_email: 'sarah.connor@example.com' }
+    parameters: { order_number: targetNum, customer_email: targetEmail }
   });
-  assert(toolResultCorrect.status === 'SUCCESS' && toolResultCorrect.data.order_number === '#10482', 'Tool execution with correct email succeeds');
+  assert(toolResultCorrect.status === 'SUCCESS' && toolResultCorrect.data.order_number === targetNum, 'Tool execution with correct email succeeds');
 
   // --------------------------------------------------------------------------
   // CRITERION 8: Signup Rate Limiting & Verification Token Generation
