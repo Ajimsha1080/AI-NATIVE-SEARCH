@@ -184,19 +184,6 @@ export default function BillingWorkspacePage() {
                 </div>
 
                 <button
-                  onClick={() => setLiveSync(!liveSync)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-mono flex items-center gap-1.5 transition ${
-                    liveSync 
-                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold shadow-2xs' 
-                      : 'bg-zinc-100 border border-zinc-200 text-zinc-600'
-                  }`}
-                  title="Toggle real-time background quota sync"
-                >
-                  <span className={`w-2 h-2 rounded-full ${liveSync ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`}></span>
-                  <span>{liveSync ? 'REAL-TIME LIVE' : 'PAUSED'}</span>
-                </button>
-
-                <button
                   onClick={() => fetchBilling(true)}
                   disabled={syncing}
                   className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer"

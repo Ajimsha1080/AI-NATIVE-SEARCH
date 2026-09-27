@@ -727,16 +727,11 @@ export default function App() {
                 <div className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-6 shadow-2xs">
                   
                   {/* AI Agent Appearance Header Section */}
-                  <div className="space-y-1 pb-2 border-b border-zinc-100 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-sm font-bold text-zinc-900 tracking-tight">AI Agent Appearance</h2>
-                      <p className="text-xs text-zinc-500">
-                        Customize widget themes, brand accent colors, launcher shape, and screen position. All styling syncs in real time.
-                      </p>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold">
-                      REAL-TIME SYNC
-                    </span>
+                  <div className="space-y-1 pb-2 border-b border-zinc-100">
+                    <h2 className="text-sm font-bold text-zinc-900 tracking-tight">AI Agent Appearance</h2>
+                    <p className="text-xs text-zinc-500">
+                      Customize widget themes, brand accent colors, launcher shape, and screen position. All styling syncs in real time.
+                    </p>
                   </div>
 
                   {/* 20 Theme Presets Arranged in 4 Columns */}

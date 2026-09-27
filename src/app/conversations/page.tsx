@@ -218,18 +218,6 @@ export default function ConversationsWorkspacePage() {
                 </h2>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setLiveSync(!liveSync)}
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 transition ${
-                      liveSync 
-                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold shadow-2xs' 
-                        : 'bg-zinc-100 border border-zinc-200 text-zinc-600'
-                    }`}
-                    title="Toggle Real-Time Background Synchronization"
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full ${liveSync ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`}></span>
-                    <span>{liveSync ? 'REAL-TIME LIVE' : 'PAUSED'}</span>
-                  </button>
-                  <button
                     onClick={() => fetchConversations(true)}
                     className="p-1 rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition"
                     title="Refresh conversations"
