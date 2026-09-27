@@ -408,7 +408,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       title: 'Sunscreen WIDE VISOR PRO',
       description: 'Wide brim maximum-coverage UV sun visor with adjustable anti-glare band for outdoor sports, cycling, and travel.',
       category: 'Accessories',
-      tags: ['visor', 'sunscreen', 'accessories', 'uvwear', 'hat'],
+      tags: ['visor', 'sunscreen', 'accessories', 'uvwear', 'hat', 'cap', 'caps', 'headwear'],
       price: 999.00,
       compare_at_price: 1499.00,
       currency: 'INR',

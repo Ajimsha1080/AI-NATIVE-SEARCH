@@ -185,7 +185,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     detectedIntent = 'ORDER_TRACKING';
   } else if (/cart|add to cart|add that|add this|add it|buy this|checkout|bag/i.test(cleanMessage)) {
     detectedIntent = 'CART_ACTION';
-  } else if (/find|search|show|look for|product|products|item|items|catalog|collection|arrival|arrivals|new|latest|best\s*seller|trending|what (?:do )?you (?:have|sell)|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|balaclava|price|cost|how much|under|buy|recommend|women|woman|mens|men|outerwear|apparel/i.test(cleanMessage)) {
+  } else if (/find|search|show|look for|product|products|item|items|catalog|collection|arrival|arrivals|new|latest|best\s*seller|trending|what (?:do )?you (?:have|sell)|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|balaclava|price|cost|how much|under|buy|recommend|women|woman|mens|men|outerwear|apparel|cap|caps|hat|hats|visor|visors|headwear|sunscreen/i.test(cleanMessage)) {
     detectedIntent = 'PRODUCT_SEARCH';
   }
 

@@ -62,12 +62,42 @@ export class LocalCommerceProvider {
       const isBroadQuery = /new|latest|arrival|arrivals|product|products|item|items|catalog|collection|bestseller|trending|recommend|what do you have|what you sell|all/i.test(q);
       const stopWords = new Set(['show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the', 'please', 'can', 'you', 'give', 'what', 'are', 'your', 'any', 'new', 'latest', 'product', 'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival']);
       const tokens = q.split(/[\s,?!]+/).filter(w => w.length > 2 && !stopWords.has(w) && isNaN(Number(w)));
+      const synonyms: Record<string, string[]> = {
+        cap: ['visor', 'hat', 'headwear'],
+        caps: ['visor', 'hat', 'headwear'],
+        hat: ['visor', 'cap', 'headwear'],
+        hats: ['visor', 'cap', 'headwear'],
+        visor: ['visor', 'hat', 'cap', 'headwear'],
+        visors: ['visor', 'hat', 'cap', 'headwear'],
+        balaclava: ['mask', 'face cover', 'neck gaiter'],
+        mask: ['balaclava', 'face cover'],
+        tee: ['tshirt', 't-shirt', 'nosweat', 'tee'],
+        tees: ['tshirt', 't-shirt', 'nosweat', 'tee'],
+        shirt: ['tshirt', 't-shirt', 'nosweat', 'tee'],
+        shirts: ['tshirt', 't-shirt', 'nosweat', 'tee'],
+        top: ['tee', 'tshirt', 'jacket'],
+        tops: ['tee', 'tshirt', 'jacket'],
+        hoodie: ['thermal', 'jacket', 'anti-ac'],
+        hoodies: ['thermal', 'jacket', 'anti-ac'],
+        jacket: ['sunscreen jacket', 'thermal', 'anti-ac'],
+        jackets: ['sunscreen jacket', 'thermal', 'anti-ac'],
+      };
+
+      const allTokens = new Set<string>(tokens);
+      for (const t of tokens) {
+        if (synonyms[t]) {
+          synonyms[t].forEach(s => allTokens.add(s));
+        }
+      }
 
       let filtered = list.filter(p => {
         const fullText = (p.title + ' ' + p.description + ' ' + p.category + ' ' + p.tags.join(' ')).toLowerCase();
         if (fullText.includes(q)) return true;
-        if (tokens.length === 0) return false;
-        return tokens.some(t => fullText.includes(t));
+        if (allTokens.size === 0) return false;
+        for (const t of allTokens) {
+          if (fullText.includes(t)) return true;
+        }
+        return false;
       });
 
       // Demographic filter: if querying for women specifically, ensure women products are selected
