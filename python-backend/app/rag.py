@@ -119,12 +119,12 @@ def understand_query(question: str) -> Dict[str, Any]:
 
     if re.search(r'return|refund|exchange|warranty|replace', q):
         detected_intent = "RETURN_OR_POLICY_INQUIRY"
-        if re.search(r'shoes|sneakers|footwear', q):
-            entities["product_category"] = "footwear"
+        if re.search(r'jacket|tee|jogger|hoodie|apparel|techwear', q):
+            entities["product_category"] = "apparel"
         days_match = re.search(r'(\d+)\s*days?', q)
         if days_match:
             entities["timeframe_days"] = int(days_match.group(1))
-    elif re.search(r'ship|transit|delivery|arrive|fedex|ups|dhl', q):
+    elif re.search(r'ship|transit|delivery|arrive|bluedart|delhivery|dtdc', q):
         detected_intent = "SHIPPING_LOGISTICS"
     elif re.search(r'size|fit|chart|measurement', q):
         detected_intent = "SIZING_FIT"

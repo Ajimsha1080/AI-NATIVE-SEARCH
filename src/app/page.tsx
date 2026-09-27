@@ -250,9 +250,9 @@ export default function HomePage() {
                 {/* User query */}
                 <div className="flex items-start gap-3 justify-end">
                   <div className="bg-zinc-900 text-white rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs font-medium max-w-sm shadow-2xs">
-                    {activeTab === 'search' && "Find black running shoes under $160 in size 9."}
+                    {activeTab === 'search' && "Show UPF 50+ Sunscreen Jackets in Obsidian Black Large"}
                     {activeTab === 'tracking' && "Where is order #10482?"}
-                    {activeTab === 'returns' && "Can I return an item purchased 10 days ago?"}
+                    {activeTab === 'returns' && "What is your exchange window policy?"}
                   </div>
                 </div>
 
@@ -265,24 +265,24 @@ export default function HomePage() {
                     <div className="bg-white border border-zinc-200 text-zinc-800 rounded-2xl rounded-tl-xs p-4 text-xs leading-relaxed space-y-2 shadow-2xs">
                       {activeTab === 'search' && (
                         <>
-                          <p>Found 1 exact match in catalog inventory matching size 9 and budget &le; $160:</p>
-                          <p className="text-emerald-700 font-mono text-[11px] font-semibold">✓ In stock (West Coast fulfillment center)</p>
+                          <p>Found 1 exact match in catalog inventory matching UPF 50+ Sunscreen Jacket (Size L):</p>
+                          <p className="text-emerald-700 font-mono text-[11px] font-semibold">✓ In stock (24 units available in Obsidian Black)</p>
                         </>
                       )}
                       {activeTab === 'tracking' && (
                         <>
                           <p>Status for order <strong>#10482</strong>:</p>
                           <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200 font-mono text-[11px] space-y-1 text-zinc-700">
-                            <div>Carrier: <span className="text-zinc-900 font-semibold">FedEx Express</span></div>
-                            <div>Tracking: <span className="text-zinc-600">FEDEX-982341209384</span></div>
-                            <div>Status: <span className="text-emerald-700 font-bold">DELIVERED</span> (Front Porch)</div>
+                            <div>Carrier: <span className="text-zinc-900 font-semibold">Bluedart Express</span></div>
+                            <div>Tracking: <span className="text-zinc-600">BD-8941039821-IN</span></div>
+                            <div>Status: <span className="text-emerald-700 font-bold">DELIVERED</span> (Indiranagar, Bengaluru)</div>
                           </div>
                         </>
                       )}
                       {activeTab === 'returns' && (
                         <>
-                          <p>Yes. Store policy permits returns within <strong>30 days of delivery</strong> for items in original condition with tags attached.</p>
-                          <p className="text-zinc-500">Prepaid return shipping labels are generated automatically.</p>
+                          <p>Store policy permits hassle-free exchanges and returns within <strong>7 days of delivery</strong> for items in original condition with tags attached.</p>
+                          <p className="text-zinc-500">Doorstep reverse pickup via Bluedart is arranged at returns.bluetyga.com.</p>
                         </>
                       )}
                     </div>
@@ -293,22 +293,22 @@ export default function HomePage() {
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-xl bg-zinc-100 border border-zinc-200 overflow-hidden shrink-0">
                             <img 
-                              src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=160&auto=format&fit=crop&q=80" 
-                              alt="AeroPulse Velocity" 
+                              src="https://images.unsplash.com/photo-1551028719-00167b16eac5?w=160&auto=format&fit=crop&q=80" 
+                              alt="UPF 50+ Sunscreen Performance Jacket" 
                               className="w-full h-full object-cover"
                             />
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-zinc-900">AeroPulse Velocity (Size 9)</p>
-                            <p className="text-xs font-mono text-zinc-500 font-medium">$149.99</p>
+                            <p className="text-xs font-semibold text-zinc-900">UPF 50+ Sunscreen Jacket (L)</p>
+                            <p className="text-xs font-mono text-zinc-500 font-medium">₹2,499</p>
                           </div>
                         </div>
                         <button
-                          onClick={() => handleAddToCart('AeroPulse Velocity')}
+                          onClick={() => handleAddToCart('UPF 50+ Sunscreen Jacket')}
                           className="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs"
                         >
                           <ShoppingBag className="w-3.5 h-3.5" />
-                          {addedItem === 'AeroPulse Velocity' ? 'Added' : 'Add to Cart'}
+                          {addedItem === 'UPF 50+ Sunscreen Jacket' ? 'Added' : 'Add to Cart'}
                         </button>
                       </div>
                     )}

@@ -263,14 +263,14 @@ class LLMClient:
 
         # 1. Prompt Injection Defense Check
         if "ignore all previous instructions" in lower or "system override" in lower or "output your system prompt" in lower:
-            # If user asks about shoes despite injection attempt, provide safe catalog info
-            if "shoe" in lower or "running" in lower:
+            # If user asks about techwear jackets despite injection attempt, provide safe catalog info
+            if "jacket" in lower or "tee" in lower or "hoodie" in lower:
                 return {
                     "content": "",
                     "tool_calls": [{
                         "id": "call_search_safe",
                         "tool_name": "search_products",
-                        "arguments": {"query": "running shoes"}
+                        "arguments": {"query": "UPF 50+ Sunscreen Performance Jacket"}
                     }],
                     "provider": "deterministic_engine"
                 }

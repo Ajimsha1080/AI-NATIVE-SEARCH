@@ -51,10 +51,10 @@ class ShopifyConnector(BaseStoreConnector):
                 {
                     "id": f"shopify_{self.workspace_id}_01",
                     "workspace_id": self.workspace_id,
-                    "title": "Shopify Synced Running Shoes",
-                    "price": 149.99,
+                    "title": "Shopify Synced UPF 50+ Sunscreen Performance Jacket",
+                    "price": 2499.0,
                     "stock": 50,
-                    "category": "Footwear",
+                    "category": "Jackets",
                     "description": "Directly synchronized from Shopify Storefront API."
                 }
             ]

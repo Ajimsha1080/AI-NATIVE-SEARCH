@@ -150,11 +150,11 @@ async def _fetch_order_db(workspace_id: str, order_number: str, customer_email: 
                     "workspace_id": workspace_id,
                     "customer_email": ord.customer_email,
                     "status": ord.status,
-                    "carrier": "FedEx Express" if "acme" in workspace_id else "UPS Next Day Air",
-                    "tracking_number": "FX-8941039821-US" if "acme" in workspace_id else "1Z9999999999999999",
-                    "items": ["1x AeroPulse Velocity Running Shoes" if "acme" in workspace_id else "1x UltraBook Titanium 16"],
+                    "carrier": "Bluedart Express" if "acme" in workspace_id else "Delhivery Express",
+                    "tracking_number": "BD-8941039821-IN" if "acme" in workspace_id else "DL-9999999999-IN",
+                    "items": ["1x UPF 50+ Sunscreen Performance Jacket" if "acme" in workspace_id else "1x Stealth Matrix Hydro-Shell Hoodie"],
                     "total_amount": float(ord.total_amount),
-                    "masked_address": "742 Evergreen ***, Springfield, OR" if "acme" in workspace_id else "100 Market ***, San Francisco, CA"
+                    "masked_address": "Flat 402, Green Glen Layout, Bellandur, Bengaluru, KA 560103" if "acme" in workspace_id else "Plot 12, Indiranagar, Bengaluru, KA 560038"
                 }
             for it in (ord.items_json or []):
                 if isinstance(it, dict) and (it.get("order_number") == clean_num or it.get("order_number") == f"#{clean_num}"):
