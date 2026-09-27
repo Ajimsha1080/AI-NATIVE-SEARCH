@@ -106,12 +106,8 @@ export default function DashboardPage() {
                   <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h1 className="text-base font-bold text-zinc-900 tracking-tight flex items-center gap-2">
+                  <h1 className="text-base font-bold text-zinc-900 tracking-tight">
                     E-Commerce Operations &amp; AI Agents
-                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                      LIVE SYNC
-                    </span>
                   </h1>
                   <p className="text-xs text-zinc-500 mt-0.5 flex items-center gap-2">
                     <span>Real-time storefront intelligence &amp; live catalog interactions</span>

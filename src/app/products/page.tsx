@@ -203,13 +203,7 @@ export default function ProductsPage() {
                   <Package className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2.5">
-                    <h1 className="text-base font-bold text-zinc-900 tracking-tight">Real-Time Store Catalog</h1>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                      LIVE SYNC ACTIVE
-                    </span>
-                  </div>
+                  <h1 className="text-base font-bold text-zinc-900 tracking-tight">Real-Time Store Catalog</h1>
                   <p className="text-xs text-zinc-500 mt-0.5">
                     Real-time inventory levels, live stock adjustments, and instant AI agent catalog availability in INR (₹).
                   </p>

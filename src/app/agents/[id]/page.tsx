@@ -162,12 +162,7 @@ Always be accurate, grounded in verified catalog data and official policy rules.
                   <Bot className="h-6 w-6" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2.5">
-                    <h1 className="text-lg font-bold text-zinc-900">{agentName}</h1>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
-                      LIVE IN PRODUCTION
-                    </span>
-                  </div>
+                  <h1 className="text-lg font-bold text-zinc-900">{agentName}</h1>
                   <p className="text-xs text-zinc-500 mt-0.5">
                     Configure identity, personality, conversational boundaries, and live e-commerce capabilities.
                   </p>

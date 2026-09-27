@@ -185,10 +185,6 @@ export default function SecuritySettingsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold shadow-2xs flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    100% Isolated
-                  </span>
                   <button
                     onClick={handleRunSecurityBenchmark}
                     disabled={benchmarking}
