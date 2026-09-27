@@ -21,14 +21,42 @@ export class LocalCommerceProvider {
       const stopWords = new Set(['show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the', 'please', 'can', 'you', 'give', 'what', 'are', 'your', 'any', 'new', 'latest', 'product', 'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival']);
       const tokens = q.split(/[\s,?!]+/).filter(w => w.length > 2 && !stopWords.has(w) && isNaN(Number(w)));
 
-      const filtered = list.filter(p => {
+      let filtered = list.filter(p => {
         const fullText = (p.title + ' ' + p.description + ' ' + p.category + ' ' + p.tags.join(' ')).toLowerCase();
         if (fullText.includes(q)) return true;
         if (tokens.length === 0) return false;
         return tokens.some(t => fullText.includes(t));
       });
 
+      // Demographic filter: if querying for women specifically, ensure women products are selected
+      if (tokens.some(t => ['women', 'womens', 'lady', 'ladies'].includes(t))) {
+        const womenOnly = filtered.filter(p => {
+          const tLower = p.title.toLowerCase();
+          const tagsLower = p.tags.map(t => t.toLowerCase());
+          return tLower.includes('women') || tagsLower.includes('women') || tagsLower.includes('womens');
+        });
+        if (womenOnly.length > 0) {
+          filtered = womenOnly;
+        }
+      }
+
       if (filtered.length > 0) {
+        // Relevance ranking: Title matches rank higher than description matches
+        filtered.sort((a, b) => {
+          const score = (p: CommerceProduct) => {
+            let s = 0;
+            const tLower = p.title.toLowerCase();
+            const dLower = p.description.toLowerCase();
+            const tagsLower = p.tags.map(t => t.toLowerCase());
+            for (const token of tokens) {
+              if (tLower.includes(token)) s += 100;
+              if (tagsLower.includes(token)) s += 50;
+              if (dLower.includes(token)) s += 20;
+            }
+            return s;
+          };
+          return score(b) - score(a);
+        });
         list = filtered;
       } else if (tokens.length === 0 && isBroadQuery) {
         // Pure discovery query without specific unmatched keywords -> return top catalog products

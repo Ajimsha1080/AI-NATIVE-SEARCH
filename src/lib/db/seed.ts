@@ -269,7 +269,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       title: 'Sunscreen Jacket',
       description: 'Engineered UPF 50+ UV-blocking lightweight breathable jacket designed for daily outdoor sun protection.',
       category: 'Outerwear',
-      tags: ['jacket', 'sunscreen', 'upf50', 'uvwear', 'outerwear', 'men', 'women'],
+      tags: ['jacket', 'sunscreen', 'upf50', 'uvwear', 'outerwear', 'men'],
       price: 999.00,
       compare_at_price: 1999.00,
       currency: 'INR',

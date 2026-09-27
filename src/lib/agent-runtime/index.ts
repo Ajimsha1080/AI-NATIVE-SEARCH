@@ -233,6 +233,16 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
 
       if (searchRes.data.length === 1) {
         responseText = `Here is the **${searchRes.data[0].title}** from our collection:`;
+      } else if (/women|ladies|girl/i.test(user_message)) {
+        responseText = `Here are the featured pieces from our Blue Tyga Women's collection:`;
+      } else if (/new|latest|arrival/i.test(user_message)) {
+        responseText = `Here are the latest new arrivals from Blue Tyga:`;
+      } else if (/jacket|sunscreen/i.test(user_message)) {
+        responseText = `Here are the top UPF 50+ Sunscreen and Thermal Jackets from Blue Tyga:`;
+      } else if (/tee|tshirt|shirt/i.test(user_message)) {
+        responseText = `Here are the active tops from Blue Tyga:`;
+      } else if (/visor|balaclava|accessory|accessories|mask/i.test(user_message)) {
+        responseText = `Here are our outdoor UV accessories:`;
       } else {
         responseText = `Here are the top matches from our Blue Tyga collection:`;
       }
