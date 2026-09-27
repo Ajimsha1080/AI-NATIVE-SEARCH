@@ -6,12 +6,14 @@ import {
   Check, ArrowRight, ExternalLink, RefreshCw, Image as ImageIcon,
   X, ZoomIn, ZoomOut, Maximize2, Download, Eye, Sparkles
 } from 'lucide-react';
+import { getThemePreset, ThemePreset } from '@/lib/theme-presets';
 
 interface ChatBoxProps {
   agentId: string;
   agentName?: string;
   initialMessage?: string;
   primaryColor?: string;
+  themePreset?: string;
   externalTrigger?: { text: string; timestamp: number } | null;
   onTraceUpdate?: (trace: any) => void;
   [key: string]: any;
@@ -28,7 +30,8 @@ export default function ChatBox({
   agentId,
   agentName = 'Blue Tyga AI Concierge',
   initialMessage = 'Hello! I am your Blue Tyga AI store concierge. I can query live catalog inventory, track shipments, check return policies, and assist with checkout.',
-  primaryColor = '#ffffff',
+  primaryColor = '#ec4899',
+  themePreset = 'mint_breeze',
   externalTrigger,
   onTraceUpdate
 }: ChatBoxProps) {
@@ -50,23 +53,45 @@ export default function ChatBox({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Live Theme & Color Sync
+  const [activeThemePresetId, setActiveThemePresetId] = useState<string>(themePreset || 'mint_breeze');
+  const [activePrimaryColor, setActivePrimaryColor] = useState<string>(primaryColor || '#ec4899');
+  const [activeBrandName, setActiveBrandName] = useState<string>(agentName);
+  const [activeStarterQuestions, setActiveStarterQuestions] = useState<string[]>([
+    'Show UPF 50+ Sunscreen Jackets',
+    'Track order #10482',
+    'What is your 7-day exchange policy?',
+    'Do you have Travel Joggers?'
+  ]);
+
   useEffect(() => {
     if (agentId) {
       fetch(`/api/agents/${agentId}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
-          if (data?.config?.identity?.greeting) {
-            setMessages(prev => {
-              if (prev.length === 1 && prev[0].id === 'msg_init') {
-                return [{ ...prev[0], content: data.config.identity.greeting }];
-              }
-              return prev;
-            });
+          if (data?.config) {
+            const cfg = data.config;
+            if (cfg.identity?.greeting) {
+              setMessages(prev => {
+                if (prev.length === 1 && prev[0].id === 'msg_init') {
+                  return [{ ...prev[0], content: cfg.identity.greeting }];
+                }
+                return prev;
+              });
+            }
+            if (cfg.identity?.name) setActiveBrandName(cfg.identity.name);
+            if (cfg.appearance?.theme_preset) setActiveThemePresetId(cfg.appearance.theme_preset);
+            if (cfg.appearance?.primary_color) setActivePrimaryColor(cfg.appearance.primary_color);
+            if (cfg.starter_questions && Array.isArray(cfg.starter_questions) && cfg.starter_questions.length > 0) {
+              setActiveStarterQuestions(cfg.starter_questions);
+            }
           }
         })
         .catch(() => {});
     }
   }, [agentId]);
+
+  const activePreset: ThemePreset = getThemePreset(activeThemePresetId);
 
   useEffect(() => {
     if (externalTrigger && externalTrigger.text) {
@@ -239,19 +264,39 @@ export default function ChatBox({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-2xl border border-zinc-200 overflow-hidden font-sans relative shadow-xs">
+    <div 
+      className="flex flex-col h-full rounded-2xl border overflow-hidden font-sans relative shadow-xs transition-colors duration-200"
+      style={{ 
+        borderColor: activePreset.borderHex,
+        backgroundColor: activePreset.cardBgHex 
+      }}
+    >
       {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 bg-white flex items-center justify-between">
+      <div 
+        className="px-4 py-3 border-b flex items-center justify-between transition-colors duration-200"
+        style={{ 
+          backgroundColor: activePreset.headerBgHex, 
+          borderColor: activePreset.borderHex 
+        }}
+      >
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center text-xs font-mono shadow-2xs">
-            <Bot className="w-4 h-4 text-emerald-400" />
+          <div 
+            className="w-7 h-7 rounded-lg text-white flex items-center justify-center text-xs font-mono shadow-2xs"
+            style={{ backgroundColor: activePrimaryColor || activePreset.primaryColor }}
+          >
+            <Bot className="w-4 h-4 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-xs font-bold text-zinc-950">{agentName}</h3>
+              <h3 
+                className="text-xs font-bold truncate max-w-[200px]"
+                style={{ color: activePreset.headerTextColor || (activePreset.themeMode === 'dark' ? '#ffffff' : '#0f172a') }}
+              >
+                {activeBrandName || agentName}
+              </h3>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             </div>
-            <p className="text-[10px] text-zinc-500 font-mono">Sarvam AI Router • Grounded Techwear Catalog</p>
+            <p className="text-[10px] text-zinc-500 font-mono">Real-Time Commerce Concierge • Live Verified</p>
           </div>
         </div>
 
@@ -267,7 +312,8 @@ export default function ChatBox({
               setConversationId(null);
               setAttachedImage(null);
             }}
-            className="text-[11px] text-zinc-600 hover:text-zinc-950 px-2.5 py-1 rounded-lg bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition flex items-center gap-1 font-semibold shadow-2xs"
+            style={{ borderColor: activePreset.borderHex }}
+            className="text-[11px] text-zinc-700 hover:text-zinc-950 px-2.5 py-1 rounded-lg bg-white/80 hover:bg-white border transition flex items-center gap-1 font-semibold shadow-2xs"
             title="Reset conversation session"
           >
             <RefreshCw className="w-3 h-3" /> Reset
@@ -276,7 +322,10 @@ export default function ChatBox({
       </div>
 
       {/* Message Transcript */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#f4f5f7]">
+      <div 
+        className="flex-1 overflow-y-auto p-4 space-y-3.5 transition-colors duration-200"
+        style={{ backgroundColor: activePreset.cardBgHex }}
+      >
 
         {messages.map((m) => (
           <div
@@ -284,11 +333,8 @@ export default function ChatBox({
             className={`flex items-start gap-2.5 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
           >
             <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-mono text-[10px] ${
-                m.role === 'user' 
-                  ? 'bg-zinc-900 text-white font-bold' 
-                  : 'bg-indigo-100 text-indigo-700 border border-indigo-200'
-              }`}
+              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-mono text-[10px] text-white font-bold"
+              style={m.role === 'user' ? { backgroundColor: activePrimaryColor || activePreset.primaryColor } : { backgroundColor: '#18181b' }}
             >
               {m.role === 'user' ? 'U' : 'AI'}
             </div>
@@ -300,7 +346,7 @@ export default function ChatBox({
                   className="rounded-xl overflow-hidden border border-zinc-200 max-w-[240px] cursor-pointer group relative shadow-xs"
                 >
                   <img src={m.imageUrl} alt="Attached" className="w-full h-auto max-h-48 object-cover rounded-xl" />
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/opacity-100 transition flex items-center justify-center">
                     <span className="text-[10px] font-mono text-zinc-900 bg-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow">
                       <ZoomIn className="w-3 h-3" /> Inspect
                     </span>
@@ -311,9 +357,10 @@ export default function ChatBox({
               <div
                 className={`p-3.5 rounded-2xl text-xs leading-relaxed break-words shadow-2xs ${
                   m.role === 'user'
-                    ? 'bg-zinc-900 text-white rounded-tr-none'
+                    ? 'text-white rounded-tr-none'
                     : 'bg-white border border-zinc-200 text-zinc-900 rounded-tl-none'
                 }`}
+                style={m.role === 'user' ? { backgroundColor: activePrimaryColor || activePreset.primaryColor } : {}}
               >
                 {renderMessageContent(m.content)}
               </div>
@@ -382,7 +429,8 @@ export default function ChatBox({
                           </button>
                           <button 
                             onClick={() => handleAddToCart(p.title)}
-                            className="flex-1 py-1 px-2.5 rounded-lg text-[11px] font-semibold text-white bg-[#18181b] hover:bg-[#27272a] transition flex items-center justify-center gap-1.5"
+                            style={{ backgroundColor: activePrimaryColor || activePreset.primaryColor }}
+                            className="flex-1 py-1 px-2.5 rounded-lg text-[11px] font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-90"
                           >
                             <ShoppingBag className="w-3 h-3" /> 
                             {addedItem === p.title ? 'Added' : 'Add to Cart'}
@@ -428,17 +476,19 @@ export default function ChatBox({
       </div>
 
       {/* Suggested prompts */}
-      <div className="px-3 py-2 bg-white border-t border-zinc-100 flex gap-1.5 overflow-x-auto">
-        {[
-          'Show UPF 50+ Sunscreen Jackets', 
-          'Track order #10482', 
-          'What is your 7-day exchange policy?', 
-          'Recommend breathable workout tees'
-        ].map((s, idx) => (
+      <div 
+        className="px-3 py-2 border-t flex gap-1.5 overflow-x-auto transition-colors duration-200"
+        style={{ 
+          backgroundColor: activePreset.topBubbleBg || '#ffffff',
+          borderColor: activePreset.borderHex 
+        }}
+      >
+        {activeStarterQuestions.map((s, idx) => (
           <button
             key={idx}
             onClick={() => handleSend(s)}
-            className="text-[11px] whitespace-nowrap bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-700 px-3 py-1 rounded-full transition shrink-0 font-medium"
+            style={{ borderColor: activePreset.borderHex }}
+            className="text-[11px] whitespace-nowrap bg-white/90 hover:bg-white border text-zinc-800 px-3 py-1 rounded-full transition shrink-0 font-medium shadow-2xs hover:shadow-xs"
           >
             {s}
           </button>
@@ -500,7 +550,8 @@ export default function ChatBox({
         <button
           type="submit"
           disabled={(!input.trim() && !attachedImage) || loading}
-          className="px-4 py-2 rounded-xl bg-[#18181b] hover:bg-[#27272a] text-white disabled:opacity-40 transition shrink-0 flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+          style={{ backgroundColor: activePrimaryColor || activePreset.primaryColor }}
+          className="px-4 py-2 rounded-xl text-white disabled:opacity-40 transition shrink-0 flex items-center gap-1.5 text-xs font-semibold shadow-xs hover:opacity-90"
         >
           <Send className="w-3.5 h-3.5" />
         </button>

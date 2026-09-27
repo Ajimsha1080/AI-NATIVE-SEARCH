@@ -35,11 +35,13 @@ const updateAgentSchema = z.object({
       fallback_response: z.string().optional()
     }).optional(),
     appearance: z.object({
+      theme_preset: z.string().optional(),
+      theme_mode: z.string().optional(),
       primary_color: z.string().optional(),
       background_color: z.string().optional(),
       text_color: z.string().optional(),
       launcher_icon: z.string().optional(),
-      position: z.enum(['bottom-right', 'bottom-left']).optional(),
+      position: z.enum(['bottom-left', 'bottom-right']).optional(),
       widget_title: z.string().optional(),
       show_branding: z.boolean().optional(),
       custom_css: z.string().optional()
@@ -50,9 +52,10 @@ const updateAgentSchema = z.object({
       customer_preferences: z.boolean().optional(),
       retention_days: z.number().optional()
     }).optional(),
+    starter_questions: z.array(z.string()).optional(),
     capabilities: z.record(z.boolean()).optional(),
     goals: z.array(z.string()).optional()
-  }).strict().optional(),
+  }).optional(),
   tool_permissions: z.array(
     z.object({
       tool_id: z.string(),
@@ -138,6 +141,7 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
         if (configData.appearance) config.appearance = { ...config.appearance, ...configData.appearance };
         if (configData.memory) config.memory = { ...config.memory, ...configData.memory };
         if (configData.capabilities) config.capabilities = { ...config.capabilities, ...configData.capabilities };
+        if (configData.starter_questions) config.starter_questions = configData.starter_questions;
         if (configData.goals) config.goals = configData.goals;
         config.updated_at = new Date().toISOString();
       }

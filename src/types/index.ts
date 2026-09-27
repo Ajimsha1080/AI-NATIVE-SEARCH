@@ -83,6 +83,8 @@ export interface AgentConfig {
     fallback_response: string;
   };
   appearance: {
+    theme_preset?: string;
+    theme_mode?: string;
     primary_color: string;
     background_color: string;
     text_color: string;
@@ -92,6 +94,7 @@ export interface AgentConfig {
     show_branding: boolean;
     custom_css?: string;
   };
+  starter_questions?: string[];
   memory: {
     enabled: boolean;
     session_memory: boolean;

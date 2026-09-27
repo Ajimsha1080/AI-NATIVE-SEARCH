@@ -219,9 +219,34 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(false), 2000);
   }
 
-  function handleSaveChanges() {
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+  async function handleSaveChanges() {
+    try {
+      await fetch(`/api/agents/${agentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config: {
+            identity: {
+              name: assistantName,
+              brand_name: headerTitle,
+              greeting: greetingMessage
+            },
+            appearance: {
+              primary_color: primaryColor,
+              launcher_icon: launcherIcon,
+              position: position === 'bottom_left' ? 'bottom-left' : 'bottom-right',
+              widget_title: assistantName,
+              show_branding: showBranding
+            },
+            starter_questions: starterQuestions
+          }
+        })
+      });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3500);
+    } catch (err) {
+      console.error('Failed to save appearance:', err);
+    }
   }
 
   function handleAddQuestion() {

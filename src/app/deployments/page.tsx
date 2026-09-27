@@ -490,12 +490,15 @@ export default function App() {
               greeting: greetingMessage
             },
             appearance: {
+              theme_preset: selectedPresetId,
+              theme_mode: themeMode,
               primary_color: primaryColor,
               launcher_icon: launcherIcon,
               position: position === 'bottom_left' ? 'bottom-left' : 'bottom-right',
               widget_title: assistantName,
               show_branding: showBranding
-            }
+            },
+            starter_questions: starterQuestions
           }
         })
       });
