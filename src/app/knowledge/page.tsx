@@ -12,6 +12,7 @@ import {
   ArrowUpRight, Database, CheckSquare, Square, Folder
 } from 'lucide-react';
 import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
+import ChatBox from '@/components/chat/ChatBox';
 
 export default function KnowledgeWorkspacePage() {
   const [sources, setSources] = useState<any[]>(() => {
@@ -452,27 +453,12 @@ export default function KnowledgeWorkspacePage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowRagTestModal(true)}
-                  className="px-3.5 py-1.5 rounded-full bg-zinc-50 hover:bg-zinc-100 text-zinc-800 border border-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs"
+                  className="px-4 py-2 rounded-xl bg-[#18181b] hover:bg-[#27272a] text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-zinc-700" />
-                  <span>Operator</span>
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Test Chat</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 </button>
-
-                <button
-                  onClick={() => setShowRagTestModal(true)}
-                  className="px-3.5 py-1.5 rounded-full bg-zinc-50 hover:bg-zinc-100 text-zinc-800 border border-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs"
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-zinc-700" />
-                  <span>Learn</span>
-                  <ChevronDown className="w-3 h-3 text-zinc-500" />
-                </button>
-
-                <Link
-                  href="/agents/agent_shopmate_01/playground"
-                  className="px-4 py-1.5 rounded-full bg-zinc-50 hover:bg-zinc-100 text-zinc-800 border border-zinc-200 text-xs font-semibold transition shadow-2xs"
-                >
-                  Preview
-                </Link>
               </div>
             </div>
 
@@ -922,59 +908,43 @@ export default function KnowledgeWorkspacePage() {
         )}
 
         {/* ========================================================================= */}
-        {/* RAG TEST MODAL */}
+        {/* TEST CHAT MODAL */}
         {/* ========================================================================= */}
         {showRagTestModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className="bg-white text-zinc-900 rounded-3xl w-full max-w-xl flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-zinc-200">
-              <div className="p-6 pb-4 flex items-start justify-between border-b border-zinc-100">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+            <div className="bg-white text-zinc-900 rounded-3xl w-full max-w-2xl h-[650px] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-zinc-200">
+              <div className="px-5 py-3.5 flex items-center justify-between border-b border-zinc-200 bg-zinc-50/80">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs">
+                    <MessageSquare className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-zinc-900 tracking-tight">Operator RAG Test</h2>
-                    <p className="text-xs text-zinc-500">Query indexed articles and test semantic grounding</p>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-bold text-zinc-900 tracking-tight">Test AI Assistant</h2>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        LIVE RAG ACTIVE
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500">Test live questions on policies, returns, sizing, and products</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setShowRagTestModal(false)}
-                  className="p-1.5 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition"
+                  className="p-1.5 rounded-full hover:bg-zinc-200 text-zinc-400 hover:text-zinc-700 transition"
+                  title="Close test chat"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleRunRagTest} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                    Test Customer Query
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="e.g. How do I return a damaged jacket?"
-                      value={testQuery}
-                      onChange={(e) => setTestQuery(e.target.value)}
-                      className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-4 pr-24 py-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition"
-                    />
-                    <button
-                      type="submit"
-                      disabled={testingRag || !testQuery.trim()}
-                      className="absolute right-1.5 top-1.5 px-3 py-1.5 rounded-lg bg-[#18181b] text-white text-xs font-semibold hover:bg-[#27272a] disabled:opacity-50 transition"
-                    >
-                      {testingRag ? 'Testing...' : 'Run Query'}
-                    </button>
-                  </div>
-                </div>
-
-                {testResult && (
-                  <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-2xl space-y-2">
-                    <h4 className="text-xs font-bold text-zinc-800">AI Response:</h4>
-                    <p className="text-xs text-zinc-700 leading-relaxed">{testResult.response || JSON.stringify(testResult)}</p>
-                  </div>
-                )}
-              </form>
+              <div className="flex-1 overflow-hidden p-3 bg-zinc-50/50">
+                <ChatBox 
+                  agentId="agent_shopmate_01"
+                  agentName="Blue Tyga AI Concierge"
+                  initialMessage="Hello! I am your Blue Tyga AI store concierge. Ask me anything about store policies, shipping timelines, returns, or browse our active catalog."
+                />
+              </div>
             </div>
           </div>
         )}
