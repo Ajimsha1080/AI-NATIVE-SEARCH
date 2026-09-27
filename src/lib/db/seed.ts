@@ -266,22 +266,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_01',
       workspace_id: workspace.id,
-      title: 'UPF 50+ Sunscreen Performance Jacket',
-      description: 'Ultra-lightweight UV-blocking techwear jacket with quick-dry cooling mesh and zippered security pockets.',
+      title: 'Sunscreen Jacket',
+      description: 'Engineered UPF 50+ UV-protection techwear jacket with breathable airflow panels and lightweight packable design.',
       category: 'Outerwear',
-      tags: ['jacket', 'sunscreen', 'upf50', 'techwear', 'outerwear', 'uv-protection'],
-      price: 2499.00,
+      tags: ['jacket', 'sunscreen', 'upf50', 'uvwear', 'outerwear'],
+      price: 999.00,
+      compare_at_price: 1999.00,
       currency: 'INR',
-      images: [
-        'https://images.unsplash.com/photo-1544441893-675973e31985?w=600&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1539533018447-63fcce667883?w=600&auto=format&fit=crop&q=80'
-      ],
+      images: ['https://images.unsplash.com/photo-1544441893-675973e31985?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
-      total_inventory: 48,
+      total_inventory: 65,
       variants: [
-        { id: 'var_bt01_m_blk', title: 'Medium / Obsidian Black', sku: 'BT-JAC-M-BLK', price: 2499.00, inventory_quantity: 18, attributes: { size: 'M', color: 'Black' } },
-        { id: 'var_bt01_l_blk', title: 'Large / Obsidian Black', sku: 'BT-JAC-L-BLK', price: 2499.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Black' } },
-        { id: 'var_bt01_xl_blk', title: 'XL / Obsidian Black', sku: 'BT-JAC-XL-BLK', price: 2499.00, inventory_quantity: 10, attributes: { size: 'XL', color: 'Black' } },
+        { id: 'var_bt01_m', title: 'Medium / Jet Black', sku: 'BT-SJ-M-BLK', price: 999.00, inventory_quantity: 30, attributes: { size: 'M', color: 'Jet Black' } },
+        { id: 'var_bt01_l', title: 'Large / Jet Black', sku: 'BT-SJ-L-BLK', price: 999.00, inventory_quantity: 35, attributes: { size: 'L', color: 'Jet Black' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -289,20 +286,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_02',
       workspace_id: workspace.id,
-      title: 'No-Sweat Anti-Odour Tech Tee',
-      description: 'Seamless breathable bamboo-elastane blend with silver-ion antimicrobial finish to stay fresh all day.',
-      category: 'T-Shirts',
-      tags: ['tshirt', 'anti-odour', 'bamboo', 'cooling', 'techwear', 'nosweat'],
-      price: 999.00,
+      title: 'Sunscreen Jacket Pro',
+      description: 'Advanced UPF 50+ UV shield with reinforced zippered utility compartments and anti-chafing active seams.',
+      category: 'Outerwear',
+      tags: ['jacket', 'pro', 'sunscreen', 'upf50', 'outerwear'],
+      price: 1299.00,
+      compare_at_price: 2999.00,
       currency: 'INR',
-      images: [
-        'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&auto=format&fit=crop&q=80'
-      ],
+      images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
-      total_inventory: 65,
+      total_inventory: 50,
       variants: [
-        { id: 'var_bt02_m_nvy', title: 'Medium / Navy Blue', sku: 'BT-TEE-M-NVY', price: 999.00, inventory_quantity: 30, attributes: { size: 'M', color: 'Navy' } },
-        { id: 'var_bt02_l_nvy', title: 'Large / Navy Blue', sku: 'BT-TEE-L-NVY', price: 999.00, inventory_quantity: 35, attributes: { size: 'L', color: 'Navy' } },
+        { id: 'var_bt02_m', title: 'Medium / Stealth Black', sku: 'BT-SJP-M-BLK', price: 1299.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Stealth Black' } },
+        { id: 'var_bt02_l', title: 'Large / Stealth Black', sku: 'BT-SJP-L-BLK', price: 1299.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Stealth Black' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -310,20 +306,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_03',
       workspace_id: workspace.id,
-      title: 'All-Day 4-Way Stretch Commuter Joggers',
-      description: 'Water-repellent 4-way stretch joggers with tailored tapered ankles and concealed zippered pockets.',
-      category: 'Bottoms',
-      tags: ['joggers', 'stretch', 'commuter', 'water-repellent', 'bottoms'],
-      price: 1899.00,
+      title: 'Sunscreen Jacket Ice Pro',
+      description: 'Cool-touch heat dispersing technical fabric with UPF 50+ rating engineered for extreme tropical heat.',
+      category: 'Outerwear',
+      tags: ['jacket', 'ice', 'cooling', 'upf50', 'outerwear'],
+      price: 1999.00,
+      compare_at_price: 3999.00,
       currency: 'INR',
-      images: [
-        'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&auto=format&fit=crop&q=80'
-      ],
+      images: ['https://images.unsplash.com/photo-1548883354-7622d03aca27?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
-      total_inventory: 42,
+      total_inventory: 45,
       variants: [
-        { id: 'var_bt03_32_gry', title: 'Size 32 / Slate Grey', sku: 'BT-JOG-32-GRY', price: 1899.00, inventory_quantity: 22, attributes: { size: '32', color: 'Grey' } },
-        { id: 'var_bt03_34_gry', title: 'Size 34 / Slate Grey', sku: 'BT-JOG-34-GRY', price: 1899.00, inventory_quantity: 20, attributes: { size: '34', color: 'Grey' } },
+        { id: 'var_bt03_m', title: 'Medium / Arctic Ice', sku: 'BT-ICE-M-BLU', price: 1999.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Ice Blue' } },
+        { id: 'var_bt03_l', title: 'Large / Arctic Ice', sku: 'BT-ICE-L-BLU', price: 1999.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Ice Blue' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -331,20 +326,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_04',
       workspace_id: workspace.id,
-      title: 'ThermaDry Active Zip Hoodie',
-      description: 'Engineered thermal fleece hoodie with thumbhole cuffs and moisture management.',
+      title: 'Anti-AC Thermal Jacket 2 Pro',
+      description: 'Dual-layer thermal fleece insulation engineered for air-conditioned office spaces and travel without bulk.',
       category: 'Hoodies',
-      tags: ['hoodie', 'thermadry', 'activewear', 'winter', 'outerwear'],
-      price: 2299.00,
+      tags: ['thermal', 'anti-ac', 'jacket', 'hoodie', 'outerwear'],
+      price: 1799.00,
+      compare_at_price: 4999.00,
       currency: 'INR',
-      images: [
-        'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80'
-      ],
+      images: ['https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
-      total_inventory: 35,
+      total_inventory: 40,
       variants: [
-        { id: 'var_bt04_m_char', title: 'Medium / Charcoal', sku: 'BT-HOD-M-CHR', price: 2299.00, inventory_quantity: 15, attributes: { size: 'M', color: 'Charcoal' } },
-        { id: 'var_bt04_l_char', title: 'Large / Charcoal', sku: 'BT-HOD-L-CHR', price: 2299.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Charcoal' } },
+        { id: 'var_bt04_m', title: 'Medium / Charcoal Grey', sku: 'BT-AC2-M-CHR', price: 1799.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Charcoal' } },
+        { id: 'var_bt04_l', title: 'Large / Charcoal Grey', sku: 'BT-AC2-L-CHR', price: 1799.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Charcoal' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -352,20 +346,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_05',
       workspace_id: workspace.id,
-      title: 'AirMesh Quick-Dry Training Shorts',
-      description: 'Ultralight performance shorts with built-in compression liner and phone drop-in pouch.',
-      category: 'Shorts',
-      tags: ['shorts', 'airmesh', 'training', 'gym', 'quick-dry'],
-      price: 1199.00,
+      title: 'No-Sweat Tech Tee',
+      description: 'Quick-dry moisture-wicking engineered active tee designed to stay cool, fresh, and odor-free all day.',
+      category: 'T-Shirts',
+      tags: ['tshirt', 'nosweat', 'quick-dry', 'activewear', 'tee'],
+      price: 799.00,
+      compare_at_price: 1499.00,
       currency: 'INR',
-      images: [
-        'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=600&auto=format&fit=crop&q=80'
-      ],
+      images: ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
-      total_inventory: 50,
+      total_inventory: 80,
       variants: [
-        { id: 'var_bt05_m_blk', title: 'Medium / Black', sku: 'BT-SHT-M-BLK', price: 1199.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Black' } },
-        { id: 'var_bt05_l_blk', title: 'Large / Black', sku: 'BT-SHT-L-BLK', price: 1199.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Black' } },
+        { id: 'var_bt05_m', title: 'Medium / Navy Blue', sku: 'BT-NST-M-NVY', price: 799.00, inventory_quantity: 40, attributes: { size: 'M', color: 'Navy' } },
+        { id: 'var_bt05_l', title: 'Large / Navy Blue', sku: 'BT-NST-L-NVY', price: 799.00, inventory_quantity: 40, attributes: { size: 'L', color: 'Navy' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -373,18 +366,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_06',
       workspace_id: workspace.id,
-      title: 'Core Tech Compression Tank',
-      description: 'Targeted muscle support compression tank engineered for high-intensity training.',
-      category: 'Tanks',
-      tags: ['tank', 'compression', 'sleeveless', 'gym', 'activewear'],
-      price: 799.00,
+      title: 'Travel Joggers',
+      description: 'Lightweight 4-way stretch water-resistant joggers with tailored tapered ankles and deep zippered pockets.',
+      category: 'Bottoms',
+      tags: ['joggers', 'travel', 'stretch', 'bottoms', 'pants'],
+      price: 1499.00,
+      compare_at_price: 2999.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
-      total_inventory: 40,
+      total_inventory: 55,
       variants: [
-        { id: 'var_bt06_m_wht', title: 'Medium / White', sku: 'BT-TNK-M-WHT', price: 799.00, inventory_quantity: 20, attributes: { size: 'M', color: 'White' } },
-        { id: 'var_bt06_l_wht', title: 'Large / White', sku: 'BT-TNK-L-WHT', price: 799.00, inventory_quantity: 20, attributes: { size: 'L', color: 'White' } },
+        { id: 'var_bt06_30', title: 'Size 30 / Stealth Black', sku: 'BT-TRV-30-BLK', price: 1499.00, inventory_quantity: 25, attributes: { size: '30', color: 'Black' } },
+        { id: 'var_bt06_32', title: 'Size 32 / Stealth Black', sku: 'BT-TRV-32-BLK', price: 1499.00, inventory_quantity: 30, attributes: { size: '32', color: 'Black' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -392,18 +386,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_07',
       workspace_id: workspace.id,
-      title: 'Endurance Pro Lightweight Windbreaker',
-      description: 'Packable wind-resistant shell jacket that folds into its own chest pocket.',
-      category: 'Outerwear',
-      tags: ['windbreaker', 'packable', 'lightweight', 'running', 'outerwear'],
-      price: 2799.00,
+      title: 'Office Jogger',
+      description: 'Structured commute-to-office technical stretch trousers combining formal silhouette with athletic comfort.',
+      category: 'Bottoms',
+      tags: ['joggers', 'office', 'commute', 'workwear', 'bottoms'],
+      price: 1699.00,
+      compare_at_price: 3499.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1548883354-7622d03aca27?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
-      total_inventory: 30,
+      total_inventory: 40,
       variants: [
-        { id: 'var_bt07_m_olive', title: 'Medium / Olive Green', sku: 'BT-WND-M-OLV', price: 2799.00, inventory_quantity: 15, attributes: { size: 'M', color: 'Olive' } },
-        { id: 'var_bt07_l_olive', title: 'Large / Olive Green', sku: 'BT-WND-L-OLV', price: 2799.00, inventory_quantity: 15, attributes: { size: 'L', color: 'Olive' } },
+        { id: 'var_bt07_32', title: 'Size 32 / Slate Grey', sku: 'BT-OFF-32-GRY', price: 1699.00, inventory_quantity: 20, attributes: { size: '32', color: 'Grey' } },
+        { id: 'var_bt07_34', title: 'Size 34 / Slate Grey', sku: 'BT-OFF-34-GRY', price: 1699.00, inventory_quantity: 20, attributes: { size: '34', color: 'Grey' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -411,18 +406,18 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_08',
       workspace_id: workspace.id,
-      title: 'BreatheWeave Moisture-Wicking Polo',
-      description: 'Structured technical polo shirt with laser-cut ventilation and anti-curl collar.',
-      category: 'Polos',
-      tags: ['polo', 'breatheweave', 'collared', 'office', 'casual'],
-      price: 1499.00,
+      title: 'Sunscreen Balaclava Pro',
+      description: 'Full facial and neck UV shield with laser-cut breathing ports and ergonomic multi-wear configurations.',
+      category: 'Accessories',
+      tags: ['balaclava', 'sunscreen', 'accessories', 'uvwear', 'mask'],
+      price: 499.00,
+      compare_at_price: 799.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
-      total_inventory: 45,
+      total_inventory: 90,
       variants: [
-        { id: 'var_bt08_m_blk', title: 'Medium / Black', sku: 'BT-POL-M-BLK', price: 1499.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Black' } },
-        { id: 'var_bt08_l_blk', title: 'Large / Black', sku: 'BT-POL-L-BLK', price: 1499.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Black' } },
+        { id: 'var_bt08_uni', title: 'Universal Fit / Jet Black', sku: 'BT-BAL-UNI-BLK', price: 499.00, inventory_quantity: 90, attributes: { size: 'Universal', color: 'Black' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

@@ -6,7 +6,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { 
   Package, RefreshCw, Search, Filter, CheckCircle2, 
   AlertCircle, Eye, ZoomIn, ZoomOut, X, ExternalLink,
-  Layers, ShoppingBag, ArrowUpRight, Plus, Sliders
+  Layers, ShoppingBag, ArrowUpRight, Plus, Sliders, Trash2
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
@@ -124,6 +124,19 @@ export default function ProductsPage() {
     }
   };
 
+  const handleClearAllProducts = async () => {
+    if (!confirm('Are you sure you want to remove all products from the store catalog?')) return;
+    try {
+      for (const p of products) {
+        await fetch(`/api/commerce/products?id=${p.id}`, { method: 'DELETE' });
+      }
+      setProducts([]);
+      showToast('All products removed from catalog');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newPrice) return;
@@ -210,6 +223,15 @@ export default function ProductsPage() {
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Product</span>
+                </button>
+
+                <button
+                  onClick={handleClearAllProducts}
+                  className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-xs rounded-xl transition flex items-center gap-1.5 shadow-2xs"
+                  title="Remove all products"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Clear All</span>
                 </button>
 
                 <button
@@ -349,10 +371,10 @@ export default function ProductsPage() {
                             <h3 className="text-xs font-bold text-zinc-900 truncate group-hover:text-indigo-600 transition">{p.title}</h3>
                             <button
                               onClick={() => handleDeleteProduct(p.id)}
-                              className="text-zinc-400 hover:text-rose-600 p-1 rounded transition opacity-0 group-hover:opacity-100"
+                              className="text-zinc-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition"
                               title="Delete product"
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
 
