@@ -361,6 +361,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                             <img 
                               src={imgSrc} 
                               alt={p.title} 
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80';
+                              }}
                               className="w-full h-full object-cover group-hover/img:scale-110 transition duration-300" 
                             />
                             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center">
@@ -371,9 +374,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-zinc-900 truncate group-hover:text-zinc-700 transition">{p.title}</p>
                             <div className="flex items-center gap-1.5 mt-1">
-                              <span className="text-xs font-mono font-bold text-zinc-900">${p.price.toFixed(2)}</span>
+                              <span className="text-xs font-mono font-bold text-zinc-900">₹{p.price?.toLocaleString('en-IN') || p.price}</span>
                               {p.comparePrice && (
-                                <span className="text-[10px] font-mono text-zinc-400 line-through">${p.comparePrice.toFixed(2)}</span>
+                                <span className="text-[10px] font-mono text-zinc-400 line-through">₹{p.comparePrice?.toLocaleString('en-IN') || p.comparePrice}</span>
                               )}
                             </div>
                           </div>
@@ -559,7 +562,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
               <div className="min-w-0 pr-4">
                 <h3 className="text-sm font-bold text-zinc-900 truncate">{previewModal.title || 'Product Image Preview'}</h3>
                 {previewModal.price !== undefined && (
-                  <p className="text-xs font-mono font-bold text-emerald-600 mt-0.5">${previewModal.price.toFixed(2)}</p>
+                  <p className="text-xs font-mono font-bold text-emerald-600 mt-0.5">₹{previewModal.price.toLocaleString('en-IN')}</p>
                 )}
               </div>
               <div className="flex items-center gap-2">
@@ -608,6 +611,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                 <img 
                   src={previewModal.url} 
                   alt={previewModal.title || 'Preview'} 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80';
+                  }}
                   className="max-h-[55vh] max-w-full object-contain rounded-xl shadow-lg border border-zinc-200" 
                 />
               </div>

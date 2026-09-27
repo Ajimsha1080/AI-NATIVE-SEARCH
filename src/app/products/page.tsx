@@ -359,6 +359,9 @@ export default function ProductsPage() {
                           <img 
                             src={mainImage} 
                             alt={p.title} 
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80';
+                            }}
                             className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300" 
                           />
                           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center">
@@ -520,6 +523,9 @@ export default function ProductsPage() {
                 <img 
                   src={previewImage.url} 
                   alt={previewImage.title} 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80';
+                  }}
                   className="max-h-[55vh] max-w-full object-contain rounded-xl shadow-lg border border-zinc-200" 
                 />
               </div>
