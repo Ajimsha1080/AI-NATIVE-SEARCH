@@ -33,6 +33,8 @@ export default function PlaygroundPage({ params }: { params: Promise<{ id: strin
       .catch(() => {});
   }, [agentId]);
 
+  const [testTrigger, setTestTrigger] = useState<{ text: string; timestamp: number } | null>(null);
+
   const handleSyncToDeploy = async () => {
     setIsSyncing(true);
     try {
@@ -76,7 +78,7 @@ export default function PlaygroundPage({ params }: { params: Promise<{ id: strin
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Live Sandbox
                 </span>
-                <span className="text-[10px] font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
+                <span className="text-[10px] font-medium text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200 font-mono">
                   {agent?.name || 'Blue Tyga Concierge'}
                 </span>
               </div>
@@ -124,11 +126,15 @@ export default function PlaygroundPage({ params }: { params: Promise<{ id: strin
             <ChatBox
               agentId={agentId}
               agentName={agent?.name || 'Blue Tyga AI Concierge'}
+              externalTrigger={testTrigger}
               onTraceUpdate={trace => setCurrentTrace(trace)}
             />
           </div>
           <div className="h-full min-h-0 overflow-hidden">
-            <TraceInspector trace={currentTrace} />
+            <TraceInspector 
+              trace={currentTrace} 
+              onSelectPrompt={prompt => setTestTrigger({ text: prompt, timestamp: Date.now() })}
+            />
           </div>
         </main>
       </div>

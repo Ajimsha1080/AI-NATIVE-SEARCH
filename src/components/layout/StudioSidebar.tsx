@@ -64,7 +64,21 @@ export default function StudioSidebar({ agentId, agentName }: { agentId: string;
         </nav>
       </div>
 
-      <div className="p-2.5 border-t border-zinc-200 bg-white">
+      <div className="p-2.5 border-t border-zinc-200 bg-white space-y-2">
+        <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200/90 text-[11px] font-mono space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-zinc-500 font-sans font-bold">
+            <span>RUNTIME</span>
+            <span className="text-emerald-600 flex items-center gap-1 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active
+            </span>
+          </div>
+          <p className="text-zinc-900 font-semibold truncate text-[11px] font-sans">{agentName || 'Blue Tyga Concierge'}</p>
+          <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-1 border-t border-zinc-200/60">
+            <span>LLM: Sarvam AI</span>
+            <span className="text-indigo-600 font-bold">INR Ready</span>
+          </div>
+        </div>
+
         <Link
           href={`/agents/${agentId}/playground`}
           className="w-full flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-[#18181b] hover:bg-[#27272a] text-white text-xs font-semibold transition shadow-xs"
