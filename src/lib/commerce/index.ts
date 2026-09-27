@@ -17,15 +17,25 @@ export class LocalCommerceProvider {
 
     if (params.query) {
       const q = params.query.toLowerCase();
-      const stopWords = new Set(['show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the', 'please', 'can', 'you', 'give']);
-      const tokens = q.split(/[\s,]+/).filter(w => w.length > 2 && !stopWords.has(w) && isNaN(Number(w)));
+      const isBroadQuery = /new|latest|arrival|arrivals|product|products|item|items|catalog|collection|bestseller|trending|recommend|what do you have|what you sell|all/i.test(q);
+      const stopWords = new Set(['show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the', 'please', 'can', 'you', 'give', 'what', 'are', 'your', 'any', 'new', 'latest', 'product', 'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival']);
+      const tokens = q.split(/[\s,?!]+/).filter(w => w.length > 2 && !stopWords.has(w) && isNaN(Number(w)));
 
-      list = list.filter(p => {
+      const filtered = list.filter(p => {
         const fullText = (p.title + ' ' + p.description + ' ' + p.category + ' ' + p.tags.join(' ')).toLowerCase();
         if (fullText.includes(q)) return true;
-        if (tokens.length === 0) return true;
+        if (tokens.length === 0) return false;
         return tokens.some(t => fullText.includes(t));
       });
+
+      if (filtered.length > 0) {
+        list = filtered;
+      } else if (isBroadQuery || tokens.length === 0) {
+        // Broad or general discovery query -> return top catalog products
+        list = list.slice(0, 4);
+      } else {
+        list = [];
+      }
     }
 
     if (params.category) {

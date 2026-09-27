@@ -378,81 +378,97 @@ export default function ChatBox({
               </div>
 
               {/* Dynamic Product Cards */}
-              {m.metadata?.products && m.metadata.products.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full mt-1.5">
-                  {m.metadata.products.map((p: any) => {
-                    const imgSrc = p.imageUrl || p.images?.[0] || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
-                    return (
-                      <div key={p.id} className="bg-white border border-zinc-200 hover:border-zinc-300 transition rounded-2xl p-3 flex flex-col justify-between gap-2.5 shadow-xs group">
-                        <div className="flex items-start gap-3">
-                          <div 
-                            onClick={() => {
-                              setPreviewModal({
-                                url: imgSrc,
-                                title: p.title,
-                                price: p.price,
-                                description: p.description
-                              });
-                              setZoomScale(1);
-                            }}
-                            className="w-16 h-16 rounded-xl border border-zinc-200 overflow-hidden bg-zinc-50 shrink-0 cursor-pointer relative group/thumb"
-                            title="Click to view full image details"
-                          >
-                            <img 
-                              src={imgSrc} 
-                              alt={p.title}
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
+              {(() => {
+                const productsList = m.metadata?.products || (m.metadata?.type === 'PRODUCTS' ? m.metadata?.data : (Array.isArray(m.metadata?.data) ? m.metadata.data : (Array.isArray(m.metadata) ? m.metadata : [])));
+                if (!productsList || productsList.length === 0) return null;
+
+                return (
+                  <div className="grid grid-cols-1 gap-2 w-full mt-2">
+                    {productsList.map((p: any) => {
+                      const imgSrc = p.imageUrl || p.images?.[0] || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
+                      const formattedPrice = typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price;
+                      const comparePrice = p.compare_at_price || p.comparePrice;
+                      const formattedComparePrice = typeof comparePrice === 'number' ? comparePrice.toLocaleString('en-IN') : comparePrice;
+
+                      return (
+                        <div 
+                          key={p.id || p.title} 
+                          className="bg-white border hover:border-zinc-300 transition rounded-2xl p-3 flex flex-col justify-between gap-2.5 shadow-2xs group"
+                          style={{ borderColor: activePreset.borderHex || '#e4e4e7' }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div 
+                              onClick={() => {
+                                setPreviewModal({
+                                  url: imgSrc,
+                                  title: p.title,
+                                  price: p.price,
+                                  description: p.description
+                                });
+                                setZoomScale(1);
                               }}
-                              className="w-full h-full object-cover group-hover/thumb:scale-105 transition duration-300"
-                            />
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center">
-                              <Eye className="w-3.5 h-3.5 text-white" />
+                              className="w-16 h-16 rounded-xl border border-zinc-200 overflow-hidden bg-zinc-50 shrink-0 cursor-pointer relative group/thumb shadow-2xs"
+                              title="Click to zoom product photo"
+                            >
+                              <img 
+                                src={imgSrc} 
+                                alt={p.title}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
+                                }}
+                                className="w-full h-full object-cover group-hover/thumb:scale-105 transition duration-300"
+                              />
+                              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center">
+                                <ZoomIn className="w-4 h-4 text-white" />
+                              </div>
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold text-zinc-900 truncate group-hover:text-pink-600 transition">{p.title}</p>
+                              <p className="text-[11px] text-zinc-500 line-clamp-1 mt-0.5">{p.description || p.category}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs font-mono font-bold text-zinc-900">₹{formattedPrice}</span>
+                                {comparePrice && (
+                                  <span className="text-[10px] font-mono text-zinc-400 line-through">₹{formattedComparePrice}</span>
+                                )}
+                                {p.in_stock && (
+                                  <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">In Stock</span>
+                                )}
+                              </div>
                             </div>
                           </div>
 
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-zinc-900 truncate group-hover:text-indigo-600 transition">{p.title}</p>
-                            <p className="text-[10px] text-zinc-500 line-clamp-1 mt-0.5">{p.description || p.category}</p>
-                            <div className="flex items-center gap-1.5 mt-1.5">
-                              <span className="text-xs font-mono font-bold text-zinc-900">₹{p.price?.toLocaleString('en-IN') || p.price}</span>
-                              {p.comparePrice && (
-                                <span className="text-[10px] font-mono text-zinc-400 line-through">₹{p.comparePrice?.toLocaleString('en-IN') || p.comparePrice}</span>
-                              )}
-                            </div>
+                          <div className="flex items-center gap-2 pt-1.5 border-t border-zinc-100">
+                            <button 
+                              onClick={() => {
+                                setPreviewModal({
+                                  url: imgSrc,
+                                  title: p.title,
+                                  price: p.price,
+                                  description: p.description
+                                });
+                                setZoomScale(1);
+                              }}
+                              className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                              title="View full image details"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> View Photo
+                            </button>
+                            <button 
+                              onClick={() => handleAddToCart(p.title)}
+                              style={{ backgroundColor: activePrimaryColor }}
+                              className="flex-1 py-1.5 px-3 rounded-xl text-[11px] font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-xs hover:opacity-90 cursor-pointer active:scale-95"
+                            >
+                              <ShoppingBag className="w-3.5 h-3.5" /> 
+                              {addedItem === p.title ? 'Added to Cart ✓' : 'Add to Cart'}
+                            </button>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-1.5 pt-1 border-t border-zinc-100">
-                          <button 
-                            onClick={() => {
-                              setPreviewModal({
-                                url: imgSrc,
-                                title: p.title,
-                                price: p.price,
-                                description: p.description
-                              });
-                              setZoomScale(1);
-                            }}
-                            className="px-2.5 py-1 rounded-lg text-[10px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition flex items-center gap-1 shrink-0"
-                            title="View full image details"
-                          >
-                            <Eye className="w-3 h-3" /> View
-                          </button>
-                          <button 
-                            onClick={() => handleAddToCart(p.title)}
-                            style={{ backgroundColor: activePrimaryColor }}
-                            className="flex-1 py-1 px-2.5 rounded-lg text-[11px] font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-90 cursor-pointer"
-                          >
-                            <ShoppingBag className="w-3 h-3" /> 
-                            {addedItem === p.title ? 'Added' : 'Add to Cart'}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
               {/* Dynamic Order Card */}
               {m.metadata?.order && (

@@ -124,7 +124,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     detectedIntent = 'ORDER_TRACKING';
   } else if (/cart|add to cart|checkout|bag/i.test(user_message)) {
     detectedIntent = 'CART_ACTION';
-  } else if (/find|search|show|look for|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|price|cost|how much|under|buy|recommend/i.test(user_message)) {
+  } else if (/find|search|show|look for|product|products|item|items|catalog|collection|arrival|arrivals|new|latest|best\s*seller|trending|what (?:do )?you (?:have|sell)|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|balaclava|price|cost|how much|under|buy|recommend/i.test(user_message)) {
     detectedIntent = 'PRODUCT_SEARCH';
   }
 
@@ -215,9 +215,10 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
         latency_ms: invRes.latency_ms
       });
 
-      responseText = 'I found **' + searchRes.data.length + '** matching product(s) for your request:\n\n';
-      searchRes.data.slice(0, 3).forEach((p: any) => {
-        responseText += '• **' + p.title + '** — **₹' + p.price.toLocaleString('en-IN') + '** (' + p.category + ')\n  ' + p.description + '\n\n';
+      responseText = 'Here are the featured product(s) matching your request from the Blue Tyga catalog:\n\n';
+      searchRes.data.slice(0, 4).forEach((p: any) => {
+        const compareStr = p.compare_at_price ? ` (was ₹${p.compare_at_price.toLocaleString('en-IN')})` : '';
+        responseText += `• **${p.title}** — **₹${p.price.toLocaleString('en-IN')}**${compareStr}\n  ${p.description}\n\n`;
       });
       if (requestedSize) {
         responseText += '✅ Verified: Size **' + requestedSize + '** is in stock and ready to ship.';
@@ -240,6 +241,15 @@ If recommending items, reference Blue Tyga techwear (UPF 50+ Sunscreen Jackets f
         responseText = `${citations[0].chunk_text}\n\nLet me know if you would like me to help you pick the right size or style!`;
       } else {
         responseText = "I'd love to help you find the perfect piece! We specialize in UPF 50+ Sunscreen Jackets, No-Sweat Tech Tees, and all-day commuter joggers. What style or fit are you looking for?";
+      }
+
+      // Attach fallback top products
+      const fallbackProducts = db.commerce_products.filter(p => p.workspace_id === workspace_id).slice(0, 4);
+      if (fallbackProducts.length > 0) {
+        interactivePayload = {
+          type: 'PRODUCTS',
+          data: fallbackProducts
+        };
       }
     }
   } else if (detectedIntent === 'ORDER_TRACKING') {
@@ -341,6 +351,32 @@ Core Capabilities:
       responseText = citations[0].chunk_text + '\n\nLet me know if you would like me to help you pick the right size or style!';
     } else {
       responseText = config.identity?.greeting || "Hey there! I'm your Blue Tyga shopping concierge. Looking for our UPF 50+ Sunscreen Jackets, No-Sweat Tees, or have a question about an order?";
+    }
+  }
+
+  // Automatic Product Cards Attachment (Ensures photo & price cards are always returned)
+  if (!interactivePayload || interactivePayload.type !== 'PRODUCTS') {
+    const storeProducts = db.commerce_products.filter(p => p.workspace_id === workspace_id);
+    const combinedText = (user_message + ' ' + responseText).toLowerCase();
+    
+    const matched = storeProducts.filter(p => {
+      const pTitle = p.title.toLowerCase();
+      if (combinedText.includes(pTitle)) return true;
+      const keyTokens = pTitle.split(/[\s+]+/).filter(w => w.length > 3 && !['with', 'performance', 'obsidian', 'stealth', 'dual'].includes(w));
+      const matches = keyTokens.filter(t => combinedText.includes(t));
+      return matches.length >= 2;
+    });
+
+    if (matched.length > 0) {
+      interactivePayload = {
+        type: 'PRODUCTS',
+        data: matched.slice(0, 4)
+      };
+    } else if (/product|products|item|items|catalog|collection|arrivals|new|latest|best\s*seller|recommend/i.test(user_message)) {
+      interactivePayload = {
+        type: 'PRODUCTS',
+        data: storeProducts.slice(0, 4)
+      };
     }
   }
 
