@@ -397,10 +397,10 @@ export default function ChatBox({
       {/* Suggested prompts */}
       <div className="px-3 py-2 bg-white border-t border-zinc-100 flex gap-1.5 overflow-x-auto">
         {[
-          'Show black running shoes in size 9', 
+          'Show UPF 50+ Sunscreen Jackets', 
           'Track order #10482', 
-          'What is your return policy?', 
-          'Show pictures of winter coats'
+          'What is your 7-day exchange policy?', 
+          'Recommend breathable workout tees'
         ].map((s, idx) => (
           <button
             key={idx}

@@ -15,7 +15,7 @@ export default function StudioSidebar({ agentId, agentName }: { agentId: string;
     { name: 'Overview', path: `/agents/${agentId}`, icon: Bot },
     { name: 'Identity & Persona', path: `/agents/${agentId}/design`, icon: Palette },
     { name: 'Guardrails & Rules', path: `/agents/${agentId}/rules`, icon: ShieldCheck },
-    { name: 'Playground', path: `/agents/${agentId}/playground`, icon: Play, highlight: true },
+    { name: 'Agent Testing', path: `/agents/${agentId}/playground`, icon: Play, highlight: true },
     { name: 'Deploy & Embed', path: `/agents/${agentId}/deploy`, icon: Rocket },
   ];
 
@@ -69,7 +69,7 @@ export default function StudioSidebar({ agentId, agentName }: { agentId: string;
           href={`/agents/${agentId}/playground`}
           className="w-full flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-[#18181b] hover:bg-[#27272a] text-white text-xs font-semibold transition shadow-xs"
         >
-          <Play className="w-3 h-3 fill-current" /> Test in Playground
+          <Play className="w-3 h-3 fill-current text-emerald-400" /> Test in Agent Suite
         </Link>
       </div>
     </aside>

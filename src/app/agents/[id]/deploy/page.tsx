@@ -99,7 +99,10 @@ export default function AgentDeployPage({ params }: { params: Promise<{ id: stri
 
   async function loadDeployments() {
     try {
-      const data = await fetchWithCache<{ deployments: any[] }>('/api/deployments');
+      const [data, agentRes] = await Promise.all([
+        fetchWithCache<{ deployments: any[] }>('/api/deployments'),
+        fetch(`/api/agents/${agentId}`).then(r => r.json()).catch(() => null)
+      ]);
       const list = (data?.deployments || []).filter((dep: any) => dep.agent_id === agentId);
       if (list.length > 0) {
         setDeployments(list);
@@ -116,6 +119,13 @@ export default function AgentDeployPage({ params }: { params: Promise<{ id: stri
             allowed_domains: ['*']
           }
         ]);
+      }
+
+      if (agentRes?.agent || agentRes?.config) {
+        if (agentRes.agent?.name) setAssistantName(agentRes.agent.name);
+        if (agentRes.config?.identity?.name) setAssistantName(agentRes.config.identity.name);
+        if (agentRes.config?.identity?.greeting) setGreetingMessage(agentRes.config.identity.greeting);
+        if (agentRes.config?.appearance?.primary_color) setPrimaryColor(agentRes.config.appearance.primary_color);
       }
     } catch (err) {
       console.error(err);
