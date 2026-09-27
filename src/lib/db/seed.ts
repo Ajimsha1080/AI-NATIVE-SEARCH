@@ -344,6 +344,46 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       updated_at: new Date().toISOString()
     },
     {
+      id: 'prod_bt_04_std',
+      workspace_id: workspace.id,
+      title: 'Women Sunscreen Jacket',
+      description: 'Engineered female-tailored UPF 50+ UV-blocking lightweight breathable jacket with thumbholes for daily outdoor sun protection.',
+      category: 'Outerwear',
+      tags: ['women', 'womens', 'jacket', 'sunscreen', 'upf50', 'outerwear'],
+      price: 999.00,
+      compare_at_price: 1999.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/WOMENSJ1-1.webp?v=1760537623'],
+      in_stock: true,
+      total_inventory: 50,
+      variants: [
+        { id: 'var_bt04s_s', title: 'Small / Navy Blue', sku: 'BT-WSJ-S-NVY', price: 999.00, inventory_quantity: 25, attributes: { size: 'S', color: 'Navy' } },
+        { id: 'var_bt04s_m', title: 'Medium / Navy Blue', sku: 'BT-WSJ-M-NVY', price: 999.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Navy' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_bt_04_pro',
+      workspace_id: workspace.id,
+      title: 'Women Sunscreen Jacket Pro',
+      description: 'High-performance women UPF 50+ technical jacket with utility zippered pockets, ponytail aperture, and cooling mesh flex.',
+      category: 'Outerwear',
+      tags: ['women', 'womens', 'jacket', 'pro', 'sunscreen', 'upf50', 'outerwear'],
+      price: 1299.00,
+      compare_at_price: 2999.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/WOMENLSJ8-1_2x-100.webp?v=1772778127'],
+      in_stock: true,
+      total_inventory: 45,
+      variants: [
+        { id: 'var_bt04p_s', title: 'Small / Coral Pink', sku: 'BT-WPRO-S-PNK', price: 1299.00, inventory_quantity: 20, attributes: { size: 'S', color: 'Pink' } },
+        { id: 'var_bt04p_m', title: 'Medium / Coral Pink', sku: 'BT-WPRO-M-PNK', price: 1299.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Pink' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
       id: 'prod_bt_05',
       workspace_id: workspace.id,
       title: 'Anti-AC Thermal Jacket 2 Pro',
