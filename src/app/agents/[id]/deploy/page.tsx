@@ -50,14 +50,15 @@ export default function AgentDeployPage({ params }: { params: Promise<{ id: stri
   const [sidePadding, setSidePadding] = useState('20');
 
   // Content settings state (matching reference image)
-  const [assistantName, setAssistantName] = useState('ShopMate Assistant');
-  const [headerTitle, setHeaderTitle] = useState('Customer Support');
+  const [assistantName, setAssistantName] = useState('Blue Tyga AI Concierge');
+  const [headerTitle, setHeaderTitle] = useState('Blue Tyga Store');
   const [headerSubtitle, setHeaderSubtitle] = useState('We usually reply in a few seconds');
-  const [greetingMessage, setGreetingMessage] = useState("Hello! 👋 I'm your ShopMate Assistant. How can I help you today?");
+  const [greetingMessage, setGreetingMessage] = useState("Hello! 👋 I'm ShopMate, your AI shopping concierge for Blue Tyga. How can I help you today?");
   const [starterQuestions, setStarterQuestions] = useState<string[]>([
-    "What are your pricing plans?",
-    "How do I get started?",
-    "Talk to human support"
+    "Show UPF 50+ Sunscreen Jackets",
+    "Track order #10482",
+    "What is your 7-day exchange policy?",
+    "Do you have Travel Joggers?"
   ]);
   const [newQuestionInput, setNewQuestionInput] = useState('');
 
@@ -124,7 +125,11 @@ export default function AgentDeployPage({ params }: { params: Promise<{ id: stri
       if (agentRes?.agent || agentRes?.config) {
         if (agentRes.agent?.name) setAssistantName(agentRes.agent.name);
         if (agentRes.config?.identity?.name) setAssistantName(agentRes.config.identity.name);
+        if (agentRes.config?.identity?.brand_name) setHeaderTitle(agentRes.config.identity.brand_name);
         if (agentRes.config?.identity?.greeting) setGreetingMessage(agentRes.config.identity.greeting);
+        if (agentRes.config?.starter_questions && Array.isArray(agentRes.config.starter_questions) && agentRes.config.starter_questions.length > 0) {
+          setStarterQuestions(agentRes.config.starter_questions);
+        }
         if (agentRes.config?.appearance?.primary_color) setPrimaryColor(agentRes.config.appearance.primary_color);
       }
     } catch (err) {

@@ -51,6 +51,24 @@ export default function ChatBox({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (agentId) {
+      fetch(`/api/agents/${agentId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.config?.identity?.greeting) {
+            setMessages(prev => {
+              if (prev.length === 1 && prev[0].id === 'msg_init') {
+                return [{ ...prev[0], content: data.config.identity.greeting }];
+              }
+              return prev;
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [agentId]);
+
+  useEffect(() => {
     if (externalTrigger && externalTrigger.text) {
       handleSend(externalTrigger.text);
     }

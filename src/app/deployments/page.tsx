@@ -321,14 +321,15 @@ export default function DeploymentsWorkspacePage() {
   const [sidePadding, setSidePadding] = useState('20');
 
   // Content settings state
-  const [assistantName, setAssistantName] = useState('ShopMate Assistant');
-  const [headerTitle, setHeaderTitle] = useState('Customer Support');
+  const [assistantName, setAssistantName] = useState('Blue Tyga AI Concierge');
+  const [headerTitle, setHeaderTitle] = useState('Blue Tyga Store');
   const [headerSubtitle, setHeaderSubtitle] = useState('We usually reply in a few seconds');
-  const [greetingMessage, setGreetingMessage] = useState("Hello! 👋 I'm your ShopMate Assistant. How can I help you today?");
+  const [greetingMessage, setGreetingMessage] = useState("Hello! 👋 I'm ShopMate, your AI shopping concierge for Blue Tyga. How can I help you today?");
   const [starterQuestions, setStarterQuestions] = useState<string[]>([
-    "What are your pricing plans?",
-    "How do I get started?",
-    "Talk to human support"
+    "Show UPF 50+ Sunscreen Jackets",
+    "Track order #10482",
+    "What is your 7-day exchange policy?",
+    "Do you have Travel Joggers?"
   ]);
   const [newQuestionInput, setNewQuestionInput] = useState('');
 
@@ -356,10 +357,23 @@ export default function DeploymentsWorkspacePage() {
       setOrigin(window.location.origin);
     }
 
-    fetchWithCache<{ deployments: DeploymentItem[] }>('/api/deployments')
-      .then(d => {
+    Promise.all([
+      fetchWithCache<{ deployments: DeploymentItem[] }>('/api/deployments'),
+      fetch('/api/agents/agent_shopmate_01').then(r => r.ok ? r.json() : null).catch(() => null)
+    ])
+      .then(([d, agentData]) => {
         if (d?.deployments) {
           setDeployments(d.deployments);
+        }
+        if (agentData?.config) {
+          const cfg = agentData.config;
+          if (cfg.identity?.name) setAssistantName(cfg.identity.name);
+          if (cfg.identity?.brand_name) setHeaderTitle(cfg.identity.brand_name);
+          if (cfg.identity?.greeting) setGreetingMessage(cfg.identity.greeting);
+          if (cfg.starter_questions && Array.isArray(cfg.starter_questions) && cfg.starter_questions.length > 0) {
+            setStarterQuestions(cfg.starter_questions);
+          }
+          if (cfg.appearance?.primary_color) setPrimaryColor(cfg.appearance.primary_color);
         }
         setLoading(false);
       })
