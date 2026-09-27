@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { seedDatabaseIfEmpty } from '@/lib/db/seed';
 import { 
   verifyPassword, 
   createSessionToken, 
@@ -11,6 +12,9 @@ import {
 
 export async function POST(req: Request) {
   try {
+    if (db.users.length === 0 || db.commerce_products.length === 0) {
+      await seedDatabaseIfEmpty();
+    }
     const { email, password } = await req.json();
     if (!email || !password) {
       return NextResponse.json({ error: { message: 'Email and password are required' } }, { status: 400 });

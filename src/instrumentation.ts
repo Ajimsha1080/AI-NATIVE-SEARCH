@@ -4,6 +4,8 @@ export async function register() {
     try {
       const { validateBootSecrets } = await import('@/lib/auth');
       validateBootSecrets();
+      const { seedDatabaseIfEmpty } = await import('@/lib/db/seed');
+      await seedDatabaseIfEmpty();
     } catch (err: any) {
       console.error('FATAL: Next.js server boot validation failed: ' + err.message);
       if (process.env.NODE_ENV === 'production' || process.env.APP_ENV === 'production') {

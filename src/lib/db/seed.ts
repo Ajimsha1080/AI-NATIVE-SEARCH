@@ -185,7 +185,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     return;
   }
 
-  if (force || db.commerce_products.length === 0 || db.knowledge_chunks.length === 0) {
+  if (force || db.commerce_products.length === 0 || db.knowledge_chunks.length === 0 || db.conversations.length > 50) {
     db.users.length = 0;
     db.workspaces.length = 0;
     db.workspace_members.length = 0;
@@ -198,6 +198,9 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     db.knowledge_chunks.length = 0;
     db.commerce_products.length = 0;
     db.commerce_orders.length = 0;
+    db.conversations.length = 0;
+    db.messages.length = 0;
+    db.executions.length = 0;
     db.evaluation_cases.length = 0;
     db.deployments.length = 0;
     db.api_keys.length = 0;
@@ -692,7 +695,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     agent_version_id: agentVersion1.id,
     channel: 'WEBSITE',
     environment: 'PRODUCTION',
-    public_key: 'pk_live_shopmate_01_acme',
+    public_key: 'pk_live_shopmate_01_bluetyga',
     status: 'ACTIVE',
     allowed_domains: ['*'],
     created_at: new Date().toISOString(),
@@ -703,23 +706,221 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     id: 'key_live_01',
     workspace_id: workspace.id,
     name: 'Production Server REST Key',
-    key_prefix: 'ak_live_acme_2026',
-    hashed_key: await bcrypt.hash('ak_live_acme_2026_secret_key', 10),
+    key_prefix: 'ak_live_bluetyga_2026',
+    hashed_key: await bcrypt.hash('ak_live_bluetyga_2026_secret_key', 10),
     permissions: ['agent.chat', 'commerce.read', 'orders.read'],
     created_at: new Date().toISOString()
   });
 
-  // 9. Evaluation Cases
+  // 9. Authentic Blue Tyga Conversations & Messages
+  const conv1 = {
+    id: 'conv_bt_01',
+    workspace_id: workspace.id,
+    agent_id: agent1.id,
+    customer_id: 'cust_901',
+    customer_email: 'sarah.sharma@gmail.com',
+    customer_name: 'Sarah Sharma',
+    channel: 'WEBSITE' as const,
+    status: 'RESOLVED' as const,
+    created_at: new Date(Date.now() - 2 * 3600000).toISOString(),
+    updated_at: new Date(Date.now() - 1 * 3600000).toISOString()
+  };
+
+  const conv2 = {
+    id: 'conv_bt_02',
+    workspace_id: workspace.id,
+    agent_id: agent1.id,
+    customer_id: 'cust_902',
+    customer_email: 'rahul.verma@gmail.com',
+    customer_name: 'Rahul Verma',
+    channel: 'WEBSITE' as const,
+    status: 'RESOLVED' as const,
+    created_at: new Date(Date.now() - 5 * 3600000).toISOString(),
+    updated_at: new Date(Date.now() - 4 * 3600000).toISOString()
+  };
+
+  const conv3 = {
+    id: 'conv_bt_03',
+    workspace_id: workspace.id,
+    agent_id: agent1.id,
+    customer_id: 'cust_903',
+    customer_email: 'priya.patel@gmail.com',
+    customer_name: 'Priya Patel',
+    channel: 'WEBSITE' as const,
+    status: 'RESOLVED' as const,
+    created_at: new Date(Date.now() - 8 * 3600000).toISOString(),
+    updated_at: new Date(Date.now() - 7 * 3600000).toISOString()
+  };
+
+  const conv4 = {
+    id: 'conv_bt_04',
+    workspace_id: workspace.id,
+    agent_id: agent1.id,
+    customer_id: 'cust_904',
+    customer_email: 'vikram.rao@gmail.com',
+    customer_name: 'Vikram Rao',
+    channel: 'WEBSITE' as const,
+    status: 'RESOLVED' as const,
+    created_at: new Date(Date.now() - 12 * 3600000).toISOString(),
+    updated_at: new Date(Date.now() - 11 * 3600000).toISOString()
+  };
+
+  db.conversations.push(conv1, conv2, conv3, conv4);
+
+  db.messages.push(
+    {
+      id: 'msg_bt_01_1',
+      workspace_id: workspace.id,
+      conversation_id: conv1.id,
+      role: 'USER',
+      content: 'Do you have the UPF 50+ Sunscreen Jacket in Obsidian Black Large?',
+      created_at: new Date(Date.now() - 2 * 3600000).toISOString()
+    },
+    {
+      id: 'msg_bt_01_2',
+      workspace_id: workspace.id,
+      conversation_id: conv1.id,
+      role: 'AGENT',
+      content: 'Yes! The UPF 50+ Sunscreen Performance Jacket in Obsidian Black (Large) is available in stock for ₹2,499. It features 4-way stretch, ultra-breathable mesh ventilation, and blocks 98%+ of harmful UV rays.',
+      created_at: new Date(Date.now() - 2 * 3600000 + 2000).toISOString()
+    },
+    {
+      id: 'msg_bt_02_1',
+      workspace_id: workspace.id,
+      conversation_id: conv2.id,
+      role: 'USER',
+      content: 'Can you track my order #10482?',
+      created_at: new Date(Date.now() - 5 * 3600000).toISOString()
+    },
+    {
+      id: 'msg_bt_02_2',
+      workspace_id: workspace.id,
+      conversation_id: conv2.id,
+      role: 'AGENT',
+      content: 'Your order #10482 has been delivered to Indiranagar, Bengaluru via Bluedart Express (Tracking: BD-8941039821-IN).',
+      created_at: new Date(Date.now() - 5 * 3600000 + 2000).toISOString()
+    },
+    {
+      id: 'msg_bt_03_1',
+      workspace_id: workspace.id,
+      conversation_id: conv3.id,
+      role: 'USER',
+      content: 'What is your exchange policy if size 32 jogger does not fit?',
+      created_at: new Date(Date.now() - 8 * 3600000).toISOString()
+    },
+    {
+      id: 'msg_bt_03_2',
+      workspace_id: workspace.id,
+      conversation_id: conv3.id,
+      role: 'AGENT',
+      content: 'We offer a 7-day hassle-free exchange and return window on all Blue Tyga apparel. You can request a doorstep exchange on returns.bluetyga.com.',
+      created_at: new Date(Date.now() - 8 * 3600000 + 2000).toISOString()
+    },
+    {
+      id: 'msg_bt_04_1',
+      workspace_id: workspace.id,
+      conversation_id: conv4.id,
+      role: 'USER',
+      content: 'Recommend me an anti-odour gym tee for running.',
+      created_at: new Date(Date.now() - 12 * 3600000).toISOString()
+    },
+    {
+      id: 'msg_bt_04_2',
+      workspace_id: workspace.id,
+      conversation_id: conv4.id,
+      role: 'AGENT',
+      content: 'I recommend our No-Sweat Anti-Odour Tech Tee for ₹1,199. It features silver-ion antibacterial microfibers that neutralize odor and dry 4x faster than standard cotton.',
+      created_at: new Date(Date.now() - 12 * 3600000 + 2000).toISOString()
+    }
+  );
+
+  // 10. Real Execution Traces
+  db.executions.push(
+    {
+      id: 'exec_bt_01',
+      workspace_id: workspace.id,
+      agent_id: agent1.id,
+      conversation_id: conv1.id,
+      intent: 'PRODUCT_SEARCH',
+      planning_steps: [
+        'Analyze customer sizing and product request for UPF 50+ Sunscreen Jacket',
+        'Call query_inventory tool with product name and variant filters',
+        'Verify in-stock status and synthesize verified INR pricing'
+      ],
+      tool_executions: [
+        {
+          tool_name: 'query_inventory',
+          input: { query: 'UPF 50+ Sunscreen Jacket', size: 'L', color: 'Obsidian Black' },
+          output: { in_stock: true, price: 2499, sku: 'BT-JCK-01-BLK-L', quantity: 24 },
+          latency_ms: 280
+        }
+      ],
+      tokens_used: { input: 145, output: 85, total: 230 },
+      latency_ms: 280,
+      status: 'VERIFIED',
+      created_at: new Date(Date.now() - 2 * 3600000).toISOString()
+    },
+    {
+      id: 'exec_bt_02',
+      workspace_id: workspace.id,
+      agent_id: agent1.id,
+      conversation_id: conv2.id,
+      intent: 'ORDER_TRACKING',
+      planning_steps: [
+        'Extract order identifier #10482',
+        'Call track_shipment tool against Bluedart logistics gateway',
+        'Verify delivery status and address'
+      ],
+      tool_executions: [
+        {
+          tool_name: 'track_shipment',
+          input: { order_number: '#10482' },
+          output: { order_number: '#10482', carrier: 'Bluedart Express', status: 'DELIVERED', tracking_number: 'BD-8941039821-IN' },
+          latency_ms: 195
+        }
+      ],
+      tokens_used: { input: 120, output: 60, total: 180 },
+      latency_ms: 195,
+      status: 'VERIFIED',
+      created_at: new Date(Date.now() - 5 * 3600000).toISOString()
+    },
+    {
+      id: 'exec_bt_03',
+      workspace_id: workspace.id,
+      agent_id: agent1.id,
+      conversation_id: conv3.id,
+      intent: 'POLICY_RAG',
+      planning_steps: [
+        'Classify inquiry as return/exchange policy question',
+        'Execute 12-stage RAG retrieval across store knowledge documents',
+        'Ground response with verified 7-day exchange window'
+      ],
+      tool_executions: [
+        {
+          tool_name: 'check_policy',
+          input: { topic: 'exchange_policy', item: 'joggers' },
+          output: { return_window_days: 7, free_pickup: true, portal: 'returns.bluetyga.com' },
+          latency_ms: 310
+        }
+      ],
+      tokens_used: { input: 160, output: 90, total: 250 },
+      latency_ms: 310,
+      status: 'VERIFIED',
+      created_at: new Date(Date.now() - 8 * 3600000).toISOString()
+    }
+  );
+
+  // 11. Evaluation Cases
   db.evaluation_cases.push(
     {
       id: 'eval_case_01',
       agent_id: agent1.id,
       workspace_id: workspace.id,
-      name: 'Constraint Search (Black shoes under $160 size 9)',
-      user_input: 'Find black running shoes under $160 in size 9.',
+      name: 'Constraint Search (UPF 50+ Sunscreen Jacket under ₹2500 size L)',
+      user_input: 'Find UPF 50+ Sunscreen Jackets under ₹2500 in size Large.',
       expected_intent: 'PRODUCT_SEARCH',
       expected_tools: ['product_search', 'inventory_lookup'],
-      expected_keywords: ['AeroPulse', '149.99'],
+      expected_keywords: ['Sunscreen', '2499', 'Large'],
       created_at: new Date().toISOString()
     },
     {
@@ -729,8 +930,8 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       name: 'Order Lookup (#10482)',
       user_input: 'Can you check the status of my order #10482?',
       expected_intent: 'ORDER_TRACKING',
-      expected_tools: ['order_lookup'],
-      expected_keywords: ['#10482', 'DELIVERED'],
+      expected_tools: ['order_lookup', 'track_shipment'],
+      expected_keywords: ['#10482', 'DELIVERED', 'Bluedart'],
       created_at: new Date().toISOString()
     }
   );
