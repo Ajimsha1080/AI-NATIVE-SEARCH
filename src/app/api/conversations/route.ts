@@ -17,7 +17,7 @@ export async function GET(req: Request) {
         id: 'conv_live_8910',
         workspace_id: session.workspaceId,
         agent_id: 'agent_shopmate_01',
-        customer_identifier: 'sarah.j@example.com',
+        customer_identifier: 'sarah.sharma@gmail.com',
         channel: 'WEBSITE' as const,
         status: 'ACTIVE' as const,
         message_count: 3,
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
         id: 'conv_live_8911',
         workspace_id: session.workspaceId,
         agent_id: 'agent_shopmate_01',
-        customer_identifier: 'david.m@example.com',
+        customer_identifier: 'rahul.verma@gmail.com',
         channel: 'WEBSITE' as const,
         status: 'HUMAN_TAKEOVER' as const,
         message_count: 5,
@@ -39,7 +39,7 @@ export async function GET(req: Request) {
         id: 'conv_live_8912',
         workspace_id: session.workspaceId,
         agent_id: 'agent_shopmate_01',
-        customer_identifier: 'emily.chen@example.com',
+        customer_identifier: 'priya.patel@gmail.com',
         channel: 'WEBSITE' as const,
         status: 'RESOLVED' as const,
         message_count: 4,
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
         conversation_id: 'conv_live_8910',
         workspace_id: session.workspaceId,
         role: 'USER',
-        content: 'Hi! I am looking for the AeroPulse Running Shoes in size 9 Black. Do you have them in stock?',
+        content: 'Hi! I am looking for the UPF 50+ Sunscreen Performance Jacket in size Large Obsidian Black. Do you have it in stock?',
         created_at: new Date(Date.now() - 4 * 60000).toISOString()
       },
       {
@@ -63,13 +63,13 @@ export async function GET(req: Request) {
         conversation_id: 'conv_live_8910',
         workspace_id: session.workspaceId,
         role: 'ASSISTANT',
-        content: 'I checked our live inventory for you! We currently have 14 pairs of the AeroPulse Pro Carbon (Size 9, Midnight Black) available for $149.99 with free express shipping.',
+        content: 'I checked our live inventory for you! We currently have 20 units of the UPF 50+ Sunscreen Performance Jacket (Large, Obsidian Black) in stock for ₹2,499 with free express shipping across India.',
         metadata: {
           products: [
             {
-              id: 'prod_shoe_01',
-              title: 'AeroPulse Pro Carbon Running Shoes',
-              price: 149.99,
+              id: 'prod_bt_01',
+              title: 'UPF 50+ Sunscreen Performance Jacket',
+              price: 2499.00,
               in_stock: true
             }
           ]
@@ -81,7 +81,7 @@ export async function GET(req: Request) {
         conversation_id: 'conv_live_8910',
         workspace_id: session.workspaceId,
         role: 'USER',
-        content: 'Awesome! Does it fit true to size or should I size up?',
+        content: 'Awesome! Does it offer UV protection during humid weather?',
         created_at: new Date(Date.now() - 1 * 60000).toISOString()
       },
 
@@ -91,7 +91,7 @@ export async function GET(req: Request) {
         conversation_id: 'conv_live_8911',
         workspace_id: session.workspaceId,
         role: 'USER',
-        content: 'I received order #10482 yesterday, but the outer packaging was damaged and one zipper is stuck.',
+        content: 'I received order #10482 yesterday, but I need to exchange it for a size XL.',
         created_at: new Date(Date.now() - 20 * 60000).toISOString()
       },
       {
@@ -99,7 +99,7 @@ export async function GET(req: Request) {
         conversation_id: 'conv_live_8911',
         workspace_id: session.workspaceId,
         role: 'ASSISTANT',
-        content: "I am very sorry to hear that! Order #10482 is eligible for an instant free replacement or refund under our 1-year warranty policy. Let me connect you with a live specialist to issue your return label.",
+        content: "Under our 7-day hassle-free exchange policy, you can exchange your item at zero extra cost. Let me connect you with a specialist to confirm your pickup address.",
         created_at: new Date(Date.now() - 18 * 60000).toISOString()
       },
       {
@@ -107,7 +107,7 @@ export async function GET(req: Request) {
         conversation_id: 'conv_live_8911',
         workspace_id: session.workspaceId,
         role: 'HUMAN',
-        content: 'Hello David! Support specialist here. I have generated a pre-paid return shipping label and sent it to david.m@example.com. Would you prefer an exchange or full refund to your card?',
+        content: 'Hello Rahul! Support specialist here. I have scheduled a reverse pickup for your jacket and initiated the XL replacement dispatch. Delivery to Koramangala is estimated in 2 business days.',
         metadata: { operator_name: 'Alex (Staff)' },
         created_at: new Date(Date.now() - 10 * 60000).toISOString()
       },
@@ -116,7 +116,7 @@ export async function GET(req: Request) {
         conversation_id: 'conv_live_8911',
         workspace_id: session.workspaceId,
         role: 'USER',
-        content: 'Please issue a replacement in size Large. Thank you so much for the quick help!',
+        content: 'Thank you so much for the quick resolution!',
         created_at: new Date(Date.now() - 5 * 60000).toISOString()
       },
 
@@ -126,7 +126,7 @@ export async function GET(req: Request) {
         conversation_id: 'conv_live_8912',
         workspace_id: session.workspaceId,
         role: 'USER',
-        content: 'Where is my package #10482?',
+        content: 'Where is my order #10482?',
         created_at: new Date(Date.now() - 55 * 60000).toISOString()
       },
       {
@@ -134,7 +134,7 @@ export async function GET(req: Request) {
         conversation_id: 'conv_live_8912',
         workspace_id: session.workspaceId,
         role: 'ASSISTANT',
-        content: 'Order #10482 has been delivered! Carrier: FedEx Ground (Tracking: FDX-992817264819). Left at front porch on Sept 23.',
+        content: 'Order #10482 has been delivered! Carrier: Bluedart Express (Tracking: BD-8941039821-IN). Delivered to Indiranagar, Bengaluru.',
         created_at: new Date(Date.now() - 54 * 60000).toISOString()
       },
       {

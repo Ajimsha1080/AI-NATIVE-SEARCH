@@ -210,7 +210,7 @@ export default function TeamPage() {
                 <input
                   type="email"
                   required
-                  placeholder="jordan@acmestore.com"
+                  placeholder="member@bluetyga.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 focus:bg-white"

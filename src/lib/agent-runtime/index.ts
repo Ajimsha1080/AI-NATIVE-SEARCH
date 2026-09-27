@@ -124,7 +124,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     detectedIntent = 'ORDER_TRACKING';
   } else if (/cart|add to cart|checkout|bag/i.test(user_message)) {
     detectedIntent = 'CART_ACTION';
-  } else if (/find|search|show|look for|shoes|running|sneaker|jacket|headphone|price|under|buy|recommend/i.test(user_message)) {
+  } else if (/find|search|show|look for|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|price|under|buy|recommend/i.test(user_message)) {
     detectedIntent = 'PRODUCT_SEARCH';
   }
 
@@ -230,7 +230,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     const orderMatch = user_message.match(/(?:#?|ord_)(\d{5})/i) || user_message.match(/#(\w+)/);
     const orderNum = orderMatch ? (orderMatch[0].startsWith('#') ? orderMatch[0] : '#' + orderMatch[1]) : '#10482';
     const emailMatch = user_message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-    const customerEmail = emailMatch ? emailMatch[1] : (params.customer_identifier?.includes('@') ? params.customer_identifier : 'sarah.connor@example.com');
+    const customerEmail = emailMatch ? emailMatch[1] : (params.customer_identifier?.includes('@') ? params.customer_identifier : 'sarah.sharma@gmail.com');
 
     planningSteps.push("4. Executing tool 'order_lookup' for order '" + orderNum + "'.");
     const orderRes = await executeTool({

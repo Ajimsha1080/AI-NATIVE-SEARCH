@@ -53,7 +53,7 @@ export default function IntegrationsWorkspacePage() {
       icon: ShoppingCart,
       badge: 'Ready',
       config: {
-        restEndpoint: 'https://store.acme-corp.com/wp-json/wc/v3',
+        restEndpoint: 'https://store.bluetyga.com/wp-json/wc/v3',
         authMethod: 'OAuth 1.0a HMAC-SHA256',
         consumerKey: 'ck_98f12a88390b1c',
         autoSyncInterval: 'Every 5 minutes'
@@ -68,7 +68,7 @@ export default function IntegrationsWorkspacePage() {
       icon: Puzzle,
       badge: 'Active',
       config: {
-        deliveryEndpoint: 'https://api.acme-corp.com/webhooks/shopmate',
+        deliveryEndpoint: 'https://api.bluetyga.com/webhooks/shopmate',
         signingAlgorithm: 'HMAC-SHA256',
         retryPolicy: 'Exponential backoff (3 attempts)',
         eventTopics: 'order.lookup, return.created, cart.updated, handoff.triggered'

@@ -109,7 +109,7 @@ export default function KnowledgeWorkspacePage() {
 
       if (addTab === 'WEBSITE') {
         if (!websiteUrl.trim()) {
-          setModalError('Please enter a website target URL (e.g. https://acmestore.com/pages/shipping).');
+          setModalError('Please enter a website target URL (e.g. https://bluetyga.com/pages/shipping).');
           setSaving(false);
           return;
         }
@@ -800,7 +800,7 @@ export default function KnowledgeWorkspacePage() {
                       <Globe className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
                       <input
                         type="url"
-                        placeholder="https://acmestore.com/pages/shipping-returns"
+                        placeholder="https://bluetyga.com/pages/shipping-returns"
                         value={websiteUrl}
                         onChange={(e) => setWebsiteUrl(e.target.value)}
                         className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition"

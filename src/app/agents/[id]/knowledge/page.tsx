@@ -196,7 +196,7 @@ export default function KnowledgePage({ params }: { params: Promise<{ id: string
                       required
                       value={urlToScrape}
                       onChange={e => setUrlToScrape(e.target.value)}
-                      placeholder="https://store.acme.com/pages/faq"
+                      placeholder="https://bluetyga.com/pages/faq"
                       className="flex-1 px-3.5 py-2 bg-zinc-50/50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 focus:bg-white transition"
                     />
                     <button

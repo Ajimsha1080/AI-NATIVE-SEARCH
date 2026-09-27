@@ -14,10 +14,10 @@ function ensureDefaultTestCases(workspaceId: string, agentId: string) {
         agent_id: agentId,
         workspace_id: workspaceId,
         name: 'Product Catalog & Size Search',
-        user_input: 'Do you have running shoes or sneakers in stock?',
+        user_input: 'Do you have UPF 50+ sunscreen jackets in stock?',
         expected_intent: 'PRODUCT_SEARCH',
         expected_tools: ['search_products'],
-        expected_keywords: ['shoes', 'sneakers', '$'],
+        expected_keywords: ['jacket', 'sunscreen', '₹', 'stock'],
         created_at: new Date().toISOString()
       },
       {
@@ -35,11 +35,11 @@ function ensureDefaultTestCases(workspaceId: string, agentId: string) {
         id: generateId('evc'),
         agent_id: agentId,
         workspace_id: workspaceId,
-        name: 'Store Return & Refund Policy',
-        user_input: 'What is your 30-day return policy for unopened items?',
+        name: 'Store Return & Exchange Policy',
+        user_input: 'What is your 7-day exchange policy for unworn items?',
         expected_intent: 'KNOWLEDGE_QUERY',
         expected_tools: ['search_knowledge'],
-        expected_keywords: ['return', 'policy', 'days'],
+        expected_keywords: ['return', 'exchange', 'policy', 'days'],
         created_at: new Date().toISOString()
       },
       {

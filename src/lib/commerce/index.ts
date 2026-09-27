@@ -230,8 +230,8 @@ export class LocalCommerceProvider {
 
     return {
       eligible: true,
-      reason: 'Eligible for standard 30-day return with prepaid shipping label',
-      return_window_days: 30
+      reason: 'Eligible for standard 7-day exchange/return with prepaid courier pickup',
+      return_window_days: 7
     };
   }
 
@@ -240,8 +240,8 @@ export class LocalCommerceProvider {
     return {
       success: true,
       return_id: returnId,
-      return_label_url: 'https://shipping.acmestore.com/labels/' + returnId + '.pdf',
-      instructions: 'Please affix the generated prepaid shipping label to the original packaging and drop off at any authorized FedEx location within 14 days.'
+      return_label_url: 'https://returns.bluetyga.com/labels/' + returnId + '.pdf',
+      instructions: 'Keep the item in its original packaging with tags attached. A Bluedart/Delhivery courier executive will arrive for doorstep reverse pickup.'
     };
   }
 }
