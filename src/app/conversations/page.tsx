@@ -4,12 +4,25 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Sidebar from '@/components/layout/Sidebar';
 import { 
-  MessageSquare, Search, Filter, Bot, User, Clock, CheckCircle, 
-  ChevronRight, Sparkles, Send, ShieldAlert, ShoppingBag, ArrowRight,
-  Headphones, RefreshCw
+  MessageSquare, Search, Bot, User, Clock, CheckCircle, 
+  Send, ShieldAlert, ShoppingBag, Truck, ZoomIn, ZoomOut, X,
+  Headphones, RefreshCw, Globe, Smartphone, Sparkles, Tag, ArrowUpRight
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
+
+interface ProductCardData {
+  id: string;
+  title: string;
+  price: number;
+  compare_at_price?: number;
+  currency?: string;
+  images?: string[];
+  imageUrl?: string;
+  in_stock?: boolean;
+  category?: string;
+  description?: string;
+}
 
 export default function ConversationsWorkspacePage() {
   const cachedConvos = getClientCachedData<{ conversations: any[] }>('/api/conversations')?.conversations || [];
@@ -22,6 +35,8 @@ export default function ConversationsWorkspacePage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [replyText, setReplyText] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  const [previewModal, setPreviewModal] = useState<{ url: string; title: string; price?: number; description?: string } | null>(null);
+  const [zoomScale, setZoomScale] = useState(1);
 
   useEffect(() => {
     fetchConversations(conversations.length === 0);
@@ -30,7 +45,7 @@ export default function ConversationsWorkspacePage() {
       if (liveSync) {
         syncLiveConversations();
       }
-    }, 3500);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [liveSync, selectedConvo?.id]);
@@ -39,7 +54,11 @@ export default function ConversationsWorkspacePage() {
     if (isInitial && conversations.length === 0) setLoading(true);
     try {
       const data = await fetchWithCache<{ conversations: any[] }>('/api/conversations');
-      const convos = data?.conversations || [];
+      const convos = (data?.conversations || []).sort((a: any, b: any) => {
+        const timeA = new Date(a.updated_at || a.updatedAt || a.created_at || 0).getTime();
+        const timeB = new Date(b.updated_at || b.updatedAt || b.created_at || 0).getTime();
+        return timeB - timeA;
+      });
       setConversations(convos);
       if (isInitial && convos.length > 0 && !selectedConvo) {
         selectConversation(convos[0]);
@@ -56,7 +75,11 @@ export default function ConversationsWorkspacePage() {
       const res = await fetch('/api/conversations');
       if (res.ok) {
         const data = await res.json();
-        const convos = data.conversations || [];
+        const convos = (data.conversations || []).sort((a: any, b: any) => {
+          const timeA = new Date(a.updated_at || a.updatedAt || a.created_at || 0).getTime();
+          const timeB = new Date(b.updated_at || b.updatedAt || b.created_at || 0).getTime();
+          return timeB - timeA;
+        });
         setConversations(convos);
         if (selectedConvo?.id) {
           const msgRes = await fetch(`/api/conversations/${selectedConvo.id}`);
@@ -131,6 +154,7 @@ export default function ConversationsWorkspacePage() {
   }
 
   const renderFormattedText = (text: string) => {
+    if (!text) return '';
     const boldRegex = /\*\*(.*?)\*\*/g;
     const elements: React.ReactNode[] = [];
     let lastIdx = 0;
@@ -158,7 +182,7 @@ export default function ConversationsWorkspacePage() {
     const idStr = String(c.id || '').toLowerCase();
     const channelStr = String(c.channel || '').toLowerCase();
     const agentStr = String(c.agent_id || c.agentId || '').toLowerCase();
-    const customerStr = String(c.customer_identifier || c.customerIdentifier || '').toLowerCase();
+    const customerStr = String(c.customer_name || c.customer_email || c.customer_identifier || c.customerIdentifier || '').toLowerCase();
     const searchLower = searchTerm.toLowerCase().trim();
 
     const matchesSearch = !searchLower || 
@@ -185,7 +209,7 @@ export default function ConversationsWorkspacePage() {
 
         <div className="flex-1 flex min-h-0">
           {/* Conversation List Pane */}
-          <div className="w-80 md:w-96 border-r border-zinc-200 flex flex-col bg-white">
+          <div className="w-80 md:w-96 border-r border-zinc-200 flex flex-col bg-white shrink-0">
             <div className="p-4 border-b border-zinc-200 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-bold text-zinc-900 flex items-center gap-2">
@@ -195,15 +219,15 @@ export default function ConversationsWorkspacePage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setLiveSync(!liveSync)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-mono flex items-center gap-1.5 transition ${
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 transition ${
                       liveSync 
-                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold' 
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold shadow-2xs' 
                         : 'bg-zinc-100 border border-zinc-200 text-zinc-600'
                     }`}
                     title="Toggle Real-Time Background Synchronization"
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${liveSync ? 'bg-emerald-500' : 'bg-zinc-400'}`}></span>
-                    <span>{liveSync ? 'LIVE' : 'PAUSED'}</span>
+                    <span className={`w-1.5 h-1.5 rounded-full ${liveSync ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`}></span>
+                    <span>{liveSync ? 'REAL-TIME LIVE' : 'PAUSED'}</span>
                   </button>
                   <button
                     onClick={() => fetchConversations(true)}
@@ -220,7 +244,7 @@ export default function ConversationsWorkspacePage() {
                 <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
-                  placeholder="Filter sessions by ID or agent..."
+                  placeholder="Filter sessions by customer or ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-3 py-1.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition"
@@ -253,7 +277,7 @@ export default function ConversationsWorkspacePage() {
               {loading ? (
                 <div className="p-8 text-center text-xs text-zinc-500 font-mono flex items-center justify-center gap-2">
                   <RefreshCw className="w-4 h-4 animate-spin text-zinc-400" />
-                  <span>Loading sessions...</span>
+                  <span>Loading live sessions...</span>
                 </div>
               ) : filteredConversations.length === 0 ? (
                 <div className="p-8 text-center text-xs text-zinc-400 font-mono">No conversations matching filters.</div>
@@ -261,22 +285,28 @@ export default function ConversationsWorkspacePage() {
                 filteredConversations.map((convo) => {
                   const isSelected = selectedConvo?.id === convo.id;
                   const dateVal = convo.updated_at || convo.updatedAt || convo.created_at || convo.createdAt || Date.now();
+                  const customerLabel = convo.customer_name || convo.customer_email || (convo.customer_identifier && !convo.customer_identifier.includes('anonymous') ? convo.customer_identifier : `Shopper #${convo.id.slice(-5)}`);
+                  const isWeb = convo.channel === 'WEBSITE' || !convo.channel;
+
                   return (
                     <button
                       key={convo.id}
                       onClick={() => selectConversation(convo)}
-                      className={`w-full text-left p-3.5 transition flex flex-col gap-1.5 border-l-2 ${
+                      className={`w-full text-left p-3.5 transition flex flex-col gap-1.5 border-l-3 ${
                         isSelected 
                           ? 'bg-zinc-50 border-zinc-900 shadow-xs' 
                           : 'border-transparent hover:bg-zinc-50/60'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono font-bold text-zinc-900 truncate max-w-[170px]">{convo.id}</span>
+                        <span className="text-xs font-semibold text-zinc-900 truncate max-w-[170px]">{customerLabel}</span>
                         <StatusBadge status={convo.status || 'ACTIVE'} size="sm" />
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-zinc-500 font-mono">
-                        <span className="truncate">Agent: {convo.agent_id || convo.agentId || 'ShopMate AI'}</span>
+                        <span className="flex items-center gap-1 text-zinc-600">
+                          {isWeb ? <Globe className="w-3 h-3 text-blue-500" /> : <Smartphone className="w-3 h-3 text-emerald-500" />}
+                          <span className="truncate max-w-[120px]">{convo.agent_id || 'ShopMate AI'}</span>
+                        </span>
                         <span className="flex items-center gap-1 text-zinc-400">
                           <Clock className="w-3 h-3" />
                           {new Date(dateVal).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
@@ -291,43 +321,43 @@ export default function ConversationsWorkspacePage() {
 
           {/* Chat Stream & Details Pane */}
           {selectedConvo ? (
-            <div className="flex-1 flex flex-col bg-[#f4f5f7]">
+            <div className="flex-1 flex flex-col bg-[#f4f5f7] min-w-0">
               {/* Header */}
-              <div className="p-4 border-b border-zinc-200 flex items-center justify-between bg-white">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center">
+              <div className="p-4 border-b border-zinc-200 flex items-center justify-between bg-white shrink-0 shadow-2xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shrink-0 shadow-2xs">
                     <Bot className="w-4 h-4" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-xs font-bold text-zinc-900 flex items-center gap-2">
-                      <span className="font-mono">{selectedConvo.id}</span>
+                      <span className="truncate">{selectedConvo.customer_name || selectedConvo.customer_email || `Session ${selectedConvo.id}`}</span>
                       <StatusBadge status={selectedConvo.status || 'ACTIVE'} size="sm" />
                     </h3>
-                    <p className="text-[11px] text-zinc-500 font-mono">
-                      Channel: {selectedConvo.channel || 'PLAYGROUND'} • Agent: {selectedConvo.agent_id || selectedConvo.agentId || 'ShopMate AI'}
+                    <p className="text-[11px] text-zinc-500 font-mono truncate">
+                      Channel: {selectedConvo.channel || 'WEBSITE'} • Agent: {selectedConvo.agent_id || 'ShopMate AI'} • ID: {selectedConvo.id}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {selectedConvo.status !== 'HUMAN_TAKEOVER' ? (
                     <button
                       onClick={() => handleTakeover('HUMAN_TAKEOVER')}
-                      className="px-3.5 py-1.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs"
+                      className="px-3.5 py-1.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
                     >
                       <ShieldAlert className="w-3.5 h-3.5 text-amber-600" /> Take Over Session
                     </button>
                   ) : (
                     <button
                       onClick={() => handleTakeover('ACTIVE')}
-                      className="px-3.5 py-1.5 rounded-full bg-zinc-900 text-white hover:bg-zinc-800 text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs"
+                      className="px-3.5 py-1.5 rounded-full bg-zinc-900 text-white hover:bg-zinc-800 text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
                     >
                       <Bot className="w-3.5 h-3.5" /> Return to AI
                     </button>
                   )}
                   <button
                     onClick={() => handleTakeover('RESOLVED')}
-                    className="px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-700 text-xs font-semibold transition flex items-center gap-1.5"
+                    className="px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-700 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Resolve
                   </button>
@@ -343,13 +373,27 @@ export default function ConversationsWorkspacePage() {
                     const isUserRole = m.role?.toLowerCase() === 'user';
                     const isHumanHandoff = m.role?.toUpperCase() === 'HUMAN';
                     const msgTime = m.created_at || m.createdAt || Date.now();
+
+                    // Extract products from interactive_payload or metadata
+                    const productsList: ProductCardData[] = 
+                      (m.interactive_payload?.type === 'PRODUCTS' && Array.isArray(m.interactive_payload.data))
+                        ? m.interactive_payload.data
+                        : (m.metadata?.products && Array.isArray(m.metadata.products))
+                        ? m.metadata.products
+                        : [];
+
+                    const orderTrackingData = 
+                      (m.interactive_payload?.type === 'ORDER_TRACKING')
+                        ? m.interactive_payload.data
+                        : null;
+
                     return (
                       <div
                         key={m.id}
                         className={`flex items-start gap-3 ${isUserRole ? 'flex-row-reverse' : 'flex-row'}`}
                       >
                         <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs ${
+                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs shadow-2xs ${
                             isUserRole
                               ? 'bg-zinc-900 text-white font-bold'
                               : isHumanHandoff
@@ -360,7 +404,7 @@ export default function ConversationsWorkspacePage() {
                           {isUserRole ? <User className="w-3.5 h-3.5" /> : isHumanHandoff ? <Headphones className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                         </div>
 
-                        <div className={`flex flex-col gap-1 max-w-xl ${isUserRole ? 'items-end' : 'items-start'}`}>
+                        <div className={`flex flex-col gap-1.5 max-w-xl ${isUserRole ? 'items-end' : 'items-start'}`}>
                           <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-mono">
                             <span className="font-semibold text-zinc-700">
                               {isUserRole ? 'Customer' : isHumanHandoff ? 'Human Operator' : 'ShopMate AI'}
@@ -368,6 +412,7 @@ export default function ConversationsWorkspacePage() {
                             <span>•</span>
                             <span>{new Date(msgTime).toLocaleTimeString('en-US')}</span>
                           </div>
+
                           <div
                             className={`p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap shadow-2xs ${
                               isUserRole
@@ -380,10 +425,101 @@ export default function ConversationsWorkspacePage() {
                             {renderFormattedText(m.content)}
                           </div>
 
-                          {/* Display metadata if any */}
-                          {m.metadata?.products && (
-                            <div className="mt-1 bg-white border border-zinc-200 p-2 rounded-xl text-[11px] text-zinc-600 font-mono shadow-2xs">
-                              📦 Recommended {m.metadata.products.length} product(s)
+                          {/* Live Product Cards Rendered in Real-Time */}
+                          {productsList.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full mt-1.5">
+                              {productsList.map((p, pIdx) => {
+                                const imgSrc = p.imageUrl || p.images?.[0] || 'https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748';
+                                return (
+                                  <div 
+                                    key={p.id || pIdx} 
+                                    className="bg-white border border-zinc-200 hover:border-zinc-300 transition rounded-2xl p-3 flex flex-col justify-between gap-2.5 shadow-2xs group"
+                                  >
+                                    <div className="flex items-start gap-2.5">
+                                      <div 
+                                        onClick={() => {
+                                          setPreviewModal({
+                                            url: imgSrc,
+                                            title: p.title,
+                                            price: p.price,
+                                            description: p.description
+                                          });
+                                          setZoomScale(1);
+                                        }}
+                                        className="w-16 h-16 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer relative group/img shadow-2xs"
+                                        title="Click to zoom image"
+                                      >
+                                        <img src={imgSrc} alt={p.title} className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300" />
+                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center">
+                                          <ZoomIn className="w-3.5 h-3.5 text-white" />
+                                        </div>
+                                      </div>
+
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="text-xs font-bold text-zinc-900 truncate leading-snug">{p.title}</h4>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                          <span className="text-xs font-bold text-emerald-700 font-mono">₹{p.price?.toLocaleString('en-IN')}</span>
+                                          {p.compare_at_price && p.compare_at_price > p.price && (
+                                            <span className="text-[10px] text-zinc-400 line-through font-mono">₹{p.compare_at_price?.toLocaleString('en-IN')}</span>
+                                          )}
+                                        </div>
+                                        {p.category && (
+                                          <span className="inline-block mt-1 text-[9px] font-medium bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded">
+                                            {p.category}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {p.description && (
+                                      <p className="text-[10px] text-zinc-500 line-clamp-2 leading-relaxed">
+                                        {p.description}
+                                      </p>
+                                    )}
+
+                                    <div className="flex items-center justify-between pt-1 border-t border-zinc-100 text-[10px]">
+                                      <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> In Stock
+                                      </span>
+                                      <button
+                                        onClick={() => {
+                                          setPreviewModal({
+                                            url: imgSrc,
+                                            title: p.title,
+                                            price: p.price,
+                                            description: p.description
+                                          });
+                                        }}
+                                        className="text-zinc-600 hover:text-zinc-900 font-semibold flex items-center gap-0.5"
+                                      >
+                                        View Photo <ArrowUpRight className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* Live Order Tracking Cards */}
+                          {orderTrackingData && (
+                            <div className="w-full mt-1.5 bg-white border border-zinc-200 rounded-2xl p-3.5 shadow-2xs space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Truck className="w-4 h-4 text-emerald-600" />
+                                  <span className="text-xs font-bold text-zinc-900">{orderTrackingData.order_number || 'Order Tracking'}</span>
+                                </div>
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                                  {orderTrackingData.status || 'IN TRANSIT'}
+                                </span>
+                              </div>
+                              <div className="text-xs text-zinc-600 font-mono space-y-1">
+                                <div>Carrier: <strong className="text-zinc-900">{orderTrackingData.carrier || 'Bluedart Express'}</strong></div>
+                                <div>Tracking: <strong className="text-zinc-900">{orderTrackingData.tracking_number || 'BD-8941039821-IN'}</strong></div>
+                                {orderTrackingData.estimated_delivery && (
+                                  <div>ETA: <strong className="text-emerald-700">{orderTrackingData.estimated_delivery}</strong></div>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -394,7 +530,7 @@ export default function ConversationsWorkspacePage() {
               </div>
 
               {/* Takeover Reply Box */}
-              <form onSubmit={handleSendReply} className="p-4 border-t border-zinc-200 bg-white flex gap-2">
+              <form onSubmit={handleSendReply} className="p-4 border-t border-zinc-200 bg-white flex gap-2 shrink-0">
                 <input
                   type="text"
                   placeholder={selectedConvo.status === 'HUMAN_TAKEOVER' ? "Type human operator response..." : "Take over session to send manual response..."}
@@ -405,7 +541,7 @@ export default function ConversationsWorkspacePage() {
                 <button
                   type="submit"
                   disabled={!replyText.trim() || sendingReply}
-                  className="px-4 py-2 bg-[#18181b] hover:bg-[#27272a] text-white text-xs font-semibold rounded-xl transition disabled:opacity-40 flex items-center gap-1.5 shadow-xs"
+                  className="px-4 py-2 bg-[#18181b] hover:bg-[#27272a] text-white text-xs font-semibold rounded-xl transition disabled:opacity-40 flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" /> Send
                 </button>
@@ -418,6 +554,69 @@ export default function ConversationsWorkspacePage() {
           )}
         </div>
       </div>
+
+      {/* Full Resolution Image & Product Zoom Modal */}
+      {previewModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setPreviewModal(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-zinc-200 flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/70">
+              <div>
+                <h3 className="text-xs font-bold text-zinc-900">{previewModal.title}</h3>
+                {previewModal.price && (
+                  <p className="text-xs font-semibold text-emerald-600 font-mono mt-0.5">₹{previewModal.price.toLocaleString('en-IN')}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setZoomScale(s => Math.min(s + 0.25, 2.5))}
+                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/5 transition"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomScale(s => Math.max(s - 0.25, 0.75))}
+                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/5 transition"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewModal(null)}
+                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/5 transition"
+                  title="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 flex-1 overflow-auto flex items-center justify-center bg-zinc-50 min-h-[300px]">
+              <img 
+                src={previewModal.url} 
+                alt={previewModal.title} 
+                className="max-h-[60vh] w-auto object-contain rounded-xl transition-transform duration-200"
+                style={{ transform: `scale(${zoomScale})` }}
+              />
+            </div>
+
+            {previewModal.description && (
+              <div className="p-4 border-t border-zinc-100 bg-white">
+                <p className="text-xs text-zinc-600 leading-relaxed">{previewModal.description}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
