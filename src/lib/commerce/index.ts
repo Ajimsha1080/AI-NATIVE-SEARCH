@@ -63,6 +63,10 @@ export class LocalCommerceProvider {
       const stopWords = new Set(['show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the', 'please', 'can', 'you', 'give', 'what', 'are', 'your', 'any', 'new', 'latest', 'product', 'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival']);
       const tokens = q.split(/[\s,?!]+/).filter(w => w.length > 2 && !stopWords.has(w) && isNaN(Number(w)));
       const synonyms: Record<string, string[]> = {
+        men: ['mens', 'male', 'gent', 'gents'],
+        mens: ['men', 'male', 'gent', 'gents'],
+        women: ['womens', 'ladies', 'lady', 'female'],
+        womens: ['women', 'ladies', 'lady', 'female'],
         cap: ['visor', 'hat', 'headwear'],
         caps: ['visor', 'hat', 'headwear'],
         hat: ['visor', 'cap', 'headwear'],
@@ -83,25 +87,51 @@ export class LocalCommerceProvider {
         jackets: ['sunscreen jacket', 'thermal', 'anti-ac'],
       };
 
-      const allTokens = new Set<string>(tokens);
-      for (const t of tokens) {
+      const demographicWords = new Set(['men', 'mens', 'male', 'gent', 'gents', 'guy', 'guys', 'women', 'womens', 'lady', 'ladies', 'female', 'girl', 'girls']);
+      const productTypeTokens = tokens.filter(t => !demographicWords.has(t));
+
+      const isMenQuery = /\b(men|mens|male|gent|gents|guy|guys)\b/i.test(q);
+      const isWomenQuery = /\b(women|womens|lady|ladies|female|girl|girls)\b/i.test(q);
+
+      const searchTypeTokens = new Set<string>(productTypeTokens);
+      for (const t of productTypeTokens) {
         if (synonyms[t]) {
-          synonyms[t].forEach(s => allTokens.add(s));
+          synonyms[t].forEach(s => searchTypeTokens.add(s));
         }
       }
 
       let filtered = list.filter(p => {
-        const fullText = (p.title + ' ' + p.description + ' ' + p.category + ' ' + p.tags.join(' ')).toLowerCase();
+        const titleLower = p.title.toLowerCase();
+        const tagsLower = p.tags.map(t => t.toLowerCase());
+        const descLower = p.description.toLowerCase();
+        const fullText = `${titleLower} ${descLower} ${p.category.toLowerCase()} ${tagsLower.join(' ')}`;
+        const wordsInText = new Set(fullText.split(/[\s,._\-/+():;]+/));
+
+        // Demographic enforcement:
+        const isWomenProduct = titleLower.includes('women') || tagsLower.includes('women') || tagsLower.includes('womens') || tagsLower.includes('female');
+        if (isMenQuery && !isWomenQuery && isWomenProduct) {
+          return false; // Exclude women's products for explicit men's query
+        }
+        if (isWomenQuery && !isMenQuery && !isWomenProduct) {
+          return false; // Exclude men-only products for explicit women's query
+        }
+
+        // If no specific product type was queried (e.g. "mens products", "men collection", "all"), return all demographic-matching items
+        if (searchTypeTokens.size === 0) {
+          return true;
+        }
+
         if (fullText.includes(q)) return true;
-        if (allTokens.size === 0) return false;
-        for (const t of allTokens) {
-          if (fullText.includes(t)) return true;
+
+        for (const t of searchTypeTokens) {
+          if (wordsInText.has(t)) return true;
+          if (t.length >= 4 && fullText.includes(t)) return true;
         }
         return false;
       });
 
-      // Demographic filter: if querying for women specifically, ensure women products are selected
-      if (tokens.some(t => ['women', 'womens', 'lady', 'ladies'].includes(t))) {
+      // Demographic filter refinement:
+      if (isWomenQuery) {
         const womenOnly = filtered.filter(p => {
           const tLower = p.title.toLowerCase();
           const tagsLower = p.tags.map(t => t.toLowerCase());
@@ -109,6 +139,15 @@ export class LocalCommerceProvider {
         });
         if (womenOnly.length > 0) {
           filtered = womenOnly;
+        }
+      } else if (isMenQuery) {
+        const menOnly = filtered.filter(p => {
+          const tLower = p.title.toLowerCase();
+          const tagsLower = p.tags.map(t => t.toLowerCase());
+          return !tLower.includes('women') && !tagsLower.includes('women') && !tagsLower.includes('womens');
+        });
+        if (menOnly.length > 0) {
+          filtered = menOnly;
         }
       }
 

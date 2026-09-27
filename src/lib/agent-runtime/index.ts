@@ -282,6 +282,8 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
 
       if (searchRes.data.length === 1) {
         responseText = `Here is the **${searchRes.data[0].title}** from our collection:`;
+      } else if (/\b(?:men|mens|male|gent|gents|guy|guys)\b/i.test(user_message)) {
+        responseText = `Here are the featured pieces from our Blue Tyga Men's collection:`;
       } else if (/women|ladies|girl/i.test(user_message)) {
         responseText = `Here are the featured pieces from our Blue Tyga Women's collection:`;
       } else if (/new|latest|arrival/i.test(user_message)) {
