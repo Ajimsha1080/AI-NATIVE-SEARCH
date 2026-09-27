@@ -169,7 +169,7 @@ export async function executeRAGPipeline(
       chunks_included: topHits.length
     },
     grounding_verification: { is_grounded: true, confidence_score: 0.95, verified_facts_count: topHits.length },
-    natural_answer: `According to our store policy:\n\n${topHits[0].chunk.content}\n\nWould you like further assistance?`,
+    natural_answer: topHits[0]?.chunk.content || '',
     citations
   };
 }

@@ -336,10 +336,10 @@ def execute_rag_pipeline(question: str, workspace_id: str, tenant_chunks: Option
 
     # 7. Answer Synthesis - Grounded Strictly in Tenant Knowledge (Never Invent Policies!)
     if reranked and len(tenant_chunks) > 0:
-        natural_answer = f"According to our verified store policy for {workspace_id}:\n\n{reranked[0]['chunk_text']}\n\nWould you like assistance with checking eligibility for a specific order?"
+        natural_answer = reranked[0]['chunk_text']
         has_chunks = True
     else:
-        natural_answer = "I do not have store policy or return information on file for this store. Would you like me to connect you with a customer support representative for assistance?"
+        natural_answer = "I'd be glad to help answer any questions about our products, sizing, delivery, or policies."
         has_chunks = False
 
     # 8. Grounding Verification
