@@ -142,19 +142,6 @@ export default function SecuritySettingsPage() {
 
               <div className="flex items-center gap-2.5">
                 <button
-                  onClick={() => setLiveSync(!liveSync)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-mono flex items-center gap-1.5 transition ${
-                    liveSync 
-                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold shadow-2xs' 
-                      : 'bg-zinc-100 border border-zinc-200 text-zinc-600'
-                  }`}
-                  title="Toggle real-time audit stream"
-                >
-                  <span className={`w-2 h-2 rounded-full ${liveSync ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`}></span>
-                  <span>{liveSync ? 'AUDIT LIVE STREAM' : 'PAUSED'}</span>
-                </button>
-
-                <button
                   onClick={handleSave}
                   disabled={saving}
                   className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs rounded-xl transition flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
@@ -325,8 +312,8 @@ export default function SecuritySettingsPage() {
                   </h2>
                   <p className="text-xs text-zinc-500 mt-0.5">Immutable log of security changes, key operations, and system events.</p>
                 </div>
-                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
-                  LIVE STREAM
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 font-semibold">
+                  Immutable Record
                 </span>
               </div>
 
