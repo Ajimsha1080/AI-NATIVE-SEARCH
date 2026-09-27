@@ -114,6 +114,20 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   let responseText = '';
   let interactivePayload: any = null;
 
+  // Retrieve multi-turn conversation history
+  const conversationHistory = db.messages
+    .filter(m => m.conversation_id === conversation.id && m.id !== userMsgId)
+    .slice(-8)
+    .map(m => ({
+      role: m.role === 'USER' ? 'user' : 'assistant',
+      content: m.content
+    }));
+
+  const storeProducts = db.commerce_products.filter(p => p.workspace_id === workspace_id);
+  const catalogContext = storeProducts.map(p => 
+    `• ${p.title} — ₹${p.price.toLocaleString('en-IN')}${p.compare_at_price ? ` (MRP: ₹${p.compare_at_price.toLocaleString('en-IN')})` : ''} | Category: ${p.category} | In Stock: ${p.in_stock ? 'Yes' : 'No'} | Details: ${p.description}`
+  ).join('\n');
+
   // Phase A: Intent Detection
   let detectedIntent = 'GENERAL_QUERY';
   if (/talk to (?:a |an )?(?:human|agent|representative|person|operator)|speak (?:with|to) (?:a )?(?:human|person|representative)|connect me to support/i.test(user_message)) {
@@ -122,7 +136,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     detectedIntent = 'RETURN_OR_POLICY_INQUIRY';
   } else if (/(?:track(?:ing)?\s+(?:my\s+)?order|where\s+is\s+my\s+order|status\s+of\s+order|order\s+status|#\d{4,6})/i.test(user_message)) {
     detectedIntent = 'ORDER_TRACKING';
-  } else if (/cart|add to cart|checkout|bag/i.test(user_message)) {
+  } else if (/cart|add to cart|add that|add this|add it|buy this|checkout|bag/i.test(user_message)) {
     detectedIntent = 'CART_ACTION';
   } else if (/find|search|show|look for|product|products|item|items|catalog|collection|arrival|arrivals|new|latest|best\s*seller|trending|what (?:do )?you (?:have|sell)|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|balaclava|price|cost|how much|under|buy|recommend/i.test(user_message)) {
     detectedIntent = 'PRODUCT_SEARCH';
@@ -139,6 +153,8 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   });
   const citations = ragResult.citations;
   planningSteps.push(`3. RAG complete: ${ragResult.citations.length} verified citation(s) retrieved (Top Score: ${(ragResult.reranking.top_score * 100).toFixed(1)}%).`);
+
+  const fullKnowledgeContext = `Official Blue Tyga Live Product Catalog:\n${catalogContext}\n\nStore Knowledge & Policies:\n${citations.length > 0 ? citations.map(c => c.chunk_text).join('\n\n') : 'Blue Tyga offers UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, No-Sweat Tech Tees, and cooling headwear. 7-day exchange window.'}`;
 
   // Phase C: Policies
   const policies = db.agent_policies.filter(p => p.agent_id === agent_id && p.is_active);
@@ -225,15 +241,15 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
       }
     } else {
       // Unrestricted conversational answer for open styling, recommendations, and search
-      const naturalPrompt = `You are a friendly, super-smart human shopping specialist at Blue Tyga (bluetyga.com).
-The user searched for an item that is not currently in our store catalog.
-Answer the user's question naturally, helpfully, and conversationally.
-Explain what Blue Tyga currently offers (UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, No-Sweat Tech Tees, Visors & Balaclavas) and offer assistance without any artificial refusal.`;
+      const naturalPrompt = `You are a helpful, knowledgeable, and friendly shopping specialist for Blue Tyga (bluetyga.com).
+The user asked a question or searched for an item. Use the store catalog and past conversation context to give a clear, accurate, and direct answer.
+If the customer asks about an item we don't have, explain politely what we do have (UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, No-Sweat Tech Tees, Cooling Headwear) and offer recommendations.`;
 
       const sarvamAnswer = await callSarvamLLM(
         naturalPrompt,
         user_message,
-        citations.length > 0 ? citations.map(c => c.chunk_text).join('\n\n') : 'Blue Tyga offers UPF 50+ Sunscreen Jackets, No-Sweat Tech Tees, and 4-Way Stretch Cargo Joggers.'
+        fullKnowledgeContext,
+        conversationHistory
       );
 
       if (sarvamAnswer) {
@@ -248,7 +264,6 @@ Explain what Blue Tyga currently offers (UPF 50+ Sunscreen Jackets, Anti-AC Ther
     }
   } else if (detectedIntent === 'CART_ACTION') {
     planningSteps.push('3. Processing Cart Action (Add to Cart / Bag Inspection).');
-    const storeProducts = db.commerce_products.filter(p => p.workspace_id === workspace_id);
     const msgLower = user_message.toLowerCase();
 
     // Match product in query
@@ -258,6 +273,18 @@ Explain what Blue Tyga currently offers (UPF 50+ Sunscreen Jackets, Anti-AC Ther
         const tokens = p.title.toLowerCase().split(/[\s+]+/).filter(w => w.length > 3);
         return tokens.filter(t => msgLower.includes(t)).length >= 2;
       });
+    }
+
+    // If still not matched, resolve from recent conversation history (e.g. "add that to cart", "add it")
+    if (!targetProduct && conversationHistory.length > 0) {
+      for (let i = conversationHistory.length - 1; i >= 0; i--) {
+        const prevText = conversationHistory[i].content.toLowerCase();
+        const prevMatched = storeProducts.find(p => prevText.includes(p.title.toLowerCase()));
+        if (prevMatched) {
+          targetProduct = prevMatched;
+          break;
+        }
+      }
     }
 
     if (targetProduct) {
@@ -346,19 +373,20 @@ Explain what Blue Tyga currently offers (UPF 50+ Sunscreen Jackets, Anti-AC Ther
     planningSteps.push('4. Synthesizing response using verified knowledge citations.');
     planningSteps.push(`5. Grounding verification: ${Math.round(ragResult.grounding_verification.confidence_score * 100)}% factual confidence.`);
     
-    // Call Sarvam AI with zero artificial restrictions
-    const naturalPrompt = `You are a helpful, friendly, and super-smart human shopping concierge and technical apparel specialist for Blue Tyga (bluetyga.com).
+    // Call Sarvam AI with full store knowledge & conversation history
+    const naturalPrompt = `You are a helpful, friendly, and super-smart shopping concierge and apparel specialist for Blue Tyga (bluetyga.com).
 
 Core Capabilities:
-- Answer ANY question the user asks naturally, intelligently, and helpfully.
+- Answer questions accurately, clearly, and conversationally based on previous messages and store knowledge.
 - When questions relate to Blue Tyga policies, shipping, returns, pricing, or products, use the provided store knowledge as your factual guide (prices in ₹).
-- For general questions (styling, weather suitability, UV protection science, fabric care, travel tips), answer freely with your deep general knowledge.
-- Speak naturally and warmly like a real in-store expert. Never use robotic templates, disclaimers, or refusals.`;
+- For general questions (styling, weather suitability, UV protection science, fabric care, travel tips), answer freely and helpfully.
+- Speak naturally and warmly like a real in-store expert.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,
       user_message,
-      citations.map(c => c.chunk_text).join('\n\n')
+      fullKnowledgeContext,
+      conversationHistory
     );
 
     if (sarvamAnswer) {
@@ -381,18 +409,19 @@ Core Capabilities:
   } else {
     // General freeform conversation or question -> Sarvam AI / Citations
     planningSteps.push('4. Calling Sarvam AI conversational model.');
-    const naturalPrompt = `You are a helpful, friendly, and super-smart human shopping concierge and technical apparel specialist for Blue Tyga (bluetyga.com).
+    const naturalPrompt = `You are a helpful, friendly, and super-smart shopping concierge and apparel specialist for Blue Tyga (bluetyga.com).
 
 Core Capabilities:
-- Answer ANY question the user asks naturally, intelligently, and helpfully.
+- Answer ANY question the user asks naturally, intelligently, and contextually based on their prior conversation queries.
 - When questions relate to Blue Tyga policies, shipping, returns, pricing, or products, use the provided store knowledge as your factual guide (prices in ₹).
-- For general questions (styling, weather suitability, UV protection science, fabric care, travel tips, open inquiries), answer freely with your deep general knowledge.
-- Speak naturally and warmly like a real in-store expert. Never use robotic templates, disclaimers, or refusals.`;
+- For styling, comparison, sizing, or general inquiries, provide helpful and direct advice.
+- Speak naturally and warmly like a real in-store specialist.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,
       user_message,
-      citations.length > 0 ? citations.map(c => c.chunk_text).join('\n\n') : 'Blue Tyga offers UPF 50+ Sunscreen Jackets, No-Sweat Tech Tees, and 4-Way Stretch Cargo Joggers.'
+      fullKnowledgeContext,
+      conversationHistory
     );
 
     if (sarvamAnswer) {
