@@ -271,9 +271,18 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     planningSteps.push('4. Synthesizing response using verified knowledge citations.');
     planningSteps.push(`5. Grounding verification: ${Math.round(ragResult.grounding_verification.confidence_score * 100)}% factual confidence.`);
     
-    // Call Sarvam AI with verified citations
+    // Call Sarvam AI with verified citations and natural persona
+    const naturalPrompt = `You are a friendly, knowledgeable human shopping specialist at Blue Tyga (bluetyga.com).
+
+Guidelines:
+- Speak naturally and warmly, just like an in-store brand expert chatting with a customer.
+- NEVER sound robotic. Avoid template clichés like "Thank you for reaching out", "Here are the details you requested", "As an AI model", or rigid headers.
+- Answer directly, conversationally, and accurately based ONLY on the provided store knowledge.
+- Quote prices in Indian Rupees (₹).
+- Keep replies helpful, engaging, and easy to read.`;
+
     const sarvamAnswer = await callSarvamLLM(
-      `You are the AI Shopping Concierge for ${config.identity?.brand_name || 'Blue Tyga Store'}. Answer customer questions accurately using the provided store knowledge. Keep tone polite and helpful.`,
+      naturalPrompt,
       user_message,
       citations.map(c => c.chunk_text).join('\n\n')
     );
@@ -281,9 +290,9 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     if (sarvamAnswer) {
       responseText = sarvamAnswer;
     } else if (citations.length > 0) {
-      responseText = `${citations[0].chunk_text}\n\nIs there anything specific I can help you with regarding Blue Tyga policies or orders?`;
+      responseText = `${citations[0].chunk_text}\n\nLet me know if you'd like more details on any of our items or sizing!`;
     } else {
-      responseText = 'Blue Tyga standard delivery takes **3 to 9 working days** across India with same-day dispatch for orders placed before 2:00 PM. Returns & exchanges can be initiated within **7 days** through the official portal for unused items with intact tags.';
+      responseText = 'We deliver across India in **3 to 9 working days** with same-day dispatch for orders placed before 2:00 PM. If you need to exchange an item, you can do so within **7 days** through our portal for unworn pieces with tags intact!';
     }
   } else if (detectedIntent === 'HUMAN_HANDOFF') {
     planningSteps.push('4. Initiating human support escalation.');
@@ -294,22 +303,30 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
       agent_id,
       conversation_id: conversation.id
     });
-    responseText = "I've connected your conversation to our customer care team (+91 63817 49310 / contact@bluetyga.com). A support specialist will assist you shortly.";
+    responseText = "I've let our team know! A support specialist from Blue Tyga will connect with you right here shortly. You can also reach us directly at **+91 63817 49310** or **contact@bluetyga.com**.";
   } else {
     // General freeform conversation or question -> Sarvam AI / Citations
     planningSteps.push('4. Calling Sarvam AI conversational model.');
+    const naturalPrompt = `You are a friendly, helpful human shopping specialist for Blue Tyga (bluetyga.com) — an engineered techwear brand with UPF 50+ UV protection and performance wear.
+
+Guidelines:
+- Speak naturally, warmly, and conversationally.
+- Never use robotic fillers like "Thank you for contacting", "Here is the information", or rigid bullet dumps.
+- Always use the provided store knowledge to give accurate, friendly advice with prices in ₹.
+- Be concise, clear, and proactive.`;
+
     const sarvamAnswer = await callSarvamLLM(
-      `You are the official AI Assistant for ${config.identity?.brand_name || 'Blue Tyga Store'}. ${config.instructions?.system_prompt || 'Help shoppers with store inquiries, orders, and products.'}`,
+      naturalPrompt,
       user_message,
-      citations.length > 0 ? citations.map(c => c.chunk_text).join('\n\n') : 'Store offers UPF 50+ Sunscreen Jackets, No-Sweat Tech Tees, and 4-Way Stretch Joggers.'
+      citations.length > 0 ? citations.map(c => c.chunk_text).join('\n\n') : 'Blue Tyga offers UPF 50+ Sunscreen Jackets, No-Sweat Tech Tees, and 4-Way Stretch Cargo Joggers.'
     );
 
     if (sarvamAnswer) {
       responseText = sarvamAnswer;
     } else if (citations.length > 0) {
-      responseText = citations[0].chunk_text + '\n\nIs there anything specific I can help you find today?';
+      responseText = citations[0].chunk_text + '\n\nLet me know if you would like me to help you pick the right size or style!';
     } else {
-      responseText = config.identity?.greeting || "Hi! I'm your Blue Tyga AI Shopping Concierge, how can I assist you today?";
+      responseText = config.identity?.greeting || "Hey there! I'm your Blue Tyga shopping concierge. Looking for our UPF 50+ Sunscreen Jackets, No-Sweat Tees, or have a question about an order?";
     }
   }
 
