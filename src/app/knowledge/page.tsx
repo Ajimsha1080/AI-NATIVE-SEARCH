@@ -908,43 +908,25 @@ export default function KnowledgeWorkspacePage() {
         )}
 
         {/* ========================================================================= */}
-        {/* TEST CHAT MODAL */}
+        {/* TEST CHAT MODAL (Authentic Storefront Widget Size & Style) */}
         {/* ========================================================================= */}
         {showRagTestModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-            <div className="bg-white text-zinc-900 rounded-3xl w-full max-w-2xl h-[650px] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-zinc-200">
-              <div className="px-5 py-3.5 flex items-center justify-between border-b border-zinc-200 bg-zinc-50/80">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs">
-                    <MessageSquare className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-bold text-zinc-900 tracking-tight">Test AI Assistant</h2>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        LIVE RAG ACTIVE
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-zinc-500">Test live questions on policies, returns, sizing, and products</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setShowRagTestModal(false)}
-                  className="p-1.5 rounded-full hover:bg-zinc-200 text-zinc-400 hover:text-zinc-700 transition"
-                  title="Close test chat"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-hidden p-3 bg-zinc-50/50">
-                <ChatBox 
-                  agentId="agent_shopmate_01"
-                  agentName="Blue Tyga AI Concierge"
-                  initialMessage="Hello! I am your Blue Tyga AI store concierge. Ask me anything about store policies, shipping timelines, returns, or browse our active catalog."
-                />
-              </div>
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150"
+            onClick={() => setShowRagTestModal(false)}
+          >
+            <div 
+              className="w-full max-w-[400px] h-[600px] max-h-[92vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ChatBox 
+                agentId="agent_shopmate_01"
+                agentName="ShopMate Concierge"
+                brandTitle="Blue Tyga"
+                subtitle="We usually reply in a few seconds"
+                initialMessage="Hello! 👋 I'm ShopMate, your AI shopping concierge for Blue Tyga. How can I help you today?"
+                onClose={() => setShowRagTestModal(false)}
+              />
             </div>
           </div>
         )}

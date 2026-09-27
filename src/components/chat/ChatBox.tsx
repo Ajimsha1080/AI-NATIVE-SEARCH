@@ -4,16 +4,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, Bot, User, ShoppingBag, Truck, CheckCircle2, RotateCcw, 
   Check, ArrowRight, ExternalLink, RefreshCw, Image as ImageIcon,
-  X, ZoomIn, ZoomOut, Maximize2, Download, Eye, Sparkles
+  X, ZoomIn, ZoomOut, Maximize2, Download, Eye, Sparkles, MessageSquare
 } from 'lucide-react';
 import { getThemePreset, ThemePreset } from '@/lib/theme-presets';
 
 interface ChatBoxProps {
   agentId: string;
   agentName?: string;
+  brandTitle?: string;
+  subtitle?: string;
   initialMessage?: string;
   primaryColor?: string;
   themePreset?: string;
+  showBranding?: boolean;
+  onClose?: () => void;
   externalTrigger?: { text: string; timestamp: number } | null;
   onTraceUpdate?: (trace: any) => void;
   [key: string]: any;
@@ -28,10 +32,14 @@ interface ImageModalState {
 
 export default function ChatBox({
   agentId,
-  agentName = 'Blue Tyga AI Concierge',
-  initialMessage = 'Hello! I am your Blue Tyga AI store concierge. I can query live catalog inventory, track shipments, check return policies, and assist with checkout.',
+  agentName = 'ShopMate Concierge',
+  brandTitle = 'Blue Tyga',
+  subtitle = 'We usually reply in a few seconds',
+  initialMessage = "Hello! 👋 I'm ShopMate, your AI shopping concierge for Blue Tyga. How can I help you today?",
   primaryColor = '#ec4899',
   themePreset = 'mint_breeze',
+  showBranding = true,
+  onClose,
   externalTrigger,
   onTraceUpdate
 }: ChatBoxProps) {
@@ -53,10 +61,13 @@ export default function ChatBox({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Live Theme & Color Sync
+  // Live Theme & Appearance State
   const [activeThemePresetId, setActiveThemePresetId] = useState<string>(themePreset || 'mint_breeze');
   const [activePrimaryColor, setActivePrimaryColor] = useState<string>(primaryColor || '#ec4899');
-  const [activeBrandName, setActiveBrandName] = useState<string>(agentName);
+  const [activeBrandTitle, setActiveBrandTitle] = useState<string>(brandTitle || 'Blue Tyga');
+  const [activeAssistantName, setActiveAssistantName] = useState<string>(agentName || 'ShopMate Concierge');
+  const [activeSubtitle, setActiveSubtitle] = useState<string>(subtitle || 'We usually reply in a few seconds');
+  const [activeShowBranding, setActiveShowBranding] = useState<boolean>(showBranding);
   const [activeStarterQuestions, setActiveStarterQuestions] = useState<string[]>([
     'Show UPF 50+ Sunscreen Jackets',
     'Track order #10482',
@@ -79,9 +90,15 @@ export default function ChatBox({
                 return prev;
               });
             }
-            if (cfg.identity?.name) setActiveBrandName(cfg.identity.name);
+            if (cfg.identity?.brand_name) setActiveBrandTitle(cfg.identity.brand_name);
+            else if (cfg.identity?.name) setActiveBrandTitle(cfg.identity.name);
+
+            if (cfg.identity?.name) setActiveAssistantName(cfg.identity.name);
+            if (cfg.identity?.description) setActiveSubtitle(cfg.identity.description);
+
             if (cfg.appearance?.theme_preset) setActiveThemePresetId(cfg.appearance.theme_preset);
             if (cfg.appearance?.primary_color) setActivePrimaryColor(cfg.appearance.primary_color);
+            if (cfg.appearance?.show_branding !== undefined) setActiveShowBranding(cfg.appearance.show_branding);
             if (cfg.starter_questions && Array.isArray(cfg.starter_questions) && cfg.starter_questions.length > 0) {
               setActiveStarterQuestions(cfg.starter_questions);
             }
@@ -119,15 +136,15 @@ export default function ChatBox({
     const currentImage = imageToSend !== undefined ? imageToSend : attachedImage;
     if ((!text.trim() && !currentImage) || loading) return;
 
-    const userMsg = {
-      id: 'msg_' + Math.random().toString(36).substring(2, 9),
+    const userMessage = {
+      id: 'msg_u_' + Date.now(),
       role: 'user',
-      content: text || 'Uploaded an image query',
-      imageUrl: currentImage || undefined,
+      content: text.trim() || 'Visual Product Search',
+      imageUrl: currentImage,
       createdAt: new Date().toISOString()
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages(prev => [...prev, userMessage]);
     if (!textToSend) setInput('');
     setAttachedImage(null);
     setLoading(true);
@@ -137,61 +154,40 @@ export default function ChatBox({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: text + (currentImage ? ` [Attached Image: ${currentImage}]` : ''),
-          imageUrl: currentImage || undefined,
-          conversationId: conversationId || undefined,
-          channel: 'playground'
+          message: text.trim(),
+          conversationId,
+          imageUrl: currentImage,
+          channel: 'web_widget'
         })
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to get agent response');
+      if (!res.ok) throw new Error(data.error || 'Failed to get response');
+
+      if (data.conversationId) {
+        setConversationId(data.conversationId);
       }
 
-      const conversationIdVal = data.conversationId || data.conversation_id;
-      if (conversationIdVal && !conversationId) {
-        setConversationId(conversationIdVal);
-      }
-
-      if (data.trace && onTraceUpdate) {
+      if (onTraceUpdate && data.trace) {
         onTraceUpdate(data.trace);
       }
 
-      const rawProducts = data.interactive_payload?.type === 'PRODUCTS'
-        ? data.interactive_payload.data
-        : data.metadata?.products;
-
-      const products = Array.isArray(rawProducts) ? rawProducts.map((p: any) => ({
-        ...p,
-        imageUrl: p.imageUrl || p.images?.[0] || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-        images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : [])
-      })) : undefined;
-
-      const order = data.interactive_payload?.type === 'ORDER'
-        ? data.interactive_payload.data
-        : data.metadata?.order;
-
-      const botMsg = {
-        id: data.message_id || data.message?.id || 'msg_' + Math.random().toString(36).substring(2, 9),
+      const botMessage = {
+        id: 'msg_a_' + Date.now(),
         role: 'assistant',
-        content: data.response || data.message?.content || '',
-        createdAt: new Date().toISOString(),
-        metadata: {
-          ...data.metadata,
-          products,
-          order
-        }
+        content: data.response || "I'm ready to assist! Let me search our active catalog.",
+        metadata: data.interactive_payload || data.metadata || (data.matchedProducts ? { products: data.matchedProducts } : undefined),
+        createdAt: new Date().toISOString()
       };
 
-      setMessages((prev) => [...prev, botMsg]);
+      setMessages(prev => [...prev, botMessage]);
     } catch (err: any) {
-      setMessages((prev) => [
+      setMessages(prev => [
         ...prev,
         {
-          id: 'msg_err_' + Math.random().toString(36).substring(2, 9),
+          id: 'msg_err_' + Date.now(),
           role: 'assistant',
-          content: `Error: ${err.message || 'Execution failed'}`,
+          content: "I'm experiencing a brief network lag. You can retry your question or choose one of the suggested prompts below.",
           createdAt: new Date().toISOString()
         }
       ]);
@@ -204,6 +200,17 @@ export default function ChatBox({
     setAddedItem(itemTitle);
     handleSend(`Add ${itemTitle} to my cart`);
     setTimeout(() => setAddedItem(null), 3000);
+  };
+
+  const handleResetChat = () => {
+    setMessages([{
+      id: 'msg_init',
+      role: 'assistant',
+      content: initialMessage,
+      createdAt: new Date().toISOString()
+    }]);
+    setConversationId(null);
+    setAttachedImage(null);
   };
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -265,80 +272,75 @@ export default function ChatBox({
 
   return (
     <div 
-      className="flex flex-col h-full rounded-2xl border overflow-hidden font-sans relative shadow-xs transition-colors duration-200"
+      className="flex flex-col h-full rounded-3xl border overflow-hidden font-sans relative shadow-xl transition-colors duration-200"
       style={{ 
         borderColor: activePreset.borderHex,
         backgroundColor: activePreset.cardBgHex 
       }}
     >
-      {/* Header */}
+      {/* Widget Header - Exact match to Deploy Preview */}
       <div 
-        className="px-4 py-3 border-b flex items-center justify-between transition-colors duration-200"
+        className="p-5 pb-4 border-b relative transition-colors duration-200 shrink-0"
         style={{ 
           backgroundColor: activePreset.headerBgHex, 
           borderColor: activePreset.borderHex 
         }}
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between mb-2">
+          {/* Brand Pill Badge */}
           <div 
-            className="w-7 h-7 rounded-lg text-white flex items-center justify-center text-xs font-mono shadow-2xs"
-            style={{ backgroundColor: activePrimaryColor || activePreset.primaryColor }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold shadow-2xs border"
+            style={{
+              backgroundColor: activePreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
+              borderColor: activePreset.borderHex || '#e4e4e7',
+              color: activePreset.themeMode === 'dark' ? '#ffffff' : '#18181b'
+            }}
           >
-            <Bot className="w-4 h-4 text-white" />
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: activePrimaryColor }} />
+            <span>{activeAssistantName || 'ShopMate Concierge'}</span>
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h3 
-                className="text-xs font-bold truncate max-w-[200px]"
-                style={{ color: activePreset.headerTextColor || (activePreset.themeMode === 'dark' ? '#ffffff' : '#0f172a') }}
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleResetChat}
+              title="Reset conversation"
+              className="p-1 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/5 transition cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+            {onClose && (
+              <button 
+                type="button"
+                onClick={onClose}
+                title="Close chat"
+                className="p-1 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-black/5 transition cursor-pointer"
               >
-                {activeBrandName || agentName}
-              </h3>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            </div>
-            <p className="text-[10px] text-zinc-500 font-mono">Real-Time Commerce Concierge • Live Verified</p>
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => {
-              setMessages([{
-                id: 'msg_init',
-                role: 'assistant',
-                content: initialMessage,
-                createdAt: new Date().toISOString()
-              }]);
-              setConversationId(null);
-              setAttachedImage(null);
-            }}
-            style={{ borderColor: activePreset.borderHex }}
-            className="text-[11px] text-zinc-700 hover:text-zinc-950 px-2.5 py-1 rounded-lg bg-white/80 hover:bg-white border transition flex items-center gap-1 font-semibold shadow-2xs"
-            title="Reset conversation session"
-          >
-            <RefreshCw className="w-3 h-3" /> Reset
-          </button>
-        </div>
+        {/* Title & Subtitle */}
+        <h2 className="text-xl font-bold tracking-tight" style={{ color: activePrimaryColor }}>
+          {activeBrandTitle}
+        </h2>
+        <p className={`text-xs mt-0.5 ${activePreset.themeMode === 'dark' ? 'text-slate-400' : 'text-zinc-500'}`}>
+          {activeSubtitle}
+        </p>
       </div>
 
-      {/* Message Transcript */}
+      {/* Message Transcript Thread */}
       <div 
-        className="flex-1 overflow-y-auto p-4 space-y-3.5 transition-colors duration-200"
+        className="flex-1 overflow-y-auto p-4 space-y-3 transition-colors duration-200"
         style={{ backgroundColor: activePreset.cardBgHex }}
       >
-
         {messages.map((m) => (
           <div
             key={m.id}
-            className={`flex items-start gap-2.5 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+            className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-mono text-[10px] text-white font-bold"
-              style={m.role === 'user' ? { backgroundColor: activePrimaryColor || activePreset.primaryColor } : { backgroundColor: '#18181b' }}
-            >
-              {m.role === 'user' ? 'U' : 'AI'}
-            </div>
-
             <div className={`flex flex-col gap-1.5 max-w-[85%] ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
               {m.imageUrl && (
                 <div 
@@ -355,12 +357,22 @@ export default function ChatBox({
               )}
 
               <div
-                className={`p-3.5 rounded-2xl text-xs leading-relaxed break-words shadow-2xs ${
+                className="rounded-2xl px-4 py-3 text-xs leading-relaxed break-words shadow-2xs border"
+                style={
                   m.role === 'user'
-                    ? 'text-white rounded-tr-none'
-                    : 'bg-white border border-zinc-200 text-zinc-900 rounded-tl-none'
-                }`}
-                style={m.role === 'user' ? { backgroundColor: activePrimaryColor || activePreset.primaryColor } : {}}
+                    ? {
+                        backgroundColor: activePrimaryColor,
+                        borderColor: activePrimaryColor,
+                        color: '#ffffff',
+                        borderTopRightRadius: '4px'
+                      }
+                    : {
+                        backgroundColor: activePreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
+                        borderColor: activePreset.borderHex || '#e4e4e7',
+                        color: activePreset.themeMode === 'dark' ? '#f1f5f9' : '#18181b',
+                        borderTopLeftRadius: '4px'
+                      }
+                }
               >
                 {renderMessageContent(m.content)}
               </div>
@@ -383,19 +395,19 @@ export default function ChatBox({
                               });
                               setZoomScale(1);
                             }}
-                            className="w-16 h-16 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer relative group/img"
-                            title="Click to view full HD image"
+                            className="w-16 h-16 rounded-xl border border-zinc-200 overflow-hidden bg-zinc-50 shrink-0 cursor-pointer relative group/thumb"
+                            title="Click to view full image details"
                           >
                             <img 
                               src={imgSrc} 
-                              alt={p.title} 
+                              alt={p.title}
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80';
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
                               }}
-                              className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300" 
+                              className="w-full h-full object-cover group-hover/thumb:scale-105 transition duration-300"
                             />
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center">
-                              <Eye className="w-4 h-4 text-white" />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center">
+                              <Eye className="w-3.5 h-3.5 text-white" />
                             </div>
                           </div>
 
@@ -429,8 +441,8 @@ export default function ChatBox({
                           </button>
                           <button 
                             onClick={() => handleAddToCart(p.title)}
-                            style={{ backgroundColor: activePrimaryColor || activePreset.primaryColor }}
-                            className="flex-1 py-1 px-2.5 rounded-lg text-[11px] font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-90"
+                            style={{ backgroundColor: activePrimaryColor }}
+                            className="flex-1 py-1 px-2.5 rounded-lg text-[11px] font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-90 cursor-pointer"
                           >
                             <ShoppingBag className="w-3 h-3" /> 
                             {addedItem === p.title ? 'Added' : 'Add to Cart'}
@@ -467,37 +479,54 @@ export default function ChatBox({
         ))}
 
         {loading && (
-          <div className="flex items-center gap-2 text-xs text-zinc-600 p-2.5 font-mono bg-white rounded-xl border border-zinc-200 w-fit shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Executing tool call &amp; grounding verification...</span>
+          <div 
+            className="border rounded-2xl px-4 py-2.5 text-xs flex items-center gap-1.5 shadow-2xs w-fit"
+            style={{
+              backgroundColor: activePreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
+              borderColor: activePreset.borderHex || '#e4e4e7',
+              color: activePreset.themeMode === 'dark' ? '#94a3b8' : '#71717a'
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: activePrimaryColor }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:0.2s]" style={{ backgroundColor: activePrimaryColor }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:0.4s]" style={{ backgroundColor: activePrimaryColor }} />
+            <span className="ml-1 text-[11px] font-medium">Checking live catalog &amp; stock...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested prompts */}
-      <div 
-        className="px-3 py-2 border-t flex gap-1.5 overflow-x-auto transition-colors duration-200"
-        style={{ 
-          backgroundColor: activePreset.topBubbleBg || '#ffffff',
-          borderColor: activePreset.borderHex 
-        }}
-      >
-        {activeStarterQuestions.map((s, idx) => (
-          <button
-            key={idx}
-            onClick={() => handleSend(s)}
-            style={{ borderColor: activePreset.borderHex }}
-            className="text-[11px] whitespace-nowrap bg-white/90 hover:bg-white border text-zinc-800 px-3 py-1 rounded-full transition shrink-0 font-medium shadow-2xs hover:shadow-xs"
-          >
-            {s}
-          </button>
-        ))}
-      </div>
+      {/* Suggested Questions Section (Matching Screenshot) */}
+      {messages.length <= 2 && activeStarterQuestions.length > 0 && (
+        <div className="px-4 pb-2 space-y-1.5 shrink-0">
+          <span className={`text-[10px] font-bold uppercase tracking-wider block ${
+            activePreset.themeMode === 'dark' ? 'text-slate-400' : 'text-zinc-500'
+          }`}>
+            SUGGESTED QUESTIONS:
+          </span>
+          <div className="space-y-1.5">
+            {activeStarterQuestions.map((q, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSend(q)}
+                className="w-full text-left p-2.5 rounded-2xl border text-xs transition-all flex items-center gap-2 group shadow-2xs hover:scale-[1.01] cursor-pointer"
+                style={{
+                  backgroundColor: activePreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
+                  borderColor: activePreset.borderHex || '#e4e4e7',
+                  color: activePreset.themeMode === 'dark' ? '#f1f5f9' : '#18181b'
+                }}
+              >
+                <span style={{ color: activePrimaryColor }}>💬</span>
+                <span className="flex-1 truncate">{q}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Attached Image Preview Bar */}
       {attachedImage && (
-        <div className="px-3 py-2 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between gap-3">
+        <div className="px-3 py-2 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-lg border border-zinc-200 overflow-hidden bg-white shrink-0">
               <img src={attachedImage} alt="Preview" className="w-full h-full object-cover" />
@@ -510,15 +539,22 @@ export default function ChatBox({
           <button
             type="button"
             onClick={() => setAttachedImage(null)}
-            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200 transition"
+            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200 transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Input bar */}
-      <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="p-3 border-t border-zinc-200 bg-white flex items-center gap-2">
+      {/* Chat Input Bar */}
+      <form 
+        onSubmit={(e) => { e.preventDefault(); handleSend(); }} 
+        className="p-3 border-t flex items-center gap-2 transition-colors duration-200 shrink-0"
+        style={{
+          backgroundColor: activePreset.themeMode === 'dark' ? '#090d16' : (activePreset.cardBgHex || '#ffffff'),
+          borderColor: activePreset.borderHex || (activePreset.themeMode === 'dark' ? '#334155' : '#e4e4e7')
+        }}
+      >
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -531,11 +567,12 @@ export default function ChatBox({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           title="Attach image for visual product search"
-          className={`p-2 rounded-xl border transition shrink-0 ${
-            attachedImage 
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-300' 
-              : 'bg-zinc-50 border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
-          }`}
+          className="p-2 rounded-full border transition shrink-0 cursor-pointer shadow-2xs"
+          style={{
+            backgroundColor: attachedImage ? `${activePrimaryColor}15` : (activePreset.themeMode === 'dark' ? '#1e293b' : '#ffffff'),
+            borderColor: attachedImage ? activePrimaryColor : (activePreset.borderHex || '#e4e4e7'),
+            color: attachedImage ? activePrimaryColor : '#71717a'
+          }}
         >
           <ImageIcon className="w-4 h-4" />
         </button>
@@ -544,18 +581,38 @@ export default function ChatBox({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={attachedImage ? "Add details about this image or press send..." : "Ask about products, sizing, photos, returns, shipping..."}
-          className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition"
+          placeholder={attachedImage ? "Add details about this image or press send..." : "Type your message..."}
+          className="flex-1 px-4 py-2.5 rounded-full text-xs focus:outline-none transition border shadow-2xs"
+          style={{
+            backgroundColor: activePreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
+            borderColor: activePreset.borderHex || '#e4e4e7',
+            color: activePreset.themeMode === 'dark' ? '#ffffff' : '#18181b'
+          }}
         />
+
         <button
           type="submit"
           disabled={(!input.trim() && !attachedImage) || loading}
-          style={{ backgroundColor: activePrimaryColor || activePreset.primaryColor }}
-          className="px-4 py-2 rounded-xl text-white disabled:opacity-40 transition shrink-0 flex items-center gap-1.5 text-xs font-semibold shadow-xs hover:opacity-90"
+          className="w-9 h-9 rounded-full text-white disabled:opacity-40 transition-all shadow-xs cursor-pointer flex items-center justify-center shrink-0 hover:scale-105 active:scale-95"
+          style={{ backgroundColor: activePrimaryColor }}
         >
           <Send className="w-3.5 h-3.5" />
         </button>
       </form>
+
+      {/* Footer Branding */}
+      {activeShowBranding && (
+        <div 
+          className="py-1.5 text-center text-[11px] border-t shrink-0"
+          style={{
+            backgroundColor: activePreset.themeMode === 'dark' ? '#070e24' : (activePreset.cardBgHex || '#f4f4f5'),
+            borderColor: activePreset.borderHex || '#e4e4e7',
+            color: activePreset.themeMode === 'dark' ? '#64748b' : '#71717a'
+          }}
+        >
+          Powered by <span className="font-semibold" style={{ color: activePreset.themeMode === 'dark' ? '#94a3b8' : '#3f3f46' }}>ShopMate AI</span>
+        </div>
+      )}
 
       {/* High-Resolution Interactive Image Lightbox Modal */}
       {previewModal && (
@@ -578,7 +635,7 @@ export default function ChatBox({
                 <button
                   type="button"
                   onClick={() => setZoomScale(prev => Math.max(0.6, prev - 0.25))}
-                  className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
+                  className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 cursor-pointer"
                   title="Zoom out"
                 >
                   <ZoomOut className="w-4 h-4" />
@@ -587,7 +644,7 @@ export default function ChatBox({
                 <button
                   type="button"
                   onClick={() => setZoomScale(prev => Math.min(2.5, prev + 0.25))}
-                  className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
+                  className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 cursor-pointer"
                   title="Zoom in"
                 >
                   <ZoomIn className="w-4 h-4" />
@@ -604,7 +661,7 @@ export default function ChatBox({
                 <button
                   type="button"
                   onClick={() => { setPreviewModal(null); setZoomScale(1); }}
-                  className="p-1.5 rounded-full text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+                  className="p-1.5 rounded-full text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -635,7 +692,7 @@ export default function ChatBox({
                     handleAddToCart(previewModal.title!);
                     setPreviewModal(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-[#18181b] text-white hover:bg-[#27272a] text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-[#18181b] text-white hover:bg-[#27272a] text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs cursor-pointer"
                 >
                   <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart
                 </button>

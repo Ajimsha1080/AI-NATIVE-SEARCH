@@ -126,11 +126,13 @@ export default function AgentDeployPage({ params }: { params: Promise<{ id: stri
         if (agentRes.agent?.name) setAssistantName(agentRes.agent.name);
         if (agentRes.config?.identity?.name) setAssistantName(agentRes.config.identity.name);
         if (agentRes.config?.identity?.brand_name) setHeaderTitle(agentRes.config.identity.brand_name);
+        if (agentRes.config?.identity?.description) setHeaderSubtitle(agentRes.config.identity.description);
         if (agentRes.config?.identity?.greeting) setGreetingMessage(agentRes.config.identity.greeting);
         if (agentRes.config?.starter_questions && Array.isArray(agentRes.config.starter_questions) && agentRes.config.starter_questions.length > 0) {
           setStarterQuestions(agentRes.config.starter_questions);
         }
         if (agentRes.config?.appearance?.primary_color) setPrimaryColor(agentRes.config.appearance.primary_color);
+        if (agentRes.config?.appearance?.show_branding !== undefined) setShowBranding(agentRes.config.appearance.show_branding);
       }
     } catch (err) {
       console.error(err);
@@ -229,6 +231,7 @@ export default function App() {
             identity: {
               name: assistantName,
               brand_name: headerTitle,
+              description: headerSubtitle,
               greeting: greetingMessage
             },
             appearance: {

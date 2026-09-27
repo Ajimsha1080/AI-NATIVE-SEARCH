@@ -487,6 +487,7 @@ export default function App() {
             identity: {
               name: assistantName,
               brand_name: headerTitle,
+              description: headerSubtitle,
               greeting: greetingMessage
             },
             appearance: {
