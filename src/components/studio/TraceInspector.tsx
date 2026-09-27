@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { 
   Terminal, Zap, CheckCircle2, AlertTriangle, Layers, 
   Code, Clock, Cpu, ArrowRight, ShieldCheck, ChevronDown, 
-  ChevronUp, Copy, Check 
+  ChevronUp, Copy, Check, Sparkles 
 } from 'lucide-react';
 
 export default function TraceInspector({ trace, onSelectPrompt }: { trace: any; onSelectPrompt?: (prompt: string) => void }) {
