@@ -222,10 +222,25 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
       if (requestedSize) {
         responseText += '✅ Verified: Size **' + requestedSize + '** is in stock and ready to ship.';
       }
-    } else if (citations.length > 0) {
-      responseText = `${citations[0].chunk_text}\n\nWould you like to explore any specific size or color?`;
     } else {
-      responseText = "I couldn't find any products in our catalog matching those exact criteria. Would you like to explore our other categories or speak with a support specialist?";
+      // Unrestricted conversational answer for open styling, recommendations, and search
+      const naturalPrompt = `You are a friendly, super-smart human shopping specialist at Blue Tyga (bluetyga.com).
+Answer the user's question naturally, helpfully, and conversationally without any artificial refusal or restriction.
+If recommending items, reference Blue Tyga techwear (UPF 50+ Sunscreen Jackets from ₹999, No-Sweat Tech Tees at ₹799, Tactical Cargo Joggers from ₹1,499).`;
+
+      const sarvamAnswer = await callSarvamLLM(
+        naturalPrompt,
+        user_message,
+        citations.length > 0 ? citations.map(c => c.chunk_text).join('\n\n') : 'Blue Tyga offers UPF 50+ Sunscreen Jackets, No-Sweat Tech Tees, and 4-Way Stretch Cargo Joggers.'
+      );
+
+      if (sarvamAnswer) {
+        responseText = sarvamAnswer;
+      } else if (citations.length > 0) {
+        responseText = `${citations[0].chunk_text}\n\nLet me know if you would like me to help you pick the right size or style!`;
+      } else {
+        responseText = "I'd love to help you find the perfect piece! We specialize in UPF 50+ Sunscreen Jackets, No-Sweat Tech Tees, and all-day commuter joggers. What style or fit are you looking for?";
+      }
     }
   } else if (detectedIntent === 'ORDER_TRACKING') {
     planningSteps.push('3. Extracting order identifier and customer email from input.');
@@ -271,15 +286,14 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     planningSteps.push('4. Synthesizing response using verified knowledge citations.');
     planningSteps.push(`5. Grounding verification: ${Math.round(ragResult.grounding_verification.confidence_score * 100)}% factual confidence.`);
     
-    // Call Sarvam AI with verified citations and natural persona
-    const naturalPrompt = `You are a friendly, knowledgeable human shopping specialist at Blue Tyga (bluetyga.com).
+    // Call Sarvam AI with zero artificial restrictions
+    const naturalPrompt = `You are a helpful, friendly, and super-smart human shopping concierge and technical apparel specialist for Blue Tyga (bluetyga.com).
 
-Guidelines:
-- Speak naturally and warmly, just like an in-store brand expert chatting with a customer.
-- NEVER sound robotic. Avoid template clichés like "Thank you for reaching out", "Here are the details you requested", "As an AI model", or rigid headers.
-- Answer directly, conversationally, and accurately based ONLY on the provided store knowledge.
-- Quote prices in Indian Rupees (₹).
-- Keep replies helpful, engaging, and easy to read.`;
+Core Capabilities:
+- Answer ANY question the user asks naturally, intelligently, and helpfully.
+- When questions relate to Blue Tyga policies, shipping, returns, pricing, or products, use the provided store knowledge as your factual guide (prices in ₹).
+- For general questions (styling, weather suitability, UV protection science, fabric care, travel tips), answer freely with your deep general knowledge.
+- Speak naturally and warmly like a real in-store expert. Never use robotic templates, disclaimers, or refusals.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,
@@ -307,13 +321,13 @@ Guidelines:
   } else {
     // General freeform conversation or question -> Sarvam AI / Citations
     planningSteps.push('4. Calling Sarvam AI conversational model.');
-    const naturalPrompt = `You are a friendly, helpful human shopping specialist for Blue Tyga (bluetyga.com) — an engineered techwear brand with UPF 50+ UV protection and performance wear.
+    const naturalPrompt = `You are a helpful, friendly, and super-smart human shopping concierge and technical apparel specialist for Blue Tyga (bluetyga.com).
 
-Guidelines:
-- Speak naturally, warmly, and conversationally.
-- Never use robotic fillers like "Thank you for contacting", "Here is the information", or rigid bullet dumps.
-- Always use the provided store knowledge to give accurate, friendly advice with prices in ₹.
-- Be concise, clear, and proactive.`;
+Core Capabilities:
+- Answer ANY question the user asks naturally, intelligently, and helpfully.
+- When questions relate to Blue Tyga policies, shipping, returns, pricing, or products, use the provided store knowledge as your factual guide (prices in ₹).
+- For general questions (styling, weather suitability, UV protection science, fabric care, travel tips, open inquiries), answer freely with your deep general knowledge.
+- Speak naturally and warmly like a real in-store expert. Never use robotic templates, disclaimers, or refusals.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,

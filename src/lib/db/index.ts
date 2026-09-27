@@ -92,8 +92,7 @@ class DatabaseEngine {
         const parsed = JSON.parse(raw);
         parsed.usage_events = parsed.usage_events || [];
         parsed.processed_webhook_events = parsed.processed_webhook_events || [];
-        // If the database has authentic Blue Tyga catalog and clean conversations, return it
-        if (parsed.commerce_products && parsed.commerce_products.length === 8 && parsed.conversations && parsed.conversations.length <= 10) {
+        if (parsed.agents && parsed.agents.length > 0 && parsed.commerce_products && parsed.commerce_products.length > 0) {
           return parsed;
         }
       }
