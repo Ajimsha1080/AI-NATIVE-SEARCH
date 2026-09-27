@@ -89,27 +89,6 @@ export default function ApiKeysWorkspacePage() {
               </p>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1.5 border-b border-zinc-200 pb-2 overflow-x-auto">
-              <Link href="/settings" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                General
-              </Link>
-              <Link href="/billing" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Billing &amp; Quotas
-              </Link>
-              <Link href="/api-keys" className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white text-zinc-900 border border-zinc-300 shadow-2xs whitespace-nowrap">
-                API Keys
-              </Link>
-              <Link href="/team" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Team Members
-              </Link>
-              <Link href="/security" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Security &amp; RBAC
-              </Link>
-              <Link href="/settings/audit-logs" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Audit Logs
-              </Link>
-            </div>
 
             {/* Created Key Banner */}
             {createdSecret && (

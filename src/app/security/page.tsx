@@ -184,27 +184,6 @@ export default function SecuritySettingsPage() {
               </div>
             )}
 
-            {/* Navigation Tabs */}
-            <div className="flex gap-1.5 border-b border-zinc-200 pb-2 overflow-x-auto">
-              <Link href="/settings" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                General
-              </Link>
-              <Link href="/billing" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Billing &amp; Quotas
-              </Link>
-              <Link href="/api-keys" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                API Keys
-              </Link>
-              <Link href="/team" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Team Members
-              </Link>
-              <Link href="/security" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-white text-zinc-900 border border-zinc-300 shadow-2xs whitespace-nowrap">
-                Security &amp; RBAC
-              </Link>
-              <Link href="/settings/audit-logs" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Audit Logs
-              </Link>
-            </div>
 
             {/* Tenant Isolation Status Box */}
             <div className="p-6 rounded-3xl bg-white border border-zinc-200 space-y-3.5 shadow-xs">
