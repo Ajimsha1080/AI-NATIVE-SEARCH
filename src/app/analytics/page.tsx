@@ -46,24 +46,19 @@ export default function AnalyticsWorkspacePage() {
     return () => clearInterval(interval);
   }, [liveSync]);
 
-  const topTools = data?.top_tools || [
-    { name: 'Product Search (Catalog match)', calls: 8, pct: 44 },
-    { name: 'Inventory Stock Verification', calls: 5, pct: 28 },
-    { name: 'Live Courier Tracking', calls: 3, pct: 17 },
-    { name: 'Store Policy & Returns RAG', calls: 2, pct: 11 }
-  ];
+  const topTools = data?.top_tools || [];
 
   const dailyTrends = data?.daily_trends || [
-    { day: 'Mon', ai: 2, human: 0, total: 2 },
-    { day: 'Tue', ai: 3, human: 1, total: 4 },
-    { day: 'Wed', ai: 4, human: 0, total: 4 },
-    { day: 'Thu', ai: 5, human: 0, total: 5 },
-    { day: 'Fri', ai: 6, human: 1, total: 7 },
-    { day: 'Sat', ai: 7, human: 0, total: 7 },
-    { day: 'Sun', ai: 8, human: 0, total: 8 }
+    { day: 'Mon', ai: 0, human: 0, total: 0 },
+    { day: 'Tue', ai: 0, human: 0, total: 0 },
+    { day: 'Wed', ai: 0, human: 0, total: 0 },
+    { day: 'Thu', ai: 0, human: 0, total: 0 },
+    { day: 'Fri', ai: 0, human: 0, total: 0 },
+    { day: 'Sat', ai: 0, human: 0, total: 0 },
+    { day: 'Sun', ai: 0, human: 0, total: 0 }
   ];
 
-  const maxDaily = Math.max(...dailyTrends.map((d: any) => d.total || 1), 10);
+  const maxDaily = Math.max(...dailyTrends.map((d: any) => d.total || 0), 5);
 
   return (
     <div className="flex h-screen bg-[#f4f5f7] text-zinc-900 font-sans selection:bg-indigo-100 selection:text-indigo-900 antialiased">
@@ -142,10 +137,10 @@ export default function AnalyticsWorkspacePage() {
                   <span className="text-emerald-600 font-bold text-base font-mono">₹</span>
                 </div>
                 <div className="text-2xl font-bold text-zinc-900">
-                  ₹{Number(data?.revenueInfluenced || 5397).toLocaleString('en-IN')}
+                  ₹{Number(data?.revenueInfluenced ?? 0).toLocaleString('en-IN')}
                 </div>
                 <p className="text-[11px] text-emerald-600 flex items-center gap-1 font-semibold font-sans">
-                  <ArrowUpRight className="w-3 h-3" /> +28.4% vs last period
+                  <ArrowUpRight className="w-3 h-3" /> Live Store Orders ({data?.ordersCount ?? 0})
                 </p>
               </div>
 
@@ -168,10 +163,10 @@ export default function AnalyticsWorkspacePage() {
                   <MessageSquare className="w-4 h-4 text-indigo-600" />
                 </div>
                 <div className="text-2xl font-bold text-zinc-900">
-                  {data?.totalConversations || 8}
+                  {data?.totalConversations ?? 0}
                 </div>
                 <p className="text-[11px] text-emerald-600 flex items-center gap-1 font-semibold font-sans">
-                  <ArrowUpRight className="w-3 h-3" /> +14.2% live growth
+                  <ArrowUpRight className="w-3 h-3" /> {data?.totalMessages ?? 0} messages handled
                 </p>
               </div>
 
@@ -181,10 +176,10 @@ export default function AnalyticsWorkspacePage() {
                   <Zap className="w-4 h-4 text-amber-500" />
                 </div>
                 <div className="text-2xl font-bold text-zinc-900">
-                  {data?.avgLatencyMs || 240} <span className="text-xs font-normal text-zinc-500 font-sans">ms</span>
+                  {data?.avgLatencyMs ?? 0} <span className="text-xs font-normal text-zinc-500 font-sans">ms</span>
                 </div>
                 <p className="text-[11px] text-zinc-500 font-sans">
-                  98.2% Tool Execution Accuracy
+                  Real-time tool execution
                 </p>
               </div>
             </div>
