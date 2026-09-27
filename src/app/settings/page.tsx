@@ -145,26 +145,6 @@ export default function SettingsWorkspacePage() {
               </div>
             </form>
 
-            {/* SuperAdmin Quick Access Card */}
-            <div className="bg-white border border-zinc-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-zinc-700" />
-                  <h3 className="text-xs font-bold text-zinc-900">SuperAdmin Platform Control</h3>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 font-semibold">ROOT ACCESS</span>
-                </div>
-                <p className="text-xs text-zinc-500">
-                  Manage multi-tenant organizations, vector index health, background cron runners, and platform metrics.
-                </p>
-              </div>
-              <Link
-                href="/admin"
-                className="shrink-0 px-4 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-xs font-semibold transition border border-zinc-200 flex items-center gap-2"
-              >
-                <span>Open SuperAdmin</span>
-                <span className="font-mono text-zinc-500">&rarr;</span>
-              </Link>
-            </div>
           </div>
         </div>
       </div>
