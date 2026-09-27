@@ -128,13 +128,27 @@ export async function executeRAGPipeline(
     };
   }
 
+  const queryWords = question.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
   const queryEmbedding = generateEmbedding(question);
-  const scored = tenantChunks.map(c => ({
-    chunk: c,
-    score: cosineSimilarity(queryEmbedding, c.embedding || generateEmbedding(c.content))
-  })).sort((a, b) => b.score - a.score);
 
-  const topHits = scored.slice(0, topK);
+  const scored = tenantChunks.map(c => {
+    const contentLower = c.content.toLowerCase();
+    let keywordHits = 0;
+    for (const w of queryWords) {
+      if (contentLower.includes(w)) {
+        keywordHits += 1;
+      }
+    }
+    const denseScore = cosineSimilarity(queryEmbedding, c.embedding || generateEmbedding(c.content));
+    const sparseScore = queryWords.length > 0 ? (keywordHits / queryWords.length) : 0;
+    const combinedScore = (denseScore * 0.4) + (sparseScore * 0.6);
+    return {
+      chunk: c,
+      score: combinedScore
+    };
+  }).sort((a, b) => b.score - a.score);
+
+  const topHits = scored.slice(0, Math.max(topK, 5));
   const citations = topHits.map(h => ({
     document_name: h.chunk.metadata?.source_name || "Store Policy Document",
     chunk_text: h.chunk.content,

@@ -116,15 +116,15 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
 
   // Phase A: Intent Detection
   let detectedIntent = 'GENERAL_QUERY';
-  if (/human|agent|support|representative|talk to someone|live operator/i.test(user_message)) {
+  if (/talk to (?:a |an )?(?:human|agent|representative|person|operator)|speak (?:with|to) (?:a )?(?:human|person|representative)|connect me to support/i.test(user_message)) {
     detectedIntent = 'HUMAN_HANDOFF';
-  } else if (/return|refund|exchange|warranty|policy|shipping policy|how to return/i.test(user_message)) {
+  } else if (/return|refund|exchange|warranty|policy|shipping policy|shipping time|delivery time|how many days|when will it arrive|shipping cost|who are you|about|contact|phone|email|address|location|headquarters|support/i.test(user_message)) {
     detectedIntent = 'RETURN_OR_POLICY_INQUIRY';
-  } else if (/order|tracking|track|#10|package|delivery|where is my/i.test(user_message)) {
+  } else if (/(?:track(?:ing)?\s+(?:my\s+)?order|where\s+is\s+my\s+order|status\s+of\s+order|order\s+status|#\d{4,6})/i.test(user_message)) {
     detectedIntent = 'ORDER_TRACKING';
   } else if (/cart|add to cart|checkout|bag/i.test(user_message)) {
     detectedIntent = 'CART_ACTION';
-  } else if (/find|search|show|look for|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|price|under|buy|recommend/i.test(user_message)) {
+  } else if (/find|search|show|look for|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|price|cost|how much|under|buy|recommend/i.test(user_message)) {
     detectedIntent = 'PRODUCT_SEARCH';
   }
 
@@ -155,19 +155,19 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     planningSteps.push('3. Parsing search constraints (category, budget, size, color).');
 
     let maxPrice: number | undefined;
-    const priceMatch = user_message.match(/(?:under|below|less than|max)\s*\$?(\d+)/i);
+    const priceMatch = user_message.match(/(?:under|below|less than|max)\s*(?:₹|\$)?\s*(\d+)/i);
     if (priceMatch) {
       maxPrice = parseFloat(priceMatch[1]);
     }
 
     let requestedSize: string | undefined;
-    const sizeMatch = user_message.match(/size\s*(\d+|s|m|l|xl)/i);
+    const sizeMatch = user_message.match(/size\s*(\d+|s|m|l|xl|xxl)/i);
     if (sizeMatch) {
       requestedSize = sizeMatch[1].toUpperCase();
     }
 
     let color: string | undefined;
-    const colorMatch = user_message.match(/\b(black|white|red|blue|grey|silver)\b/i);
+    const colorMatch = user_message.match(/\b(black|white|red|blue|grey|silver|olive)\b/i);
     if (colorMatch) {
       color = colorMatch[1];
     }
@@ -217,49 +217,55 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
 
       responseText = 'I found **' + searchRes.data.length + '** matching product(s) for your request:\n\n';
       searchRes.data.slice(0, 3).forEach((p: any) => {
-        responseText += '• **' + p.title + '** — **$' + p.price.toFixed(2) + '** (' + p.category + ')\n  ' + p.description + '\n\n';
+        responseText += '• **' + p.title + '** — **₹' + p.price.toLocaleString('en-IN') + '** (' + p.category + ')\n  ' + p.description + '\n\n';
       });
       if (requestedSize) {
         responseText += '✅ Verified: Size **' + requestedSize + '** is in stock and ready to ship.';
       }
+    } else if (citations.length > 0) {
+      responseText = `${citations[0].chunk_text}\n\nWould you like to explore any specific size or color?`;
     } else {
       responseText = "I couldn't find any products in our catalog matching those exact criteria. Would you like to explore our other categories or speak with a support specialist?";
     }
   } else if (detectedIntent === 'ORDER_TRACKING') {
     planningSteps.push('3. Extracting order identifier and customer email from input.');
-    const orderMatch = user_message.match(/(?:#?|ord_)(\d{5})/i) || user_message.match(/#(\w+)/);
-    const orderNum = orderMatch ? (orderMatch[0].startsWith('#') ? orderMatch[0] : '#' + orderMatch[1]) : '#10482';
-    const emailMatch = user_message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-    const customerEmail = emailMatch ? emailMatch[1] : (params.customer_identifier?.includes('@') ? params.customer_identifier : 'sarah.sharma@gmail.com');
-
-    planningSteps.push("4. Executing tool 'order_lookup' for order '" + orderNum + "'.");
-    const orderRes = await executeTool({
-      tool_id: 'order_lookup',
-      parameters: { order_number: orderNum, customer_email: customerEmail },
-      workspace_id,
-      agent_id,
-      conversation_id: conversation.id
-    });
-
-    toolExecutions.push({
-      tool_name: 'order_lookup',
-      input: { order_number: orderNum, customer_email: customerEmail },
-      output: orderRes.data ? 'Order status: ' + orderRes.data.status : orderRes.message,
-      status: orderRes.status,
-      latency_ms: orderRes.latency_ms
-    });
-
-    if (orderRes.data) {
-      interactivePayload = orderRes.interactive_payload;
-      const order = orderRes.data;
-      responseText = 'Here is the status for your order **' + order.order_number + '**:\n\n' +
-        '• **Status**: `' + order.status + '`\n' +
-        '• **Carrier**: ' + (order.carrier || 'FedEx') + '\n' +
-        '• **Tracking Number**: `' + (order.tracking_number || 'Pending') + '`\n' +
-        '• **Items**: ' + order.items.map((i: any) => i.quantity + 'x ' + i.title).join(', ') + '\n' +
-        '• **Destination**: ' + order.shipping_address;
+    const orderMatch = user_message.match(/(?:#?|ord_)(\d{4,6})/i) || user_message.match(/#(\w+)/);
+    if (!orderMatch) {
+      responseText = "Could you please provide your **Order Number** (e.g. #10482) and the email address used for purchase so I can check your real-time tracking status?";
     } else {
-      responseText = 'I was unable to locate order **' + orderNum + '**. Please check the order number.';
+      const orderNum = orderMatch[0].startsWith('#') ? orderMatch[0] : '#' + orderMatch[1];
+      const emailMatch = user_message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+      const customerEmail = emailMatch ? emailMatch[1] : (params.customer_identifier?.includes('@') ? params.customer_identifier : 'sarah.sharma@gmail.com');
+
+      planningSteps.push("4. Executing tool 'order_lookup' for order '" + orderNum + "'.");
+      const orderRes = await executeTool({
+        tool_id: 'order_lookup',
+        parameters: { order_number: orderNum, customer_email: customerEmail },
+        workspace_id,
+        agent_id,
+        conversation_id: conversation.id
+      });
+
+      toolExecutions.push({
+        tool_name: 'order_lookup',
+        input: { order_number: orderNum, customer_email: customerEmail },
+        output: orderRes.data ? 'Order status: ' + orderRes.data.status : orderRes.message,
+        status: orderRes.status,
+        latency_ms: orderRes.latency_ms
+      });
+
+      if (orderRes.data) {
+        interactivePayload = orderRes.interactive_payload;
+        const order = orderRes.data;
+        responseText = 'Here is the status for your order **' + order.order_number + '**:\n\n' +
+          '• **Status**: `' + order.status + '`\n' +
+          '• **Carrier**: ' + (order.carrier || 'Bluedart Express') + '\n' +
+          '• **Tracking Number**: `' + (order.tracking_number || 'Pending') + '`\n' +
+          '• **Items**: ' + order.items.map((i: any) => i.quantity + 'x ' + i.title).join(', ') + '\n' +
+          '• **Destination**: ' + (order.shipping_destination || order.shipping_address || 'Customer Delivery Address');
+      } else {
+        responseText = 'I was unable to locate order **' + orderNum + '**. Please verify the order number and email address.';
+      }
     }
   } else if (detectedIntent === 'RETURN_OR_POLICY_INQUIRY') {
     planningSteps.push('4. Synthesizing response using verified knowledge citations.');
@@ -275,9 +281,9 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     if (sarvamAnswer) {
       responseText = sarvamAnswer;
     } else if (citations.length > 0) {
-      responseText = ragResult.natural_answer;
+      responseText = `${citations[0].chunk_text}\n\nIs there anything specific I can help you with regarding Blue Tyga policies or orders?`;
     } else {
-      responseText = 'Our store accepts returns within **7 days** of delivery for unworn merchandise with original tags. Express replacement is provided for defective items.';
+      responseText = 'Blue Tyga standard delivery takes **3 to 9 working days** across India with same-day dispatch for orders placed before 2:00 PM. Returns & exchanges can be initiated within **7 days** through the official portal for unused items with intact tags.';
     }
   } else if (detectedIntent === 'HUMAN_HANDOFF') {
     planningSteps.push('4. Initiating human support escalation.');
@@ -288,9 +294,9 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
       agent_id,
       conversation_id: conversation.id
     });
-    responseText = "I've connected your conversation to our customer care team. A live support specialist has been notified and will respond here shortly.";
+    responseText = "I've connected your conversation to our customer care team (+91 63817 49310 / contact@bluetyga.com). A support specialist will assist you shortly.";
   } else {
-    // General freeform conversation or question -> Sarvam AI
+    // General freeform conversation or question -> Sarvam AI / Citations
     planningSteps.push('4. Calling Sarvam AI conversational model.');
     const sarvamAnswer = await callSarvamLLM(
       `You are the official AI Assistant for ${config.identity?.brand_name || 'Blue Tyga Store'}. ${config.instructions?.system_prompt || 'Help shoppers with store inquiries, orders, and products.'}`,
