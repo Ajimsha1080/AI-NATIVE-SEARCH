@@ -262,6 +262,81 @@ const THEME_PRESETS: ThemePreset[] = [
     headerBgHex: '#fce7f3',
     borderHex: '#fbcfe8',
     description: 'Playful Japanese sakura petals with magenta buttons'
+  },
+  {
+    id: 'midnight_obsidian',
+    name: 'Midnight Obsidian',
+    primaryColor: '#eab308',
+    themeMode: 'dark',
+    canvasBg: 'bg-[#121214]',
+    topBubbleBg: 'bg-[#27272a]',
+    midBubbleBg: 'bg-[#18181b]',
+    inputBg: 'bg-[#27272a]',
+    dotColor: '#eab308',
+    cardBgHex: '#121214',
+    headerBgHex: '#18181b',
+    borderHex: '#3f3f46',
+    description: 'Ultra-luxurious dark obsidian with polished gold accents'
+  },
+  {
+    id: 'cyber_neon',
+    name: 'Cyber Neon',
+    primaryColor: '#22c55e',
+    themeMode: 'dark',
+    canvasBg: 'bg-[#090d16]',
+    topBubbleBg: 'bg-[#131d2e]',
+    midBubbleBg: 'bg-[#0f172a]',
+    inputBg: 'bg-[#131d2e]',
+    dotColor: '#22c55e',
+    cardBgHex: '#090d16',
+    headerBgHex: '#131d2e',
+    borderHex: '#1e293b',
+    description: 'High-tech cyberpunk dark canvas with vibrant neon green'
+  },
+  {
+    id: 'terracotta_clay',
+    name: 'Terracotta Clay',
+    primaryColor: '#ea580c',
+    themeMode: 'light',
+    canvasBg: 'bg-[#faf5f0]',
+    topBubbleBg: 'bg-[#fed7aa]',
+    midBubbleBg: 'bg-white',
+    inputBg: 'bg-white',
+    dotColor: '#ea580c',
+    cardBgHex: '#faf5f0',
+    headerBgHex: '#ffedd5',
+    borderHex: '#fdba74',
+    description: 'Earthy artisan terracotta with warm Tuscan pottery tones'
+  },
+  {
+    id: 'arctic_glacier',
+    name: 'Arctic Glacier',
+    primaryColor: '#06b6d4',
+    themeMode: 'light',
+    canvasBg: 'bg-[#f0fdff]',
+    topBubbleBg: 'bg-[#cffafe]',
+    midBubbleBg: 'bg-white',
+    inputBg: 'bg-white',
+    dotColor: '#06b6d4',
+    cardBgHex: '#f0fdff',
+    headerBgHex: '#cffafe',
+    borderHex: '#a5f3fc',
+    description: 'Polar glacial cyan with ultra-crisp alpine ice tones'
+  },
+  {
+    id: 'royal_amethyst',
+    name: 'Royal Amethyst',
+    primaryColor: '#a855f7',
+    themeMode: 'light',
+    canvasBg: 'bg-[#faf5ff]',
+    topBubbleBg: 'bg-[#f3e8ff]',
+    midBubbleBg: 'bg-white',
+    inputBg: 'bg-white',
+    dotColor: '#a855f7',
+    cardBgHex: '#faf5ff',
+    headerBgHex: '#f3e8ff',
+    borderHex: '#d8b4fe',
+    description: 'Regal imperial amethyst purple with sparkling violet accents'
   }
 ];
 
@@ -664,8 +739,8 @@ export default function App() {
                     </span>
                   </div>
 
-                  {/* 15 Theme Presets */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-1">
+                  {/* 20 Theme Presets Arranged in 4 Columns */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
                     {THEME_PRESETS.map((preset) => {
                       const isSelected = selectedPresetId === preset.id;
                       return (
