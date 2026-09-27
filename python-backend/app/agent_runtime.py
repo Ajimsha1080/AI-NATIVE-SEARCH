@@ -150,25 +150,6 @@ def run_agent_cycle(
                 "type": "CONFIRMATION",
                 "data": {"action": "HUMAN_ESCALATION_TRIGGERED", "status": "PENDING_OPERATOR"}
             }
-    # Automatic Product Payload Association if products are discussed
-    if not interactive_payload or interactive_payload.get("type") != "PRODUCTS":
-        from .tools import get_tenant_products_sync
-        prods = get_tenant_products_sync(workspace_id)
-        combined_text = f"{message} {response_text}".lower()
-        matched = []
-        for p in prods:
-            p_title = p.get("title", "").lower()
-            if p_title and p_title in combined_text:
-                matched.append(p)
-            else:
-                tokens = [t for t in p_title.split() if len(t) > 3 and t not in ["with", "performance", "obsidian", "stealth"]]
-                if tokens and sum(1 for t in tokens if t in combined_text) >= 2:
-                    matched.append(p)
-        
-        if matched:
-            interactive_payload = {"type": "PRODUCTS", "data": matched[:4]}
-        elif re.search(r'product|products|item|items|catalog|collection|arrivals|new|latest|recommend|buy|shop', message, re.I):
-            interactive_payload = {"type": "PRODUCTS", "data": prods[:4]}
 
     duration_ms = int((time.time() - start_time) * 1000)
 

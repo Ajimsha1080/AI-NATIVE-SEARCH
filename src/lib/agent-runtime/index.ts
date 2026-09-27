@@ -215,19 +215,20 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
         latency_ms: invRes.latency_ms
       });
 
-      responseText = 'Here are the featured product(s) matching your request from the Blue Tyga catalog:\n\n';
-      searchRes.data.slice(0, 4).forEach((p: any) => {
-        const compareStr = p.compare_at_price ? ` (was ₹${p.compare_at_price.toLocaleString('en-IN')})` : '';
-        responseText += `• **${p.title}** — **₹${p.price.toLocaleString('en-IN')}**${compareStr}\n  ${p.description}\n\n`;
-      });
+      if (searchRes.data.length === 1) {
+        responseText = `Here is the **${searchRes.data[0].title}** from our collection:`;
+      } else {
+        responseText = `Here are the top matches from our Blue Tyga collection:`;
+      }
       if (requestedSize) {
-        responseText += '✅ Verified: Size **' + requestedSize + '** is in stock and ready to ship.';
+        responseText += `\n\n✅ Verified: Size **${requestedSize}** is in stock and ready to ship.`;
       }
     } else {
       // Unrestricted conversational answer for open styling, recommendations, and search
       const naturalPrompt = `You are a friendly, super-smart human shopping specialist at Blue Tyga (bluetyga.com).
-Answer the user's question naturally, helpfully, and conversationally without any artificial refusal or restriction.
-If recommending items, reference Blue Tyga techwear (UPF 50+ Sunscreen Jackets from ₹999, No-Sweat Tech Tees at ₹799, Tactical Cargo Joggers from ₹1,499).`;
+The user searched for an item that is not currently in our store catalog.
+Answer the user's question naturally, helpfully, and conversationally.
+Explain what Blue Tyga currently offers (UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, No-Sweat Tech Tees, Visors & Balaclavas) and offer assistance without any artificial refusal.`;
 
       const sarvamAnswer = await callSarvamLLM(
         naturalPrompt,
@@ -238,18 +239,67 @@ If recommending items, reference Blue Tyga techwear (UPF 50+ Sunscreen Jackets f
       if (sarvamAnswer) {
         responseText = sarvamAnswer;
       } else if (citations.length > 0) {
-        responseText = `${citations[0].chunk_text}\n\nLet me know if you would like me to help you pick the right size or style!`;
+        responseText = `${citations[0].chunk_text}\n\nLet me know if you would like me to help you find something else!`;
       } else {
-        responseText = "I'd love to help you find the perfect piece! We specialize in UPF 50+ Sunscreen Jackets, No-Sweat Tech Tees, and all-day commuter joggers. What style or fit are you looking for?";
+        responseText = "We don't currently have that specific piece listed in our collection, but we carry a wide range of UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, No-Sweat Tech Tees, and cooling headwear. Let me know what you're looking for!";
       }
 
-      // Attach fallback top products
-      const fallbackProducts = db.commerce_products.filter(p => p.workspace_id === workspace_id).slice(0, 4);
-      if (fallbackProducts.length > 0) {
-        interactivePayload = {
-          type: 'PRODUCTS',
-          data: fallbackProducts
-        };
+      interactivePayload = null;
+    }
+  } else if (detectedIntent === 'CART_ACTION') {
+    planningSteps.push('3. Processing Cart Action (Add to Cart / Bag Inspection).');
+    const storeProducts = db.commerce_products.filter(p => p.workspace_id === workspace_id);
+    const msgLower = user_message.toLowerCase();
+
+    // Match product in query
+    let targetProduct = storeProducts.find(p => msgLower.includes(p.title.toLowerCase()));
+    if (!targetProduct) {
+      targetProduct = storeProducts.find(p => {
+        const tokens = p.title.toLowerCase().split(/[\s+]+/).filter(w => w.length > 3);
+        return tokens.filter(t => msgLower.includes(t)).length >= 2;
+      });
+    }
+
+    if (targetProduct) {
+      planningSteps.push(`4. Adding product '${targetProduct.title}' to cart.`);
+      const cartRes = await executeTool({
+        tool_id: 'add_to_cart',
+        parameters: {
+          product_id: targetProduct.id,
+          quantity: 1,
+          cart_id: conversation.id
+        },
+        workspace_id,
+        agent_id,
+        conversation_id: conversation.id
+      });
+
+      toolExecutions.push({
+        tool_name: 'add_to_cart',
+        input: { product_id: targetProduct.id, quantity: 1 },
+        output: cartRes.message,
+        status: cartRes.status,
+        latency_ms: cartRes.latency_ms
+      });
+
+      responseText = `🛒 Added **${targetProduct.title}** (₹${targetProduct.price.toLocaleString('en-IN')}) to your bag!\n\nYou can click the button below to view or manage your item, or let me know if you need sizing or styling advice before checkout.`;
+      interactivePayload = {
+        type: 'PRODUCTS',
+        data: [targetProduct]
+      };
+    } else {
+      const cartRes = await executeTool({
+        tool_id: 'cart_lookup',
+        parameters: { cart_id: conversation.id },
+        workspace_id,
+        agent_id,
+        conversation_id: conversation.id
+      });
+      if (cartRes.data && cartRes.data.items.length > 0) {
+        responseText = `You currently have **${cartRes.data.items.length}** item(s) in your bag totaling **₹${cartRes.data.total.toLocaleString('en-IN')}**.`;
+        interactivePayload = cartRes.interactive_payload;
+      } else {
+        responseText = `Your shopping bag is currently empty. Which Blue Tyga piece would you like to add?`;
       }
     }
   } else if (detectedIntent === 'ORDER_TRACKING') {
@@ -351,32 +401,6 @@ Core Capabilities:
       responseText = citations[0].chunk_text + '\n\nLet me know if you would like me to help you pick the right size or style!';
     } else {
       responseText = config.identity?.greeting || "Hey there! I'm your Blue Tyga shopping concierge. Looking for our UPF 50+ Sunscreen Jackets, No-Sweat Tees, or have a question about an order?";
-    }
-  }
-
-  // Automatic Product Cards Attachment (Ensures photo & price cards are always returned)
-  if (!interactivePayload || interactivePayload.type !== 'PRODUCTS') {
-    const storeProducts = db.commerce_products.filter(p => p.workspace_id === workspace_id);
-    const combinedText = (user_message + ' ' + responseText).toLowerCase();
-    
-    const matched = storeProducts.filter(p => {
-      const pTitle = p.title.toLowerCase();
-      if (combinedText.includes(pTitle)) return true;
-      const keyTokens = pTitle.split(/[\s+]+/).filter(w => w.length > 3 && !['with', 'performance', 'obsidian', 'stealth', 'dual'].includes(w));
-      const matches = keyTokens.filter(t => combinedText.includes(t));
-      return matches.length >= 2;
-    });
-
-    if (matched.length > 0) {
-      interactivePayload = {
-        type: 'PRODUCTS',
-        data: matched.slice(0, 4)
-      };
-    } else if (/product|products|item|items|catalog|collection|arrivals|new|latest|best\s*seller|recommend/i.test(user_message)) {
-      interactivePayload = {
-        type: 'PRODUCTS',
-        data: storeProducts.slice(0, 4)
-      };
     }
   }
 

@@ -30,8 +30,8 @@ export class LocalCommerceProvider {
 
       if (filtered.length > 0) {
         list = filtered;
-      } else if (isBroadQuery || tokens.length === 0) {
-        // Broad or general discovery query -> return top catalog products
+      } else if (tokens.length === 0 && isBroadQuery) {
+        // Pure discovery query without specific unmatched keywords -> return top catalog products
         list = list.slice(0, 4);
       } else {
         list = [];
