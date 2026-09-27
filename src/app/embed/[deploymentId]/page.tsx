@@ -362,7 +362,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                               src={imgSrc} 
                               alt={p.title} 
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80';
+                                (e.target as HTMLImageElement).src = 'https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748';
                               }}
                               className="w-full h-full object-cover group-hover/img:scale-110 transition duration-300" 
                             />

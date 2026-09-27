@@ -267,18 +267,18 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       id: 'prod_bt_01',
       workspace_id: workspace.id,
       title: 'Sunscreen Jacket',
-      description: 'Engineered UPF 50+ UV-protection techwear jacket with breathable airflow panels and lightweight packable design.',
+      description: 'Engineered UPF 50+ UV-blocking lightweight breathable jacket designed for daily outdoor sun protection.',
       category: 'Outerwear',
-      tags: ['jacket', 'sunscreen', 'upf50', 'uvwear', 'outerwear'],
+      tags: ['jacket', 'sunscreen', 'upf50', 'uvwear', 'outerwear', 'men', 'women'],
       price: 999.00,
       compare_at_price: 1999.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1544441893-675973e31985?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
       in_stock: true,
       total_inventory: 65,
       variants: [
-        { id: 'var_bt01_m', title: 'Medium / Jet Black', sku: 'BT-SJ-M-BLK', price: 999.00, inventory_quantity: 30, attributes: { size: 'M', color: 'Jet Black' } },
-        { id: 'var_bt01_l', title: 'Large / Jet Black', sku: 'BT-SJ-L-BLK', price: 999.00, inventory_quantity: 35, attributes: { size: 'L', color: 'Jet Black' } }
+        { id: 'var_bt01_m', title: 'Medium / Obsidian Black', sku: 'BT-SJ-M-BLK', price: 999.00, inventory_quantity: 30, attributes: { size: 'M', color: 'Black' } },
+        { id: 'var_bt01_l', title: 'Large / Obsidian Black', sku: 'BT-SJ-L-BLK', price: 999.00, inventory_quantity: 35, attributes: { size: 'L', color: 'Black' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -287,18 +287,18 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       id: 'prod_bt_02',
       workspace_id: workspace.id,
       title: 'Sunscreen Jacket Pro',
-      description: 'Advanced UPF 50+ UV shield with reinforced zippered utility compartments and anti-chafing active seams.',
+      description: 'High-performance UPF 50+ technical sunscreen jacket with utility zippered pockets, cooling mesh, and active flex.',
       category: 'Outerwear',
       tags: ['jacket', 'pro', 'sunscreen', 'upf50', 'outerwear'],
       price: 1299.00,
       compare_at_price: 2999.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ2_-_1_4a769590-ab42-4c42-bc68-874df3032dc8.webp?v=1776246852'],
       in_stock: true,
       total_inventory: 50,
       variants: [
-        { id: 'var_bt02_m', title: 'Medium / Stealth Black', sku: 'BT-SJP-M-BLK', price: 1299.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Stealth Black' } },
-        { id: 'var_bt02_l', title: 'Large / Stealth Black', sku: 'BT-SJP-L-BLK', price: 1299.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Stealth Black' } }
+        { id: 'var_bt02_m', title: 'Medium / Navy Blue', sku: 'BT-SJP-M-NVY', price: 1299.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Navy' } },
+        { id: 'var_bt02_l', title: 'Large / Navy Blue', sku: 'BT-SJP-L-NVY', price: 1299.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Navy' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -307,18 +307,18 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       id: 'prod_bt_03',
       workspace_id: workspace.id,
       title: 'Sunscreen Jacket Ice Pro',
-      description: 'Cool-touch heat dispersing technical fabric with UPF 50+ rating engineered for extreme tropical heat.',
+      description: 'Next-gen cooling techwear jacket with Arctic Ice cool-touch heat dispersal and certified UPF 50+ rating.',
       category: 'Outerwear',
-      tags: ['jacket', 'ice', 'cooling', 'upf50', 'outerwear'],
+      tags: ['jacket', 'ice', 'cooling', 'upf50', 'outerwear', 'ice pro'],
       price: 1999.00,
       compare_at_price: 3999.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1548883354-7622d03aca27?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/BTF.webp?v=1779275127'],
       in_stock: true,
       total_inventory: 45,
       variants: [
-        { id: 'var_bt03_m', title: 'Medium / Arctic Ice', sku: 'BT-ICE-M-BLU', price: 1999.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Ice Blue' } },
-        { id: 'var_bt03_l', title: 'Large / Arctic Ice', sku: 'BT-ICE-L-BLU', price: 1999.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Ice Blue' } }
+        { id: 'var_bt03_m', title: 'Medium / Arctic Ice Grey', sku: 'BT-ICE-M-GRY', price: 1999.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Ice Grey' } },
+        { id: 'var_bt03_l', title: 'Large / Arctic Ice Grey', sku: 'BT-ICE-L-GRY', price: 1999.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Ice Grey' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -326,19 +326,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_04',
       workspace_id: workspace.id,
-      title: 'Anti-AC Thermal Jacket 2 Pro',
-      description: 'Dual-layer thermal fleece insulation engineered for air-conditioned office spaces and travel without bulk.',
-      category: 'Hoodies',
-      tags: ['thermal', 'anti-ac', 'jacket', 'hoodie', 'outerwear'],
-      price: 1799.00,
-      compare_at_price: 4999.00,
+      title: 'Women Sunscreen Jacket Ice Pro',
+      description: 'Tailored women ergonomic UPF 50+ cooling jacket with thumbholes, ponytail aperture, and ice-filament fabric.',
+      category: 'Outerwear',
+      tags: ['women', 'jacket', 'ice pro', 'sunscreen', 'upf50'],
+      price: 1999.00,
+      compare_at_price: 3999.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/WOMENLSJ8-1_2x-100.webp?v=1772778127'],
       in_stock: true,
       total_inventory: 40,
       variants: [
-        { id: 'var_bt04_m', title: 'Medium / Charcoal Grey', sku: 'BT-AC2-M-CHR', price: 1799.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Charcoal' } },
-        { id: 'var_bt04_l', title: 'Large / Charcoal Grey', sku: 'BT-AC2-L-CHR', price: 1799.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Charcoal' } }
+        { id: 'var_bt04_s', title: 'Small / Lavender Ice', sku: 'BT-WICE-S-LAV', price: 1999.00, inventory_quantity: 20, attributes: { size: 'S', color: 'Lavender' } },
+        { id: 'var_bt04_m', title: 'Medium / Lavender Ice', sku: 'BT-WICE-M-LAV', price: 1999.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Lavender' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -346,19 +346,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_05',
       workspace_id: workspace.id,
-      title: 'No-Sweat Tech Tee',
-      description: 'Quick-dry moisture-wicking engineered active tee designed to stay cool, fresh, and odor-free all day.',
-      category: 'T-Shirts',
-      tags: ['tshirt', 'nosweat', 'quick-dry', 'activewear', 'tee'],
-      price: 799.00,
-      compare_at_price: 1499.00,
+      title: 'Anti-AC Thermal Jacket 2 Pro',
+      description: 'Dual-layer thermal fleece insulation engineered for air-conditioned corporate spaces and chill protection without bulk.',
+      category: 'Hoodies',
+      tags: ['thermal', 'anti-ac', 'jacket', 'hoodie', 'outerwear'],
+      price: 1799.00,
+      compare_at_price: 4999.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/ANTI_AC_PRO_1-100.jpg?v=1762598400'],
       in_stock: true,
-      total_inventory: 80,
+      total_inventory: 40,
       variants: [
-        { id: 'var_bt05_m', title: 'Medium / Navy Blue', sku: 'BT-NST-M-NVY', price: 799.00, inventory_quantity: 40, attributes: { size: 'M', color: 'Navy' } },
-        { id: 'var_bt05_l', title: 'Large / Navy Blue', sku: 'BT-NST-L-NVY', price: 799.00, inventory_quantity: 40, attributes: { size: 'L', color: 'Navy' } }
+        { id: 'var_bt05_m', title: 'Medium / Stealth Black', sku: 'BT-AC2-M-BLK', price: 1799.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Black' } },
+        { id: 'var_bt05_l', title: 'Large / Stealth Black', sku: 'BT-AC2-L-BLK', price: 1799.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Black' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -366,19 +366,19 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_06',
       workspace_id: workspace.id,
-      title: 'Travel Joggers',
-      description: 'Lightweight 4-way stretch water-resistant joggers with tailored tapered ankles and deep zippered pockets.',
-      category: 'Bottoms',
-      tags: ['joggers', 'travel', 'stretch', 'bottoms', 'pants'],
-      price: 1499.00,
-      compare_at_price: 2999.00,
+      title: 'No Sweat Tech Tee',
+      description: 'Quick-dry moisture-wicking engineered active tee designed to stay cool, fresh, and odor-free all day.',
+      category: 'T-Shirts',
+      tags: ['tshirt', 'nosweat', 'quick-dry', 'activewear', 'tee'],
+      price: 799.00,
+      compare_at_price: 1499.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/NoSweatTee_1.webp?v=1777871708'],
       in_stock: true,
-      total_inventory: 55,
+      total_inventory: 80,
       variants: [
-        { id: 'var_bt06_30', title: 'Size 30 / Stealth Black', sku: 'BT-TRV-30-BLK', price: 1499.00, inventory_quantity: 25, attributes: { size: '30', color: 'Black' } },
-        { id: 'var_bt06_32', title: 'Size 32 / Stealth Black', sku: 'BT-TRV-32-BLK', price: 1499.00, inventory_quantity: 30, attributes: { size: '32', color: 'Black' } }
+        { id: 'var_bt06_m', title: 'Medium / Olive Green', sku: 'BT-NST-M-OLV', price: 799.00, inventory_quantity: 40, attributes: { size: 'M', color: 'Olive' } },
+        { id: 'var_bt06_l', title: 'Large / Olive Green', sku: 'BT-NST-L-OLV', price: 799.00, inventory_quantity: 40, attributes: { size: 'L', color: 'Olive' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -386,19 +386,18 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_07',
       workspace_id: workspace.id,
-      title: 'Office Jogger',
-      description: 'Structured commute-to-office technical stretch trousers combining formal silhouette with athletic comfort.',
-      category: 'Bottoms',
-      tags: ['joggers', 'office', 'commute', 'workwear', 'bottoms'],
-      price: 1699.00,
-      compare_at_price: 3499.00,
+      title: 'Balaclava Pro',
+      description: 'Full facial and neck UV shield with laser-cut breathing ports and ergonomic multi-wear configurations.',
+      category: 'Accessories',
+      tags: ['balaclava', 'sunscreen', 'accessories', 'uvwear', 'mask'],
+      price: 499.00,
+      compare_at_price: 799.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/balaclavapro_2.webp?v=1777282036'],
       in_stock: true,
-      total_inventory: 40,
+      total_inventory: 90,
       variants: [
-        { id: 'var_bt07_32', title: 'Size 32 / Slate Grey', sku: 'BT-OFF-32-GRY', price: 1699.00, inventory_quantity: 20, attributes: { size: '32', color: 'Grey' } },
-        { id: 'var_bt07_34', title: 'Size 34 / Slate Grey', sku: 'BT-OFF-34-GRY', price: 1699.00, inventory_quantity: 20, attributes: { size: '34', color: 'Grey' } }
+        { id: 'var_bt07_uni', title: 'Universal Fit / Jet Black', sku: 'BT-BAL-UNI-BLK', price: 499.00, inventory_quantity: 90, attributes: { size: 'Universal', color: 'Black' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -406,18 +405,18 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     {
       id: 'prod_bt_08',
       workspace_id: workspace.id,
-      title: 'Sunscreen Balaclava Pro',
-      description: 'Full facial and neck UV shield with laser-cut breathing ports and ergonomic multi-wear configurations.',
+      title: 'Sunscreen WIDE VISOR PRO',
+      description: 'Wide brim maximum-coverage UV sun visor with adjustable anti-glare band for outdoor sports, cycling, and travel.',
       category: 'Accessories',
-      tags: ['balaclava', 'sunscreen', 'accessories', 'uvwear', 'mask'],
-      price: 499.00,
-      compare_at_price: 799.00,
+      tags: ['visor', 'sunscreen', 'accessories', 'uvwear', 'hat'],
+      price: 999.00,
+      compare_at_price: 1499.00,
       currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80'],
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/sunscreenwidevisorpro_25.webp?v=1777284066'],
       in_stock: true,
-      total_inventory: 90,
+      total_inventory: 50,
       variants: [
-        { id: 'var_bt08_uni', title: 'Universal Fit / Jet Black', sku: 'BT-BAL-UNI-BLK', price: 499.00, inventory_quantity: 90, attributes: { size: 'Universal', color: 'Black' } }
+        { id: 'var_bt08_uni', title: 'Universal / Graphite Black', sku: 'BT-VIS-UNI-BLK', price: 999.00, inventory_quantity: 50, attributes: { size: 'Universal', color: 'Black' } }
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

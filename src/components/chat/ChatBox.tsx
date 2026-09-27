@@ -385,7 +385,7 @@ export default function ChatBox({
                 return (
                   <div className="grid grid-cols-1 gap-2 w-full mt-2">
                     {productsList.map((p: any) => {
-                      const imgSrc = p.imageUrl || p.images?.[0] || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
+                      const imgSrc = p.imageUrl || p.images?.[0] || 'https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748';
                       const formattedPrice = typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price;
                       const comparePrice = p.compare_at_price || p.comparePrice;
                       const formattedComparePrice = typeof comparePrice === 'number' ? comparePrice.toLocaleString('en-IN') : comparePrice;
@@ -414,7 +414,7 @@ export default function ChatBox({
                                 src={imgSrc} 
                                 alt={p.title}
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
+                                  (e.target as HTMLImageElement).src = 'https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748';
                                 }}
                                 className="w-full h-full object-cover group-hover/thumb:scale-105 transition duration-300"
                               />
