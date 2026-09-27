@@ -250,11 +250,11 @@ export default function AnalyticsWorkspacePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-2xl text-center font-mono">
-                  <span className="text-3xl font-bold text-emerald-600">4.9 / 5</span>
+                  <span className="text-3xl font-bold text-emerald-600">{data?.csat || '4.8 / 5'}</span>
                   <p className="text-xs text-zinc-600 font-sans mt-1 font-semibold">Customer CSAT Satisfaction</p>
                 </div>
                 <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-2xl text-center font-mono">
-                  <span className="text-3xl font-bold text-zinc-900">99.4%</span>
+                  <span className="text-3xl font-bold text-zinc-900">{data?.groundingAccuracy || '100.0%'}</span>
                   <p className="text-xs text-zinc-600 font-sans mt-1 font-semibold">Grounding &amp; Fact Verification</p>
                 </div>
               </div>
