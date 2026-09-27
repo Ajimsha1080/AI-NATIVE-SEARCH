@@ -19,9 +19,9 @@ export async function POST(req: Request) {
   let existingProducts = db.commerce_products.filter(p => p.workspace_id === session.workspaceId);
   if (existingProducts.length === 0) {
     // Clone genuine products for this workspace
-    const demoItems = db.commerce_products.filter(p => p.workspace_id === 'ws_acme_corp');
-    if (demoItems.length > 0) {
-      demoItems.forEach(item => {
+    const catalogItems = db.commerce_products.filter(p => p.workspace_id === 'ws_acme_corp');
+    if (catalogItems.length > 0) {
+      catalogItems.forEach(item => {
         db.commerce_products.push({
           ...item,
           id: generateId('prod'),

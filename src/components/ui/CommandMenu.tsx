@@ -65,7 +65,7 @@ export default function CommandMenu({ isOpen, onClose }: CommandMenuProps) {
 
   const actionItems = [
     { label: 'Create New AI Agent', path: '/agents/new', icon: Plus, category: 'Actions' },
-    { label: 'Launch Public Embed Demo', path: '/demo.html', icon: ExternalLink, category: 'Actions' },
+    { label: 'Storefront Live Deployment', path: '/deployments', icon: Globe, category: 'Actions' },
   ];
 
   const agentItems = agents.map(a => ({

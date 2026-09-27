@@ -111,12 +111,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Dev-Only Demo Logins */}
+          {/* Quick Sign In */}
           {showDemoCredentials && (
             <div className="pt-4 border-t border-zinc-100 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-bold">1-Click Quick Fill:</span>
-                <span className="text-[10px] font-mono text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded font-semibold">Instant Access</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-bold">1-Click Sign In:</span>
+                <span className="text-[10px] font-mono text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded font-semibold">Storefront Access</span>
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <button

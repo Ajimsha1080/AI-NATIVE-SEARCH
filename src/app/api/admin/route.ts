@@ -266,7 +266,7 @@ export async function GET(req: Request) {
     auditLogs: db.audit_logs.length > 0 ? db.audit_logs : [
       { id: 'aud_1', admin: 'superadmin@platform.ai', action: 'TENANT_PLAN_UPGRADE', target: 'ws_acme_corp', tenant: 'Acme Corp Commerce', timestamp: '12m ago', requestId: 'req_9842a', metadata: 'Upgraded to Enterprise plan' },
       { id: 'aud_2', admin: 'superadmin@platform.ai', action: 'FEATURE_FLAG_TOGGLED', target: 'flag_vision_search', tenant: 'GLOBAL', timestamp: '1h ago', requestId: 'req_8731b', metadata: 'Enabled for all tenants' },
-      { id: 'aud_3', admin: 'security_bot@platform.ai', action: 'RATE_LIMIT_CHECK', target: 'ws_shopmate_demo', tenant: 'Shopmate Footwear', timestamp: '3h ago', requestId: 'req_7612c', metadata: 'Traffic within normal thresholds' },
+      { id: 'aud_3', admin: 'security_bot@platform.ai', action: 'RATE_LIMIT_CHECK', target: 'ws_bluetyga_store', tenant: 'Blue Tyga Apparel', timestamp: '3h ago', requestId: 'req_7612c', metadata: 'Traffic within normal thresholds' },
       { id: 'aud_4', admin: 'superadmin@platform.ai', action: 'RAG_REINDEX_ALL', target: 'TENANT_VECTOR_STORES', tenant: 'GLOBAL', timestamp: '1d ago', requestId: 'req_6541d', metadata: 'Refreshed 128-dim dense index' },
     ]
   });

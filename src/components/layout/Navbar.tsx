@@ -98,7 +98,7 @@ export default function Navbar() {
             {menuOpen && (
               <div className="absolute right-0 mt-2 w-52 bg-white border border-zinc-200 rounded-xl shadow-lg py-1 z-50 text-xs divide-y divide-zinc-100">
                 <div className="px-3 py-2">
-                  <p className="font-semibold text-zinc-900 truncate">{user?.name || 'Demo Merchant'}</p>
+                  <p className="font-semibold text-zinc-900 truncate">{user?.name || 'Alex Vance (Store Owner)'}</p>
                   <p className="text-[11px] text-zinc-500 truncate">{user?.email || 'merchant@shopmate.com'}</p>
                 </div>
 
