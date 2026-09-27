@@ -9,7 +9,6 @@ import {
   ExternalLink, Code2, Globe2, ShieldAlert, Play, ArrowUpRight,
   Search, Sliders, CheckCircle, Lock, Server, Sparkles, LayoutDashboard
 } from 'lucide-react';
-import PortalSwitcher from '@/components/layout/PortalSwitcher';
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'search' | 'tracking' | 'returns'>('search');
@@ -57,7 +56,6 @@ export default function HomePage() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <PortalSwitcher />
             <Link 
               href="/auth/login"
               className="px-3 py-1.5 text-xs font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 border border-zinc-200 rounded-xl transition"

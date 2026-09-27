@@ -8,7 +8,6 @@ import {
   Building, Search, Sparkles, ExternalLink, ArrowRight
 } from 'lucide-react';
 import CommandMenu from '@/components/ui/CommandMenu';
-import PortalSwitcher from '@/components/layout/PortalSwitcher';
 import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
 
 export default function Navbar() {
@@ -80,8 +79,6 @@ export default function Navbar() {
 
         {/* Right controls */}
         <div className="flex items-center gap-2.5">
-          <PortalSwitcher isSuperAdmin={user ? !!user.is_super_admin : undefined} />
-
           {/* User dropdown */}
           <div className="relative" ref={userMenuRef}>
             <button
