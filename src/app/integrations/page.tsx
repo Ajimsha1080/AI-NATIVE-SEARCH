@@ -32,50 +32,22 @@ export default function IntegrationsWorkspacePage() {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; latency?: number } | null>(null);
   const [syncTimestamps, setSyncTimestamps] = useState<Record<string, string>>({
-    shopify_storefront: 'Just now',
-    web_crawler: 'Just now',
+    shopify_storefront: 'Active',
+    web_crawler: 'Active',
     local_catalog: 'Real-time',
-    woocommerce: 'Active Handshake',
-    razorpay_stripe: 'Instant Capture',
-    logistics_carriers: 'Live AWB Sync',
+    woocommerce: 'Ready',
+    razorpay_stripe: 'Active',
+    logistics_carriers: 'Active',
     custom_webhooks: 'Active'
   });
   const [metrics, setMetrics] = useState({
-    productsCount: 10,
-    ordersCount: 3,
-    knowledgeCount: 32,
+    productsCount: 0,
+    ordersCount: 0,
+    knowledgeCount: 0,
     activeConnectors: 5,
     webhookHealth: '100% OPERATIONAL'
   });
-  const [liveLogs, setLiveLogs] = useState<any[]>([
-    {
-      id: 'log_01',
-      connector: 'Shopify Storefront API',
-      action: 'CATALOG_SYNC',
-      status: 'SUCCESS',
-      message: '10 products and 24 variants synced with live stock quantities.',
-      time: 'Just now',
-      latency: '34ms'
-    },
-    {
-      id: 'log_02',
-      connector: 'Bluedart & Delhivery Courier Sync',
-      action: 'AWB_TRACKING_POLL',
-      status: 'SUCCESS',
-      message: 'Verified tracking numbers BD-8941039821-IN and DEL-104908912-IN.',
-      time: '2 mins ago',
-      latency: '42ms'
-    },
-    {
-      id: 'log_03',
-      connector: 'Outbound Commerce Webhooks',
-      action: 'EVENT_DISPATCH',
-      status: 'SUCCESS',
-      message: 'HMAC-SHA256 signature verified on endpoint https://api.bluetyga.com/webhooks/shopmate.',
-      time: '5 mins ago',
-      latency: '28ms'
-    }
-  ]);
+  const [liveLogs, setLiveLogs] = useState<any[]>([]);
 
   useEffect(() => {
     fetchMetrics();
@@ -89,6 +61,7 @@ export default function IntegrationsWorkspacePage() {
       if (res.ok) {
         const data = await res.json();
         if (data.metrics) setMetrics(data.metrics);
+        if (data.syncTimestamps) setSyncTimestamps(data.syncTimestamps);
         if (data.recentLogs && data.recentLogs.length > 0) {
           const formatted = data.recentLogs.map((l: any, idx: number) => ({
             id: l.id || `log_${idx}`,
@@ -97,7 +70,7 @@ export default function IntegrationsWorkspacePage() {
             status: 'SUCCESS',
             message: l.metadata?.message || 'Sync completed successfully.',
             time: new Date(l.created_at).toLocaleTimeString('en-US'),
-            latency: `${l.metadata?.latencyMs || 30}ms`
+            latency: `${l.metadata?.latencyMs || 28}ms`
           }));
           setLiveLogs(formatted);
         }
@@ -414,7 +387,7 @@ export default function IntegrationsWorkspacePage() {
                   <ShoppingCart className="w-3.5 h-3.5 text-indigo-600" />
                 </div>
                 <div className="text-xl font-bold text-zinc-900 font-mono">{metrics.productsCount} Products</div>
-                <div className="text-[10px] text-zinc-500 font-medium">Full Women &amp; Men Apparel</div>
+                <div className="text-[10px] text-zinc-500 font-medium">{metrics.ordersCount} Live Orders Active</div>
               </div>
 
               <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-2xs space-y-1">
@@ -423,7 +396,7 @@ export default function IntegrationsWorkspacePage() {
                   <Globe className="w-3.5 h-3.5 text-blue-600" />
                 </div>
                 <div className="text-xl font-bold text-zinc-900 font-mono">{metrics.knowledgeCount} Vectors</div>
-                <div className="text-[10px] text-zinc-500 font-medium">128-dim Dense Semantic RAG</div>
+                <div className="text-[10px] text-zinc-500 font-medium">Dense Semantic Store Knowledge</div>
               </div>
 
               <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-2xs space-y-1">
@@ -525,22 +498,29 @@ export default function IntegrationsWorkspacePage() {
               </div>
 
               <div className="space-y-2 font-mono text-xs max-h-56 overflow-y-auto">
-                {liveLogs.map((log) => (
-                  <div key={log.id} className="flex items-start justify-between gap-4 p-2.5 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2 text-[11px]">
-                        <span className="text-indigo-400 font-bold">{log.connector}</span>
-                        <span className="text-zinc-500">•</span>
-                        <span className="text-zinc-400 text-[10px]">{log.action}</span>
-                      </div>
-                      <p className="text-zinc-300 text-xs">{log.message}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] text-zinc-400 block">{log.time}</span>
-                      <span className="text-[10px] text-emerald-400 font-semibold">{log.latency}</span>
-                    </div>
+                {liveLogs.length === 0 ? (
+                  <div className="py-6 text-center text-zinc-400 font-mono text-xs space-y-1">
+                    <p>No sync events recorded yet.</p>
+                    <p className="text-[11px] text-zinc-500">Click &quot;Sync Now&quot; on any connector above to trigger a live synchronization handshake.</p>
                   </div>
-                ))}
+                ) : (
+                  liveLogs.map((log) => (
+                    <div key={log.id} className="flex items-start justify-between gap-4 p-2.5 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 text-[11px]">
+                          <span className="text-indigo-400 font-bold">{log.connector}</span>
+                          <span className="text-zinc-500">•</span>
+                          <span className="text-zinc-400 text-[10px]">{log.action}</span>
+                        </div>
+                        <p className="text-zinc-300 text-xs">{log.message}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-[10px] text-zinc-400 block">{log.time}</span>
+                        <span className="text-[10px] text-emerald-400 font-semibold">{log.latency}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
