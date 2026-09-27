@@ -224,6 +224,30 @@ export default function ChatBox({
     }
   };
 
+  const renderFormattedText = (text: string) => {
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    const elements: React.ReactNode[] = [];
+    let lastIdx = 0;
+    let match;
+
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (match.index > lastIdx) {
+        elements.push(text.substring(lastIdx, match.index));
+      }
+      elements.push(
+        <strong key={`bold-${match.index}`} className="font-bold text-inherit">
+          {match[1]}
+        </strong>
+      );
+      lastIdx = match.index + match[0].length;
+    }
+    if (lastIdx < text.length) {
+      elements.push(text.substring(lastIdx));
+    }
+
+    return elements.length > 0 ? elements : text;
+  };
+
   const renderMessageContent = (content: string) => {
     const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
     const parts: Array<{ type: 'text'; value: string } | { type: 'image'; alt: string; url: string }> = [];
@@ -242,14 +266,14 @@ export default function ChatBox({
     }
 
     if (parts.length === 0) {
-      return <span>{content}</span>;
+      return <span>{renderFormattedText(content)}</span>;
     }
 
     return (
       <div className="space-y-2">
         {parts.map((p, idx) => {
           if (p.type === 'text') {
-            return <p key={idx} className="whitespace-pre-wrap">{p.value}</p>;
+            return <p key={idx} className="whitespace-pre-wrap">{renderFormattedText(p.value)}</p>;
           }
           return (
             <div 

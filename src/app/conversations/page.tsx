@@ -130,6 +130,30 @@ export default function ConversationsWorkspacePage() {
     }
   }
 
+  const renderFormattedText = (text: string) => {
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    const elements: React.ReactNode[] = [];
+    let lastIdx = 0;
+    let match;
+
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (match.index > lastIdx) {
+        elements.push(text.substring(lastIdx, match.index));
+      }
+      elements.push(
+        <strong key={`bold-${match.index}`} className="font-bold text-inherit">
+          {match[1]}
+        </strong>
+      );
+      lastIdx = match.index + match[0].length;
+    }
+    if (lastIdx < text.length) {
+      elements.push(text.substring(lastIdx));
+    }
+
+    return elements.length > 0 ? elements : text;
+  };
+
   const filteredConversations = conversations.filter(c => {
     const idStr = String(c.id || '').toLowerCase();
     const channelStr = String(c.channel || '').toLowerCase();
@@ -353,7 +377,7 @@ export default function ConversationsWorkspacePage() {
                                 : 'bg-white border border-zinc-200 text-zinc-900 rounded-tl-none'
                             }`}
                           >
-                            {m.content}
+                            {renderFormattedText(m.content)}
                           </div>
 
                           {/* Display metadata if any */}
