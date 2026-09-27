@@ -1,3 +1,6 @@
+process.env.APP_ENV = process.env.APP_ENV || 'development';
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
 import fs from 'fs';
 import path from 'path';
 
@@ -79,9 +82,25 @@ async function testAction(name: string, fn: () => Promise<boolean>) {
   }
 }
 
+import { createSessionToken } from '../src/lib/auth';
+
 async function runLiveTests() {
   let passedCount = 0;
   let totalTests = 0;
+
+  let sessionToken = await createSessionToken({
+    userId: 'usr_admin_01',
+    email: 'admin@aaas-platform.com',
+    workspaceId: 'ws_acme_corp',
+    role: 'OWNER',
+    isSuperAdmin: true
+  });
+
+  const authHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${sessionToken}`,
+    'Cookie': `aaas_session=${sessionToken}`
+  };
 
   async function check(name: string, fn: () => Promise<boolean>) {
     totalTests++;
@@ -93,7 +112,7 @@ async function runLiveTests() {
   await check('Button "Create New Agent" -> POST /api/agents', async () => {
     const res = await fetch(`${BASE_URL}/api/agents`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         name: 'Automated Audit Bot',
         description: 'Temporary agent created to verify button workflows',
@@ -107,7 +126,7 @@ async function runLiveTests() {
   await check('Button "Save Agent Settings / Instructions" -> PUT /api/agents/agent_shopmate_01', async () => {
     const res = await fetch(`${BASE_URL}/api/agents/agent_shopmate_01`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         name: 'ShopMate Assistant',
         temperature: 0.7,
@@ -121,7 +140,7 @@ async function runLiveTests() {
   await check('Button "Send Message" (Chat / RAG Pipeline) -> POST /api/agents/agent_shopmate_01/chat', async () => {
     const res = await fetch(`${BASE_URL}/api/agents/agent_shopmate_01/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         message: 'Can I exchange my running shoes for a size 11?',
         channel: 'playground'
@@ -134,7 +153,7 @@ async function runLiveTests() {
   await check('Button "Live RAG Query" -> POST /api/rag/query', async () => {
     const res = await fetch(`${BASE_URL}/api/rag/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         question: 'What is the return window for unworn items?'
       })
@@ -146,7 +165,7 @@ async function runLiveTests() {
   await check('Button "Ingest Knowledge Document" -> POST /api/rag/ingest', async () => {
     const res = await fetch(`${BASE_URL}/api/rag/ingest`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         name: 'Button Test Policy',
         type: 'POLICY',
@@ -159,19 +178,19 @@ async function runLiveTests() {
 
   // 4. Commerce Catalog & Sync Buttons
   await check('Button "Sync Store Catalog" -> POST /api/commerce/sync', async () => {
-    const res = await fetch(`${BASE_URL}/api/commerce/sync`, { method: 'POST' });
+    const res = await fetch(`${BASE_URL}/api/commerce/sync`, { method: 'POST', headers: authHeaders });
     const data = await res.json();
     return res.status === 200 && data.success === true;
   });
 
   await check('Button "Fetch Products List" -> GET /api/commerce/products', async () => {
-    const res = await fetch(`${BASE_URL}/api/commerce/products`);
+    const res = await fetch(`${BASE_URL}/api/commerce/products`, { headers: authHeaders });
     const data = await res.json();
     return res.status === 200 && Array.isArray(data.products) && data.products.length > 0;
   });
 
   await check('Button "Fetch Live Orders" -> GET /api/commerce/orders', async () => {
-    const res = await fetch(`${BASE_URL}/api/commerce/orders`);
+    const res = await fetch(`${BASE_URL}/api/commerce/orders`, { headers: authHeaders });
     const data = await res.json();
     return res.status === 200 && Array.isArray(data.orders) && data.orders.length > 0;
   });
@@ -180,7 +199,7 @@ async function runLiveTests() {
   await check('Button "Publish Version Snapshot" -> POST /api/agents/agent_shopmate_01/versions', async () => {
     const res = await fetch(`${BASE_URL}/api/agents/agent_shopmate_01/versions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         action: 'PUBLISH',
         change_summary: 'Automated test snapshot deployment'
@@ -193,7 +212,7 @@ async function runLiveTests() {
   await check('Button "Generate API Key" -> POST /api/api-keys', async () => {
     const res = await fetch(`${BASE_URL}/api/api-keys`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         name: 'Automated CI Test Key'
       })
@@ -205,7 +224,7 @@ async function runLiveTests() {
   await check('Button "Run Agent Test Suite" -> POST /api/evaluations', async () => {
     const res = await fetch(`${BASE_URL}/api/evaluations`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         action: 'RUN',
         agent_id: 'agent_shopmate_01'
@@ -218,15 +237,15 @@ async function runLiveTests() {
   await check('Button "Sync Provider Webhook / Integration" -> POST /api/commerce/sync', async () => {
     const res = await fetch(`${BASE_URL}/api/commerce/sync`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ integrationId: 'shopify_storefront' })
+      headers: authHeaders,
+      body: JSON.stringify({ integrationId: 'custom_webhooks' })
     });
     return res.status === 200;
   });
 
   // 9. Conversations & Messages
   await check('Button "Fetch Workspace Conversations" -> GET /api/conversations', async () => {
-    const res = await fetch(`${BASE_URL}/api/conversations`);
+    const res = await fetch(`${BASE_URL}/api/conversations`, { headers: authHeaders });
     return res.status === 200;
   });
 

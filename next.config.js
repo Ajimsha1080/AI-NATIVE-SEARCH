@@ -2,11 +2,9 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   reactStrictMode: false,
   compress: true,
   poweredByHeader: false,
-  outputFileTracingRoot: path.join(__dirname),
   eslint: {
     ignoreDuringBuilds: false,
   },

@@ -109,7 +109,29 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
 
   try {
     const rawBody = await req.json();
-    const parseResult = updateAgentSchema.safeParse(rawBody);
+    let payload = rawBody;
+    if (rawBody && !rawBody.agent && !rawBody.config && !rawBody.tool_permissions) {
+      payload = {
+        agent: {
+          name: rawBody.name,
+          description: rawBody.description,
+          industry: rawBody.industry,
+          primary_objective: rawBody.primary_objective,
+          language: rawBody.language,
+          status: rawBody.status
+        },
+        config: {
+          instructions: rawBody.system_prompt !== undefined || rawBody.prompt !== undefined ? {
+            system_prompt: rawBody.system_prompt || rawBody.prompt
+          } : undefined,
+          personality: rawBody.tone !== undefined || rawBody.temperature !== undefined ? {
+            tone: rawBody.tone,
+            enthusiasm_level: rawBody.temperature !== undefined ? Math.round(rawBody.temperature * 100) : undefined
+          } : undefined
+        }
+      };
+    }
+    const parseResult = updateAgentSchema.safeParse(payload);
 
     if (!parseResult.success) {
       return NextResponse.json({

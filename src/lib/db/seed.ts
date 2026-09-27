@@ -253,13 +253,22 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
   };
   db.workspaces.push(workspace);
 
-  db.workspace_members.push({
-    id: 'wsm_01',
-    workspace_id: workspace.id,
-    user_id: userMerchant.id,
-    role: 'OWNER',
-    created_at: new Date().toISOString()
-  });
+  db.workspace_members.push(
+    {
+      id: 'wsm_01',
+      workspace_id: workspace.id,
+      user_id: userMerchant.id,
+      role: 'OWNER',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'wsm_admin_01',
+      workspace_id: workspace.id,
+      user_id: userAdmin.id,
+      role: 'OWNER',
+      created_at: new Date().toISOString()
+    }
+  );
 
   // 3. Products
   const products: any[] = [
