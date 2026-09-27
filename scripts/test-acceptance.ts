@@ -91,6 +91,45 @@ async function main() {
     'Service JWT with iss:aaas-node and aud:aaas-python verifies successfully'
   );
 
+  // Test ENCRYPTION_KEY fail-closed when unset in production mode
+  const { getEncryptionKey } = await import('../src/lib/crypto/encryption');
+  const prevNodeEnv = process.env.NODE_ENV;
+  const prevAppEnv = process.env.APP_ENV;
+  const prevEncKey = process.env.ENCRYPTION_KEY;
+
+  process.env.NODE_ENV = 'production';
+  process.env.APP_ENV = 'production';
+  delete process.env.ENCRYPTION_KEY;
+
+  let caughtMissingEncKey = false;
+  try {
+    getEncryptionKey();
+  } catch {
+    caughtMissingEncKey = true;
+  }
+  assert(caughtMissingEncKey, 'Fails closed and refuses to boot in production when ENCRYPTION_KEY is unset');
+
+  // Test ENCRYPTION_KEY fail-closed when under 32 bytes in production
+  process.env.ENCRYPTION_KEY = 'short_secret_under_32_bytes';
+  let caughtShortEncKey = false;
+  try {
+    getEncryptionKey();
+  } catch {
+    caughtShortEncKey = true;
+  }
+  assert(caughtShortEncKey, 'Fails closed in production when ENCRYPTION_KEY is shorter than 32 characters');
+
+  // Restore valid ENCRYPTION_KEY for subsequent test cases
+  process.env.ENCRYPTION_KEY = 'production_encryption_key_enterprise_grade_32bytes_min!';
+  process.env.NODE_ENV = prevNodeEnv || 'test';
+  process.env.APP_ENV = prevAppEnv || 'test';
+
+  const validEncKeyBuffer = getEncryptionKey();
+  assert(
+    validEncKeyBuffer !== null && validEncKeyBuffer.length === 32,
+    'Valid ENCRYPTION_KEY derives 256-bit key without reusing JWT secrets'
+  );
+
   // --------------------------------------------------------------------------
   // CRITERION 2: Production Demo Account Suppression
   // --------------------------------------------------------------------------

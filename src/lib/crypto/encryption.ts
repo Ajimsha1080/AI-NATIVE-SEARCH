@@ -1,11 +1,25 @@
 import crypto from 'crypto';
+import { validateSecretStrength } from '../auth';
 
-function getEncryptionKey(): Buffer {
-  const secret = process.env.ENCRYPTION_KEY || 
-                 process.env.SERVICE_JWT_SECRET || 
-                 process.env.SESSION_JWT_SECRET || 
-                 'secure_encryption_key_32bytes_enterprise_aaas';
-  return crypto.createHash('sha256').update(secret).digest();
+/**
+ * Derives a 256-bit encryption key strictly from ENCRYPTION_KEY.
+ * Never reuses JWT secrets and fails closed if missing in production.
+ */
+export function getEncryptionKey(): Buffer {
+  const appEnv = process.env.APP_ENV || process.env.NODE_ENV;
+  const raw = process.env.ENCRYPTION_KEY;
+  
+  if (!raw) {
+    if (appEnv === 'development') {
+      return crypto.createHash('sha256').update('development_only_encryption_key_32bytes_min!').digest();
+    }
+    throw new Error(
+      'Security Error: ENCRYPTION_KEY is missing. Explicit APP_ENV=development is required to use local fallback keys.'
+    );
+  }
+  
+  validateSecretStrength(raw, 'ENCRYPTION_KEY');
+  return crypto.createHash('sha256').update(raw).digest();
 }
 
 /**

@@ -67,6 +67,8 @@ export function getServiceJwtSecret(): Uint8Array {
 export function validateBootSecrets(): void {
   getSessionJwtSecret();
   getServiceJwtSecret();
+  const { getEncryptionKey } = require('../crypto/encryption');
+  getEncryptionKey();
 }
 
 // In-Memory Login Rate Limiting & Lockout Store (Production uses Redis)

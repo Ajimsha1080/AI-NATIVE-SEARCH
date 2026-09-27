@@ -35,6 +35,7 @@ jobs:
           SESSION_JWT_SECRET: super_secure_ci_test_session_secret_32bytes_long!
           SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
           INTERNAL_SERVICE_SECRET: super_secure_ci_test_service_secret_32bytes_long!
+          ENCRYPTION_KEY: super_secure_ci_test_encryption_key_32bytes_long!
 
       - name: Run Security Tests
         run: npx tsx scripts/test-security.ts
@@ -49,6 +50,7 @@ jobs:
           NODE_ENV: production
           SESSION_JWT_SECRET: super_secure_ci_test_session_secret_32bytes_long!
           SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
+          ENCRYPTION_KEY: super_secure_ci_test_encryption_key_32bytes_long!
 
   python-backend-test:
     name: Python Backend Suite & Pytest Matrix

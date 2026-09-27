@@ -20,6 +20,7 @@ gen_secret() {
 POSTGRES_PW=$(gen_secret)
 SESSION_SECRET=$(gen_secret)
 SERVICE_SECRET=$(gen_secret)
+ENCRYPTION_SECRET=$(gen_secret)
 
 echo ""
 echo "# Generated on $(date -u)"
@@ -27,6 +28,7 @@ echo "POSTGRES_PASSWORD=\"${POSTGRES_PW}\""
 echo "SESSION_JWT_SECRET=\"${SESSION_SECRET}\""
 echo "SERVICE_JWT_SECRET=\"${SERVICE_SECRET}\""
 echo "INTERNAL_SERVICE_SECRET=\"${SERVICE_SECRET}\""
+echo "ENCRYPTION_KEY=\"${ENCRYPTION_SECRET}\""
 echo ""
 echo "================================================================="
 echo "Copy these values into your .env or CI deployment secrets."

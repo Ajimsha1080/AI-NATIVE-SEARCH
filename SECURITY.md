@@ -32,7 +32,7 @@ To purge the exposed key from historical commits using `git-filter-repo` or `BFG
 # Using git-filter-repo (Recommended)
 pip install git-filter-repo
 git filter-repo --invert-paths --path .env
-git filter-repo --replace-text <(echo "REDACTED_SECRET==>REDACTED_SECRET")
+git filter-repo --replace-text expressions.txt
 git push origin --force --all
 ```
 
