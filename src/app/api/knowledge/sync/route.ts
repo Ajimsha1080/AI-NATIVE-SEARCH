@@ -41,7 +41,11 @@ export async function POST(req: Request) {
       '/pages/about',
       '/pages/faq',
       '/pages/faqs',
-      '/collections/all'
+      '/pages/terms-of-service',
+      '/policies/terms-of-service',
+      '/collections/all',
+      '/collections/women',
+      '/collections/sunscreen-jackets'
     ];
 
     const scrapedSections: string[] = [];
@@ -66,11 +70,12 @@ export async function POST(req: Request) {
             const cleaned = html
               .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
               .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+              .replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, '')
               .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, '')
               .replace(/<[^>]+>/g, ' ')
               .replace(/\s+/g, ' ')
               .trim();
-            if (cleaned.length > 120) {
+            if (cleaned.length > 80) {
               const label = route ? route.replace(/^\/(pages|policies|collections)\//, '').replace(/[-_]/g, ' ').toUpperCase() : 'HOMEPAGE';
               scrapedSections.push(`\n--- [PAGE: ${label} | ${target}] ---\n${cleaned.substring(0, 3500)}`);
             }
@@ -95,11 +100,12 @@ export async function POST(req: Request) {
 ================================================================================
 2. [PRODUCT CATALOG & CATEGORIES] (https://bluetyga.com/collections/all)
 ================================================================================
-• 1. Sunscreen Performance Jackets (UPF 50+ UV protection, packable, underarm ventilation, zip pockets)
-• 2. No-Sweat Tech Tees (Quick-dry, ultralight, anti-odor, breathable active fit)
-• 3. Tactical Cargo Commuter Joggers (Water-resistant, reinforced utility pockets, tapered athletic cut)
-• 4. Thermal Hydro-Shell Hoodies (Windproof, water-repellent, warmth without bulk)
-• 5. Sizing Standards: S, M, L, XL, XXL (True to Indian athletic sizing chart)
+• 1. Sunscreen Jackets (Men): Standard (₹999), Pro (₹1,299), Ice Pro (₹1,999) with certified UPF 50+ UV protection.
+• 2. Women's Sunscreen Jackets: Women Sunscreen Jacket (₹999), Women Sunscreen Jacket Pro (₹1,299), Women Sunscreen Jacket Ice Pro (₹1,999) with tailored feminine fit, thumbholes, and ponytail apertures.
+• 3. Anti-AC Thermal Jacket 2 Pro (₹1,799): Dual-layer fleece insulation engineered for office AC and chill protection.
+• 4. No-Sweat Tech Tees (₹799): Quick-dry, ultralight, anti-odor, breathable active fit.
+• 5. Headwear & Sun Protection: Sunscreen WIDE VISOR PRO (₹999), Balaclava Pro (₹499).
+• 6. Sizing Standards: S, M, L, XL, XXL (True to Indian athletic sizing chart).
 
 ================================================================================
 3. [SHIPPING & DELIVERY POLICY] (https://bluetyga.com/pages/shipping-policy)
@@ -159,20 +165,18 @@ Comprehensive Store Intelligence:
           id: generateId('prod_bt_01'),
           workspace_id: session.workspaceId,
           title: 'Sunscreen Jacket',
-          description: 'Engineered UPF 50+ UV-blocking technical jacket with underarm breathability zones, water-repellent finish, and zippered pockets.',
-          category: 'Jackets',
-          tags: ['sunscreen', 'upf50', 'uv-protection', 'bestseller', 'jacket'],
+          description: 'Engineered UPF 50+ UV-blocking lightweight breathable jacket designed for daily outdoor sun protection.',
+          category: 'Outerwear',
+          tags: ['jacket', 'sunscreen', 'upf50', 'uvwear', 'outerwear', 'men'],
           price: 999.00,
           compare_at_price: 1999.00,
           currency: 'INR',
-          images: ['https://bluetyga.com/cdn/shop/files/1_07d4bfa5-7d52-47ba-89a3-5c029302e1c9.jpg?v=1719313264&w=800'],
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
           in_stock: true,
-          total_inventory: 84,
+          total_inventory: 65,
           variants: [
-            { id: generateId('var'), sku: 'BT-SJ-BLK-S', title: 'Size S / Obsidian Black', inventory_quantity: 18, price: 999.00, attributes: { size: 'S', color: 'Black' } },
-            { id: generateId('var'), sku: 'BT-SJ-BLK-M', title: 'Size M / Obsidian Black', inventory_quantity: 26, price: 999.00, attributes: { size: 'M', color: 'Black' } },
-            { id: generateId('var'), sku: 'BT-SJ-BLK-L', title: 'Size L / Obsidian Black', inventory_quantity: 24, price: 999.00, attributes: { size: 'L', color: 'Black' } },
-            { id: generateId('var'), sku: 'BT-SJ-BLK-XL', title: 'Size XL / Obsidian Black', inventory_quantity: 16, price: 999.00, attributes: { size: 'XL', color: 'Black' } }
+            { id: generateId('var'), sku: 'BT-SJ-BLK-M', title: 'Size M / Obsidian Black', inventory_quantity: 30, price: 999.00, attributes: { size: 'M', color: 'Black' } },
+            { id: generateId('var'), sku: 'BT-SJ-BLK-L', title: 'Size L / Obsidian Black', inventory_quantity: 35, price: 999.00, attributes: { size: 'L', color: 'Black' } }
           ],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -181,19 +185,18 @@ Comprehensive Store Intelligence:
           id: generateId('prod_bt_02'),
           workspace_id: session.workspaceId,
           title: 'Sunscreen Jacket Pro',
-          description: 'High-performance UPF 50+ technical jacket with reinforced taped seams, hidden internal device pockets, and storm-proof hood.',
-          category: 'Jackets',
-          tags: ['sunscreen', 'upf50', 'pro', 'water-resistant', 'jacket'],
+          description: 'High-performance UPF 50+ technical sunscreen jacket with utility zippered pockets, cooling mesh, and active flex.',
+          category: 'Outerwear',
+          tags: ['jacket', 'pro', 'sunscreen', 'upf50', 'outerwear'],
           price: 1299.00,
           compare_at_price: 2999.00,
           currency: 'INR',
-          images: ['https://bluetyga.com/cdn/shop/files/NavyBlue_1_1800x1800.jpg?v=1719313333&w=800'],
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ2_-_1_4a769590-ab42-4c42-bc68-874df3032dc8.webp?v=1776246852'],
           in_stock: true,
-          total_inventory: 62,
+          total_inventory: 50,
           variants: [
-            { id: generateId('var'), sku: 'BT-SJP-NVY-M', title: 'Size M / Deep Navy', inventory_quantity: 22, price: 1299.00, attributes: { size: 'M', color: 'Navy' } },
-            { id: generateId('var'), sku: 'BT-SJP-NVY-L', title: 'Size L / Deep Navy', inventory_quantity: 24, price: 1299.00, attributes: { size: 'L', color: 'Navy' } },
-            { id: generateId('var'), sku: 'BT-SJP-NVY-XL', title: 'Size XL / Deep Navy', inventory_quantity: 16, price: 1299.00, attributes: { size: 'XL', color: 'Navy' } }
+            { id: generateId('var'), sku: 'BT-SJP-NVY-M', title: 'Size M / Navy Blue', inventory_quantity: 25, price: 1299.00, attributes: { size: 'M', color: 'Navy' } },
+            { id: generateId('var'), sku: 'BT-SJP-NVY-L', title: 'Size L / Navy Blue', inventory_quantity: 25, price: 1299.00, attributes: { size: 'L', color: 'Navy' } }
           ],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -202,19 +205,18 @@ Comprehensive Store Intelligence:
           id: generateId('prod_bt_03'),
           workspace_id: session.workspaceId,
           title: 'Sunscreen Jacket Ice Pro',
-          description: 'Next-gen cooling techwear jacket with ice-feel ceramic microfibers, instant body temp lowering, and UPF 50+ ultraviolet protection.',
-          category: 'Jackets',
-          tags: ['cooling', 'ice-pro', 'upf50', 'ceramic-cool', 'jacket'],
+          description: 'Next-gen cooling techwear jacket with Arctic Ice cool-touch heat dispersal and certified UPF 50+ rating.',
+          category: 'Outerwear',
+          tags: ['jacket', 'ice', 'cooling', 'upf50', 'outerwear', 'ice pro'],
           price: 1999.00,
           compare_at_price: 3999.00,
           currency: 'INR',
-          images: ['https://bluetyga.com/cdn/shop/files/Grey_1_1800x1800.jpg?v=1719313401&w=800'],
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/BTF.webp?v=1779275127'],
           in_stock: true,
           total_inventory: 45,
           variants: [
-            { id: generateId('var'), sku: 'BT-ICE-GRY-M', title: 'Size M / Frost Grey', inventory_quantity: 15, price: 1999.00, attributes: { size: 'M', color: 'Grey' } },
-            { id: generateId('var'), sku: 'BT-ICE-GRY-L', title: 'Size L / Frost Grey', inventory_quantity: 20, price: 1999.00, attributes: { size: 'L', color: 'Grey' } },
-            { id: generateId('var'), sku: 'BT-ICE-GRY-XL', title: 'Size XL / Frost Grey', inventory_quantity: 10, price: 1999.00, attributes: { size: 'XL', color: 'Grey' } }
+            { id: generateId('var'), sku: 'BT-ICE-GRY-M', title: 'Size M / Arctic Ice Grey', inventory_quantity: 20, price: 1999.00, attributes: { size: 'M', color: 'Ice Grey' } },
+            { id: generateId('var'), sku: 'BT-ICE-GRY-L', title: 'Size L / Arctic Ice Grey', inventory_quantity: 25, price: 1999.00, attributes: { size: 'L', color: 'Ice Grey' } }
           ],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -222,20 +224,59 @@ Comprehensive Store Intelligence:
         {
           id: generateId('prod_bt_04'),
           workspace_id: session.workspaceId,
-          title: 'Anti-AC Thermal Jacket 2 Pro',
-          description: 'Dual-action climate shield jacket engineered to neutralize freezing office AC temperatures while remaining ultra-breathable.',
-          category: 'Jackets',
-          tags: ['thermal', 'anti-ac', 'climate-control', 'jacket'],
-          price: 1799.00,
-          compare_at_price: 4999.00,
+          title: 'Women Sunscreen Jacket Ice Pro',
+          description: 'Tailored women ergonomic UPF 50+ cooling jacket with thumbholes, ponytail aperture, and ice-filament fabric.',
+          category: 'Outerwear',
+          tags: ['women', 'jacket', 'ice pro', 'sunscreen', 'upf50'],
+          price: 1999.00,
+          compare_at_price: 3999.00,
           currency: 'INR',
-          images: ['https://bluetyga.com/cdn/shop/files/Anti-AC_Black_1.jpg?v=1719313480&w=800'],
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/WOMENLSJ8-1_2x-100.webp?v=1772778127'],
+          in_stock: true,
+          total_inventory: 40,
+          variants: [
+            { id: generateId('var'), sku: 'BT-WICE-S-LAV', title: 'Size S / Lavender Ice', inventory_quantity: 20, price: 1999.00, attributes: { size: 'S', color: 'Lavender' } },
+            { id: generateId('var'), sku: 'BT-WICE-M-LAV', title: 'Size M / Lavender Ice', inventory_quantity: 20, price: 1999.00, attributes: { size: 'M', color: 'Lavender' } }
+          ],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: generateId('prod_bt_04_std'),
+          workspace_id: session.workspaceId,
+          title: 'Women Sunscreen Jacket',
+          description: 'Engineered female-tailored UPF 50+ UV-blocking lightweight breathable jacket with thumbholes for daily outdoor sun protection.',
+          category: 'Outerwear',
+          tags: ['women', 'womens', 'jacket', 'sunscreen', 'upf50', 'outerwear'],
+          price: 999.00,
+          compare_at_price: 1999.00,
+          currency: 'INR',
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/WOMENSJ1-1.webp?v=1760537623'],
           in_stock: true,
           total_inventory: 50,
           variants: [
-            { id: generateId('var'), sku: 'BT-THM-BLK-M', title: 'Size M / Jet Black', inventory_quantity: 20, price: 1799.00, attributes: { size: 'M', color: 'Black' } },
-            { id: generateId('var'), sku: 'BT-THM-BLK-L', title: 'Size L / Jet Black', inventory_quantity: 20, price: 1799.00, attributes: { size: 'L', color: 'Black' } },
-            { id: generateId('var'), sku: 'BT-THM-BLK-XL', title: 'Size XL / Jet Black', inventory_quantity: 10, price: 1799.00, attributes: { size: 'XL', color: 'Black' } }
+            { id: generateId('var'), sku: 'BT-WSJ-S-NVY', title: 'Size S / Navy Blue', inventory_quantity: 25, price: 999.00, attributes: { size: 'S', color: 'Navy' } },
+            { id: generateId('var'), sku: 'BT-WSJ-M-NVY', title: 'Size M / Navy Blue', inventory_quantity: 25, price: 999.00, attributes: { size: 'M', color: 'Navy' } }
+          ],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: generateId('prod_bt_04_pro'),
+          workspace_id: session.workspaceId,
+          title: 'Women Sunscreen Jacket Pro',
+          description: 'High-performance women UPF 50+ technical jacket with utility zippered pockets, ponytail aperture, and cooling mesh flex.',
+          category: 'Outerwear',
+          tags: ['women', 'womens', 'jacket', 'pro', 'sunscreen', 'upf50', 'outerwear'],
+          price: 1299.00,
+          compare_at_price: 2999.00,
+          currency: 'INR',
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/WOMENLSJ8-1_2x-100.webp?v=1772778127'],
+          in_stock: true,
+          total_inventory: 45,
+          variants: [
+            { id: generateId('var'), sku: 'BT-WPRO-S-PNK', title: 'Size S / Coral Pink', inventory_quantity: 20, price: 1299.00, attributes: { size: 'S', color: 'Pink' } },
+            { id: generateId('var'), sku: 'BT-WPRO-M-PNK', title: 'Size M / Coral Pink', inventory_quantity: 25, price: 1299.00, attributes: { size: 'M', color: 'Pink' } }
           ],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -243,20 +284,19 @@ Comprehensive Store Intelligence:
         {
           id: generateId('prod_bt_05'),
           workspace_id: session.workspaceId,
-          title: 'No-Sweat Tech Tee',
-          description: 'Ultra-soft moisture-wicking active tee with anti-odor silver ions and rapid evaporative cooling technology.',
-          category: 'Tees',
-          tags: ['no-sweat', 'anti-odor', 'quick-dry', 'tee'],
-          price: 799.00,
-          compare_at_price: 1499.00,
+          title: 'Anti-AC Thermal Jacket 2 Pro',
+          description: 'Dual-layer thermal fleece insulation engineered for air-conditioned corporate spaces and chill protection without bulk.',
+          category: 'Hoodies',
+          tags: ['thermal', 'anti-ac', 'jacket', 'hoodie', 'outerwear'],
+          price: 1799.00,
+          compare_at_price: 4999.00,
           currency: 'INR',
-          images: ['https://bluetyga.com/cdn/shop/files/Tee_Olive_1.jpg?v=1719313550&w=800'],
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/ANTI_AC_PRO_1-100.jpg?v=1762598400'],
           in_stock: true,
-          total_inventory: 90,
+          total_inventory: 40,
           variants: [
-            { id: generateId('var'), sku: 'BT-TEE-OLV-M', title: 'Size M / Olive Green', inventory_quantity: 35, price: 799.00, attributes: { size: 'M', color: 'Olive' } },
-            { id: generateId('var'), sku: 'BT-TEE-OLV-L', title: 'Size L / Olive Green', inventory_quantity: 40, price: 799.00, attributes: { size: 'L', color: 'Olive' } },
-            { id: generateId('var'), sku: 'BT-TEE-OLV-XL', title: 'Size XL / Olive Green', inventory_quantity: 15, price: 799.00, attributes: { size: 'XL', color: 'Olive' } }
+            { id: generateId('var'), sku: 'BT-AC2-M-BLK', title: 'Size M / Stealth Black', inventory_quantity: 20, price: 1799.00, attributes: { size: 'M', color: 'Black' } },
+            { id: generateId('var'), sku: 'BT-AC2-L-BLK', title: 'Size L / Stealth Black', inventory_quantity: 20, price: 1799.00, attributes: { size: 'L', color: 'Black' } }
           ],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -264,20 +304,19 @@ Comprehensive Store Intelligence:
         {
           id: generateId('prod_bt_06'),
           workspace_id: session.workspaceId,
-          title: 'Travel Joggers',
-          description: '4-way stretch utility travel joggers with hidden passport zipper pocket, wrinkle-free fabric, and tapered athletic fit.',
-          category: 'Joggers',
-          tags: ['joggers', 'travel', '4-way-stretch', 'wrinkle-free'],
-          price: 1499.00,
-          compare_at_price: 2999.00,
+          title: 'No Sweat Tech Tee',
+          description: 'Quick-dry moisture-wicking engineered active tee designed to stay cool, fresh, and odor-free all day.',
+          category: 'T-Shirts',
+          tags: ['tshirt', 'nosweat', 'quick-dry', 'activewear', 'tee'],
+          price: 799.00,
+          compare_at_price: 1499.00,
           currency: 'INR',
-          images: ['https://bluetyga.com/cdn/shop/files/Joggers_Charcoal_1.jpg?v=1719313620&w=800'],
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/NoSweatTee_1.webp?v=1777871708'],
           in_stock: true,
-          total_inventory: 70,
+          total_inventory: 80,
           variants: [
-            { id: generateId('var'), sku: 'BT-JOG-CHR-30', title: 'Size 30 / Charcoal Grey', inventory_quantity: 20, price: 1499.00, attributes: { size: '30', color: 'Charcoal' } },
-            { id: generateId('var'), sku: 'BT-JOG-CHR-32', title: 'Size 32 / Charcoal Grey', inventory_quantity: 30, price: 1499.00, attributes: { size: '32', color: 'Charcoal' } },
-            { id: generateId('var'), sku: 'BT-JOG-CHR-34', title: 'Size 34 / Charcoal Grey', inventory_quantity: 20, price: 1499.00, attributes: { size: '34', color: 'Charcoal' } }
+            { id: generateId('var'), sku: 'BT-NST-M-OLV', title: 'Size M / Olive Green', inventory_quantity: 40, price: 799.00, attributes: { size: 'M', color: 'Olive' } },
+            { id: generateId('var'), sku: 'BT-NST-L-OLV', title: 'Size L / Olive Green', inventory_quantity: 40, price: 799.00, attributes: { size: 'L', color: 'Olive' } }
           ],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -285,20 +324,18 @@ Comprehensive Store Intelligence:
         {
           id: generateId('prod_bt_07'),
           workspace_id: session.workspaceId,
-          title: 'Office Jogger',
-          description: 'Hybrid formal-athletic trousers with structured stretch weave, belt loops, and hidden comfort waistband.',
-          category: 'Joggers',
-          tags: ['office-jogger', 'workwear', 'hybrid', 'stretch'],
-          price: 1699.00,
-          compare_at_price: 3499.00,
+          title: 'Balaclava Pro',
+          description: 'Full facial and neck UV shield with laser-cut breathing ports and ergonomic multi-wear configurations.',
+          category: 'Accessories',
+          tags: ['balaclava', 'sunscreen', 'accessories', 'uvwear', 'mask'],
+          price: 499.00,
+          compare_at_price: 799.00,
           currency: 'INR',
-          images: ['https://bluetyga.com/cdn/shop/files/Office_Jogger_Navy_1.jpg?v=1719313690&w=800'],
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/balaclavapro_2.webp?v=1777282036'],
           in_stock: true,
-          total_inventory: 55,
+          total_inventory: 90,
           variants: [
-            { id: generateId('var'), sku: 'BT-OFF-NVY-32', title: 'Size 32 / Classic Navy', inventory_quantity: 25, price: 1699.00, attributes: { size: '32', color: 'Navy' } },
-            { id: generateId('var'), sku: 'BT-OFF-NVY-34', title: 'Size 34 / Classic Navy', inventory_quantity: 20, price: 1699.00, attributes: { size: '34', color: 'Navy' } },
-            { id: generateId('var'), sku: 'BT-OFF-NVY-36', title: 'Size 36 / Classic Navy', inventory_quantity: 10, price: 1699.00, attributes: { size: '36', color: 'Navy' } }
+            { id: generateId('var'), sku: 'BT-BAL-UNI-BLK', title: 'Universal Fit / Jet Black', inventory_quantity: 90, price: 499.00, attributes: { size: 'Universal', color: 'Black' } }
           ],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -306,18 +343,18 @@ Comprehensive Store Intelligence:
         {
           id: generateId('prod_bt_08'),
           workspace_id: session.workspaceId,
-          title: 'Sunscreen Balaclava Pro',
-          description: 'Complete 360° head, neck, and face UV shield with breathable nasal mesh and anti-fog eyewear compatibility.',
+          title: 'Sunscreen WIDE VISOR PRO',
+          description: 'Wide brim maximum-coverage UV sun visor with adjustable anti-glare band for outdoor sports, cycling, and travel.',
           category: 'Accessories',
-          tags: ['balaclava', 'sunscreen', 'upf50', 'riding-gear'],
-          price: 499.00,
-          compare_at_price: 799.00,
+          tags: ['visor', 'sunscreen', 'accessories', 'uvwear', 'hat', 'cap', 'caps', 'headwear'],
+          price: 999.00,
+          compare_at_price: 1499.00,
           currency: 'INR',
-          images: ['https://bluetyga.com/cdn/shop/files/Balaclava_Black_1.jpg?v=1719313750&w=800'],
+          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/sunscreenwidevisorpro_25.webp?v=1777284066'],
           in_stock: true,
-          total_inventory: 110,
+          total_inventory: 50,
           variants: [
-            { id: generateId('var'), sku: 'BT-BALA-BLK-OS', title: 'One Size / Stealth Black', inventory_quantity: 110, price: 499.00, attributes: { size: 'Free Size', color: 'Black' } }
+            { id: generateId('var'), sku: 'BT-VIS-UNI-BLK', title: 'Universal / Graphite Black', inventory_quantity: 50, price: 999.00, attributes: { size: 'Universal', color: 'Black' } }
           ],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
