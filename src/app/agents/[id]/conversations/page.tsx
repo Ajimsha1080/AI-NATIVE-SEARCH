@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useEffect, useState, use } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import StudioSidebar from '@/components/layout/StudioSidebar';
 import { MessageSquare, ArrowRight, ExternalLink, Inbox } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
-export default function AgentConversationsPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const agentId = resolvedParams.id;
+export const dynamic = 'force-dynamic';
+
+export default function AgentConversationsPage() {
+  const params = useParams();
+  const agentId = typeof params?.id === 'string' ? params.id : Array.isArray(params?.id) ? params.id[0] : '';
   const [conversations, setConversations] = useState<any[]>([]);
 
   useEffect(() => {

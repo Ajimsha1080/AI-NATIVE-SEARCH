@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthSession } from '@/lib/auth';
+import { getAuthSession, requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { ingestDocument } from '@/lib/rag';
 
@@ -14,6 +14,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const session = await getAuthSession(req);
   if (!session) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
+  if (!requireRole(session, ['OWNER', 'ADMIN', 'EDITOR'])) {
+    return NextResponse.json({ error: { message: 'Forbidden: Insufficient permissions. Requires EDITOR, ADMIN, or OWNER role.' } }, { status: 403 });
+  }
 
   try {
     const { name, type, content, agent_id } = await req.json();
@@ -37,6 +40,9 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const session = await getAuthSession(req);
   if (!session) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
+  if (!requireRole(session, ['OWNER', 'ADMIN', 'EDITOR'])) {
+    return NextResponse.json({ error: { message: 'Forbidden: Insufficient permissions. Requires EDITOR, ADMIN, or OWNER role.' } }, { status: 403 });
+  }
 
   const url = new URL(req.url);
   const id = url.searchParams.get('id');

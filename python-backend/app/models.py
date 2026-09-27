@@ -4,13 +4,13 @@ from typing import List, Optional, Dict, Any
 class ChatRequest(BaseModel):
     message: str = Field(..., description="User question or prompt")
     conversation_id: Optional[str] = None
-    workspace_id: Optional[str] = "ws_acme_corp"
+    workspace_id: Optional[str] = None
     customer_identifier: Optional[str] = "guest_user"
     channel: Optional[str] = "PLAYGROUND"
 
 class RAGQueryRequest(BaseModel):
     question: str = Field(..., description="Query for knowledge retrieval")
-    workspace_id: Optional[str] = "ws_acme_corp"
+    workspace_id: Optional[str] = None
     top_k: Optional[int] = 3
     min_score: Optional[float] = 0.20
 

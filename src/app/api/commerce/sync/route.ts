@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthSession } from '@/lib/auth';
+import { getAuthSession, requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { generateId } from '@/lib/utils';
 import { dispatchWebhookEvent } from '@/lib/webhooks';
@@ -90,6 +90,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const session = await getAuthSession(req);
   if (!session) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
+  if (!requireRole(session, ['OWNER', 'ADMIN', 'EDITOR'])) {
+    return NextResponse.json({ error: { message: 'Forbidden: Insufficient permissions. Requires EDITOR, ADMIN, or OWNER role.' } }, { status: 403 });
+  }
 
   let integrationId = 'local_catalog';
   let customConfig: Record<string, any> = {};
