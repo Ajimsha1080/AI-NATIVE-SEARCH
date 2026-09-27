@@ -20,20 +20,50 @@ export default function StudioSidebar({ agentId, agentName }: { agentId: string;
   ];
 
   return (
-    <aside className="w-56 border-r border-zinc-200 bg-[#f9fafb] flex flex-col justify-between shrink-0 select-none">
-      <div className="flex flex-col">
-        {/* Back button & Agent Badge */}
-        <div className="h-14 px-3 border-b border-zinc-200 flex items-center justify-between bg-white">
-          <Link
-            href="/agents"
-            className="flex items-center gap-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-950 transition"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Fleet
-          </Link>
-          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-zinc-100 border border-zinc-200 text-zinc-700 truncate max-w-[90px]">
-            {agentId}
-          </span>
-        </div>
+    <>
+      {/* Mobile Horizontal Sub-Navigation */}
+      <div className="md:hidden flex items-center overflow-x-auto p-2 bg-white border-b border-zinc-200 gap-1.5 shrink-0 select-none shadow-2xs">
+        <Link
+          href="/agents"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-zinc-600 bg-zinc-100 rounded-lg shrink-0"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+        </Link>
+        {studioTabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = pathname === tab.path;
+          return (
+            <Link
+              key={tab.name}
+              href={tab.path}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 transition ${
+                isActive
+                  ? 'bg-zinc-900 text-white font-semibold shadow-2xs'
+                  : 'bg-zinc-50 text-zinc-700 border border-zinc-200'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{tab.name}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Desktop Aside Sidebar */}
+      <aside className="hidden md:flex md:w-56 border-r border-zinc-200 bg-[#f9fafb] flex-col justify-between shrink-0 select-none">
+        <div className="flex flex-col">
+          {/* Back button & Agent Badge */}
+          <div className="h-14 px-3 border-b border-zinc-200 flex items-center justify-between bg-white">
+            <Link
+              href="/agents"
+              className="flex items-center gap-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-950 transition"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Fleet
+            </Link>
+            <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-zinc-100 border border-zinc-200 text-zinc-700 truncate max-w-[90px]">
+              {agentId}
+            </span>
+          </div>
 
         {/* Studio Sub-pages */}
         <nav className="p-2 space-y-0.5 overflow-y-auto max-h-[calc(100vh-130px)]">
@@ -87,5 +117,6 @@ export default function StudioSidebar({ agentId, agentName }: { agentId: string;
         </Link>
       </div>
     </aside>
-  );
+  </>
+);
 }

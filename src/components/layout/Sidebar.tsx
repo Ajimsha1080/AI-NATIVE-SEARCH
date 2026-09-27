@@ -102,7 +102,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-[70px] lg:w-56 border-r border-zinc-200 bg-white flex flex-col justify-between shrink-0 select-none overflow-y-auto shadow-xs">
+    <aside className="hidden md:flex md:w-[70px] lg:w-56 border-r border-zinc-200 bg-white flex-col justify-between shrink-0 select-none overflow-y-auto shadow-xs">
       <div className="flex flex-col">
         {/* Brand Header */}
         <div className="h-14 px-4 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white z-10">

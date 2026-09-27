@@ -74,21 +74,21 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <main className="flex-1">
-        <section className="pt-20 pb-16 px-6 max-w-5xl mx-auto space-y-6 text-center">
+        <section className="pt-10 sm:pt-20 pb-12 sm:pb-16 px-4 sm:px-6 max-w-5xl mx-auto space-y-5 sm:space-y-6 text-center">
           
           {/* Status badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-zinc-200 text-zinc-700 text-xs font-mono shadow-2xs">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1 rounded-full bg-white border border-zinc-200 text-zinc-700 text-[11px] sm:text-xs font-mono shadow-2xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="font-medium">Version 2.4 Production Engine</span>
-            <span className="text-zinc-300">|</span>
-            <span className="text-zinc-500">128-dim Cosine RAG + 15 Typed Tools</span>
+            <span className="text-zinc-300 hidden sm:inline">|</span>
+            <span className="text-zinc-500 hidden sm:inline">128-dim Cosine RAG + 15 Typed Tools</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight leading-[1.1] max-w-4xl mx-auto">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-zinc-900 tracking-tight leading-[1.15] sm:leading-[1.1] max-w-4xl mx-auto">
             The Autonomous Agent Runtime for Modern E-Commerce
           </h1>
 
-          <p className="text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base md:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed">
             Build, test, evaluate, and deploy production commerce concierges. Query live inventory, track shipments, calculate return eligibility, and execute verified store actions with zero hallucinations.
           </p>
 
