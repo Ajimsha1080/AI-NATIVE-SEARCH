@@ -70,12 +70,6 @@ export default function Sidebar() {
       isActive: (path: string) => path.startsWith('/integrations')
     },
     { 
-      name: 'AI Search', 
-      href: '/search', 
-      icon: Search,
-      isActive: (path: string) => path.startsWith('/search') || path.includes('/playground')
-    },
-    { 
       name: 'Analytics', 
       href: '/analytics', 
       icon: BarChart3,

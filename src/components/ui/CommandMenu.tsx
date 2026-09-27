@@ -55,7 +55,6 @@ export default function CommandMenu({ isOpen, onClose }: CommandMenuProps) {
     { label: 'Store Integrations & Connectors', path: '/integrations', icon: Layers, category: 'Navigation' },
     { label: 'Agent Action Permissions & Tools', path: '/actions', icon: Shield, category: 'Navigation' },
     { label: 'Conversations & Live Inbox', path: '/conversations', icon: MessageSquare, category: 'Navigation' },
-    { label: 'AI Search & Natural Query', path: '/search', icon: Search, category: 'Navigation' },
     { label: 'Store & Revenue Analytics', path: '/analytics', icon: Sparkles, category: 'Navigation' },
     { label: 'Deployments & Embed Snippets', path: '/deployments', icon: Globe, category: 'Navigation' },
     { label: 'Security & Tenant Governance', path: '/security', icon: Shield, category: 'Navigation' },
