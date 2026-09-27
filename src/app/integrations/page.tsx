@@ -31,11 +31,20 @@ export default function IntegrationsWorkspacePage() {
   const [activeModal, setActiveModal] = useState<IntegrationItem | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; latency?: number } | null>(null);
+  const [syncTimestamps, setSyncTimestamps] = useState<Record<string, string>>({
+    shopify_storefront: 'Just now',
+    web_crawler: 'Just now',
+    local_catalog: 'Real-time',
+    woocommerce: 'Active Handshake',
+    razorpay_stripe: 'Instant Capture',
+    logistics_carriers: 'Live AWB Sync',
+    custom_webhooks: 'Active'
+  });
   const [metrics, setMetrics] = useState({
     productsCount: 10,
     ordersCount: 3,
-    knowledgeCount: 24,
-    activeConnectors: 6,
+    knowledgeCount: 32,
+    activeConnectors: 5,
     webhookHealth: '100% OPERATIONAL'
   });
   const [liveLogs, setLiveLogs] = useState<any[]>([
@@ -70,7 +79,7 @@ export default function IntegrationsWorkspacePage() {
 
   useEffect(() => {
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 5000);
+    const interval = setInterval(fetchMetrics, 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -294,6 +303,37 @@ export default function IntegrationsWorkspacePage() {
     }
   }
 
+  async function handleSyncAll() {
+    setSyncing('ALL');
+    try {
+      const res = await fetch('/api/commerce/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'SYNC_ALL' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg(data.message || 'All store connectors and RAG crawlers synchronized successfully!');
+        const nowStr = 'Just now';
+        setSyncTimestamps({
+          shopify_storefront: nowStr,
+          web_crawler: nowStr,
+          local_catalog: 'Real-time',
+          woocommerce: nowStr,
+          razorpay_stripe: nowStr,
+          logistics_carriers: nowStr,
+          custom_webhooks: nowStr
+        });
+        fetchMetrics();
+        setTimeout(() => setSuccessMsg(null), 5000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSyncing(null);
+    }
+  }
+
   async function handleTriggerSync(item: IntegrationItem) {
     setSyncing(item.id);
     try {
@@ -309,6 +349,7 @@ export default function IntegrationsWorkspacePage() {
       const data = await res.json();
       if (res.ok) {
         setSuccessMsg(data.message || `Synchronized records for ${item.name}!`);
+        setSyncTimestamps(prev => ({ ...prev, [item.id]: 'Just now' }));
         fetchMetrics();
         if (activeModal) setActiveModal(null);
         setTimeout(() => setSuccessMsg(null), 5000);
@@ -343,14 +384,12 @@ export default function IntegrationsWorkspacePage() {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    handleTriggerSync(integrations[0]);
-                  }}
+                  onClick={handleSyncAll}
                   disabled={!!syncing}
                   className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-2 shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
-                  <span>{syncing ? 'Synchronizing All...' : 'Sync All Connectors'}</span>
+                  <span>{syncing === 'ALL' ? 'Synchronizing All...' : 'Sync All Connectors'}</span>
                 </button>
               </div>
             </div>
@@ -409,7 +448,7 @@ export default function IntegrationsWorkspacePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {integrations.map((item) => {
                 const Icon = item.icon;
-                const isSyncing = syncing === item.id;
+                const isSyncing = syncing === item.id || syncing === 'ALL';
                 return (
                   <div
                     key={item.id}
@@ -435,11 +474,11 @@ export default function IntegrationsWorkspacePage() {
                         {item.description}
                       </p>
 
-                      <div className="bg-zinc-50 border border-zinc-150 rounded-xl p-2.5 space-y-1 font-mono text-[10px] text-zinc-600">
+                      <div className="bg-zinc-50 border border-zinc-150 rounded-xl p-2.5 space-y-1.5 font-mono text-[10px]">
                         {Object.entries(item.config).slice(0, 2).map(([k, v]) => (
-                          <div key={k} className="flex items-center justify-between">
-                            <span className="text-zinc-400 uppercase">{k}:</span>
-                            <span className="text-zinc-800 font-medium truncate max-w-[200px]">{v}</span>
+                          <div key={k} className="flex items-center justify-between gap-2">
+                            <span className="text-zinc-400 uppercase font-semibold">{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                            <span className="text-zinc-800 font-medium truncate max-w-[220px]">{v}</span>
                           </div>
                         ))}
                       </div>
@@ -448,7 +487,7 @@ export default function IntegrationsWorkspacePage() {
                     <div className="pt-3 border-t border-zinc-100 flex items-center justify-between font-mono text-[11px]">
                       <span className="text-zinc-500 flex items-center gap-1.5 text-[10px]">
                         <Clock className="w-3 h-3 text-zinc-400" />
-                        Last sync: {item.lastSynced || 'Active'}
+                        Last sync: <span className="font-semibold text-zinc-700">{syncTimestamps[item.id] || 'Active'}</span>
                       </span>
                       <div className="flex items-center gap-2">
                         <button
