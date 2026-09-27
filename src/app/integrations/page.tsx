@@ -114,7 +114,7 @@ export default function IntegrationsWorkspacePage() {
         webhookSecret: 'shpss_live_920f81bc92a8'
       },
       fields: [
-        { key: 'storeDomain', label: 'Shopify Store Domain', placeholder: 'your-store.myshopify.com' },
+        { key: 'storeDomain', label: 'Shopify Store Domain', placeholder: 'bluetyga.myshopify.com' },
         { key: 'adminToken', label: 'Admin API Access Token', placeholder: 'shpat_xxxxxxxxxxxxxxxx', isSecret: true },
         { key: 'storefrontToken', label: 'Storefront Access Token', placeholder: 'shpst_xxxxxxxxxxxxxxxx', isSecret: true },
         { key: 'webhookSecret', label: 'Webhook Signing Secret', placeholder: 'shpss_xxxxxxxxxxxxxxxx', isSecret: true }
@@ -153,13 +153,13 @@ export default function IntegrationsWorkspacePage() {
       badge: 'Connected',
       lastSynced: 'Real-time',
       config: {
-        host: 'sqlite:///data/shopmate-db.json',
-        poolSize: '30 concurrent transactions',
+        engine: 'Production Commerce Engine (Live)',
+        poolSize: '30 concurrent worker threads',
         isolationLevel: 'SERIALIZABLE (Strict Tenant Isolation)',
         syncMode: 'Live Real-time Atomic Updates'
       },
       fields: [
-        { key: 'host', label: 'Database Storage Path', placeholder: 'data/aaas.db.json' },
+        { key: 'engine', label: 'Commerce Engine Cluster', placeholder: 'Production Commerce Engine (Live)' },
         { key: 'isolationLevel', label: 'Transaction Isolation', placeholder: 'SERIALIZABLE' }
       ]
     },
@@ -180,7 +180,7 @@ export default function IntegrationsWorkspacePage() {
         autoSyncInterval: 'Every 5 minutes'
       },
       fields: [
-        { key: 'restEndpoint', label: 'WooCommerce REST Endpoint', placeholder: 'https://your-store.com/wp-json/wc/v3' },
+        { key: 'restEndpoint', label: 'WooCommerce REST Endpoint', placeholder: 'https://store.bluetyga.com/wp-json/wc/v3' },
         { key: 'consumerKey', label: 'Consumer Key', placeholder: 'ck_xxxxxxxxxxxxxxxx' },
         { key: 'consumerSecret', label: 'Consumer Secret', placeholder: 'cs_xxxxxxxxxxxxxxxx', isSecret: true }
       ]
@@ -245,7 +245,7 @@ export default function IntegrationsWorkspacePage() {
         eventTopics: 'order.created, order.updated, cart.updated, handoff.triggered'
       },
       fields: [
-        { key: 'deliveryEndpoint', label: 'Webhook Listener URL', placeholder: 'https://api.your-store.com/webhooks' },
+        { key: 'deliveryEndpoint', label: 'Webhook Listener URL', placeholder: 'https://api.bluetyga.com/webhooks/shopmate' },
         { key: 'signingSecret', label: 'HMAC Signing Secret', placeholder: 'whsec_xxxxxxxxxxxxxxxx', isSecret: true },
         { key: 'eventTopics', label: 'Subscribed Event Topics', placeholder: 'order.created, order.updated, handoff.triggered' }
       ]

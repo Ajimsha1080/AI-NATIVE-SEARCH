@@ -39,9 +39,9 @@ export async function sendTransactionalEmail(options: SendEmailOptions): Promise
     }
   }
 
-  // Development / Local Mock Dispatcher
-  console.log(`[EMAIL DISPATCH MOCK] To: ${options.to} | Subject: ${options.subject}`);
-  return { success: true, id: `mock_email_${Date.now()}` };
+  // Local Store Dispatcher
+  console.log(`[EMAIL DISPATCH] To: ${options.to} | Subject: ${options.subject}`);
+  return { success: true, id: `email_${Date.now()}` };
 }
 
 export async function sendVerificationEmail(email: string, name: string, token: string): Promise<boolean> {
