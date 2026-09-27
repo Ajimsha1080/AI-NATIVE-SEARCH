@@ -659,6 +659,8 @@ export default function KnowledgeWorkspacePage() {
                             </div>
                           </td>
                         </tr>
+                      ))}
+
                       {/* Empty State Row */}
                       {filteredSources.length === 0 && (
                         <tr>
