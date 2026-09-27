@@ -339,7 +339,7 @@ def execute_rag_pipeline(question: str, workspace_id: str, tenant_chunks: Option
         natural_answer = reranked[0]['chunk_text']
         has_chunks = True
     else:
-        natural_answer = "I'd be glad to help answer any questions about our products, sizing, delivery, or policies."
+        natural_answer = "I do not have store policy documents on file for this workspace. Please contact customer support for assistance."
         has_chunks = False
 
     # 8. Grounding Verification
