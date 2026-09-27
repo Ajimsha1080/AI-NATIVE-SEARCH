@@ -516,66 +516,9 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
   ];
   db.commerce_orders.push(...orders);
 
-  // 5. Knowledge Docs
-  const doc1 = {
-    id: 'doc_policy_01',
-    workspace_id: workspace.id,
-    name: 'Store Shipping, Tracking & Delivery SLAs.md',
-    type: 'MARKDOWN' as const,
-    status: 'READY' as const,
-    size_bytes: 48200,
-    chunk_count: 2,
-    raw_content: 'Official Store Shipping & Delivery Policies:\n1. Standard Delivery: Orders are shipped via courier partners with an expected delivery timeline of 3 to 9 working days across all major pincodes.\n2. Real-Time Order Tracking: Customers can track live courier status using their Order ID on the tracking portal.\n3. Delivery Issues: Any package delivery discrepancy or delay must be reported within 24 hours of notification to initiate an immediate carrier investigation.\n4. Processing: Orders placed before 2 PM are packed and dispatched same-day from the fulfillment hub.',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  db.knowledge_documents.push(doc1);
-
-  const policyChunks = chunkText(doc1.raw_content, 300);
-  policyChunks.forEach((chunkStr, idx) => {
-    db.knowledge_chunks.push({
-      id: 'chk_policy_0' + (idx + 1),
-      workspace_id: workspace.id,
-      document_id: doc1.id,
-      chunk_index: idx,
-      content: chunkStr,
-      embedding: generateEmbedding(chunkStr),
-      metadata: {
-        source_name: doc1.name
-      },
-      created_at: new Date().toISOString()
-    });
-  });
-
-  const doc2 = {
-    id: 'doc_shipping_faq_02',
-    workspace_id: workspace.id,
-    name: 'Returns, Exchanges & Warranty Guidelines.md',
-    type: 'MARKDOWN' as const,
-    status: 'READY' as const,
-    size_bytes: 32400,
-    chunk_count: 2,
-    raw_content: 'Returns & Exchange Guidelines:\n• Return Window: Eligible return or exchange requests can be initiated within the return window through the official return portal.\n• Condition: Items must be unused, unwashed, and in original packaging with intact tags.\n• Single Request Limit: Each order is eligible for one return or exchange request.\n• Refunds & Fees: Approved returns are refunded to the original payment method. For certain return categories, a nominal ₹200 reverse logistics fee may apply.\n• Defective Replacements: Manufacturing defects are replaced at zero cost.',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  db.knowledge_documents.push(doc2);
-
-  const shippingChunks = chunkText(doc2.raw_content, 250);
-  shippingChunks.forEach((chunkStr, idx) => {
-    db.knowledge_chunks.push({
-      id: 'chk_shipping_0' + (idx + 1),
-      workspace_id: workspace.id,
-      document_id: doc2.id,
-      chunk_index: idx,
-      content: chunkStr,
-      embedding: generateEmbedding(chunkStr),
-      metadata: {
-        source_name: doc2.name
-      },
-      created_at: new Date().toISOString()
-    });
-  });
+  // 5. Knowledge Docs (Clean real-time state - populated via UI upload or website sync)
+  db.knowledge_documents.length = 0;
+  db.knowledge_chunks.length = 0;
 
   // 6. Agents
   const agent1 = {

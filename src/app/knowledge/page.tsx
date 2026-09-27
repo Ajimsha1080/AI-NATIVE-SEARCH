@@ -659,7 +659,32 @@ export default function KnowledgeWorkspacePage() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      {/* Empty State Row */}
+                      {filteredSources.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-zinc-500 text-xs">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <p className="font-medium text-zinc-600">No knowledge sources connected yet</p>
+                              <p className="text-[11px] text-zinc-400">Add real-time store guidelines, FAQs, or sync your live website</p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <button
+                                  onClick={() => setShowAddModal(true)}
+                                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition"
+                                >
+                                  + Add Document
+                                </button>
+                                <button
+                                  onClick={() => { setAddTab('WEBSITE'); setShowAddModal(true); }}
+                                  className="px-3 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-semibold text-xs transition flex items-center gap-1.5"
+                                >
+                                  <Globe className="w-3.5 h-3.5 text-zinc-500" />
+                                  Website Sync
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
