@@ -192,9 +192,6 @@ export default function SecuritySettingsPage() {
               <Link href="/billing" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
                 Billing &amp; Quotas
               </Link>
-              <Link href="/analytics" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Store Analytics
-              </Link>
               <Link href="/api-keys" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
                 API Keys
               </Link>
@@ -203,6 +200,9 @@ export default function SecuritySettingsPage() {
               </Link>
               <Link href="/security" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-white text-zinc-900 border border-zinc-300 shadow-2xs whitespace-nowrap">
                 Security &amp; RBAC
+              </Link>
+              <Link href="/settings/audit-logs" className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
+                Audit Logs
               </Link>
             </div>
 

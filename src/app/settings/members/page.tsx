@@ -108,16 +108,13 @@ export default function MembersSettingsPage() {
               <Link href="/billing" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
                 Billing &amp; Quotas
               </Link>
-              <Link href="/analytics" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Store Analytics
-              </Link>
               <Link href="/api-keys" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
                 API Keys
               </Link>
-              <Link href="/settings/members" className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white text-zinc-900 shadow-2xs border border-zinc-200 whitespace-nowrap">
+              <Link href="/team" className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white text-zinc-900 shadow-2xs border border-zinc-200 whitespace-nowrap">
                 Team Members
               </Link>
-              <Link href="/settings/security" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
+              <Link href="/security" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
                 Security &amp; RBAC
               </Link>
               <Link href="/settings/audit-logs" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">

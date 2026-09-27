@@ -86,9 +86,6 @@ export default function SettingsWorkspacePage() {
               <Link href="/billing" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
                 Billing &amp; Quotas
               </Link>
-              <Link href="/analytics" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
-                Store Analytics
-              </Link>
               <Link href="/api-keys" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
                 API Keys
               </Link>
@@ -97,6 +94,9 @@ export default function SettingsWorkspacePage() {
               </Link>
               <Link href="/security" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
                 Security &amp; RBAC
+              </Link>
+              <Link href="/settings/audit-logs" className="px-3 py-1.5 text-xs font-semibold rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition whitespace-nowrap">
+                Audit Logs
               </Link>
             </div>
 
