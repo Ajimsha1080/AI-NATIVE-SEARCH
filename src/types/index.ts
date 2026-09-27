@@ -284,6 +284,42 @@ export interface Integration {
   created_at: string;
 }
 
+export type IntegrationStatus = 'NOT_CONNECTED' | 'CONNECTED' | 'ERROR' | 'SYNCING';
+
+export interface WorkspaceIntegration {
+  id: string;
+  workspace_id: string;
+  integration_id: string; // 'shopify', 'woocommerce', 'razorpay', 'stripe', 'logistics', 'web_crawler', 'custom_webhooks'
+  provider: string;
+  name: string;
+  status: IntegrationStatus;
+  connected_at?: string;
+  connected_by_user_id?: string;
+  connected_by_email?: string;
+  last_sync_at?: string;
+  last_sync_status?: 'SUCCESS' | 'FAILED' | 'PENDING';
+  last_error?: string;
+  scopes_granted?: string[];
+  credentials_ciphertext?: string;
+  masked_credentials?: Record<string, string>;
+  config?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IntegrationSyncJob {
+  id: string;
+  workspace_id: string;
+  integration_id: string;
+  status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  progress: number; // 0 to 100
+  items_synced?: number;
+  message?: string;
+  error?: string;
+  created_at: string;
+  completed_at?: string;
+}
+
 export interface Conversation {
   id: string;
   workspace_id: string;

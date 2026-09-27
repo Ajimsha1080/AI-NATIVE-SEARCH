@@ -28,7 +28,9 @@ import {
   EvaluationRun,
   AuditLog,
   UsageEvent,
-  ProcessedWebhookEvent
+  ProcessedWebhookEvent,
+  WorkspaceIntegration,
+  IntegrationSyncJob
 } from '@/types';
 
 export interface DatabaseSchema {
@@ -60,6 +62,8 @@ export interface DatabaseSchema {
   audit_logs: AuditLog[];
   usage_events: UsageEvent[];
   processed_webhook_events: ProcessedWebhookEvent[];
+  workspace_integrations: WorkspaceIntegration[];
+  integration_sync_jobs: IntegrationSyncJob[];
 }
 
 const DB_FILE_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'aaas.db.json');
@@ -92,6 +96,8 @@ class DatabaseEngine {
         const parsed = JSON.parse(raw);
         parsed.usage_events = parsed.usage_events || [];
         parsed.processed_webhook_events = parsed.processed_webhook_events || [];
+        parsed.workspace_integrations = parsed.workspace_integrations || [];
+        parsed.integration_sync_jobs = parsed.integration_sync_jobs || [];
         if (parsed.agents && parsed.agents.length > 0 && parsed.commerce_products && parsed.commerce_products.length > 0) {
           return parsed;
         }
@@ -128,7 +134,9 @@ class DatabaseEngine {
       evaluation_runs: [],
       audit_logs: [],
       usage_events: [],
-      processed_webhook_events: []
+      processed_webhook_events: [],
+      workspace_integrations: [],
+      integration_sync_jobs: []
     };
 
     this.saveImmediate(initialSchema);
@@ -197,6 +205,8 @@ class DatabaseEngine {
   public get audit_logs() { return this.data.audit_logs; }
   public get usage_events() { return this.data.usage_events; }
   public get processed_webhook_events() { return this.data.processed_webhook_events; }
+  public get workspace_integrations() { return this.data.workspace_integrations; }
+  public get integration_sync_jobs() { return this.data.integration_sync_jobs; }
 }
 
 export const db = DatabaseEngine.getInstance();
