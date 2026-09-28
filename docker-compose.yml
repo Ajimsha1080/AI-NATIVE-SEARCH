@@ -10,6 +10,7 @@ services:
       - "8000:8000"
     environment:
       - PORT=8000
+      - SERVICE_JWT_SECRET=aaas_live_production_jwt_service_secret_2026_secure_key!
     volumes:
       - ./python-backend/data:/app/data
 
@@ -26,6 +27,10 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - PYTHON_BACKEND_URL=http://python-backend:8000
+      - SESSION_JWT_SECRET=aaas_live_production_jwt_session_secret_2026_secure_key!
+      - SERVICE_JWT_SECRET=aaas_live_production_jwt_service_secret_2026_secure_key!
+      - ENCRYPTION_KEY=aaas_live_production_aes_256_encryption_master_key_2026!
+      - AUTH_COOKIE_NAME=aaas_session_token
     depends_on:
       - python-backend
     volumes:
