@@ -49,32 +49,40 @@ export default function AgentConversationsPage() {
             <div className="p-6 rounded-2xl bg-white border border-zinc-200 space-y-4 shadow-2xs">
               <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Active Sessions ({conversations.length})</h3>
               <div className="divide-y divide-zinc-100">
-                {conversations.map((c) => (
-                  <div key={c.id} className="py-4 flex items-center justify-between hover:bg-zinc-50/60 p-2 rounded-xl transition">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono font-bold text-zinc-900 text-xs">{c.id}</span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border ${
-                          c.status === 'ESCALATED'
-                            ? 'bg-rose-50 text-rose-700 border-rose-200'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        }`}>
-                          {c.status}
-                        </span>
+                {conversations.length > 0 ? (
+                  conversations.map((c) => (
+                    <div key={c.id} className="py-4 flex items-center justify-between hover:bg-zinc-50/60 p-2 rounded-xl transition">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono font-bold text-zinc-900 text-xs">{c.id}</span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border ${
+                            c.status === 'ESCALATED'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          }`}>
+                            {c.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-600 mt-1">
+                          Channel: <strong className="text-zinc-800">{c.channel}</strong> • {c.message_count} messages
+                        </p>
                       </div>
-                      <p className="text-xs text-zinc-600 mt-1">
-                        Channel: <strong className="text-zinc-800">{c.channel}</strong> • {c.message_count} messages
-                      </p>
+                      <Link
+                        href={`/conversations/${c.id}`}
+                        className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-xs text-zinc-900 font-semibold rounded-xl border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>Inspect Thread</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
                     </div>
-                    <Link
-                      href={`/conversations/${c.id}`}
-                      className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-xs text-zinc-900 font-semibold rounded-xl border border-zinc-200 transition flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <span>Inspect Thread</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </Link>
+                  ))
+                ) : (
+                  <div className="py-10 text-center text-xs text-zinc-400 space-y-2">
+                    <MessageSquare className="w-6 h-6 mx-auto text-zinc-300" />
+                    <p className="font-medium text-zinc-600">No active customer sessions</p>
+                    <p className="text-[11px] text-zinc-400">Conversations handled by this agent will appear here in real time.</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

@@ -77,18 +77,18 @@ export default function DashboardPage() {
   
   // Real-time tool counts from analytics telemetry
   const topTools = analytics?.top_tools || [];
-  const pSearchTool = topTools.find((t: any) => t.key === 'product_search');
+  const pSearchTool = topTools.find((t: any) => t.name?.toLowerCase().includes('search') || t.key === 'product_search');
   const productSearchesCount = pSearchTool ? pSearchTool.calls : 0;
   
   const actionsPerformedCount = topTools
-    .filter((t: any) => t.key !== 'product_search')
+    .filter((t: any) => !t.name?.toLowerCase().includes('search') && t.key !== 'product_search')
     .reduce((sum: number, t: any) => sum + (t.calls || 0), 0);
 
   const avgResponseTime = analytics?.avgLatencyMs ? `${analytics.avgLatencyMs}ms` : '0ms';
-  const rawCsatNum = parseFloat(String(analytics?.metrics?.csat || analytics?.csat || '4.8').split('/')[0].trim());
-  const csatScoreVal = !isNaN(rawCsatNum) && rawCsatNum > 0 ? rawCsatNum : 4.8;
-  const customerSatisfaction = totalConvs > 0 ? `${(csatScoreVal * 20).toFixed(0)}%` : '100%';
-  const csatRating = totalConvs > 0 ? `${csatScoreVal.toFixed(1)} / 5.0` : '5.0 / 5.0';
+  const rawCsatNum = parseFloat(String(analytics?.metrics?.csat || analytics?.csat || '0.0').split('/')[0].trim());
+  const csatScoreVal = !isNaN(rawCsatNum) && rawCsatNum > 0 ? rawCsatNum : 0.0;
+  const customerSatisfaction = totalConvs > 0 ? `${(csatScoreVal * 20).toFixed(0)}%` : '0%';
+  const csatRating = totalConvs > 0 ? `${csatScoreVal.toFixed(1)} / 5.0` : '0.0 / 5.0';
   const totalTokensUsed = analytics?.totalTokens || (analytics?.metrics?.total_tokens ?? 0);
   const tokenPct = Math.min(100, Math.max(0, Math.round((totalTokensUsed / 100000) * 100)));
   const aiTokensUsage = `${(totalTokensUsed / 1000).toFixed(1)}K / 100K`;
