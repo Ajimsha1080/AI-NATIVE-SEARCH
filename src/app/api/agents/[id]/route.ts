@@ -39,8 +39,16 @@ const updateAgentSchema = z.object({
       theme_mode: z.string().optional(),
       primary_color: z.string().optional(),
       background_color: z.string().optional(),
+      header_background: z.string().optional(),
+      border_color: z.string().optional(),
       text_color: z.string().optional(),
       launcher_icon: z.string().optional(),
+      launcher_shape: z.string().optional(),
+      launcher_text: z.string().optional(),
+      logo_url: z.string().optional(),
+      logo_background: z.string().optional(),
+      bottom_padding: z.string().optional(),
+      side_padding: z.string().optional(),
       position: z.enum(['bottom-left', 'bottom-right']).optional(),
       widget_title: z.string().optional(),
       show_branding: z.boolean().optional(),
@@ -70,14 +78,44 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   const session = await getAuthSession(req);
   if (!session) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
 
-  const agent = db.agents.find(a => a.id === id && a.workspace_id === session.workspaceId);
-  if (!agent) return NextResponse.json({ error: { message: 'Agent not found' } }, { status: 404 });
+  let agent = db.agents.find(a => a.id === id && a.workspace_id === session.workspaceId);
+  if (!agent) {
+    agent = db.agents.find(a => a.workspace_id === session.workspaceId);
+  }
+  if (!agent) {
+    const templateAgent = db.agents.find(a => a.id === id) || db.agents[0];
+    agent = {
+      id: id || 'agent_shopmate_01',
+      workspace_id: session.workspaceId,
+      name: templateAgent?.name || 'ShopMate AI',
+      description: templateAgent?.description || 'Autonomous commerce concierge specialized in product discovery, live inventory queries, order status, and customer assistance.',
+      industry: templateAgent?.industry || 'Omnichannel Retail & E-Commerce',
+      primary_objective: templateAgent?.primary_objective || 'Boost product conversions and handle order inquiries autonomously with verified tool executions.',
+      language: templateAgent?.language || 'English',
+      status: 'PUBLISHED' as const,
+      current_version_id: 'ver_shopmate_v1_0',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    db.agents.push(agent);
 
-  const config = db.agent_configs.find(c => c.agent_id === id);
-  const permissions = db.tool_permissions.filter(p => p.agent_id === id);
-  const policies = db.agent_policies.filter(p => p.agent_id === id);
-  const versions = db.agent_versions.filter(v => v.agent_id === id);
-  const deployments = db.deployments.filter(d => d.agent_id === id);
+    const templateConfig = db.agent_configs.find(c => c.agent_id === templateAgent?.id) || db.agent_configs[0];
+    if (templateConfig) {
+      db.agent_configs.push({
+        ...templateConfig,
+        id: 'cfg_' + agent.id,
+        agent_id: agent.id,
+        updated_at: new Date().toISOString()
+      });
+    }
+    db.saveImmediate();
+  }
+
+  const config = db.agent_configs.find(c => c.agent_id === agent.id) || db.agent_configs[0];
+  const permissions = db.tool_permissions.filter(p => p.agent_id === agent.id);
+  const policies = db.agent_policies.filter(p => p.agent_id === agent.id);
+  const versions = db.agent_versions.filter(v => v.agent_id === agent.id);
+  const deployments = db.deployments.filter(d => d.agent_id === agent.id);
 
   return NextResponse.json({
     agent,
@@ -174,12 +212,20 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
         let perm = db.tool_permissions.find(p => p.agent_id === id && p.tool_id === tp.tool_id);
         if (perm) {
           perm.is_enabled = tp.is_enabled;
-          perm.permission_mode = tp.permission_mode;
+          if (tp.permission_mode) perm.permission_mode = tp.permission_mode;
+        } else {
+          db.tool_permissions.push({
+            id: 'perm_' + id + '_' + tp.tool_id,
+            agent_id: id,
+            tool_id: tp.tool_id,
+            is_enabled: tp.is_enabled,
+            permission_mode: tp.permission_mode || 'ALLOWED'
+          });
         }
       });
     }
 
-    db.scheduleSave();
+    db.saveImmediate();
     return NextResponse.json({ success: true, agent });
   } catch (err: any) {
     return NextResponse.json({ error: { message: err.message || 'Update failed' } }, { status: 500 });

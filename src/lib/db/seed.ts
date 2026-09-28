@@ -181,11 +181,11 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
     db.tools.push(...STANDARD_TOOLS);
   }
 
-  if (db.users.length > 0 && db.commerce_products.length > 0 && db.knowledge_chunks.length > 0 && !force) {
+  if (db.users.length > 0 && !force) {
     return;
   }
 
-  if (force || db.commerce_products.length === 0 || db.knowledge_chunks.length === 0 || db.conversations.length > 50) {
+  if (force || db.users.length === 0) {
     db.users.length = 0;
     db.workspaces.length = 0;
     db.workspace_members.length = 0;
@@ -258,13 +258,6 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       id: 'wsm_01',
       workspace_id: workspace.id,
       user_id: userMerchant.id,
-      role: 'OWNER',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'wsm_admin_01',
-      workspace_id: workspace.id,
-      user_id: userAdmin.id,
       role: 'OWNER',
       created_at: new Date().toISOString()
     }

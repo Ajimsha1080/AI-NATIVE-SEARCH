@@ -864,10 +864,10 @@ export default function App() {
                   
                   {/* Floating Widget (Rendered in State) */}
                   {isWidgetOpen ? (
-                    <div className="w-full max-w-[390px] mx-auto bg-[#0B132B] rounded-2xl border border-slate-700/80 shadow-2xl flex flex-col overflow-hidden animate-fadeIn">
+                    <div className="w-full max-w-[390px] h-[580px] mx-auto bg-[#0B132B] rounded-2xl border border-slate-700/80 shadow-2xl flex flex-col overflow-hidden animate-fadeIn">
                       
                       {/* Widget Header (Matching screenshot banner) */}
-                      <div className="p-5 pb-4 bg-[#0c1633] border-b border-slate-800/80 relative">
+                      <div className="p-5 pb-4 bg-[#0c1633] border-b border-slate-800/80 relative shrink-0">
                         <div className="flex items-center justify-between mb-3">
                           {/* Brand Pill Badge */}
                           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700 text-xs font-semibold text-white shadow-sm">
@@ -891,7 +891,7 @@ export default function App() {
                       </div>
 
                       {/* Chat Messages Thread */}
-                      <div className="p-4 space-y-3 max-h-[300px] overflow-y-auto no-scrollbar">
+                      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 no-scrollbar">
                         {chatMessages.map(msg => (
                           <div
                             key={msg.id}
@@ -933,7 +933,7 @@ export default function App() {
 
                       {/* Suggested Questions (Chips from Screenshot) */}
                       {chatMessages.length <= 2 && starterQuestions.length > 0 && (
-                        <div className="px-4 pb-2 space-y-2">
+                        <div className="px-4 pb-2 space-y-2 shrink-0 max-h-[180px] overflow-y-auto">
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                             SUGGESTED QUESTIONS:
                           </span>
@@ -953,7 +953,7 @@ export default function App() {
                       )}
 
                       {/* Chat Input Box */}
-                      <div className="p-3 bg-[#0c1633] border-t border-slate-800/80 flex items-center gap-2">
+                      <div className="p-3 bg-[#0c1633] border-t border-slate-800/80 flex items-center gap-2 shrink-0">
                         <input
                           type="text"
                           value={chatInput}
@@ -973,7 +973,7 @@ export default function App() {
                       </div>
 
                       {showBranding && (
-                        <div className="py-1 text-center bg-[#070e24] text-[10px] text-slate-500 border-t border-slate-800/60">
+                        <div className="py-1 text-center bg-[#070e24] text-[10px] text-slate-500 border-t border-slate-800/60 shrink-0">
                           Powered by <span className="text-slate-400 font-semibold">ShopMate AI</span>
                         </div>
                       )}

@@ -1,78 +1,34 @@
 version: '3.8'
 
 services:
-  # 1. Enterprise PostgreSQL 16 with pgvector Extension
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: aaas-postgres
-    restart: always
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-aaas_enterprise}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD environment variable is required}
-    expose:
-      - "5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./data/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # 2. Redis Distributed Cache & Task Queue
-  redis:
-    image: redis:7-alpine
-    container_name: aaas-redis
-    restart: always
-    expose:
-      - "6379"
-    volumes:
-      - redis_data:/data
-
-  # 3. Python FastAPI Enterprise AI & RAG Backend (Internal Service Network Only)
+  # 1. Python FastAPI AI Engine Backend
   python-backend:
     build:
       context: ./python-backend
       dockerfile: Dockerfile
-    container_name: aaas-python-backend
+    container_name: shopmate-python-backend
     restart: always
+    ports:
+      - "8000:8000"
     environment:
-      APP_ENV: production
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-aaas_enterprise}
-      REDIS_URL: redis://redis:6379/0
-      SERVICE_JWT_SECRET: ${SERVICE_JWT_SECRET:?SERVICE_JWT_SECRET environment variable is required}
-      INTERNAL_SERVICE_SECRET: ${SERVICE_JWT_SECRET:?SERVICE_JWT_SECRET environment variable is required}
-      ALLOWED_ORIGINS: "http://frontend:3000,http://localhost:3000"
-      PORT: 8000
-    expose:
-      - "8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - PORT=8000
+    volumes:
+      - ./python-backend/data:/app/data
 
-  # 4. Next.js 15 Frontend
+  # 2. Next.js Frontend & Storefront
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: aaas-frontend
+    container_name: shopmate-frontend
     restart: always
-    environment:
-      NODE_ENV: production
-      APP_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-aaas_enterprise}
-      PYTHON_BACKEND_URL: http://python-backend:8000
-      SESSION_JWT_SECRET: ${SESSION_JWT_SECRET:?SESSION_JWT_SECRET environment variable is required}
-      SERVICE_JWT_SECRET: ${SERVICE_JWT_SECRET:?SERVICE_JWT_SECRET environment variable is required}
-      PORT: 3000
     ports:
-      - "3000:3000"
+      - "80:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - PYTHON_BACKEND_URL=http://python-backend:8000
     depends_on:
       - python-backend
-
-volumes:
-  postgres_data:
-  redis_data:
-
+    volumes:
+      - ./data:/app/data

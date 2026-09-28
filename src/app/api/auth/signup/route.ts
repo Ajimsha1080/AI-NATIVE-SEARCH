@@ -6,6 +6,7 @@ import { generateId } from '@/lib/utils';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { verifyCaptchaToken } from '@/lib/security/captcha';
 import { sendVerificationEmail } from '@/lib/email';
+import { STANDARD_TOOLS } from '@/lib/db/seed';
 
 export async function POST(req: Request) {
   try {
@@ -92,6 +93,43 @@ export async function POST(req: Request) {
       user_id: userId,
       role: 'OWNER',
       created_at: new Date().toISOString()
+    });
+
+    // Auto-provision initial Commerce Agent for new workspace
+    const agentId = generateId('agent');
+    const newAgent = {
+      id: agentId,
+      workspace_id: wsId,
+      name: 'ShopMate AI',
+      description: 'Autonomous commerce concierge specialized in product discovery, live inventory queries, order status, and customer assistance.',
+      industry: 'Omnichannel Retail & E-Commerce',
+      primary_objective: 'Boost product conversions and handle order inquiries autonomously with verified tool executions.',
+      language: 'English',
+      status: 'PUBLISHED' as const,
+      current_version_id: 'ver_shopmate_v1_0',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    db.agents.push(newAgent);
+
+    const templateConfig = db.agent_configs[0];
+    if (templateConfig) {
+      db.agent_configs.push({
+        ...templateConfig,
+        id: generateId('cfg'),
+        agent_id: agentId,
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    STANDARD_TOOLS.forEach(t => {
+      db.tool_permissions.push({
+        id: 'perm_' + agentId + '_' + t.id,
+        agent_id: agentId,
+        tool_id: t.id,
+        is_enabled: true,
+        permission_mode: t.risk_level === 'HIGH' ? 'REQUIRES_CONFIRMATION' : 'ALLOWED'
+      });
     });
 
     db.saveImmediate();

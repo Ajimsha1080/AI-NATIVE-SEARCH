@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthSession, requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { ingestDocument } from '@/lib/rag';
+import { extractTextFromPdfBuffer } from '@/lib/utils/pdf-extractor';
 
 export async function GET(req: Request) {
   const session = await getAuthSession(req);
@@ -19,9 +20,59 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { name, type, content, agent_id } = await req.json();
-    if (!name || !content) {
-      return NextResponse.json({ error: { message: 'Document name and content are required' } }, { status: 400 });
+    const contentType = req.headers.get('content-type') || '';
+    let name = '';
+    let type: any = 'TEXT';
+    let content = '';
+    let agent_id: string | undefined;
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      const file = formData.get('file') as File | null;
+      name = (formData.get('name') as string) || file?.name || 'Uploaded Document';
+      type = (formData.get('type') as string) || (name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOCUMENT');
+      agent_id = (formData.get('agent_id') as string) || undefined;
+
+      if (file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        if (file.name.toLowerCase().endsWith('.pdf') || buffer.slice(0, 5).toString().startsWith('%PDF-')) {
+          type = 'PDF';
+          content = await extractTextFromPdfBuffer(buffer);
+        } else {
+          content = buffer.toString('utf-8');
+        }
+      } else {
+        content = (formData.get('content') as string) || '';
+      }
+    } else {
+      const body = await req.json();
+      name = body.name;
+      type = body.type || 'TEXT';
+      content = body.content || '';
+      agent_id = body.agent_id;
+
+      // Handle base64 encoded PDF or raw PDF data string
+      if (typeof content === 'string') {
+        if (content.startsWith('data:application/pdf;base64,') || (body.isBase64 && type === 'PDF')) {
+          const base64Data = content.replace(/^data:application\/pdf;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          content = await extractTextFromPdfBuffer(buffer);
+          type = 'PDF';
+        } else if (content.startsWith('%PDF-') || name?.toLowerCase().endsWith('.pdf')) {
+          try {
+            const buffer = Buffer.from(content, 'binary');
+            const extracted = await extractTextFromPdfBuffer(buffer);
+            if (extracted && extracted.length > 50) {
+              content = extracted;
+            }
+          } catch {}
+        }
+      }
+    }
+
+    if (!name || !content || content.trim().length === 0) {
+      return NextResponse.json({ error: { message: 'Document name and readable text content are required' } }, { status: 400 });
     }
 
     const doc = await ingestDocument(session.workspaceId, {
@@ -33,6 +84,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, document: doc });
   } catch (err: any) {
+    console.error('Document ingestion error:', err);
     return NextResponse.json({ error: { message: err.message || 'Ingestion failed' } }, { status: 500 });
   }
 }

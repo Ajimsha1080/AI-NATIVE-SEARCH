@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthSession, createServiceJwt } from '@/lib/auth';
+import { db } from '@/lib/db';
 import { runAgentCycle } from '@/lib/agent-runtime';
 
 const PYTHON_BACKEND_URL = process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:8000';
@@ -7,7 +8,11 @@ const PYTHON_BACKEND_URL = process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:8
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const session = await getAuthSession(req);
-  const workspaceId = session?.workspaceId || 'ws_acme_corp';
+  let workspaceId = session?.workspaceId;
+  if (!workspaceId) {
+    const existingAgent = db.agents.find(a => a.id === id);
+    workspaceId = existingAgent?.workspace_id || 'ws_acme_corp';
+  }
   const userId = session?.user?.id || 'usr_guest_shopper';
   const userRole = session?.role || 'VIEWER';
 

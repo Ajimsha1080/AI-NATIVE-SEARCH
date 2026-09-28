@@ -43,7 +43,9 @@ export default function KnowledgeWorkspacePage() {
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<{ name: string; size: number } | null>(null);
+  const [uploadedRawFile, setUploadedRawFile] = useState<File | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [activeAgentId, setActiveAgentId] = useState<string>('agent_shopmate_01');
   
   // RAG Test state
   const [testQuery, setTestQuery] = useState('');
@@ -52,11 +54,23 @@ export default function KnowledgeWorkspacePage() {
 
   useEffect(() => {
     loadKnowledge();
+    fetch('/api/agents')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.agents?.[0]?.id) {
+          setActiveAgentId(data.agents[0].id);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   async function loadKnowledge() {
     try {
       const res = await fetch('/api/knowledge', { cache: 'no-store' });
+      if (res.status === 401) {
+        window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         const docs = data.documents || data.sources || [];
@@ -83,19 +97,28 @@ export default function KnowledgeWorkspacePage() {
     }
 
     if (file) {
+      setUploadedRawFile(file);
       setUploadedFile({ name: file.name, size: file.size });
       if (!docTitle) {
         setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
       }
       const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        setDocContent(text || `Document: ${file?.name}\n\nProcessed contents and verified guidelines for AI assistant.`);
-      };
-      reader.onerror = () => {
-        setDocContent(`Document: ${file?.name}\nSize: ${(file!.size / 1024).toFixed(1)} KB`);
-      };
-      reader.readAsText(file);
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        reader.onload = (event) => {
+          const dataUrl = event.target?.result as string;
+          setDocContent(dataUrl);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        reader.onload = (event) => {
+          const text = event.target?.result as string;
+          setDocContent(text || `Document: ${file?.name}`);
+        };
+        reader.onerror = () => {
+          setDocContent(`Document: ${file?.name}\nSize: ${(file!.size / 1024).toFixed(1)} KB`);
+        };
+        reader.readAsText(file);
+      }
     }
   };
 
@@ -132,6 +155,8 @@ export default function KnowledgeWorkspacePage() {
         setShowAddModal(false);
         setDocTitle('');
         setWebsiteUrl('');
+        setUploadedRawFile(null);
+        setUploadedFile(null);
         setSuccessToast(`Successfully synced and indexed website: ${websiteUrl}`);
         setTimeout(() => setSuccessToast(null), 4000);
         await loadKnowledge();
@@ -155,9 +180,6 @@ export default function KnowledgeWorkspacePage() {
         if (!payloadName && uploadedFile) {
           payloadName = uploadedFile.name.replace(/\.[^/.]+$/, '');
         }
-        if (!payloadContent) {
-          payloadContent = `Document: ${payloadName}\n\nStandard operating guidelines, policies, and product catalog metadata for AI customer service.`;
-        }
       } else if (addTab === 'TEXT') {
         if (!payloadName) {
           setModalError('Please enter an article title.');
@@ -171,19 +193,40 @@ export default function KnowledgeWorkspacePage() {
         }
       }
 
-      const res = await fetch('/api/knowledge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: payloadName,
-          type: payloadType === 'FAQ' ? 'FAQ' : 'DOCUMENT',
-          content: payloadContent,
-          collection: selectedCollection
-        })
-      });
+      let res: Response;
+      if (uploadedRawFile && addTab === 'DOCUMENT') {
+        const formData = new FormData();
+        formData.append('file', uploadedRawFile);
+        formData.append('name', payloadName || uploadedRawFile.name.replace(/\.[^/.]+$/, ''));
+        formData.append('type', uploadedRawFile.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOCUMENT');
+        if (activeAgentId) formData.append('agent_id', activeAgentId);
+
+        res = await fetch('/api/knowledge', {
+          method: 'POST',
+          body: formData
+        });
+      } else {
+        res = await fetch('/api/knowledge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: payloadName,
+            type: payloadType,
+            content: payloadContent,
+            agent_id: activeAgentId
+          })
+        });
+      }
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 401) {
+          setModalError('Session expired or unauthorized. Redirecting to login...');
+          setTimeout(() => {
+            window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+          }, 1200);
+          return;
+        }
         throw new Error(data.error?.message || data.error || 'Failed to save knowledge document');
       }
 
@@ -232,7 +275,7 @@ export default function KnowledgeWorkspacePage() {
     setTestingRag(true);
     setTestResult(null);
     try {
-      const res = await fetch('/api/agents/agent_shopmate_01/chat', {
+      const res = await fetch(`/api/agents/${activeAgentId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -920,7 +963,7 @@ export default function KnowledgeWorkspacePage() {
               onClick={(e) => e.stopPropagation()}
             >
               <ChatBox 
-                agentId="agent_shopmate_01"
+                agentId={activeAgentId}
                 agentName="ShopMate Concierge"
                 brandTitle="Blue Tyga"
                 subtitle="We usually reply in a few seconds"

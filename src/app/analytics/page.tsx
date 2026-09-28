@@ -116,7 +116,7 @@ export default function AnalyticsWorkspacePage() {
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="text-2xl font-bold text-emerald-600">
-                  {data?.containmentRate || '100.0%'}
+                  {data?.containmentRate || '0.0%'}
                 </div>
                 <p className="text-[11px] text-zinc-500 font-sans">
                   Resolved autonomously
@@ -186,7 +186,7 @@ export default function AnalyticsWorkspacePage() {
                 <div className="flex items-center justify-center gap-5 text-[11px] font-mono text-zinc-500">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                    <span>AI Autonomous ({data?.containmentRate || '100%'})</span>
+                    <span>AI Autonomous ({data?.containmentRate || '0.0%'})</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
@@ -205,20 +205,26 @@ export default function AnalyticsWorkspacePage() {
                 </div>
 
                 <div className="space-y-3">
-                  {topTools.map((t: any, i: number) => (
-                    <div key={i} className="space-y-1.5">
-                      <div className="flex justify-between text-xs font-mono">
-                        <span className="text-zinc-800 font-semibold truncate max-w-[260px]">{t.name}</span>
-                        <span className="text-zinc-500 font-semibold">{t.calls} calls ({t.pct}%)</span>
-                      </div>
-                      <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-zinc-900 rounded-full transition-all duration-500" 
-                          style={{ width: `${t.pct}%` }}
-                        ></div>
-                      </div>
+                  {topTools.length === 0 ? (
+                    <div className="py-10 text-center text-xs text-zinc-400 font-mono">
+                      No tool invocations recorded yet.
                     </div>
-                  ))}
+                  ) : (
+                    topTools.map((t: any, i: number) => (
+                      <div key={i} className="space-y-1.5">
+                        <div className="flex justify-between text-xs font-mono">
+                          <span className="text-zinc-800 font-semibold truncate max-w-[260px]">{t.name}</span>
+                          <span className="text-zinc-500 font-semibold">{t.calls} calls ({t.pct}%)</span>
+                        </div>
+                        <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-zinc-900 rounded-full transition-all duration-500" 
+                            style={{ width: `${t.pct}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -237,11 +243,11 @@ export default function AnalyticsWorkspacePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-2xl text-center font-mono">
-                  <span className="text-3xl font-bold text-emerald-600">{data?.csat || '4.8 / 5'}</span>
+                  <span className="text-3xl font-bold text-emerald-600">{data?.csat || '0.0 / 5'}</span>
                   <p className="text-xs text-zinc-600 font-sans mt-1 font-semibold">Customer CSAT Satisfaction</p>
                 </div>
                 <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-2xl text-center font-mono">
-                  <span className="text-3xl font-bold text-zinc-900">{data?.groundingAccuracy || '100.0%'}</span>
+                  <span className="text-3xl font-bold text-zinc-900">{data?.groundingAccuracy || '0.0%'}</span>
                   <p className="text-xs text-zinc-600 font-sans mt-1 font-semibold">Grounding &amp; Fact Verification</p>
                 </div>
               </div>

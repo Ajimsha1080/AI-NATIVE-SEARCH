@@ -10,7 +10,47 @@ export async function GET(req: Request) {
   const session = await getAuthSession(req);
   if (!session) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
 
-  const agents = db.agents.filter(a => a.workspace_id === session.workspaceId);
+  let agents = db.agents.filter(a => a.workspace_id === session.workspaceId);
+  if (agents.length === 0) {
+    const templateAgent = db.agents[0];
+    const newAgent = {
+      id: generateId('agent'),
+      workspace_id: session.workspaceId,
+      name: templateAgent?.name || 'ShopMate AI',
+      description: templateAgent?.description || 'Autonomous commerce concierge specialized in product discovery, live inventory queries, order status, and customer assistance.',
+      industry: templateAgent?.industry || 'Omnichannel Retail & E-Commerce',
+      primary_objective: templateAgent?.primary_objective || 'Boost product conversions and handle order inquiries autonomously with verified tool executions.',
+      language: templateAgent?.language || 'English',
+      status: 'PUBLISHED' as const,
+      current_version_id: 'ver_shopmate_v1_0',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    db.agents.push(newAgent);
+
+    const templateConfig = db.agent_configs[0];
+    if (templateConfig) {
+      db.agent_configs.push({
+        ...templateConfig,
+        id: generateId('cfg'),
+        agent_id: newAgent.id,
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    STANDARD_TOOLS.forEach(t => {
+      db.tool_permissions.push({
+        id: 'perm_' + newAgent.id + '_' + t.id,
+        agent_id: newAgent.id,
+        tool_id: t.id,
+        is_enabled: true,
+        permission_mode: t.risk_level === 'HIGH' ? 'REQUIRES_CONFIRMATION' : 'ALLOWED'
+      });
+    });
+
+    db.saveImmediate();
+    agents = [newAgent];
+  }
   return NextResponse.json({ agents });
 }
 

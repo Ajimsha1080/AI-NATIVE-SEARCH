@@ -3,6 +3,7 @@ import { executeRAGPipeline } from '../rag';
 import { executeTool } from '../tools';
 import { generateId } from '../utils';
 import { AgentConfig, ExecutionTrace, Message } from '@/types';
+import { STANDARD_TOOLS } from '../db/seed';
 
 export interface AgentRunParams {
   agent_id: string;
@@ -116,8 +117,54 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   const { agent_id, workspace_id, user_message, channel = 'PLAYGROUND' } = params;
   const cleanMessage = normalizeUserMessage(user_message);
 
-  const agent = db.agents.find(a => a.id === agent_id && a.workspace_id === workspace_id);
-  if (!agent) throw new Error('Agent ' + agent_id + ' not found in workspace.');
+  let agent = db.agents.find(a => a.id === agent_id && a.workspace_id === workspace_id);
+  if (!agent) {
+    agent = db.agents.find(a => a.workspace_id === workspace_id);
+  }
+  if (!agent) {
+    // Auto-provision default agent for this workspace
+    const templateAgent = db.agents.find(a => a.id === agent_id) || db.agents[0];
+    const newAgentId = templateAgent ? templateAgent.id : (agent_id || generateId('agent'));
+    agent = {
+      id: newAgentId,
+      workspace_id: workspace_id,
+      name: templateAgent?.name || 'ShopMate AI',
+      description: templateAgent?.description || 'Autonomous commerce concierge specialized in product discovery, live inventory queries, order status, and customer assistance.',
+      industry: templateAgent?.industry || 'Omnichannel Retail & E-Commerce',
+      primary_objective: templateAgent?.primary_objective || 'Boost product conversions and handle order inquiries autonomously with verified tool executions.',
+      language: templateAgent?.language || 'English',
+      status: 'PUBLISHED' as const,
+      current_version_id: 'ver_shopmate_v1_0',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    db.agents.push(agent);
+
+    const templateConfig = db.agent_configs.find(c => c.agent_id === templateAgent?.id) || db.agent_configs[0];
+    if (templateConfig) {
+      db.agent_configs.push({
+        ...templateConfig,
+        id: generateId('cfg'),
+        agent_id: agent.id,
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    STANDARD_TOOLS.forEach(t => {
+      const existingPerm = db.tool_permissions.find(p => p.agent_id === agent!.id && p.tool_id === t.id);
+      if (!existingPerm) {
+        db.tool_permissions.push({
+          id: 'perm_' + agent!.id + '_' + t.id,
+          agent_id: agent!.id,
+          tool_id: t.id,
+          is_enabled: true,
+          permission_mode: t.risk_level === 'HIGH' ? 'REQUIRES_CONFIRMATION' : 'ALLOWED'
+        });
+      }
+    });
+
+    db.saveImmediate();
+  }
 
   const config = db.agent_configs.find(c => c.agent_id === agent_id) || ({
     identity: { name: agent.name, greeting: 'Hello!', brand_name: 'Blue Tyga Store' },
@@ -194,14 +241,43 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   // Phase B: 12-Stage Advanced RAG Pipeline Execution
   planningSteps.push('2. Running 12-Stage RAG: Query Understanding → Expansion → Hybrid Retrieval → RRF → Rerank → Context Assembly.');
   const ragResult = await executeRAGPipeline(workspace_id, cleanMessage, {
-    topK: 3,
-    minScore: 0.20,
+    topK: 5,
+    minScore: 0.15,
     agentId: agent_id
   });
   const citations = ragResult.citations;
   planningSteps.push(`3. RAG complete: ${ragResult.citations.length} verified citation(s) retrieved (Top Score: ${(ragResult.reranking.top_score * 100).toFixed(1)}%).`);
 
-  const fullKnowledgeContext = `Official Blue Tyga Live Product Catalog:\n${catalogContext}\n\nStore Knowledge & Policies:\n${citations.length > 0 ? citations.map(c => c.chunk_text).join('\n\n') : 'Blue Tyga offers UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, No-Sweat Tech Tees, and cooling headwear. 7-day exchange window.'}`;
+  // Assemble comprehensive store knowledge from citations + all workspace knowledge chunks
+  const workspaceChunks = db.knowledge_chunks.filter(c => c.workspace_id === workspace_id);
+  const citationTexts = citations.map(c => c.chunk_text.trim());
+  const otherChunkTexts = workspaceChunks
+    .map(c => c.content.trim())
+    .filter(content => !citationTexts.some(cit => cit.includes(content) || content.includes(cit)))
+    .slice(0, 20);
+
+  const knowledgeSections = [
+    ...(citationTexts.length > 0 ? ['[Top Matching Verified Knowledge Citations]:\n' + citationTexts.join('\n\n')] : []),
+    ...(otherChunkTexts.length > 0 ? ['[Knowledge Base Documents & Operational Guidelines]:\n' + otherChunkTexts.join('\n\n')] : [])
+  ].join('\n\n');
+
+  const fullKnowledgeContext = `Live Product Catalog:\n${catalogContext}\n\nWorkspace Knowledge Base & Documents:\n${knowledgeSections || 'No additional documents on file.'}`;
+
+  // Helper for dynamic local knowledge extraction if LLM is unavailable
+  const dynamicFallbackAnswer = (query: string): string => {
+    const qLower = query.toLowerCase();
+    const matchedChunk = workspaceChunks.find(c => {
+      const cLower = c.content.toLowerCase();
+      const tokens = qLower.split(/\s+/).filter(w => w.length > 3);
+      return tokens.some(t => cLower.includes(t));
+    }) || citations[0];
+
+    if (matchedChunk) {
+      const text = (matchedChunk as any).chunk_text || (matchedChunk as any).content || '';
+      return text.replace(/^=+|=+$/gm, '').trim();
+    }
+    return "Blue Tyga specializes in technical dailywear including UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, and cooling activewear. Free shipping across India with standard delivery in 3 to 9 working days!";
+  };
 
   // Phase C: Policies
   const policies = db.agent_policies.filter(p => p.agent_id === agent_id && p.is_active);
@@ -259,7 +335,11 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
       latency_ms: searchRes.latency_ms
     });
 
-    if (searchRes.data && searchRes.data.length > 0) {
+    if (searchRes.status === 'PERMISSION_DENIED') {
+      responseText = 'Product catalog search is currently disabled by store configuration. Please browse our collections online or contact customer support.';
+      interactivePayload = null;
+      searchReturnedEmpty = true;
+    } else if (searchRes.data && searchRes.data.length > 0) {
       interactivePayload = searchRes.interactive_payload;
       const topProduct = searchRes.data[0];
 
@@ -280,25 +360,50 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
         latency_ms: invRes.latency_ms
       });
 
-      if (searchRes.data.length === 1) {
-        responseText = `Here is the **${searchRes.data[0].title}** from our collection:`;
-      } else if (/\b(?:men|mens|male|gent|gents|guy|guys)\b/i.test(user_message)) {
-        responseText = `Here are the featured pieces from our Blue Tyga Men's collection:`;
-      } else if (/women|ladies|girl/i.test(user_message)) {
-        responseText = `Here are the featured pieces from our Blue Tyga Women's collection:`;
-      } else if (/new|latest|arrival/i.test(user_message)) {
-        responseText = `Here are the latest new arrivals from Blue Tyga:`;
-      } else if (/jacket|sunscreen/i.test(user_message)) {
-        responseText = `Here are the top UPF 50+ Sunscreen and Thermal Jackets from Blue Tyga:`;
-      } else if (/tee|tshirt|shirt/i.test(user_message)) {
-        responseText = `Here are the active tops from Blue Tyga:`;
-      } else if (/visor|balaclava|accessory|accessories|mask/i.test(user_message)) {
-        responseText = `Here are our outdoor UV accessories:`;
+      const brand = config.identity?.brand_name || 'Blue Tyga';
+      const matchedList = searchRes.data.slice(0, 4);
+      const matchedSummary = matchedList.map((p: any) => 
+        `• ${p.title} (₹${typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price}) — ${p.description || p.category}`
+      ).join('\n');
+
+      const naturalProductPrompt = `You are a warm, stylish, and highly engaging AI shopping concierge for ${brand}.
+The user asked: "${user_message}".
+We found these matching products from our store catalog:
+${matchedSummary}
+
+Guidelines:
+- Write an authentic, natural, and helpful recommendation in 1 to 2 short sentences.
+- Highlight key benefits (e.g. UPF 50+ UV protection, Arctic Ice cooling tech, quick-dry anti-sweat fabric) with an enthusiastic, friendly tone.
+- Do NOT repeat all price tags or dump raw lists since interactive product cards will appear directly below your message.
+- Be conversational and offer help with sizing, fabric advice, or styling.`;
+
+      const sarvamProductAnswer = await callSarvamLLM(
+        naturalProductPrompt,
+        user_message,
+        `Matched Products:\n${matchedSummary}\n\n${fullKnowledgeContext}`,
+        conversationHistory
+      );
+
+      if (sarvamProductAnswer) {
+        responseText = sarvamProductAnswer;
       } else {
-        responseText = `Here are the top matches from our Blue Tyga collection:`;
+        if (matchedList.length === 1) {
+          responseText = `Here is our popular **${matchedList[0].title}**! It features high-performance breathable techwear fabric engineered for daily comfort.`;
+        } else if (/new|latest|arrival/i.test(user_message)) {
+          responseText = `Here are our latest new arrivals at **${brand}**! These pieces feature our signature UPF 50+ sun protection and active cooling technology:`;
+        } else if (/jacket|sunscreen/i.test(user_message)) {
+          responseText = `Here are our top UPF 50+ Sunscreen and Thermal Jackets—engineered to protect you from harsh UV rays and AC chill without adding bulk:`;
+        } else if (/tee|tshirt|shirt/i.test(user_message)) {
+          responseText = `Here are our quick-dry, anti-odor active tees designed to keep you cool, fresh, and restricted-free all day:`;
+        } else if (/visor|balaclava|accessory|accessories|mask/i.test(user_message)) {
+          responseText = `Here are our outdoor UV protection accessories crafted for cycling, running, and daily travel:`;
+        } else {
+          responseText = `Here are our featured pieces from **${brand}** that match what you're looking for:`;
+        }
       }
+
       if (requestedSize) {
-        responseText += `\n\n✅ Verified: Size **${requestedSize}** is in stock and ready to ship.`;
+        responseText += `\n\n✅ Size **${requestedSize}** is in stock and ready for same-day dispatch.`;
       }
     } else {
       // Unrestricted conversational answer for open styling, recommendations, and search
@@ -371,11 +476,16 @@ If the customer asks about an item we don't have, explain politely what we do ha
         latency_ms: cartRes.latency_ms
       });
 
-      responseText = `🛒 Added **${targetProduct.title}** (₹${targetProduct.price.toLocaleString('en-IN')}) to your bag!\n\nYou can click the button below to view or manage your item, or let me know if you need sizing or styling advice before checkout.`;
-      interactivePayload = {
-        type: 'PRODUCTS',
-        data: [targetProduct]
-      };
+      if (cartRes.status === 'PERMISSION_DENIED') {
+        responseText = `Cart actions and ordering are currently disabled by store configuration. If you have questions about our items, I'd be glad to help!`;
+        interactivePayload = null;
+      } else {
+        responseText = `🛒 Added **${targetProduct.title}** (₹${targetProduct.price.toLocaleString('en-IN')}) to your bag!\n\nYou can click the button below to view or manage your item, or let me know if you need sizing or styling advice before checkout.`;
+        interactivePayload = {
+          type: 'PRODUCTS',
+          data: [targetProduct]
+        };
+      }
     } else {
       const cartRes = await executeTool({
         tool_id: 'cart_lookup',
@@ -384,7 +494,10 @@ If the customer asks about an item we don't have, explain politely what we do ha
         agent_id,
         conversation_id: conversation.id
       });
-      if (cartRes.data && cartRes.data.items.length > 0) {
+      if (cartRes.status === 'PERMISSION_DENIED') {
+        responseText = `Cart management is currently disabled by store configuration.`;
+        interactivePayload = null;
+      } else if (cartRes.data && cartRes.data.items.length > 0) {
         responseText = `You currently have **${cartRes.data.items.length}** item(s) in your bag totaling **₹${cartRes.data.total.toLocaleString('en-IN')}**.`;
         interactivePayload = cartRes.interactive_payload;
       } else {
@@ -418,7 +531,10 @@ If the customer asks about an item we don't have, explain politely what we do ha
         latency_ms: orderRes.latency_ms
       });
 
-      if (orderRes.data) {
+      if (orderRes.status === 'PERMISSION_DENIED') {
+        responseText = 'Order lookup and tracking is currently disabled by store configuration. Please contact customer support for assistance with your order.';
+        interactivePayload = null;
+      } else if (orderRes.data) {
         interactivePayload = orderRes.interactive_payload;
         const order = orderRes.data;
         responseText = 'Here is the status for your order **' + order.order_number + '**:\n\n' +
@@ -435,14 +551,15 @@ If the customer asks about an item we don't have, explain politely what we do ha
     planningSteps.push('4. Synthesizing response using verified knowledge citations.');
     planningSteps.push(`5. Grounding verification: ${Math.round(ragResult.grounding_verification.confidence_score * 100)}% factual confidence.`);
     
-    // Call Sarvam AI with full store knowledge & conversation history
-    const naturalPrompt = `You are a helpful, friendly, and super-smart shopping concierge and apparel specialist for Blue Tyga (bluetyga.com).
+    // Call Sarvam AI with full workspace knowledge & conversation history
+    const naturalPrompt = `You are ShopMate AI, the intelligent assistant and knowledge expert for this workspace.
 
 Core Capabilities:
-- Answer questions accurately, clearly, and conversationally based on previous messages and store knowledge.
-- When questions relate to Blue Tyga policies, shipping, returns, pricing, or products, use the provided store knowledge as your factual guide (prices in ₹).
-- For general questions (styling, weather suitability, UV protection science, fabric care, travel tips), answer freely and helpfully.
-- Speak naturally and warmly like a real in-store expert.`;
+- Answer questions accurately, clearly, and conversationally based on previous messages and workspace knowledge.
+- When questions relate to company policies, operational SOPs (such as BrightForge Operations SOP), internal guidelines, shipping, returns, pricing, or products, use the provided Knowledge Base Documents as your primary factual guide.
+- Explain the procedures, principles, roles, and rules described in the knowledge documents clearly and thoroughly.
+- For general questions (styling, weather suitability, science, procedures), answer helpfully and professionally.
+- Speak naturally and warmly.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,
@@ -453,10 +570,8 @@ Core Capabilities:
 
     if (sarvamAnswer) {
       responseText = sarvamAnswer;
-    } else if (citations.length > 0) {
-      responseText = `${citations[0].chunk_text}\n\nLet me know if you'd like more details on any of our items or sizing!`;
     } else {
-      responseText = 'We deliver across India in **3 to 9 working days** with same-day dispatch for orders placed before 2:00 PM. If you need to exchange an item, you can do so within **7 days** through our portal for unworn pieces with tags intact!';
+      responseText = dynamicFallbackAnswer(user_message);
     }
   } else if (detectedIntent === 'HUMAN_HANDOFF') {
     planningSteps.push('4. Initiating human support escalation.');
@@ -467,17 +582,17 @@ Core Capabilities:
       agent_id,
       conversation_id: conversation.id
     });
-    responseText = "I've let our team know! A support specialist from Blue Tyga will connect with you right here shortly. You can also reach us directly at **+91 63817 49310** or **contact@bluetyga.com**.";
+    responseText = "I've let our team know! A support specialist will connect with you right here shortly. You can also reach us directly at **+91 63817 49310** or **contact@bluetyga.com**.";
   } else {
     // General freeform conversation or question -> Sarvam AI / Citations
     planningSteps.push('4. Calling Sarvam AI conversational model.');
-    const naturalPrompt = `You are a helpful, friendly, and super-smart shopping concierge and apparel specialist for Blue Tyga (bluetyga.com).
+    const naturalPrompt = `You are ShopMate AI, the intelligent assistant and knowledge expert for this workspace.
 
 Core Capabilities:
-- Answer ANY question the user asks naturally, intelligently, and contextually based on their prior conversation queries.
-- When questions relate to Blue Tyga policies, shipping, returns, pricing, or products, use the provided store knowledge as your factual guide (prices in ₹).
-- For styling, comparison, sizing, or general inquiries, provide helpful and direct advice.
-- Speak naturally and warmly like a real in-store specialist.`;
+- Answer ANY question the user asks naturally, intelligently, and contextually based on their prior conversation queries and workspace documents.
+- When questions relate to company operations, SOP manuals (e.g. BrightForge Technologies Internal Operations SOP), policies, shipping, returns, pricing, or catalog products, use the provided knowledge base documents to explain the details thoroughly.
+- Explain the key sections, workflows, objectives, and policies directly from the knowledge context.
+- Speak naturally, warmly, and authoritatively like an experienced specialist.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,
@@ -488,10 +603,8 @@ Core Capabilities:
 
     if (sarvamAnswer) {
       responseText = sarvamAnswer;
-    } else if (citations.length > 0) {
-      responseText = citations[0].chunk_text + '\n\nLet me know if you would like me to help you pick the right size or style!';
     } else {
-      responseText = config.identity?.greeting || "Hey there! I'm your Blue Tyga shopping concierge. Looking for our UPF 50+ Sunscreen Jackets, No-Sweat Tees, or have a question about an order?";
+      responseText = dynamicFallbackAnswer(user_message);
     }
   }
 

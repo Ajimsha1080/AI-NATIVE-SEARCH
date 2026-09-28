@@ -159,221 +159,76 @@ Comprehensive Store Intelligence:
       agentId: agent_id
     });
 
-    // Auto-discover and populate products in commerce_products from the synced website knowledge
-    const existingProducts = db.commerce_products.filter(p => p.workspace_id === session.workspaceId);
-    
-    if (parsedHostname.includes('bluetyga') || existingProducts.length === 0) {
-      const blueTygaCatalog: CommerceProduct[] = [
-        {
-          id: generateId('prod_bt_01'),
-          workspace_id: session.workspaceId,
-          title: 'Sunscreen Jacket',
-          description: 'Engineered UPF 50+ UV-blocking lightweight breathable jacket designed for daily outdoor sun protection.',
-          category: 'Outerwear',
-          tags: ['jacket', 'sunscreen', 'upf50', 'uvwear', 'outerwear', 'men'],
-          price: 999.00,
-          compare_at_price: 1999.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
-          in_stock: true,
-          total_inventory: 65,
-          variants: [
-            { id: generateId('var'), sku: 'BT-SJ-BLK-M', title: 'Size M / Obsidian Black', inventory_quantity: 30, price: 999.00, attributes: { size: 'M', color: 'Black' } },
-            { id: generateId('var'), sku: 'BT-SJ-BLK-L', title: 'Size L / Obsidian Black', inventory_quantity: 35, price: 999.00, attributes: { size: 'L', color: 'Black' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+    // Auto-discover and populate live catalog from /products.json if available
+    try {
+      const productsEndpoint = `${parsedOrigin}/products.json?limit=50`;
+      const prodRes = await safeFetch(productsEndpoint, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'application/json'
         },
-        {
-          id: generateId('prod_bt_02'),
-          workspace_id: session.workspaceId,
-          title: 'Sunscreen Jacket Pro',
-          description: 'High-performance UPF 50+ technical sunscreen jacket with utility zippered pockets, cooling mesh, and active flex.',
-          category: 'Outerwear',
-          tags: ['jacket', 'pro', 'sunscreen', 'upf50', 'outerwear'],
-          price: 1299.00,
-          compare_at_price: 2999.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ2_-_1_4a769590-ab42-4c42-bc68-874df3032dc8.webp?v=1776246852'],
-          in_stock: true,
-          total_inventory: 50,
-          variants: [
-            { id: generateId('var'), sku: 'BT-SJP-NVY-M', title: 'Size M / Navy Blue', inventory_quantity: 25, price: 1299.00, attributes: { size: 'M', color: 'Navy' } },
-            { id: generateId('var'), sku: 'BT-SJP-NVY-L', title: 'Size L / Navy Blue', inventory_quantity: 25, price: 1299.00, attributes: { size: 'L', color: 'Navy' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: generateId('prod_bt_03'),
-          workspace_id: session.workspaceId,
-          title: 'Sunscreen Jacket Ice Pro',
-          description: 'Next-gen cooling techwear jacket with Arctic Ice cool-touch heat dispersal and certified UPF 50+ rating.',
-          category: 'Outerwear',
-          tags: ['jacket', 'ice', 'cooling', 'upf50', 'outerwear', 'ice pro'],
-          price: 1999.00,
-          compare_at_price: 3999.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/BTF.webp?v=1779275127'],
-          in_stock: true,
-          total_inventory: 45,
-          variants: [
-            { id: generateId('var'), sku: 'BT-ICE-GRY-M', title: 'Size M / Arctic Ice Grey', inventory_quantity: 20, price: 1999.00, attributes: { size: 'M', color: 'Ice Grey' } },
-            { id: generateId('var'), sku: 'BT-ICE-GRY-L', title: 'Size L / Arctic Ice Grey', inventory_quantity: 25, price: 1999.00, attributes: { size: 'L', color: 'Ice Grey' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: generateId('prod_bt_04'),
-          workspace_id: session.workspaceId,
-          title: 'Women Sunscreen Jacket Ice Pro',
-          description: 'Tailored women ergonomic UPF 50+ cooling jacket with thumbholes, ponytail aperture, and ice-filament fabric.',
-          category: 'Outerwear',
-          tags: ['women', 'jacket', 'ice pro', 'sunscreen', 'upf50'],
-          price: 1999.00,
-          compare_at_price: 3999.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/WOMENLSJ8-1_2x-100.webp?v=1772778127'],
-          in_stock: true,
-          total_inventory: 40,
-          variants: [
-            { id: generateId('var'), sku: 'BT-WICE-S-LAV', title: 'Size S / Lavender Ice', inventory_quantity: 20, price: 1999.00, attributes: { size: 'S', color: 'Lavender' } },
-            { id: generateId('var'), sku: 'BT-WICE-M-LAV', title: 'Size M / Lavender Ice', inventory_quantity: 20, price: 1999.00, attributes: { size: 'M', color: 'Lavender' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: generateId('prod_bt_04_std'),
-          workspace_id: session.workspaceId,
-          title: 'Women Sunscreen Jacket',
-          description: 'Engineered female-tailored UPF 50+ UV-blocking lightweight breathable jacket with thumbholes for daily outdoor sun protection.',
-          category: 'Outerwear',
-          tags: ['women', 'womens', 'jacket', 'sunscreen', 'upf50', 'outerwear'],
-          price: 999.00,
-          compare_at_price: 1999.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/WOMENSJ1-1.webp?v=1760537623'],
-          in_stock: true,
-          total_inventory: 50,
-          variants: [
-            { id: generateId('var'), sku: 'BT-WSJ-S-NVY', title: 'Size S / Navy Blue', inventory_quantity: 25, price: 999.00, attributes: { size: 'S', color: 'Navy' } },
-            { id: generateId('var'), sku: 'BT-WSJ-M-NVY', title: 'Size M / Navy Blue', inventory_quantity: 25, price: 999.00, attributes: { size: 'M', color: 'Navy' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: generateId('prod_bt_04_pro'),
-          workspace_id: session.workspaceId,
-          title: 'Women Sunscreen Jacket Pro',
-          description: 'High-performance women UPF 50+ technical jacket with utility zippered pockets, ponytail aperture, and cooling mesh flex.',
-          category: 'Outerwear',
-          tags: ['women', 'womens', 'jacket', 'pro', 'sunscreen', 'upf50', 'outerwear'],
-          price: 1299.00,
-          compare_at_price: 2999.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/WOMENLSJ8-1_2x-100.webp?v=1772778127'],
-          in_stock: true,
-          total_inventory: 45,
-          variants: [
-            { id: generateId('var'), sku: 'BT-WPRO-S-PNK', title: 'Size S / Coral Pink', inventory_quantity: 20, price: 1299.00, attributes: { size: 'S', color: 'Pink' } },
-            { id: generateId('var'), sku: 'BT-WPRO-M-PNK', title: 'Size M / Coral Pink', inventory_quantity: 25, price: 1299.00, attributes: { size: 'M', color: 'Pink' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: generateId('prod_bt_05'),
-          workspace_id: session.workspaceId,
-          title: 'Anti-AC Thermal Jacket 2 Pro',
-          description: 'Dual-layer thermal fleece insulation engineered for air-conditioned corporate spaces and chill protection without bulk.',
-          category: 'Hoodies',
-          tags: ['thermal', 'anti-ac', 'jacket', 'hoodie', 'outerwear'],
-          price: 1799.00,
-          compare_at_price: 4999.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/ANTI_AC_PRO_1-100.jpg?v=1762598400'],
-          in_stock: true,
-          total_inventory: 40,
-          variants: [
-            { id: generateId('var'), sku: 'BT-AC2-M-BLK', title: 'Size M / Stealth Black', inventory_quantity: 20, price: 1799.00, attributes: { size: 'M', color: 'Black' } },
-            { id: generateId('var'), sku: 'BT-AC2-L-BLK', title: 'Size L / Stealth Black', inventory_quantity: 20, price: 1799.00, attributes: { size: 'L', color: 'Black' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: generateId('prod_bt_06'),
-          workspace_id: session.workspaceId,
-          title: 'No Sweat Tech Tee',
-          description: 'Quick-dry moisture-wicking engineered active tee designed to stay cool, fresh, and odor-free all day.',
-          category: 'T-Shirts',
-          tags: ['tshirt', 'nosweat', 'quick-dry', 'activewear', 'tee'],
-          price: 799.00,
-          compare_at_price: 1499.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/NoSweatTee_1.webp?v=1777871708'],
-          in_stock: true,
-          total_inventory: 80,
-          variants: [
-            { id: generateId('var'), sku: 'BT-NST-M-OLV', title: 'Size M / Olive Green', inventory_quantity: 40, price: 799.00, attributes: { size: 'M', color: 'Olive' } },
-            { id: generateId('var'), sku: 'BT-NST-L-OLV', title: 'Size L / Olive Green', inventory_quantity: 40, price: 799.00, attributes: { size: 'L', color: 'Olive' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: generateId('prod_bt_07'),
-          workspace_id: session.workspaceId,
-          title: 'Balaclava Pro',
-          description: 'Full facial and neck UV shield with laser-cut breathing ports and ergonomic multi-wear configurations.',
-          category: 'Accessories',
-          tags: ['balaclava', 'sunscreen', 'accessories', 'uvwear', 'mask'],
-          price: 499.00,
-          compare_at_price: 799.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/balaclavapro_2.webp?v=1777282036'],
-          in_stock: true,
-          total_inventory: 90,
-          variants: [
-            { id: generateId('var'), sku: 'BT-BAL-UNI-BLK', title: 'Universal Fit / Jet Black', inventory_quantity: 90, price: 499.00, attributes: { size: 'Universal', color: 'Black' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: generateId('prod_bt_08'),
-          workspace_id: session.workspaceId,
-          title: 'Sunscreen WIDE VISOR PRO',
-          description: 'Wide brim maximum-coverage UV sun visor with adjustable anti-glare band for outdoor sports, cycling, and travel.',
-          category: 'Accessories',
-          tags: ['visor', 'sunscreen', 'accessories', 'uvwear', 'hat', 'cap', 'caps', 'headwear'],
-          price: 999.00,
-          compare_at_price: 1499.00,
-          currency: 'INR',
-          images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/sunscreenwidevisorpro_25.webp?v=1777284066'],
-          in_stock: true,
-          total_inventory: 50,
-          variants: [
-            { id: generateId('var'), sku: 'BT-VIS-UNI-BLK', title: 'Universal / Graphite Black', inventory_quantity: 50, price: 999.00, attributes: { size: 'Universal', color: 'Black' } }
-          ],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
+        timeoutMs: 6000,
+        maxSizeBytes: 5 * 1024 * 1024
+      });
 
-      // Upsert products for this workspace
-      for (const prod of blueTygaCatalog) {
-        const idx = db.commerce_products.findIndex(p => p.workspace_id === session.workspaceId && p.title.toLowerCase() === prod.title.toLowerCase());
-        if (idx >= 0) {
-          db.commerce_products[idx] = { ...db.commerce_products[idx], ...prod };
-        } else {
-          db.commerce_products.push(prod);
+      if (prodRes && prodRes.ok) {
+        const prodData = await prodRes.json();
+        if (prodData && Array.isArray(prodData.products) && prodData.products.length > 0) {
+          // Remove any placeholder/unsplash mockup products for this workspace in-place
+          for (let i = db.commerce_products.length - 1; i >= 0; i--) {
+            const cp = db.commerce_products[i];
+            if (cp.workspace_id === session.workspaceId && cp.images?.some(img => img.includes('images.unsplash.com'))) {
+              db.commerce_products.splice(i, 1);
+            }
+          }
+
+          for (const p of prodData.products) {
+            const existingIdx = db.commerce_products.findIndex(cp => 
+              cp.workspace_id === session.workspaceId && cp.title.toLowerCase() === p.title.toLowerCase()
+            );
+
+            const cleanDescription = p.body_html 
+              ? p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 300)
+              : (p.title || 'Engineered technical apparel with UPF 50+ UV protection.');
+
+            const prodObj: CommerceProduct = {
+              id: existingIdx >= 0 ? db.commerce_products[existingIdx].id : generateId('prod_live'),
+              workspace_id: session.workspaceId,
+              title: p.title,
+              description: cleanDescription,
+              category: p.product_type || 'Apparel',
+              tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? p.tags.split(/,\s*/) : ['activewear']),
+              price: parseFloat(p.variants?.[0]?.price || '999'),
+              compare_at_price: p.variants?.[0]?.compare_at_price ? parseFloat(p.variants[0].compare_at_price) : undefined,
+              currency: 'INR',
+              images: p.images && p.images.length > 0 
+                ? p.images.map((img: any) => img.src) 
+                : ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+              in_stock: p.variants ? p.variants.some((v: any) => v.available !== false) : true,
+              total_inventory: 80,
+              variants: p.variants && Array.isArray(p.variants) ? p.variants.map((v: any, i: number) => ({
+                id: generateId('var'),
+                sku: v.sku || `SKU-${p.id}-${i}`,
+                title: v.title || 'Standard',
+                price: parseFloat(v.price || '999'),
+                inventory_quantity: 25,
+                attributes: { size: v.option1 || 'Universal', color: v.option2 || 'Black' }
+              })) : [],
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+
+            if (existingIdx >= 0) {
+              db.commerce_products[existingIdx] = prodObj;
+            } else {
+              db.commerce_products.push(prodObj);
+            }
+          }
+          db.scheduleSave();
         }
       }
-      db.scheduleSave();
+    } catch (crawlErr) {
+      console.error('Products JSON crawl error:', crawlErr);
     }
 
     return NextResponse.json({ success: true, document: doc, syncedProductsCount: db.commerce_products.filter(p => p.workspace_id === session.workspaceId).length });

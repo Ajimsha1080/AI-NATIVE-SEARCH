@@ -12,6 +12,11 @@
   var position = currentScript.getAttribute('data-position') || 'bottom_right';
   var primaryColor = currentScript.getAttribute('data-primary-color') || '#4f46e5';
   var themeMode = currentScript.getAttribute('data-theme-mode') || 'dark';
+  var customBgColor = currentScript.getAttribute('data-background-color') || '';
+  var customHeaderBg = currentScript.getAttribute('data-header-background') || '';
+  var customBorderColor = currentScript.getAttribute('data-border-color') || '';
+  var logoUrl = currentScript.getAttribute('data-logo-url') || '';
+  var logoBackground = currentScript.getAttribute('data-logo-background') || 'transparent';
   var launcherText = currentScript.getAttribute('data-launcher-text') || 'Chat with us';
   var launcherShape = currentScript.getAttribute('data-launcher-shape') || 'teardrop';
   var launcherIcon = currentScript.getAttribute('data-launcher-icon') || 'chat';
@@ -21,6 +26,10 @@
   var greetingMessage = currentScript.getAttribute('data-greeting-message') || "Hello! 👋 I'm your AI assistant. How can I help you today?";
   var starterQuestionsRaw = currentScript.getAttribute('data-starter-questions') || 'What are your pricing plans?||How do I get started?||Talk to human support';
   var starterQuestions = starterQuestionsRaw.split('||').filter(Boolean);
+
+  var chatBg = themeMode === 'light' ? (customBgColor || '#ffffff') : '#0B132B';
+  var chatHeaderBg = themeMode === 'light' ? (customHeaderBg || '#f8fafc') : '#0c1633';
+  var chatBorder = themeMode === 'light' ? (customBorderColor || '#e2e8f0') : '#1e293b';
 
   // Avoid duplicate injection
   if (document.getElementById('shopmate-ai-widget-root')) return;
@@ -66,9 +75,9 @@
       max-width: calc(100vw - 40px);
       height: 600px;
       max-height: calc(100vh - 120px);
-      background: ${themeMode === 'light' ? '#ffffff' : '#0B132B'};
+      background: ${chatBg};
       color: ${themeMode === 'light' ? '#0f172a' : '#f8fafc'};
-      border: 1px solid ${themeMode === 'light' ? '#e2e8f0' : '#1e293b'};
+      border: 1px solid ${chatBorder};
       border-radius: 20px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
       display: flex;
@@ -80,8 +89,8 @@
     
     .sm-header {
       padding: 16px;
-      background: ${themeMode === 'light' ? '#f8fafc' : '#0c1633'};
-      border-bottom: 1px solid ${themeMode === 'light' ? '#e2e8f0' : '#1e293b'};
+      background: ${chatHeaderBg};
+      border-bottom: 1px solid ${chatBorder};
     }
     .sm-header-badge {
       display: inline-flex;
@@ -208,14 +217,18 @@
       chatWin.className = 'sm-chat-window';
 
       // Header
+      var logoBadgeHtml = logoUrl 
+        ? `<img src="${logoUrl}" style="width: 14px; height: 14px; border-radius: 50%; object-fit: cover; vertical-align: middle;" />` 
+        : `<span style="width: 6px; height: 6px; border-radius: 6px; background: ${primaryColor};"></span>`;
+
       chatWin.innerHTML = `
         <div class="sm-header">
           <div class="sm-header-badge">
-            <span style="width: 6px; height: 6px; border-radius: 6px; background: ${primaryColor};"></span>
+            ${logoBadgeHtml}
             ${assistantName}
           </div>
           <button class="sm-close-btn" id="sm-close">✕</button>
-          <h2 class="sm-header-title">Customer Support</h2>
+          <h2 class="sm-header-title">${assistantName}</h2>
           <p class="sm-header-subtitle">We usually reply in a few seconds</p>
         </div>
         <div class="sm-messages" id="sm-msg-container"></div>
@@ -286,20 +299,62 @@
       input.focus();
     } else {
       // Launcher Button
+      var shapeRadius = '50%';
+      if (launcherShape === 'teardrop') shapeRadius = '24px 24px 4px 24px';
+      else if (launcherShape === 'rounded') shapeRadius = '16px';
+      else if (launcherShape === 'pill' || launcherShape === 'circle') shapeRadius = '9999px';
+
       var shapeClass = 'sm-' + launcherShape;
       var btn = document.createElement('button');
       btn.className = 'sm-launcher-btn ' + shapeClass;
       btn.style.backgroundColor = primaryColor;
+      btn.style.borderRadius = shapeRadius;
       
-      var iconHtml = '💬';
-      if (launcherIcon === 'sparkles') iconHtml = '✨';
-      else if (launcherIcon === 'bot') iconHtml = '🤖';
-      else if (launcherIcon === 'bag') iconHtml = '🛍️';
+      var hasText = Boolean(launcherText && launcherText.trim());
+      if (!hasText || launcherShape === 'circle') {
+        btn.style.width = '56px';
+        btn.style.height = '56px';
+        btn.style.padding = '0';
+        btn.style.justifyContent = 'center';
+      }
 
-      if (launcherShape === 'circle') {
-        btn.innerHTML = `<span style="font-size: 20px;">${iconHtml}</span>`;
+      var iconHtml = '💬';
+      if (launcherIcon === 'logo' && logoUrl) {
+        if (!hasText || launcherShape === 'circle') {
+          if (logoBackground === 'transparent') {
+            btn.style.backgroundColor = 'transparent';
+            btn.style.padding = '0';
+            btn.style.boxShadow = 'none';
+            btn.innerHTML = `
+              <div style="position: relative; width: 56px; height: 56px; border-radius: ${shapeRadius}; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.35); border: 2px solid #ffffff; overflow: hidden;">
+                <img src="${logoUrl}" style="width: 56px; height: 56px; border-radius: ${shapeRadius}; object-fit: cover; display: block;" />
+                <span style="position: absolute; bottom: 1px; right: 1px; width: 12px; height: 12px; background: #10b981; border: 2px solid #ffffff; border-radius: 50%;"></span>
+              </div>
+            `;
+          } else {
+            btn.innerHTML = `
+              <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <img src="${logoUrl}" style="width: 38px; height: 38px; border-radius: ${shapeRadius}; object-fit: cover; border: 2px solid rgba(255,255,255,0.9); display: block;" />
+                <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: #10b981; border: 1.5px solid #ffffff; border-radius: 50%;"></span>
+              </div>
+            `;
+          }
+        } else {
+          iconHtml = `<img src="${logoUrl}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255,255,255,0.8); vertical-align: middle;" />`;
+          btn.innerHTML = `<span style="font-size: 16px; display: flex; align-items: center;">${iconHtml}</span><span style="font-size: 13px; font-weight: 600;">${launcherText}</span>`;
+        }
       } else {
-        btn.innerHTML = `<span style="font-size: 16px;">${iconHtml}</span><span style="font-size: 13px; font-weight: 600;">${launcherText}</span>`;
+        if (launcherIcon === 'sparkles') iconHtml = '✨';
+        else if (launcherIcon === 'droplet') iconHtml = '💧';
+        else if (launcherIcon === 'bot') iconHtml = '🤖';
+        else if (launcherIcon === 'bag') iconHtml = '🛍️';
+        else if (launcherIcon === 'help') iconHtml = '❓';
+
+        if (!hasText || launcherShape === 'circle') {
+          btn.innerHTML = `<span style="font-size: 20px; display: flex; align-items: center; justify-content: center;">${iconHtml}</span>`;
+        } else {
+          btn.innerHTML = `<span style="font-size: 16px; display: flex; align-items: center;">${iconHtml}</span><span style="font-size: 13px; font-weight: 600;">${launcherText}</span>`;
+        }
       }
 
       btn.onclick = function () {

@@ -10,14 +10,15 @@ import {
   Palette, FileText, Sliders, ExternalLink, ChevronRight,
   Settings2, Eye, HelpCircle, Layers, CheckCircle2,
   Send, Bot, ShoppingBag, Minimize2, Maximize2, RotateCcw,
-  SlidersHorizontal, MessageCircle, Terminal, Crown, HelpCircle as QuestionIcon
+  SlidersHorizontal, MessageCircle, Terminal, Crown, HelpCircle as QuestionIcon,
+  Image as ImageIcon, Upload, Droplet
 } from 'lucide-react';
-import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
+import { fetchWithCache, getClientCachedData, invalidateClientCache } from '@/lib/client-cache';
 
 type TabType = 'channels' | 'appearance' | 'content' | 'general' | 'embed';
 type SnippetType = 'html' | 'react' | 'iframe' | 'rest';
-type LauncherShape = 'teardrop' | 'circle' | 'pill' | 'rounded';
-type LauncherIcon = 'chat' | 'sparkles' | 'bot' | 'bag' | 'help';
+type LauncherShape = 'teardrop' | 'circle' | 'pill';
+type LauncherIcon = 'chat' | 'sparkles' | 'bot' | 'bag' | 'help' | 'logo';
 type ThemeMode = 'dark' | 'light' | 'auto';
 
 interface ThemePreset {
@@ -54,19 +55,19 @@ const THEME_PRESETS: ThemePreset[] = [
     description: 'Clean modern lavender aesthetic with soft violet accents'
   },
   {
-    id: 'cosmic_depth',
-    name: 'Cosmic Depth',
-    primaryColor: '#8b5cf6',
-    themeMode: 'dark',
-    canvasBg: 'bg-[#0f172a]',
-    topBubbleBg: 'bg-[#1e293b]',
-    midBubbleBg: 'bg-[#161e2e]',
-    inputBg: 'bg-[#1e293b]',
-    dotColor: '#8b5cf6',
-    cardBgHex: '#0f172a',
-    headerBgHex: '#1e293b',
-    borderHex: '#334155',
-    description: 'Deep cosmic dark mode with vibrant neon violet accents'
+    id: 'emerald_mint',
+    name: 'Emerald Mint',
+    primaryColor: '#10b981',
+    themeMode: 'light',
+    canvasBg: 'bg-[#f0fdf4]',
+    topBubbleBg: 'bg-[#dcfce7]',
+    midBubbleBg: 'bg-white',
+    inputBg: 'bg-white',
+    dotColor: '#10b981',
+    cardBgHex: '#f0fdf4',
+    headerBgHex: '#dcfce7',
+    borderHex: '#bbf7d0',
+    description: 'Fresh botanic emerald with revitalizing crisp mint accents'
   },
   {
     id: 'sunset_bliss',
@@ -234,19 +235,19 @@ const THEME_PRESETS: ThemePreset[] = [
     description: 'Deep marine navy and soothing seafoam turquoise'
   },
   {
-    id: 'monochrome_pro',
-    name: 'Monochrome Pro',
-    primaryColor: '#18181b',
+    id: 'nordic_slate',
+    name: 'Nordic Slate',
+    primaryColor: '#475569',
     themeMode: 'light',
     canvasBg: 'bg-[#f8fafc]',
-    topBubbleBg: 'bg-[#f1f5f9]',
+    topBubbleBg: 'bg-[#e2e8f0]',
     midBubbleBg: 'bg-white',
     inputBg: 'bg-white',
-    dotColor: '#18181b',
+    dotColor: '#475569',
     cardBgHex: '#f8fafc',
-    headerBgHex: '#f1f5f9',
-    borderHex: '#e2e8f0',
-    description: 'Architectural titanium grayscale for minimalist stores'
+    headerBgHex: '#e2e8f0',
+    borderHex: '#cbd5e1',
+    description: 'Cool Scandinavian slate with clean neutral architectural tones'
   },
   {
     id: 'cherry_blossom',
@@ -264,34 +265,34 @@ const THEME_PRESETS: ThemePreset[] = [
     description: 'Playful Japanese sakura petals with magenta buttons'
   },
   {
-    id: 'midnight_obsidian',
-    name: 'Midnight Obsidian',
-    primaryColor: '#eab308',
-    themeMode: 'dark',
-    canvasBg: 'bg-[#121214]',
-    topBubbleBg: 'bg-[#27272a]',
-    midBubbleBg: 'bg-[#18181b]',
-    inputBg: 'bg-[#27272a]',
-    dotColor: '#eab308',
-    cardBgHex: '#121214',
-    headerBgHex: '#18181b',
-    borderHex: '#3f3f46',
-    description: 'Ultra-luxurious dark obsidian with polished gold accents'
+    id: 'sunset_coral',
+    name: 'Sunset Coral',
+    primaryColor: '#f97316',
+    themeMode: 'light',
+    canvasBg: 'bg-[#fff7ed]',
+    topBubbleBg: 'bg-[#ffedd5]',
+    midBubbleBg: 'bg-white',
+    inputBg: 'bg-white',
+    dotColor: '#f97316',
+    cardBgHex: '#fff7ed',
+    headerBgHex: '#ffedd5',
+    borderHex: '#fed7aa',
+    description: 'Radiant warm sunrise coral and golden amber tones'
   },
   {
-    id: 'cyber_neon',
-    name: 'Cyber Neon',
-    primaryColor: '#22c55e',
-    themeMode: 'dark',
-    canvasBg: 'bg-[#090d16]',
-    topBubbleBg: 'bg-[#131d2e]',
-    midBubbleBg: 'bg-[#0f172a]',
-    inputBg: 'bg-[#131d2e]',
-    dotColor: '#22c55e',
-    cardBgHex: '#090d16',
-    headerBgHex: '#131d2e',
-    borderHex: '#1e293b',
-    description: 'High-tech cyberpunk dark canvas with vibrant neon green'
+    id: 'emerald_mint',
+    name: 'Emerald Mint',
+    primaryColor: '#10b981',
+    themeMode: 'light',
+    canvasBg: 'bg-[#f0fdf4]',
+    topBubbleBg: 'bg-[#dcfce7]',
+    midBubbleBg: 'bg-white',
+    inputBg: 'bg-white',
+    dotColor: '#10b981',
+    cardBgHex: '#f0fdf4',
+    headerBgHex: '#dcfce7',
+    borderHex: '#bbf7d0',
+    description: 'Fresh botanic emerald with revitalizing crisp mint accents'
   },
   {
     id: 'terracotta_clay',
@@ -392,8 +393,40 @@ export default function DeploymentsWorkspacePage() {
   const [launcherShape, setLauncherShape] = useState<LauncherShape>('teardrop');
   const [launcherIcon, setLauncherIcon] = useState<LauncherIcon>('sparkles');
   const [launcherText, setLauncherText] = useState('Chat with us');
+  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [logoBackground, setLogoBackground] = useState<'transparent' | 'filled'>('transparent');
   const [bottomPadding, setBottomPadding] = useState('20');
   const [sidePadding, setSidePadding] = useState('20');
+  const [appearanceSection, setAppearanceSection] = useState<'all' | 'themes' | 'colors' | 'logo' | 'launcher' | 'position'>('all');
+  const [colorSelectionMode, setColorSelectionMode] = useState<'preset' | 'custom'>('preset');
+  const [customCardBg, setCustomCardBg] = useState('');
+  const [customHeaderBg, setCustomHeaderBg] = useState('');
+  const [customBorderColor, setCustomBorderColor] = useState('');
+  const [showAdvancedPalette, setShowAdvancedPalette] = useState(false);
+  const [showAllThemes, setShowAllThemes] = useState(false);
+  const logoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const PRESET_LOGOS = [
+    { id: 'shoes', name: 'Sneakers & Sports', url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&auto=format&fit=crop&q=80' },
+    { id: 'fashion', name: 'Fashion & Apparel', url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=120&auto=format&fit=crop&q=80' },
+    { id: 'watch', name: 'Luxury Watches', url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=120&auto=format&fit=crop&q=80' },
+    { id: 'tech', name: 'Tech & Gadgets', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=120&auto=format&fit=crop&q=80' }
+  ];
+
+  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setLogoUrl(reader.result);
+          setLauncherIcon('logo');
+          setIsWidgetOpen(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Content settings state
   const [assistantName, setAssistantName] = useState('Blue Tyga AI Concierge');
@@ -444,11 +477,37 @@ export default function DeploymentsWorkspacePage() {
           const cfg = agentData.config;
           if (cfg.identity?.name) setAssistantName(cfg.identity.name);
           if (cfg.identity?.brand_name) setHeaderTitle(cfg.identity.brand_name);
-          if (cfg.identity?.greeting) setGreetingMessage(cfg.identity.greeting);
+          if (cfg.identity?.description) setHeaderSubtitle(cfg.identity.description);
+          if (cfg.identity?.greeting) {
+            setGreetingMessage(cfg.identity.greeting);
+            setChatMessages([
+              {
+                id: 'msg_greet_0',
+                sender: 'agent',
+                text: cfg.identity.greeting,
+                timestamp: 'Just now'
+              }
+            ]);
+          }
+          if (cfg.identity?.avatar_url) setLogoUrl(cfg.identity.avatar_url);
+          else if (cfg.appearance?.logo_url) setLogoUrl(cfg.appearance.logo_url);
           if (cfg.starter_questions && Array.isArray(cfg.starter_questions) && cfg.starter_questions.length > 0) {
             setStarterQuestions(cfg.starter_questions);
           }
+          if (cfg.appearance?.theme_preset) setSelectedPresetId(cfg.appearance.theme_preset);
+          if (cfg.appearance?.theme_mode) setThemeMode(cfg.appearance.theme_mode);
           if (cfg.appearance?.primary_color) setPrimaryColor(cfg.appearance.primary_color);
+          if (cfg.appearance?.background_color) setCustomCardBg(cfg.appearance.background_color);
+          if (cfg.appearance?.header_background) setCustomHeaderBg(cfg.appearance.header_background);
+          if (cfg.appearance?.border_color) setCustomBorderColor(cfg.appearance.border_color);
+          if (cfg.appearance?.launcher_icon) setLauncherIcon(cfg.appearance.launcher_icon);
+          if (cfg.appearance?.launcher_shape) setLauncherShape(cfg.appearance.launcher_shape);
+          if (cfg.appearance?.launcher_text !== undefined) setLauncherText(cfg.appearance.launcher_text);
+          if (cfg.appearance?.logo_background) setLogoBackground(cfg.appearance.logo_background);
+          if (cfg.appearance?.bottom_padding) setBottomPadding(cfg.appearance.bottom_padding);
+          if (cfg.appearance?.side_padding) setSidePadding(cfg.appearance.side_padding);
+          if (cfg.appearance?.position) setPosition(cfg.appearance.position === 'bottom-left' || cfg.appearance.position === 'bottom_left' ? 'bottom_left' : 'bottom_right');
+          if (cfg.appearance?.show_branding !== undefined) setShowBranding(cfg.appearance.show_branding);
         }
         setLoading(false);
       })
@@ -469,11 +528,29 @@ export default function DeploymentsWorkspacePage() {
   const agentKey = activeDeployment?.public_key || (deployments.length > 0 ? deployments[0].public_key : '');
   const apiUrl = origin || 'https://api.shopmate.ai';
 
+  const currentPreset = THEME_PRESETS.find(p => p.id === selectedPresetId) || THEME_PRESETS[0];
+  const activeCardBg = themeMode === 'dark' ? '#0f172a' : (customCardBg || currentPreset.cardBgHex || '#ffffff');
+  const activeHeaderBg = themeMode === 'dark' ? '#1e293b' : (customHeaderBg || currentPreset.headerBgHex || '#f4f4f5');
+  const activeBorderColor = themeMode === 'dark' ? '#334155' : (customBorderColor || currentPreset.borderHex || '#e4e4e7');
+
   // Apply theme preset
   const handleSelectThemePreset = (preset: ThemePreset) => {
     setSelectedPresetId(preset.id);
     setPrimaryColor(preset.primaryColor);
     setThemeMode(preset.themeMode);
+    setCustomCardBg(preset.cardBgHex);
+    setCustomHeaderBg(preset.headerBgHex);
+    setCustomBorderColor(preset.borderHex);
+  };
+
+  // Reset to original preset template defaults
+  const handleResetThemePreset = () => {
+    const preset = THEME_PRESETS.find(p => p.id === selectedPresetId) || THEME_PRESETS[0];
+    setPrimaryColor(preset.primaryColor);
+    setThemeMode(preset.themeMode);
+    setCustomCardBg(preset.cardBgHex);
+    setCustomHeaderBg(preset.headerBgHex);
+    setCustomBorderColor(preset.borderHex);
   };
 
   // Dynamic code snippets
@@ -486,6 +563,11 @@ export default function DeploymentsWorkspacePage() {
   data-position="${position}"
   data-primary-color="${primaryColor}"
   data-theme-mode="${themeMode}"
+  data-background-color="${customCardBg || currentPreset.cardBgHex || ''}"
+  data-header-background="${customHeaderBg || currentPreset.headerBgHex || ''}"
+  data-border-color="${customBorderColor || currentPreset.borderHex || ''}"
+  data-logo-url="${logoUrl}"
+  data-logo-background="${logoBackground}"
   data-launcher-text="${launcherText}"
   data-launcher-shape="${launcherShape}"
   data-launcher-icon="${launcherIcon}"
@@ -509,7 +591,14 @@ export default function App() {
       position="${position}"
       primaryColor="${primaryColor}"
       themeMode="${themeMode}"
+      backgroundColor="${customCardBg || currentPreset.cardBgHex || ''}"
+      headerBackground="${customHeaderBg || currentPreset.headerBgHex || ''}"
+      borderColor="${customBorderColor || currentPreset.borderHex || ''}"
+      logoUrl="${logoUrl}"
+      logoBackground="${logoBackground}"
       launcherText="${launcherText}"
+      launcherShape="${launcherShape}"
+      launcherIcon="${launcherIcon}"
       assistantName="${assistantName}"
       greeting="${greetingMessage}"
       starterQuestions={[
@@ -520,7 +609,7 @@ export default function App() {
 }`;
 
   const iframeSnippet = `<iframe
-  src="${apiUrl}/embed/${activeDeployment.id}?themePreset=${selectedPresetId}&primaryColor=${encodeURIComponent(primaryColor)}&theme=${themeMode}"
+  src="${apiUrl}/embed/${activeDeployment.id}?themePreset=${selectedPresetId}&primaryColor=${encodeURIComponent(primaryColor)}&theme=${themeMode}${customCardBg ? `&bgColor=${encodeURIComponent(customCardBg)}` : ''}${customHeaderBg ? `&headerBg=${encodeURIComponent(customHeaderBg)}` : ''}${customBorderColor ? `&borderColor=${encodeURIComponent(customBorderColor)}` : ''}${logoUrl ? `&logoUrl=${encodeURIComponent(logoUrl)}` : ''}${logoBackground ? `&logoBg=${logoBackground}` : ''}"
   width="420"
   height="680"
   style="border: none; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);"
@@ -563,13 +652,23 @@ export default function App() {
               name: assistantName,
               brand_name: headerTitle,
               description: headerSubtitle,
-              greeting: greetingMessage
+              greeting: greetingMessage,
+              avatar_url: logoUrl
             },
             appearance: {
               theme_preset: selectedPresetId,
               theme_mode: themeMode,
               primary_color: primaryColor,
+              background_color: customCardBg,
+              header_background: customHeaderBg,
+              border_color: customBorderColor,
               launcher_icon: launcherIcon,
+              launcher_shape: launcherShape,
+              launcher_text: launcherText,
+              logo_url: logoUrl,
+              logo_background: logoBackground,
+              bottom_padding: bottomPadding,
+              side_padding: sidePadding,
               position: position === 'bottom_left' ? 'bottom-left' : 'bottom-right',
               widget_title: assistantName,
               show_branding: showBranding
@@ -578,6 +677,7 @@ export default function App() {
           }
         })
       });
+      invalidateClientCache();
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3500);
     } catch (err) {
@@ -660,8 +760,6 @@ export default function App() {
     ]);
   }
 
-  const currentPreset = THEME_PRESETS.find(p => p.id === selectedPresetId) || THEME_PRESETS[0];
-
   return (
     <div className="flex min-h-screen bg-[#f4f5f7] text-zinc-900 antialiased selection:bg-zinc-200 selection:text-zinc-900 font-sans">
       <Sidebar />
@@ -722,155 +820,456 @@ export default function App() {
             {/* Left Column: Tab Config & Code Snippets (7 Columns) */}
             <div className="xl:col-span-7 space-y-6">
               
-              {/* TAB 2: APPEARANCE CONFIGURATION (Exact Match to User Screenshot) */}
+              {/* TAB 2: APPEARANCE CONFIGURATION (Structured List of Sections) */}
               {activeTab === 'appearance' && (
-                <div className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-6 shadow-2xs">
+                <div className="space-y-5">
                   
                   {/* AI Agent Appearance Header Section */}
-                  <div className="space-y-1 pb-2 border-b border-zinc-100">
-                    <h2 className="text-sm font-bold text-zinc-900 tracking-tight">AI Agent Appearance</h2>
-                    <p className="text-xs text-zinc-500">
-                      Customize widget themes, brand accent colors, launcher shape, and screen position. All styling syncs in real time.
-                    </p>
+                  <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-sm font-bold text-zinc-900 tracking-tight">
+                          AI Agent Appearance
+                        </h2>
+                        <p className="text-xs text-zinc-500 mt-0.5">
+                          Customize widget themes, brand accent colors, launcher shape, and screen position. All styling syncs in real time.
+                        </p>
+                      </div>
+
+                      {/* Active Configuration Badges */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-semibold px-2 py-1 rounded-lg text-white font-mono flex items-center gap-1" style={{ backgroundColor: primaryColor }}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                          {primaryColor}
+                        </span>
+                        <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-zinc-50 border border-zinc-200 text-zinc-700 capitalize font-mono">
+                          {launcherShape}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* 20 Theme Presets Arranged in 4 Columns */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
-                    {THEME_PRESETS.map((preset) => {
-                      const isSelected = selectedPresetId === preset.id;
-                      return (
-                        <div key={preset.id} className="flex flex-col items-center gap-2">
+                  {/* SECTION 1: WIDGET THEME & BRAND COLORS */}
+                  <div className="bg-white rounded-2xl border border-zinc-200 p-5 space-y-5 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
+                      <div>
+                        <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
+                          1. Widget Theme &amp; Brand Colors
+                        </h3>
+                        <p className="text-[11px] text-zinc-500 mt-0.5">
+                          Select a curated theme template and fine-tune your accent, background, header, and border colors.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowAllThemes(!showAllThemes)}
+                          className="text-xs font-semibold text-zinc-900 hover:text-zinc-700 bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-xl border border-zinc-200 transition-all cursor-pointer shrink-0 self-start sm:self-auto"
+                        >
+                          {showAllThemes ? 'Show Less (8)' : 'View All (20) Presets'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Curated Theme Presets Grid */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-zinc-700">Curated Theme Templates</label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-zinc-500 font-mono">
+                            Selected: <span className="font-bold text-zinc-900">{currentPreset.name}</span>
+                          </span>
                           <button
                             type="button"
-                            onClick={() => handleSelectThemePreset(preset)}
-                            className={`w-full aspect-[4/4.2] rounded-2xl p-2.5 flex flex-col justify-between transition-all duration-150 cursor-pointer relative overflow-hidden text-left shadow-2xs ${
-                              preset.canvasBg
-                            } ${
-                              isSelected
-                                ? 'border-2 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                                : 'border border-zinc-200 hover:border-zinc-300 hover:scale-[1.02]'
-                            }`}
+                            onClick={handleResetThemePreset}
+                            title="Reset all colors to this template's original design"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold text-zinc-600 hover:text-zinc-900 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 transition-all cursor-pointer"
                           >
-                            {/* Top Bubble */}
-                            <div className="flex justify-start w-full pr-6">
-                              <div className={`h-4 w-12 rounded-lg ${preset.topBubbleBg} shadow-2xs opacity-90`} />
-                            </div>
+                            <RotateCcw className="w-2.5 h-2.5" />
+                            Reset Defaults
+                          </button>
+                        </div>
+                      </div>
 
-                            {/* Middle Bubble with Checkmark if Selected */}
-                            <div className="flex justify-start w-full">
-                              <div className={`h-5 w-16 rounded-xl ${preset.midBubbleBg} flex items-center justify-center text-xs shadow-2xs relative`}>
-                                {isSelected && (
-                                  <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold shadow-xs">
-                                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {(showAllThemes ? THEME_PRESETS : THEME_PRESETS.slice(0, 8)).map((preset) => {
+                          const isSelected = selectedPresetId === preset.id;
+                          return (
+                            <div key={preset.id} className="flex flex-col items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleSelectThemePreset(preset)}
+                                className={`w-full aspect-[4/3.6] rounded-xl p-2 flex flex-col justify-between transition-all duration-150 cursor-pointer relative overflow-hidden text-left shadow-2xs ${
+                                  preset.canvasBg
+                                } ${
+                                  isSelected
+                                    ? 'border-2 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                                    : 'border border-zinc-200 hover:border-zinc-300 hover:scale-[1.02]'
+                                }`}
+                              >
+                                {/* Top Bubble */}
+                                <div className="flex justify-start w-full pr-4">
+                                  <div className={`h-3.5 w-10 rounded-md ${preset.topBubbleBg} shadow-2xs opacity-90`} />
+                                </div>
+
+                                {/* Middle Bubble with Checkmark if Selected */}
+                                <div className="flex justify-start w-full">
+                                  <div className={`h-4.5 w-14 rounded-lg ${preset.midBubbleBg} flex items-center justify-center text-xs shadow-2xs relative`}>
+                                    {isSelected && (
+                                      <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[8px] font-bold shadow-xs">
+                                        <Check className="w-2 h-2 stroke-[3]" />
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
+                                </div>
+
+                                {/* Bottom Input Pill Bar with Dot */}
+                                <div className={`h-4 w-full rounded-lg ${preset.inputBg} flex items-center justify-end px-1 shadow-2xs border border-zinc-200/40`}>
+                                  <span 
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ backgroundColor: preset.dotColor }}
+                                  />
+                                </div>
+                              </button>
+
+                              {/* Theme Label */}
+                              <span className={`text-[11px] font-semibold text-center truncate w-full ${
+                                isSelected ? 'text-zinc-900 font-bold' : 'text-zinc-600'
+                              }`}>
+                                {preset.name}
+                              </span>
                             </div>
-
-                            {/* Bottom Input Pill Bar with Dot */}
-                            <div className={`h-5 w-full rounded-xl ${preset.inputBg} flex items-center justify-end px-1.5 shadow-2xs border border-zinc-200/40`}>
-                              <span 
-                                className="w-2.5 h-2.5 rounded-full"
-                                style={{ backgroundColor: preset.dotColor }}
-                              />
-                            </div>
-                          </button>
-
-                          {/* Theme Label */}
-                          <span className={`text-xs font-semibold text-center ${
-                            isSelected ? 'text-zinc-900 font-bold' : 'text-zinc-700'
-                          }`}>
-                            {preset.name}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Brand Accent Color & Custom Pickers */}
-                  <div className="pt-4 border-t border-zinc-100 space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">Custom Accent Color</label>
-                      <div className="flex items-center gap-3">
-                        <input 
-                          type="color" 
-                          value={primaryColor}
-                          onChange={(e) => setPrimaryColor(e.target.value)}
-                          className="w-10 h-10 rounded-xl cursor-pointer bg-white border border-zinc-200 shadow-2xs"
-                        />
-                        <input 
-                          type="text" 
-                          value={primaryColor}
-                          onChange={(e) => setPrimaryColor(e.target.value)}
-                          className="px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-900 font-mono uppercase w-32 focus:outline-none focus:border-zinc-400"
-                        />
-                        <div className="flex items-center gap-2">
-                          {['#7c3aed', '#8b5cf6', '#f97316', '#2563eb', '#ec4899', '#10b981'].map(c => (
-                            <button
-                              key={c}
-                              onClick={() => setPrimaryColor(c)}
-                              className={`w-6 h-6 rounded-full border border-zinc-200 transition-transform hover:scale-110 cursor-pointer ${
-                                primaryColor === c ? 'ring-2 ring-zinc-900 ring-offset-2' : ''
-                              }`}
-                              style={{ backgroundColor: c }}
-                            />
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    {/* Theme Mode */}
-                    <div className="space-y-2 pt-2">
-                      <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">Theme Mode</label>
-                      <div className="grid grid-cols-3 gap-3">
-                        {[
-                          { id: 'light', label: 'Light Mode' },
-                          { id: 'dark', label: 'Dark Mode' },
-                          { id: 'auto', label: 'Auto (System)' }
-                        ].map(t => (
-                          <button
-                            key={t.id}
-                            onClick={() => setThemeMode(t.id as ThemeMode)}
-                            className={`p-3 rounded-xl border text-xs font-semibold transition-all shadow-2xs ${
-                              themeMode === t.id
-                                ? 'border-zinc-900 bg-zinc-900 text-white'
-                                : 'border-zinc-200 bg-white text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
-                            }`}
-                          >
-                            {t.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Launcher Shape & Icon */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    {/* Customize Brand Accent & Mode */}
+                    <div className="pt-3 border-t border-zinc-100 grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Primary Accent Color */}
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">Launcher Shape</label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-zinc-700">Brand Accent Color</label>
+                          <span className="text-[10px] font-mono text-zinc-400">Buttons, bubbles &amp; highlights</span>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <input 
+                            type="color" 
+                            value={primaryColor}
+                            onChange={(e) => setPrimaryColor(e.target.value)}
+                            className="w-9 h-9 rounded-xl cursor-pointer bg-white border border-zinc-200 shadow-2xs shrink-0"
+                          />
+                          <input 
+                            type="text" 
+                            value={primaryColor}
+                            onChange={(e) => setPrimaryColor(e.target.value)}
+                            className="px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 font-mono uppercase w-28 focus:outline-none focus:border-zinc-400"
+                          />
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {['#ec4899', '#7c3aed', '#2563eb', '#10b981', '#f97316', '#0f172a'].map(c => (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => setPrimaryColor(c)}
+                                className={`w-5 h-5 rounded-full border border-zinc-200 transition-transform hover:scale-110 cursor-pointer ${
+                                  primaryColor === c ? 'ring-2 ring-zinc-900 ring-offset-2' : ''
+                                }`}
+                                style={{ backgroundColor: c }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Theme Mode */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-zinc-700">Theme Mode</label>
+                        <div className="grid grid-cols-3 gap-2">
                           {[
-                            { id: 'teardrop', label: 'Teardrop' },
-                            { id: 'pill', label: 'Pill Button' },
-                            { id: 'circle', label: 'Circle' },
-                            { id: 'rounded', label: 'Rounded Square' }
-                          ].map(s => (
+                            { id: 'light', label: 'Light' },
+                            { id: 'dark', label: 'Dark' },
+                            { id: 'auto', label: 'Auto' }
+                          ].map(t => (
                             <button
-                              key={s.id}
-                              onClick={() => setLauncherShape(s.id as LauncherShape)}
-                              className={`px-3 py-2 rounded-xl border text-xs font-semibold shadow-2xs ${
-                                launcherShape === s.id ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                              key={t.id}
+                              type="button"
+                              onClick={() => setThemeMode(t.id as ThemeMode)}
+                              className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all shadow-2xs cursor-pointer ${
+                                themeMode === t.id
+                                  ? 'border-zinc-900 bg-zinc-900 text-white'
+                                  : 'border-zinc-200 bg-white text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                               }`}
                             >
-                              {s.label}
+                              {t.label}
                             </button>
                           ))}
                         </div>
                       </div>
+                    </div>
 
+                    {/* ADVANCED TEMPLATE CUSTOMIZATION ACCORDION */}
+                    <div className="pt-3 border-t border-zinc-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => setShowAdvancedPalette(!showAdvancedPalette)}
+                          className="flex items-center gap-2 text-xs font-bold text-zinc-900 hover:text-zinc-700 transition-colors cursor-pointer"
+                        >
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-600" />
+                          <span>Advanced Template Palette Customization</span>
+                          <span className="text-[10px] font-normal text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-md border border-zinc-200">
+                            {showAdvancedPalette ? 'Hide Details' : 'Customize Canvas, Header & Border'}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleResetThemePreset}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold text-zinc-700 hover:text-zinc-900 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 transition-all cursor-pointer"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          Reset to Template Defaults
+                        </button>
+                      </div>
+
+                      {showAdvancedPalette && (
+                        <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 space-y-4 animate-fadeIn">
+                          <p className="text-[11px] text-zinc-500">
+                            Fine-tune the individual background, header, and border colors for the <strong className="text-zinc-800">{currentPreset.name}</strong> template.
+                          </p>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* 1. Chat Window Background Color */}
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-zinc-700">Chat Window Background</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="color" 
+                                  value={customCardBg || currentPreset.cardBgHex || '#ffffff'}
+                                  onChange={(e) => setCustomCardBg(e.target.value)}
+                                  className="w-8 h-8 rounded-lg cursor-pointer bg-white border border-zinc-200 shadow-2xs shrink-0"
+                                />
+                                <input 
+                                  type="text" 
+                                  value={customCardBg || currentPreset.cardBgHex || '#ffffff'}
+                                  onChange={(e) => setCustomCardBg(e.target.value)}
+                                  className="flex-1 px-2.5 py-1.5 bg-white border border-zinc-200 rounded-lg text-xs font-mono uppercase text-zinc-900 focus:outline-none focus:border-zinc-400"
+                                />
+                              </div>
+                              <div className="flex items-center gap-1 pt-1 flex-wrap">
+                                {['#ffffff', '#f4f5f8', '#f0fdf4', '#fdf2f8', '#faf5ff', '#fffbeb'].map(c => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setCustomCardBg(c)}
+                                    className={`w-4 h-4 rounded-full border border-zinc-300 transition-transform hover:scale-110 cursor-pointer ${
+                                      (customCardBg || currentPreset.cardBgHex) === c ? 'ring-2 ring-zinc-900' : ''
+                                    }`}
+                                    style={{ backgroundColor: c }}
+                                    title={c}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* 2. Header Background Color */}
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-zinc-700">Header Background</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="color" 
+                                  value={customHeaderBg || currentPreset.headerBgHex || '#f4f4f5'}
+                                  onChange={(e) => setCustomHeaderBg(e.target.value)}
+                                  className="w-8 h-8 rounded-lg cursor-pointer bg-white border border-zinc-200 shadow-2xs shrink-0"
+                                />
+                                <input 
+                                  type="text" 
+                                  value={customHeaderBg || currentPreset.headerBgHex || '#f4f4f5'}
+                                  onChange={(e) => setCustomHeaderBg(e.target.value)}
+                                  className="flex-1 px-2.5 py-1.5 bg-white border border-zinc-200 rounded-lg text-xs font-mono uppercase text-zinc-900 focus:outline-none focus:border-zinc-400"
+                                />
+                              </div>
+                              <div className="flex items-center gap-1 pt-1 flex-wrap">
+                                {['#f4f4f5', '#ede9fe', '#dcfce7', '#fce7f3', '#e0f2fe', '#fef3c7'].map(c => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setCustomHeaderBg(c)}
+                                    className={`w-4 h-4 rounded-full border border-zinc-300 transition-transform hover:scale-110 cursor-pointer ${
+                                      (customHeaderBg || currentPreset.headerBgHex) === c ? 'ring-2 ring-zinc-900' : ''
+                                    }`}
+                                    style={{ backgroundColor: c }}
+                                    title={c}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* 3. Border & Divider Color */}
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-zinc-700">Border &amp; Dividers</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="color" 
+                                  value={customBorderColor || currentPreset.borderHex || '#e4e4e7'}
+                                  onChange={(e) => setCustomBorderColor(e.target.value)}
+                                  className="w-8 h-8 rounded-lg cursor-pointer bg-white border border-zinc-200 shadow-2xs shrink-0"
+                                />
+                                <input 
+                                  type="text" 
+                                  value={customBorderColor || currentPreset.borderHex || '#e4e4e7'}
+                                  onChange={(e) => setCustomBorderColor(e.target.value)}
+                                  className="flex-1 px-2.5 py-1.5 bg-white border border-zinc-200 rounded-lg text-xs font-mono uppercase text-zinc-900 focus:outline-none focus:border-zinc-400"
+                                />
+                              </div>
+                              <div className="flex items-center gap-1 pt-1 flex-wrap">
+                                {['#e4e4e7', '#ddd6fe', '#bbf7d0', '#fbcfe8', '#bae6fd', '#cbd5e1'].map(c => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setCustomBorderColor(c)}
+                                    className={`w-4 h-4 rounded-full border border-zinc-300 transition-transform hover:scale-110 cursor-pointer ${
+                                      (customBorderColor || currentPreset.borderHex) === c ? 'ring-2 ring-zinc-900' : ''
+                                    }`}
+                                    style={{ backgroundColor: c }}
+                                    title={c}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SECTION 2: STOREFRONT LOGO & AVATAR */}
+                  <div className="bg-white rounded-2xl border border-zinc-200 p-5 space-y-4 shadow-2xs">
+                    <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                      <div>
+                        <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
+                          2. Storefront Logo / Brand Avatar
+                        </h3>
+                        <p className="text-[11px] text-zinc-500 mt-0.5">Upload brand logo to display on the header and floating launcher button.</p>
+                      </div>
+                      {logoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setLogoUrl('')}
+                          className="text-xs text-rose-500 hover:text-rose-700 font-semibold cursor-pointer"
+                        >
+                          Remove Logo
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-1">
+                      {/* Logo Thumbnail Preview */}
+                      <div className="w-14 h-14 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 overflow-hidden relative shadow-2xs">
+                        {logoUrl ? (
+                          <img src={logoUrl} alt="Store Logo" className="w-full h-full object-cover" />
+                        ) : (
+                          <ImageIcon className="w-6 h-6 text-zinc-400" />
+                        )}
+                      </div>
+
+                      {/* File Upload Button & URL Input */}
+                      <div className="flex-1 w-full space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="file"
+                            ref={logoInputRef}
+                            onChange={handleLogoFileUpload}
+                            accept="image/*"
+                            className="hidden"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => logoInputRef.current?.click()}
+                            className="px-3 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
+                          >
+                            <Upload className="w-3.5 h-3.5" /> Upload Image
+                          </button>
+                          <input
+                            type="text"
+                            value={logoUrl}
+                            onChange={(e) => setLogoUrl(e.target.value)}
+                            placeholder="Or paste image URL (e.g. https://.../logo.png)"
+                            className="flex-1 px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-zinc-400"
+                          />
+                        </div>
+
+                        {/* Quick Presets */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-mono text-zinc-400">Presets:</span>
+                          {PRESET_LOGOS.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                setLogoUrl(p.url);
+                                setLauncherIcon('logo');
+                                setIsWidgetOpen(false);
+                              }}
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border transition-all cursor-pointer ${
+                                logoUrl === p.url
+                                    ? 'bg-zinc-900 text-white border-zinc-900'
+                                    : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-600 border-zinc-200'
+                              }`}
+                            >
+                              {p.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 3: LAUNCHER BUTTON & SHAPE */}
+                  <div className="bg-white rounded-2xl border border-zinc-200 p-5 space-y-4 shadow-2xs">
+                    <div className="border-b border-zinc-100 pb-3">
+                      <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">3. Floating Launcher Button &amp; Icon</h3>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Configure how the floating widget trigger button appears on your store.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+                      {/* Launcher Shape */}
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">Launcher Icon</label>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <label className="text-xs font-semibold text-zinc-700">Launcher Shape</label>
+                        <div className="grid grid-cols-3 gap-2">
                           {[
+                            { id: 'teardrop', label: 'Teardrop', icon: MessageSquare },
+                            { id: 'circle', label: 'Circle' },
+                            { id: 'pill', label: 'Pill Button' }
+                          ].map(s => {
+                            const ShapeIcon = s.icon;
+                            return (
+                              <button
+                                key={s.id}
+                                onClick={() => {
+                                  setLauncherShape(s.id as LauncherShape);
+                                  setIsWidgetOpen(false);
+                                }}
+                                className={`px-2.5 py-2 rounded-xl border text-xs font-semibold shadow-2xs cursor-pointer transition-all flex items-center justify-center gap-1.5 ${
+                                  launcherShape === s.id ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                                }`}
+                              >
+                                {ShapeIcon && <ShapeIcon className="w-3.5 h-3.5" />}
+                                <span>{s.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Launcher Icon */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-zinc-700">Launcher Icon</label>
+                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                          {[
+                            { id: 'logo', label: 'Logo', icon: ImageIcon },
+                            { id: 'chat', label: 'Chat', icon: MessageCircle },
                             { id: 'sparkles', label: 'Sparkles', icon: Sparkles },
                             { id: 'bot', label: 'Bot', icon: Bot },
                             { id: 'bag', label: 'Store', icon: ShoppingBag },
@@ -880,13 +1279,20 @@ export default function App() {
                             return (
                               <button
                                 key={i.id}
-                                onClick={() => setLauncherIcon(i.id as LauncherIcon)}
-                                className={`p-2 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 shadow-2xs ${
+                                onClick={() => {
+                                  setLauncherIcon(i.id as LauncherIcon);
+                                  setIsWidgetOpen(false);
+                                }}
+                                className={`p-2 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 shadow-2xs cursor-pointer transition-all ${
                                   launcherIcon === i.id ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
                                 }`}
                               >
-                                <IconComp className="w-4 h-4" />
-                                <span>{i.label}</span>
+                                {i.id === 'logo' && logoUrl ? (
+                                  <img src={logoUrl} alt="Logo" className="w-3.5 h-3.5 rounded-full object-cover" />
+                                ) : (
+                                  <IconComp className="w-3.5 h-3.5" />
+                                )}
+                                <span className="text-[10px] truncate w-full text-center">{i.label}</span>
                               </button>
                             );
                           })}
@@ -894,21 +1300,33 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Launcher Text & Position */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">Launcher Text</label>
-                        <input 
-                          type="text" 
-                          value={launcherText}
-                          onChange={(e) => setLauncherText(e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-zinc-400"
-                          placeholder="e.g. Chat with us"
-                        />
-                      </div>
+                    {/* Launcher Text */}
+                    <div className="space-y-1.5 pt-1">
+                      <label className="text-xs font-semibold text-zinc-700">Launcher Text Label</label>
+                      <input 
+                        type="text" 
+                        value={launcherText}
+                        onChange={(e) => {
+                          setLauncherText(e.target.value);
+                          setIsWidgetOpen(false);
+                        }}
+                        className="w-full px-3.5 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-zinc-400"
+                        placeholder="e.g. Chat with us"
+                      />
+                    </div>
+                  </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider">Screen Position</label>
+                  {/* SECTION 4: POSITION & OFFSETS */}
+                  <div className="bg-white rounded-2xl border border-zinc-200 p-5 space-y-4 shadow-2xs">
+                    <div className="border-b border-zinc-100 pb-3">
+                      <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">4. Screen Position &amp; Edge Spacing</h3>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Control where the widget anchors and set pixel distance from screen edges.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+                      {/* Position */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-zinc-700">Screen Corner Anchor</label>
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => setPosition('bottom_right')}
@@ -928,8 +1346,31 @@ export default function App() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Edge Offsets */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-zinc-700">Bottom Offset (px)</label>
+                          <input
+                            type="number"
+                            value={bottomPadding}
+                            onChange={(e) => setBottomPadding(e.target.value)}
+                            className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 font-mono focus:outline-none focus:border-zinc-400"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-zinc-700">Side Offset (px)</label>
+                          <input
+                            type="number"
+                            value={sidePadding}
+                            onChange={(e) => setSidePadding(e.target.value)}
+                            className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 font-mono focus:outline-none focus:border-zinc-400"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
+
                 </div>
               )}
 
@@ -1025,22 +1466,20 @@ export default function App() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-700">Assistant Name</label>
-                    <input 
-                      type="text" 
-                      value={assistantName}
-                      onChange={(e) => setAssistantName(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-zinc-400"
-                      placeholder="e.g. ShopMate Assistant"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-zinc-700">Greeting Welcome Message</label>
                     <textarea 
                       rows={3}
                       value={greetingMessage}
-                      onChange={(e) => setGreetingMessage(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setGreetingMessage(val);
+                        setChatMessages(prev => {
+                          if (prev.length > 0 && prev[0].id.startsWith('msg_greet')) {
+                            return [{ ...prev[0], text: val }, ...prev.slice(1)];
+                          }
+                          return prev;
+                        });
+                      }}
                       className="w-full px-3.5 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 resize-none"
                       placeholder="Hello! 👋 How can I help you today?"
                     />
@@ -1185,21 +1624,46 @@ export default function App() {
             <div className="xl:col-span-5 space-y-3 sticky top-6">
               
               {/* Live Preview Header */}
-              <div className="flex items-center justify-between px-1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 font-mono">LIVE PREVIEW</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shadow-2xs">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shadow-2xs">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Interactive
                   </span>
                 </div>
-                <button
-                  onClick={handleResetChat}
-                  className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  Reset Chat
-                </button>
+
+                {/* View Switcher: Chat Window vs Launcher Button */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-zinc-100 p-0.5 rounded-xl border border-zinc-200">
+                    <button
+                      onClick={() => setIsWidgetOpen(true)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                        isWidgetOpen ? 'bg-white text-zinc-900 shadow-2xs' : 'text-zinc-500 hover:text-zinc-900'
+                      }`}
+                    >
+                      <MessageSquare className="w-3 h-3" /> Chat Window
+                    </button>
+                    <button
+                      onClick={() => setIsWidgetOpen(false)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                        !isWidgetOpen ? 'bg-white text-zinc-900 shadow-2xs' : 'text-zinc-500 hover:text-zinc-900'
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3" /> Launcher Button
+                    </button>
+                  </div>
+
+                  {isWidgetOpen && (
+                    <button
+                      onClick={handleResetChat}
+                      className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Reset chat history"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Realistic Browser Window Frame */}
@@ -1213,7 +1677,9 @@ export default function App() {
                     <div className="w-2.5 h-2.5 rounded-full bg-zinc-300" />
                     <span className="ml-2 font-mono text-[11px] text-zinc-600 font-medium">your-store.com</span>
                   </div>
-                  <span className="text-[11px] text-zinc-400 hidden sm:inline font-mono">Live Widget Container</span>
+                  <span className="text-[11px] text-zinc-400 hidden sm:inline font-mono">
+                    {isWidgetOpen ? 'Open Chat Window State' : 'Floating Launcher State'}
+                  </span>
                 </div>
 
                 {/* Simulated Store Page Content */}
@@ -1222,55 +1688,67 @@ export default function App() {
                   {/* Floating Widget (Rendered with Live Selected Theme Preset) */}
                   {isWidgetOpen ? (
                     <div 
-                      className="w-full max-w-[390px] mx-auto rounded-3xl border shadow-xl flex flex-col overflow-hidden animate-fadeIn transition-colors duration-200"
+                      className={`w-full max-w-[390px] h-[580px] rounded-3xl border shadow-xl flex flex-col overflow-hidden animate-fadeIn transition-all duration-200 ${
+                        position === 'bottom_left' ? 'self-start' : 'self-end'
+                      }`}
                       style={{
-                        backgroundColor: currentPreset.cardBgHex || (currentPreset.themeMode === 'dark' ? '#0f172a' : '#ffffff'),
-                        borderColor: currentPreset.borderHex || (currentPreset.themeMode === 'dark' ? '#334155' : '#e4e4e7'),
-                        color: currentPreset.themeMode === 'dark' ? '#f8fafc' : '#18181b'
+                        backgroundColor: activeCardBg,
+                        borderColor: activeBorderColor,
+                        color: themeMode === 'dark' ? '#f8fafc' : '#18181b'
                       }}
                     >
                       
                       {/* Widget Header */}
                       <div 
-                        className="p-5 pb-4 border-b relative transition-colors duration-200"
+                        className="p-5 pb-4 border-b relative transition-colors duration-200 shrink-0"
                         style={{
-                          backgroundColor: currentPreset.headerBgHex || (currentPreset.themeMode === 'dark' ? '#1e293b' : '#f4f4f5'),
-                          borderColor: currentPreset.borderHex || (currentPreset.themeMode === 'dark' ? '#334155' : '#e4e4e7')
+                          backgroundColor: activeHeaderBg,
+                          borderColor: activeBorderColor
                         }}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          {/* Brand Pill Badge */}
+                          {/* Assistant Status Badge */}
                           <div 
-                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold shadow-2xs border"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-2xs border"
                             style={{
-                              backgroundColor: currentPreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
-                              borderColor: currentPreset.borderHex || '#e4e4e7',
-                              color: currentPreset.themeMode === 'dark' ? '#ffffff' : '#18181b'
+                              backgroundColor: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+                              borderColor: activeBorderColor,
+                              color: themeMode === 'dark' ? '#ffffff' : '#18181b'
                             }}
                           >
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryColor }} />
-                            <span>ShopMate Concierge</span>
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>{assistantName || 'ShopMate AI'}</span>
                           </div>
 
                           <button 
                             onClick={() => setIsWidgetOpen(false)}
                             className="p-1 rounded-lg text-zinc-400 hover:text-zinc-900 transition-colors cursor-pointer"
+                            title="Minimize to floating button"
                           >
                             <X className="w-4 h-4" />
                           </button>
                         </div>
 
-                        {/* Title & Subtitle */}
-                        <h2 className="text-base font-bold tracking-tight" style={{ color: primaryColor }}>
-                          {headerTitle}
-                        </h2>
-                        <p className={`text-xs mt-0.5 ${currentPreset.themeMode === 'dark' ? 'text-slate-400' : 'text-zinc-500'}`}>
-                          {headerSubtitle}
-                        </p>
+                        {/* Title & Subtitle with Logo Avatar */}
+                        <div className="flex items-center gap-3">
+                          {logoUrl && (
+                            <div className="w-9 h-9 rounded-xl overflow-hidden border border-zinc-200/60 shrink-0 shadow-2xs bg-white">
+                              <img src={logoUrl} alt={headerTitle} className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <h2 className="text-base font-bold tracking-tight truncate" style={{ color: primaryColor }}>
+                              {headerTitle}
+                            </h2>
+                            <p className={`text-xs mt-0.5 truncate ${themeMode === 'dark' ? 'text-slate-400' : 'text-zinc-500'}`}>
+                              {headerSubtitle}
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Chat Messages Thread */}
-                      <div className="p-4 space-y-3 max-h-[280px] overflow-y-auto no-scrollbar">
+                      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 no-scrollbar">
                         {chatMessages.map(msg => (
                           <div
                             key={msg.id}
@@ -1287,9 +1765,9 @@ export default function App() {
                                       borderTopRightRadius: '4px'
                                     }
                                   : {
-                                      backgroundColor: currentPreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
-                                      borderColor: currentPreset.borderHex || '#e4e4e7',
-                                      color: currentPreset.themeMode === 'dark' ? '#f1f5f9' : '#18181b',
+                                      backgroundColor: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+                                      borderColor: activeBorderColor,
+                                      color: themeMode === 'dark' ? '#f1f5f9' : '#18181b',
                                       borderTopLeftRadius: '4px'
                                     }
                               }
@@ -1316,9 +1794,9 @@ export default function App() {
                             <div 
                               className="border rounded-2xl px-4 py-2.5 text-xs flex items-center gap-1.5 shadow-2xs"
                               style={{
-                                backgroundColor: currentPreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
-                                borderColor: currentPreset.borderHex || '#e4e4e7',
-                                color: currentPreset.themeMode === 'dark' ? '#94a3b8' : '#71717a'
+                                backgroundColor: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+                                borderColor: activeBorderColor,
+                                color: themeMode === 'dark' ? '#94a3b8' : '#71717a'
                               }}
                             >
                               <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: primaryColor }} />
@@ -1331,9 +1809,9 @@ export default function App() {
 
                       {/* Suggested Questions (Chips) */}
                       {chatMessages.length <= 2 && starterQuestions.length > 0 && (
-                        <div className="px-4 pb-2 space-y-1.5">
+                        <div className="px-4 pb-2 space-y-1.5 shrink-0 max-h-[180px] overflow-y-auto">
                           <span className={`text-[10px] font-bold uppercase tracking-wider block ${
-                            currentPreset.themeMode === 'dark' ? 'text-slate-400' : 'text-zinc-500'
+                            themeMode === 'dark' ? 'text-slate-400' : 'text-zinc-500'
                           }`}>
                             SUGGESTED QUESTIONS:
                           </span>
@@ -1344,9 +1822,9 @@ export default function App() {
                                 onClick={() => handleSendLiveMessage(q)}
                                 className="w-full text-left p-2.5 rounded-xl border text-xs transition-all flex items-center gap-2 group shadow-2xs hover:scale-[1.01] cursor-pointer"
                                 style={{
-                                  backgroundColor: currentPreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
-                                  borderColor: currentPreset.borderHex || '#e4e4e7',
-                                  color: currentPreset.themeMode === 'dark' ? '#f1f5f9' : '#18181b'
+                                  backgroundColor: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+                                  borderColor: activeBorderColor,
+                                  color: themeMode === 'dark' ? '#f1f5f9' : '#18181b'
                                 }}
                               >
                                 <span style={{ color: primaryColor }}>💬</span>
@@ -1359,10 +1837,10 @@ export default function App() {
 
                       {/* Chat Input Box */}
                       <div 
-                        className="p-3 border-t flex items-center gap-2 transition-colors duration-200"
+                        className="p-3 border-t flex items-center gap-2 transition-colors duration-200 shrink-0"
                         style={{
-                          backgroundColor: currentPreset.themeMode === 'dark' ? '#090d16' : (currentPreset.cardBgHex || '#ffffff'),
-                          borderColor: currentPreset.borderHex || (currentPreset.themeMode === 'dark' ? '#334155' : '#e4e4e7')
+                          backgroundColor: themeMode === 'dark' ? '#090d16' : activeCardBg,
+                          borderColor: activeBorderColor
                         }}
                       >
                         <input
@@ -1373,9 +1851,9 @@ export default function App() {
                           placeholder="Type your message..."
                           className="flex-1 px-3.5 py-2 rounded-xl text-xs focus:outline-none transition border"
                           style={{
-                            backgroundColor: currentPreset.themeMode === 'dark' ? '#1e293b' : '#ffffff',
-                            borderColor: currentPreset.borderHex || '#e4e4e7',
-                            color: currentPreset.themeMode === 'dark' ? '#ffffff' : '#18181b'
+                            backgroundColor: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+                            borderColor: themeMode === 'dark' ? '#334155' : activeBorderColor,
+                            color: themeMode === 'dark' ? '#ffffff' : '#18181b'
                           }}
                         />
                         <button
@@ -1391,38 +1869,104 @@ export default function App() {
                       {/* Optional Branding */}
                       {showBranding && (
                         <div 
-                          className="py-1 text-center text-[10px] border-t"
+                          className="py-1 text-center text-[10px] border-t shrink-0"
                           style={{
-                            backgroundColor: currentPreset.themeMode === 'dark' ? '#090d16' : (currentPreset.cardBgHex || '#f4f4f5'),
-                            borderColor: currentPreset.borderHex || (currentPreset.themeMode === 'dark' ? '#1e293b' : '#f4f4f5'),
-                            color: currentPreset.themeMode === 'dark' ? '#64748b' : '#a1a1aa'
+                            backgroundColor: themeMode === 'dark' ? '#090d16' : activeCardBg,
+                            borderColor: themeMode === 'dark' ? '#1e293b' : activeBorderColor,
+                            color: themeMode === 'dark' ? '#64748b' : '#a1a1aa'
                           }}
                         >
-                          Powered by <span className="font-semibold" style={{ color: currentPreset.themeMode === 'dark' ? '#94a3b8' : '#52525b' }}>ShopMate AI</span>
+                          Powered by <span className="font-semibold" style={{ color: themeMode === 'dark' ? '#94a3b8' : '#52525b' }}>ShopMate AI</span>
                         </div>
                       )}
                     </div>
                   ) : (
                     /* Floating Launcher Button Preview */
-                    <div className="flex justify-end p-2">
+                    <div className={`flex flex-col p-4 w-full h-[520px] justify-between ${position === 'bottom_left' ? 'items-start' : 'items-end'}`}>
+                      <div className="bg-white/90 backdrop-blur-xs border border-zinc-200 rounded-2xl p-3 shadow-2xs max-w-xs text-center space-y-1">
+                        <p className="text-xs font-bold text-zinc-900">Live Floating Launcher Preview</p>
+                        <p className="text-[11px] text-zinc-500">
+                          Shape: <span className="font-semibold capitalize text-zinc-700">{launcherShape}</span> • Icon: <span className="font-semibold capitalize text-zinc-700">{launcherIcon}</span>
+                        </p>
+                        <p className="text-[10px] text-zinc-400 font-mono">Click button below to open chat</p>
+                      </div>
+
                       <button
                         onClick={() => setIsWidgetOpen(true)}
-                        className={`shadow-xl flex items-center gap-2 text-white font-semibold transition-all active:scale-95 cursor-pointer ${
-                          launcherShape === 'circle' ? 'w-14 h-14 rounded-full justify-center p-0' :
-                          launcherShape === 'pill' ? 'px-5 py-3 rounded-full' :
-                          launcherShape === 'rounded' ? 'px-4 py-3 rounded-2xl' :
-                          'px-5 py-3 rounded-2xl rounded-br-sm'
+                        className={`flex items-center gap-2.5 font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+                          !launcherText.trim() || launcherShape === 'circle'
+                            ? `w-14 h-14 ${
+                                launcherShape === 'teardrop' 
+                                  ? 'rounded-3xl rounded-br-xs' 
+                                  : 'rounded-full'
+                              } justify-center p-0`
+                            : launcherShape === 'teardrop'
+                              ? 'px-5 py-3 rounded-3xl rounded-br-xs'
+                              : 'px-5 py-3 rounded-full'
+                        } ${
+                          (launcherIcon === 'logo' && logoUrl && logoBackground === 'transparent' && (!launcherText.trim() || launcherShape === 'circle'))
+                            ? ''
+                            : 'shadow-xl text-white'
                         }`}
-                        style={{ backgroundColor: primaryColor }}
+                        style={{ 
+                          backgroundColor: (launcherIcon === 'logo' && logoUrl && logoBackground === 'transparent' && (!launcherText.trim() || launcherShape === 'circle'))
+                            ? 'transparent' 
+                            : primaryColor 
+                        }}
                       >
-                        {launcherIcon === 'chat' && <MessageSquare className="w-5 h-5" />}
-                        {launcherIcon === 'sparkles' && <Sparkles className="w-5 h-5" />}
-                        {launcherIcon === 'bot' && <Bot className="w-5 h-5" />}
-                        {launcherIcon === 'bag' && <ShoppingBag className="w-5 h-5" />}
-                        {launcherIcon === 'help' && <HelpCircle className="w-5 h-5" />}
+                        {launcherIcon === 'logo' && (
+                          logoUrl ? (
+                            (!launcherText.trim() || launcherShape === 'circle') ? (
+                              logoBackground === 'transparent' ? (
+                                <div className={`relative w-14 h-14 flex items-center justify-center ${
+                                  launcherShape === 'teardrop' 
+                                    ? 'rounded-3xl rounded-br-xs' 
+                                    : 'rounded-full'
+                                }`}>
+                                  <img 
+                                    src={logoUrl} 
+                                    alt="Store Logo" 
+                                    className={`w-14 h-14 object-cover border-2 border-white shadow-xl ${
+                                      launcherShape === 'teardrop' 
+                                        ? 'rounded-3xl rounded-br-xs' 
+                                        : 'rounded-full'
+                                    }`} 
+                                  />
+                                  <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-xs"></span>
+                                </div>
+                              ) : (
+                                <div className="relative w-11 h-11 flex items-center justify-center">
+                                  <img 
+                                    src={logoUrl} 
+                                    alt="Store Logo" 
+                                    className={`w-10 h-10 object-cover border-2 border-white/90 shadow-xs ${
+                                      launcherShape === 'teardrop' 
+                                        ? 'rounded-2xl rounded-br-xs' 
+                                        : 'rounded-full'
+                                    }`} 
+                                  />
+                                  <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
+                                </div>
+                              )
+                            ) : (
+                              <img 
+                                src={logoUrl} 
+                                alt="Store Logo" 
+                                className="w-6 h-6 object-cover rounded-full border border-white/70 shadow-xs shrink-0" 
+                              />
+                            )
+                          ) : (
+                            <ImageIcon className="w-5 h-5 shrink-0" />
+                          )
+                        )}
+                        {launcherIcon === 'chat' && <MessageSquare className="w-5 h-5 shrink-0" />}
+                        {launcherIcon === 'sparkles' && <Sparkles className="w-5 h-5 shrink-0" />}
+                        {launcherIcon === 'bot' && <Bot className="w-5 h-5 shrink-0" />}
+                        {launcherIcon === 'bag' && <ShoppingBag className="w-5 h-5 shrink-0" />}
+                        {launcherIcon === 'help' && <HelpCircle className="w-5 h-5 shrink-0" />}
                         
-                        {launcherShape !== 'circle' && (
-                          <span className="text-xs">{launcherText}</span>
+                        {launcherShape !== 'circle' && launcherText.trim() && (
+                          <span className="text-xs font-bold tracking-wide">{launcherText}</span>
                         )}
                       </button>
                     </div>

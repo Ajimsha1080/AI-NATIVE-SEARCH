@@ -19,9 +19,11 @@ export async function GET(req: Request) {
         email: user?.email || 'member@store.com',
         role: m.role,
         status: 'ACTIVE',
+        is_super_admin: Boolean(user?.is_super_admin),
         created_at: m.created_at
       };
-    });
+    })
+    .filter(m => !m.is_super_admin);
 
   return NextResponse.json({ members });
 }

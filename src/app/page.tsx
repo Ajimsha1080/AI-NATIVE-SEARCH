@@ -119,7 +119,7 @@ export default function HomePage() {
 
             {/* UI 2: Customer Storefront Widget */}
             <Link 
-              href="/embed/dep_live_widget_01"
+              href="/embed/dep_web_01"
               target="_blank"
               className="p-5 rounded-2xl bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-md transition-all group flex flex-col justify-between gap-3 shadow-2xs"
             >

@@ -18,41 +18,27 @@ interface SuperAdminSidebarProps {
 export default function SuperAdminSidebar({ activeTab, setActiveTab }: SuperAdminSidebarProps) {
   const navSections = [
     {
-      title: 'PLATFORM MANAGEMENT',
+      title: 'MERCHANT & STORE OPS',
       items: [
-        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-        { id: 'tenants', label: 'Tenants', icon: Building2 },
-        { id: 'users', label: 'Users', icon: Users },
+        { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard },
+        { id: 'tenants', label: 'Merchant Stores & Sync', icon: Building2 },
+        { id: 'users', label: 'Store Users & Access', icon: Users },
         { id: 'plans', label: 'Plans & Limits', icon: Tag },
-        { id: 'billing', label: 'Billing & MRR', icon: CreditCard },
       ]
     },
     {
-      title: 'AI & INTELLIGENCE',
+      title: 'INTEGRATIONS & CATALOG SYNC',
       items: [
-        { id: 'ai-models', label: 'AI & Models', icon: Cpu },
-        { id: 'ai-cost', label: 'AI Usage & Cost', icon: DollarSign },
-        { id: 'rag-ops', label: 'RAG Operations', icon: Database },
-        { id: 'indexing', label: 'Indexing & Knowledge', icon: HardDriveDownload },
-      ]
-    },
-    {
-      title: 'ECOSYSTEM & ACTIONS',
-      items: [
-        { id: 'integrations', label: 'Integrations', icon: Layers },
-        { id: 'agent-actions', label: 'Agent Actions', icon: Wrench },
+        { id: 'integrations', label: 'Store Integrations', icon: Layers },
+        { id: 'indexing', label: 'Catalog & RAG Indexing', icon: HardDriveDownload },
         { id: 'conversations', label: 'Conversations Monitor', icon: MessageSquare },
-        { id: 'analytics', label: 'Platform Analytics', icon: BarChart3 },
       ]
     },
     {
-      title: 'INFRASTRUCTURE & OPS',
+      title: 'AI ENGINE & PLATFORM',
       items: [
-        { id: 'system-health', label: 'System Health', icon: Activity },
-        { id: 'logs', label: 'Logs & Errors', icon: AlertOctagon },
-        { id: 'security', label: 'Security & Access', icon: ShieldCheck },
-        { id: 'audit-logs', label: 'Audit Logs', icon: FileText },
-        { id: 'feature-flags', label: 'Feature Flags', icon: Flag },
+        { id: 'ai-models', label: 'AI & Model Orchestration', icon: Cpu },
+        { id: 'system-health', label: 'System Health & Logs', icon: Activity },
         { id: 'settings', label: 'Platform Settings', icon: Settings },
       ]
     }

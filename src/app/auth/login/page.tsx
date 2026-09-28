@@ -31,7 +31,10 @@ export default function LoginPage() {
         throw new Error(data.error?.message || data.error || 'Invalid credentials');
       }
 
-      router.push('/dashboard');
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectParam = searchParams.get('redirect');
+      const redirectUrl = redirectParam || (data.user?.is_super_admin ? '/admin' : '/dashboard');
+      window.location.href = redirectUrl;
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -110,50 +113,6 @@ export default function LoginPage() {
               {loading ? 'Authenticating...' : 'Sign In'} <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
-
-          {/* Quick Sign In */}
-          {showDemoCredentials && (
-            <div className="pt-4 border-t border-zinc-100 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-bold">1-Click Sign In:</span>
-                <span className="text-[10px] font-mono text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded font-semibold">Storefront Access</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => selectDemoAccount('merchant@shopmate.com', 'password123')}
-                  className={`p-3 rounded-xl border text-left transition ${
-                    email === 'merchant@shopmate.com'
-                      ? 'bg-indigo-50/70 border-indigo-300 ring-1 ring-indigo-400 shadow-2xs'
-                      : 'bg-zinc-50 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-xs text-zinc-900">Store Merchant</p>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  </div>
-                  <p className="text-zinc-500 text-[10px] font-mono mt-0.5 truncate">merchant@shopmate.com</p>
-                  <p className="text-[9px] text-zinc-400 font-mono mt-0.5">Role: Store Owner</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => selectDemoAccount('admin@aaas-platform.com', 'admin123')}
-                  className={`p-3 rounded-xl border text-left transition ${
-                    email === 'admin@aaas-platform.com'
-                      ? 'bg-red-50/70 border-red-300 ring-1 ring-red-400 shadow-2xs'
-                      : 'bg-zinc-50 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-xs text-zinc-900">SuperAdmin</p>
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                  </div>
-                  <p className="text-zinc-500 text-[10px] font-mono mt-0.5 truncate">admin@aaas-platform.com</p>
-                  <p className="text-[9px] text-red-500 font-mono mt-0.5">Role: Root Admin</p>
-                </button>
-              </div>
-            </div>
-          )}
 
           <div className="text-center text-xs text-zinc-500">
             Don&apos;t have an account?{' '}

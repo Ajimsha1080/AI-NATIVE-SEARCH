@@ -10,26 +10,7 @@ export async function GET(req: Request) {
   const workspace = db.workspaces.find(w => w.id === session.workspaceId);
   const usageData = getWorkspaceUsage(session.workspaceId);
 
-  const invoices = [
-    {
-      id: 'INV-2026-0901',
-      date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-      amount: '₹14,999',
-      amount_usd: '$199.00',
-      status: 'PAID',
-      plan: usageData.plan,
-      pdf_url: '#'
-    },
-    {
-      id: 'INV-2026-0801',
-      date: new Date(Date.now() - 30 * 86400000).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-      amount: '₹14,999',
-      amount_usd: '$199.00',
-      status: 'PAID',
-      plan: usageData.plan,
-      pdf_url: '#'
-    }
-  ];
+  const invoices: any[] = [];
 
   return NextResponse.json({
     plan: usageData.plan,

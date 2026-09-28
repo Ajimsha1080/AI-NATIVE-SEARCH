@@ -105,13 +105,7 @@ export async function GET(req: Request) {
   ];
 
   // Billing & Subscriptions
-  const billingLedger = [
-    { id: 'inv_9841', tenant: 'Acme Luxury Goods', plan: 'ENTERPRISE', amount: 499, status: 'PAID', date: '2026-09-24', invoiceUrl: '#' },
-    { id: 'inv_9840', tenant: 'Shopmate Footwear', plan: 'GROWTH', amount: 99, status: 'PAID', date: '2026-09-23', invoiceUrl: '#' },
-    { id: 'inv_9839', tenant: 'Nordic Apparel Co', plan: 'STARTER', amount: 49, status: 'PAID', date: '2026-09-22', invoiceUrl: '#' },
-    { id: 'inv_9838', tenant: 'Glow Cosmetics', plan: 'BUSINESS', amount: 249, status: 'PAID', date: '2026-09-20', invoiceUrl: '#' },
-    { id: 'inv_9837', tenant: 'CyberPulse Electronics', plan: 'ENTERPRISE', amount: 499, status: 'PAID', date: '2026-09-18', invoiceUrl: '#' },
-  ];
+  const billingLedger: any[] = [];
 
   // Indexing & Knowledge Vector Telemetry
   const indexingStats = {
@@ -122,26 +116,33 @@ export async function GET(req: Request) {
     hybridMode: 'Dense (128-dim) + Sparse BM25 + RRF Fusion',
     reindexCadence: 'Continuous CDC Webhook Trigger',
     lastReindex: 'Just now',
-    indexHealth: '100% HEALTHY'
+    indexHealth: db.knowledge_chunks.length > 0 ? '100% HEALTHY' : 'READY FOR INGESTION'
   };
 
   // Cross-tenant Integrations
-  const integrationsList = [
-    { id: 'int_shopify', name: 'Shopify Store Connector', type: 'ECOMMERCE', status: 'CONNECTED', activeSync: true, tenantCount: 2, lastSync: '1 min ago' },
-    { id: 'int_woocommerce', name: 'WooCommerce REST Mesh', type: 'ECOMMERCE', status: 'CONNECTED', activeSync: true, tenantCount: 1, lastSync: '4 mins ago' },
-    { id: 'int_stripe', name: 'Stripe Agentic Checkout', type: 'PAYMENTS', status: 'OPERATIONAL', activeSync: true, tenantCount: 3, lastSync: 'Real-time' },
-    { id: 'int_razorpay', name: 'Razorpay UPI & Cards', type: 'PAYMENTS', status: 'OPERATIONAL', activeSync: true, tenantCount: 2, lastSync: 'Real-time' },
-    { id: 'int_klaviyo', name: 'Klaviyo Segment Marketing', type: 'MARKETING', status: 'CONNECTED', activeSync: false, tenantCount: 1, lastSync: '25 mins ago' },
-  ];
+  const integrationsList = db.workspace_integrations.map(wi => ({
+    id: wi.id,
+    name: wi.provider,
+    type: 'ECOMMERCE',
+    status: wi.status,
+    activeSync: wi.status === 'CONNECTED',
+    tenantCount: 1,
+    lastSync: wi.last_sync_at || 'Never'
+  }));
 
   // Agent Actions & Tool Permissions
-  const agentActionsList = [
-    { id: 'act_catalog_search', name: 'Search Catalog Products', type: 'READ_ONLY', riskLevel: 'LOW', executionsCount: 1420, approvalRequired: false, status: 'ALLOWED' },
-    { id: 'act_check_inventory', name: 'Check Realtime Stock', type: 'READ_ONLY', riskLevel: 'LOW', executionsCount: 890, approvalRequired: false, status: 'ALLOWED' },
-    { id: 'act_apply_coupon', name: 'Apply Promotional Code', type: 'MUTATION', riskLevel: 'MEDIUM', executionsCount: 340, approvalRequired: false, status: 'ALLOWED' },
-    { id: 'act_create_cart', name: 'Create Shopping Cart Session', type: 'MUTATION', riskLevel: 'LOW', executionsCount: 620, approvalRequired: false, status: 'ALLOWED' },
-    { id: 'act_issue_refund', name: 'Autonomous Refund Issuance', type: 'HIGH_RISK_MUTATION', riskLevel: 'HIGH', executionsCount: 14, approvalRequired: true, status: 'RESTRICTED' },
-  ];
+  const agentActionsList = db.tools.map(t => {
+    const execsCount = db.executions.filter(e => (e.tool_executions || []).some(te => te.tool_name === t.id || te.tool_name === t.name)).length;
+    return {
+      id: `act_${t.id}`,
+      name: t.name,
+      type: t.category === 'CATALOG' ? 'READ_ONLY' : 'MUTATION',
+      riskLevel: t.risk_level || 'LOW',
+      executionsCount: execsCount,
+      approvalRequired: t.risk_level === 'HIGH',
+      status: 'ALLOWED'
+    };
+  });
 
   // Live Conversations Monitor
   const liveConversations = db.conversations.slice(0, 15).map(c => {

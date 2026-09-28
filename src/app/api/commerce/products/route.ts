@@ -8,78 +8,7 @@ export async function GET(req: Request) {
   const session = await getAuthSession(req);
   if (!session) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
 
-  let products = db.commerce_products.filter(p => p.workspace_id === session.workspaceId);
-
-  if (products.length === 0) {
-    const defaultCatalog: CommerceProduct[] = [
-      {
-        id: generateId('prod'),
-        workspace_id: session.workspaceId,
-        title: 'UPF 50+ Sunscreen Performance Jacket',
-        description: 'Ultra-lightweight, 4-way stretch breathable sunscreen jacket with UPF 50+ UV ray blocking protection and mesh underarm venting.',
-        category: 'Techwear Jackets',
-        tags: ['sunscreen', 'upf50', 'breathable', 'lightweight', 'jacket', 'techwear'],
-        price: 2499.00,
-        compare_at_price: 2999.00,
-        currency: 'INR',
-        images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80'],
-        in_stock: true,
-        total_inventory: 48,
-        variants: [
-          { id: generateId('var'), sku: 'BT-JCK-01-BLK-M', title: 'Medium / Obsidian Black', inventory_quantity: 16, price: 2499.00, attributes: { size: 'M', color: 'Obsidian Black' } },
-          { id: generateId('var'), sku: 'BT-JCK-01-BLK-L', title: 'Large / Obsidian Black', inventory_quantity: 20, price: 2499.00, attributes: { size: 'L', color: 'Obsidian Black' } },
-          { id: generateId('var'), sku: 'BT-JCK-01-BLK-XL', title: 'XL / Obsidian Black', inventory_quantity: 12, price: 2499.00, attributes: { size: 'XL', color: 'Obsidian Black' } }
-        ],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: generateId('prod'),
-        workspace_id: session.workspaceId,
-        title: 'No-Sweat Anti-Odour Tech Tee',
-        description: 'Moisture-wicking silver-infused tech fabric designed to stay fresh and dry during high-intensity training.',
-        category: 'Performance Tees',
-        tags: ['nosweat', 'antiodour', 'breathable', 'gym', 'tshirt'],
-        price: 999.00,
-        compare_at_price: 1399.00,
-        currency: 'INR',
-        images: ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80'],
-        in_stock: true,
-        total_inventory: 65,
-        variants: [
-          { id: generateId('var'), sku: 'BT-TEE-02-NVY-M', title: 'Medium / Navy Blue', inventory_quantity: 25, price: 999.00, attributes: { size: 'M', color: 'Navy Blue' } },
-          { id: generateId('var'), sku: 'BT-TEE-02-NVY-L', title: 'Large / Navy Blue', inventory_quantity: 40, price: 999.00, attributes: { size: 'L', color: 'Navy Blue' } }
-        ],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: generateId('prod'),
-        workspace_id: session.workspaceId,
-        title: 'All-Day 4-Way Stretch Commuter Joggers',
-        description: 'Tailored athletic fit with water-resistant DWR coating and secure zip pockets for daily wear and mobility.',
-        category: 'Bottoms',
-        tags: ['joggers', 'stretch', 'waterresistant', 'commuter'],
-        price: 1899.00,
-        compare_at_price: 2499.00,
-        currency: 'INR',
-        images: ['https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&auto=format&fit=crop&q=80'],
-        in_stock: true,
-        total_inventory: 40,
-        variants: [
-          { id: generateId('var'), sku: 'BT-JOG-03-GRY-32', title: 'Size 32 / Slate Grey', inventory_quantity: 20, price: 1899.00, attributes: { size: '32', color: 'Slate Grey' } },
-          { id: generateId('var'), sku: 'BT-JOG-03-GRY-34', title: 'Size 34 / Slate Grey', inventory_quantity: 20, price: 1899.00, attributes: { size: '34', color: 'Slate Grey' } }
-        ],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-
-    db.commerce_products.push(...defaultCatalog);
-    db.scheduleSave();
-    products = db.commerce_products.filter(p => p.workspace_id === session.workspaceId);
-  }
-
+  const products = db.commerce_products.filter(p => p.workspace_id === session.workspaceId);
   return NextResponse.json({ products });
 }
 

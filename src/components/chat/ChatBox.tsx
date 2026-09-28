@@ -7,6 +7,7 @@ import {
   X, ZoomIn, ZoomOut, Maximize2, Download, Eye, Sparkles, MessageSquare
 } from 'lucide-react';
 import { getThemePreset, ThemePreset } from '@/lib/theme-presets';
+import MarkdownContent from './MarkdownContent';
 
 interface ChatBoxProps {
   agentId: string;
@@ -162,7 +163,10 @@ export default function ChatBox({
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to get response');
+      if (!res.ok) {
+        const errMsg = typeof data.error === 'string' ? data.error : data.error?.message || 'Failed to get response';
+        throw new Error(errMsg);
+      }
 
       if (data.conversationId) {
         setConversationId(data.conversationId);
@@ -175,7 +179,7 @@ export default function ChatBox({
       const botMessage = {
         id: 'msg_a_' + Date.now(),
         role: 'assistant',
-        content: data.response || "I'm ready to assist! Let me search our active catalog.",
+        content: data.response || data.response_text || "I'm ready to assist! Let me search our active catalog.",
         metadata: data.interactive_payload || data.metadata || (data.matchedProducts ? { products: data.matchedProducts } : undefined),
         createdAt: new Date().toISOString()
       };
@@ -187,7 +191,9 @@ export default function ChatBox({
         {
           id: 'msg_err_' + Date.now(),
           role: 'assistant',
-          content: "I'm experiencing a brief network lag. You can retry your question or choose one of the suggested prompts below.",
+          content: err?.message?.includes('network') 
+            ? "I'm experiencing a brief network lag. You can retry your question or choose one of the suggested prompts below."
+            : (err?.message || "I'm having trouble connecting right now. Please retry your question."),
           createdAt: new Date().toISOString()
         }
       ]);
@@ -224,73 +230,15 @@ export default function ChatBox({
     }
   };
 
-  const renderFormattedText = (text: string) => {
-    const boldRegex = /\*\*(.*?)\*\*/g;
-    const elements: React.ReactNode[] = [];
-    let lastIdx = 0;
-    let match;
-
-    while ((match = boldRegex.exec(text)) !== null) {
-      if (match.index > lastIdx) {
-        elements.push(text.substring(lastIdx, match.index));
-      }
-      elements.push(
-        <strong key={`bold-${match.index}`} className="font-bold text-inherit">
-          {match[1]}
-        </strong>
-      );
-      lastIdx = match.index + match[0].length;
-    }
-    if (lastIdx < text.length) {
-      elements.push(text.substring(lastIdx));
-    }
-
-    return elements.length > 0 ? elements : text;
-  };
-
   const renderMessageContent = (content: string) => {
-    const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
-    const parts: Array<{ type: 'text'; value: string } | { type: 'image'; alt: string; url: string }> = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = imgRegex.exec(content)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push({ type: 'text', value: content.substring(lastIndex, match.index) });
-      }
-      parts.push({ type: 'image', alt: match[1], url: match[2] });
-      lastIndex = match.index + match[0].length;
-    }
-    if (lastIndex < content.length) {
-      parts.push({ type: 'text', value: content.substring(lastIndex) });
-    }
-
-    if (parts.length === 0) {
-      return <span>{renderFormattedText(content)}</span>;
-    }
-
     return (
-      <div className="space-y-2">
-        {parts.map((p, idx) => {
-          if (p.type === 'text') {
-            return <p key={idx} className="whitespace-pre-wrap">{renderFormattedText(p.value)}</p>;
-          }
-          return (
-            <div 
-              key={idx} 
-              onClick={() => { setPreviewModal({ url: p.url, title: p.alt || 'Image Preview' }); setZoomScale(1); }}
-              className="relative group rounded-xl overflow-hidden border border-zinc-200 bg-white cursor-pointer max-w-sm my-2 shadow-xs hover:border-zinc-300 transition"
-            >
-              <img src={p.url} alt={p.alt} className="w-full max-h-56 object-cover" />
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                <span className="text-[11px] font-semibold bg-white text-zinc-900 px-3 py-1 rounded-full flex items-center gap-1.5 shadow">
-                  <ZoomIn className="w-3.5 h-3.5 text-indigo-600" /> Click to enlarge
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <MarkdownContent
+        content={content}
+        onImageClick={(url, alt) => {
+          setPreviewModal({ url, title: alt || 'Image Preview' });
+          setZoomScale(1);
+        }}
+      />
     );
   };
 

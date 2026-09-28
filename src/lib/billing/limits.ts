@@ -30,22 +30,14 @@ export function getWorkspaceUsage(workspaceId: string) {
   // Use usage_events or count directly from live database tables
   const messageEvents = db.usage_events.filter(e => e.workspace_id === workspaceId && e.event_type === 'MESSAGE');
   const rawMessagesCount = db.messages.filter(m => m.workspace_id === workspaceId).length;
-  const messageCount = Math.max(
-    rawMessagesCount,
-    messageEvents.reduce((acc, cur) => acc + (cur.quantity || 1), 0),
-    16
-  );
+  const messageCount = rawMessagesCount + messageEvents.reduce((acc, cur) => acc + (cur.quantity || 1), 0);
 
   const chunkEvents = db.usage_events.filter(e => e.workspace_id === workspaceId && e.event_type === 'CHUNK_EMBED');
   const rawChunksCount = db.knowledge_chunks.filter(c => c.workspace_id === workspaceId).length;
-  const chunkCount = Math.max(
-    rawChunksCount,
-    chunkEvents.reduce((acc, cur) => acc + (cur.quantity || 1), 0),
-    24
-  );
+  const chunkCount = rawChunksCount + chunkEvents.reduce((acc, cur) => acc + (cur.quantity || 1), 0);
 
   const rawAgentsCount = db.agents.filter(a => a.workspace_id === workspaceId && a.status !== 'ARCHIVED').length;
-  const agentCount = Math.max(rawAgentsCount, 1);
+  const agentCount = rawAgentsCount;
 
   return {
     plan,

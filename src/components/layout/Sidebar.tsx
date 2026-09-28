@@ -70,12 +70,6 @@ export default function Sidebar() {
       isActive: (path: string) => path.startsWith('/integrations')
     },
     { 
-      name: 'Analytics', 
-      href: '/analytics', 
-      icon: BarChart3,
-      isActive: (path: string) => path.startsWith('/analytics')
-    },
-    { 
       name: 'Widget & Deploy', 
       href: '/deployments', 
       icon: Globe,
@@ -168,14 +162,6 @@ export default function Sidebar() {
           <Settings className="w-4 h-4 text-zinc-500 shrink-0" />
           <span className="hidden lg:inline text-xs">Settings</span>
         </Link>
-
-        <div className="hidden lg:flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-200/70 text-[11px] text-zinc-600">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span className="font-medium text-zinc-800">Tenant Active</span>
-          </div>
-          <span className="text-[10px] font-mono text-zinc-400">v2.5</span>
-        </div>
       </div>
     </aside>
   );

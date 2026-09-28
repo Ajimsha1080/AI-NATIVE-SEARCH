@@ -28,7 +28,6 @@ export default function Navbar() {
     { name: 'Knowledge Base', href: '/knowledge', icon: BookOpen },
     { name: 'Conversations', href: '/conversations', icon: MessageSquare },
     { name: 'Integrations Hub', href: '/integrations', icon: Layers },
-    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Widget & Deploy', href: '/deployments', icon: Globe },
     { name: 'Security Console', href: '/security', icon: ShieldCheck },
     { name: 'Team Members', href: '/team', icon: Users },

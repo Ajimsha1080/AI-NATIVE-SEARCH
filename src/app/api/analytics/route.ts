@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
   const containmentPct = totalConversations > 0
     ? ((conversations.filter(c => (c.status as any) !== 'HUMAN_TAKEOVER' && (c.status as any) !== 'ESCALATED').length / totalConversations) * 100).toFixed(1)
-    : '100.0';
+    : '0.0';
 
   let totalLatency = 0;
   let totalTokens = 0;
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
 
   const avgLatencyMs = executions.length > 0 
     ? Math.round(totalLatency / executions.length) 
-    : 180;
+    : 0;
 
   // Real volume trends for the past 7 days from actual conversation timestamps
   const now = new Date();
@@ -95,11 +95,16 @@ export async function GET(req: Request) {
   const groundedExecs = executions.filter(e => e.rag_pipeline?.grounding_verification?.is_grounded !== false).length;
   const groundingPct = executions.length > 0 
     ? ((groundedExecs / executions.length) * 100).toFixed(1) + '%'
-    : '100.0%';
+    : '0.0%';
 
   const csatScore = totalConversations > 0
     ? (4.0 + (resolvedConversations / totalConversations) * 0.9).toFixed(1)
-    : '5.0';
+    : '0.0';
+
+  const successfulExecs = executions.filter(e => e.tool_executions?.every((t: any) => t.status === 'SUCCESS') !== false).length;
+  const toolSuccessPct = executions.length > 0
+    ? ((successfulExecs / executions.length) * 100).toFixed(1) + '%'
+    : '0.0%';
 
   return NextResponse.json({
     metrics: {
@@ -116,7 +121,8 @@ export async function GET(req: Request) {
       total_tokens: totalTokens,
       orders_count: orders.length,
       csat: `${csatScore} / 5`,
-      grounding_accuracy: groundingPct
+      grounding_accuracy: groundingPct,
+      tool_success_rate: toolSuccessPct
     },
     top_tools: topTools,
     revenueInfluenced: totalRevenue,
@@ -130,6 +136,8 @@ export async function GET(req: Request) {
     totalTokens: totalTokens,
     csat: `${csatScore} / 5`,
     groundingAccuracy: groundingPct,
-    daily_trends: dailyTrends
+    toolSuccessRate: toolSuccessPct,
+    daily_trends: dailyTrends,
+    traces: executions.slice(-10).reverse()
   });
 }

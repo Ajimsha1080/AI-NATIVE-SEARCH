@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import PortalSwitcher from '@/components/layout/PortalSwitcher';
 import { sanitizeImageUrl } from '@/lib/utils';
+import MarkdownContent from '@/components/chat/MarkdownContent';
+import { getThemePreset } from '@/lib/theme-presets';
 
 interface Message {
   id: string;
@@ -37,6 +39,10 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
   const [loading, setLoading] = useState(true);
   const [deployment, setDeployment] = useState<any>(null);
   const [agent, setAgent] = useState<any>(null);
+  const [themePresetId, setThemePresetId] = useState('mint_breeze');
+  const [primaryColor, setPrimaryColor] = useState('#ec4899');
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
+  const [logoUrl, setLogoUrl] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -68,6 +74,21 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
         
         // Use resolved Agent details
         setAgent(data.agent || { id: dep.agent_id, name: 'ShopMate AI' });
+
+        if (typeof window !== 'undefined') {
+          const sp = new URLSearchParams(window.location.search);
+          const qPreset = sp.get('themePreset') || sp.get('preset');
+          const qColor = sp.get('primaryColor') || sp.get('color');
+          const qTheme = sp.get('theme') || sp.get('themeMode');
+          const qLogo = sp.get('logoUrl') || sp.get('logo');
+
+          const chosenPresetId = qPreset || data.appearance?.theme_preset || 'mint_breeze';
+          const presetObj = getThemePreset(chosenPresetId);
+          setThemePresetId(chosenPresetId);
+          setPrimaryColor(qColor || data.appearance?.primary_color || presetObj.primaryColor || '#ec4899');
+          setThemeMode((qTheme === 'dark' || (!qTheme && data.appearance?.theme_mode === 'dark')) ? 'dark' : 'light');
+          setLogoUrl(qLogo || data.appearance?.logo_url || data.agent?.avatar_url || '');
+        }
         
         const welcomeMsg = data.welcome_message || 'Hello! I am your AI store concierge. How may I assist you today?';
         setMessages([
@@ -192,87 +213,26 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
     }
   };
 
-  const renderFormattedText = (text: string) => {
-    const boldRegex = /\*\*(.*?)\*\*/g;
-    const elements: React.ReactNode[] = [];
-    let lastIdx = 0;
-    let match;
-
-    while ((match = boldRegex.exec(text)) !== null) {
-      if (match.index > lastIdx) {
-        elements.push(text.substring(lastIdx, match.index));
-      }
-      elements.push(
-        <strong key={`bold-${match.index}`} className="font-bold text-inherit">
-          {match[1]}
-        </strong>
-      );
-      lastIdx = match.index + match[0].length;
-    }
-    if (lastIdx < text.length) {
-      elements.push(text.substring(lastIdx));
-    }
-
-    return elements.length > 0 ? elements : text;
-  };
-
-  // Helper to render markdown message text with inline markdown image support
   const renderMessageContent = (content: string) => {
-    const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
-    const parts: Array<{ type: 'text'; value: string } | { type: 'image'; alt: string; url: string }> = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = imgRegex.exec(content)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push({ type: 'text', value: content.substring(lastIndex, match.index) });
-      }
-      const cleanUrl = sanitizeImageUrl(match[2]);
-      if (cleanUrl) {
-        parts.push({ type: 'image', alt: match[1], url: cleanUrl });
-      } else {
-        parts.push({ type: 'text', value: `[Image: ${match[1]}]` });
-      }
-      lastIndex = match.index + match[0].length;
-    }
-    if (lastIndex < content.length) {
-      parts.push({ type: 'text', value: content.substring(lastIndex) });
-    }
-
-    if (parts.length === 0) {
-      return <span>{renderFormattedText(content)}</span>;
-    }
-
     return (
-      <div className="space-y-2">
-        {parts.map((p, idx) => {
-          if (p.type === 'text') {
-            return <p key={idx} className="whitespace-pre-wrap">{renderFormattedText(p.value)}</p>;
-          }
-          return (
-            <div 
-              key={idx} 
-              onClick={() => { setPreviewModal({ url: p.url, title: p.alt || 'Image Preview' }); setZoomScale(1); }}
-              className="relative group rounded-xl overflow-hidden border border-zinc-200 bg-zinc-50 cursor-pointer max-w-sm my-2 shadow-2xs hover:border-zinc-300 transition"
-            >
-              <img src={p.url} alt={p.alt} className="w-full max-h-56 object-cover" />
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                <span className="text-[11px] font-semibold bg-white/95 text-zinc-900 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow">
-                  <ZoomIn className="w-3.5 h-3.5 text-emerald-600" /> Click to enlarge
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <MarkdownContent
+        content={content}
+        onImageClick={(url, alt) => {
+          setPreviewModal({ url, title: alt || 'Image Preview' });
+          setZoomScale(1);
+        }}
+      />
     );
   };
 
+  const currentPreset = getThemePreset(themePresetId);
+  const isDark = themeMode === 'dark';
+
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f4f5f7] text-zinc-500 text-xs font-mono">
+      <div className={`flex h-screen items-center justify-center text-xs font-mono ${isDark ? 'bg-[#09090b] text-zinc-400' : 'bg-[#f4f5f7] text-zinc-500'}`}>
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 bg-zinc-900 rounded-full animate-ping"></span>
+          <span className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: primaryColor }}></span>
           <span>Initializing ShopMate Storefront Concierge...</span>
         </div>
       </div>
@@ -281,10 +241,10 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
 
   if (error || !deployment) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f4f5f7] p-4 font-sans">
-        <div className="max-w-md w-full bg-white border border-zinc-200 rounded-2xl p-6 text-center space-y-3 shadow-sm">
+      <div className={`flex h-screen items-center justify-center p-4 font-sans ${isDark ? 'bg-[#09090b]' : 'bg-[#f4f5f7]'}`}>
+        <div className={`max-w-md w-full border rounded-2xl p-6 text-center space-y-3 shadow-sm ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
-          <h2 className="text-base font-bold text-zinc-900">Widget Unavailable</h2>
+          <h2 className={`text-base font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Widget Unavailable</h2>
           <p className="text-xs text-zinc-500">{error || 'Unable to connect to active storefront deployment.'}</p>
         </div>
       </div>
@@ -292,28 +252,47 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-xl mx-auto bg-[#f4f5f7] font-sans border-x border-zinc-200 relative antialiased selection:bg-zinc-200 selection:text-zinc-900">
+    <div 
+      className={`flex flex-col h-screen max-w-xl mx-auto font-sans border-x relative antialiased ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}
+      style={{ backgroundColor: isDark ? '#09090b' : currentPreset.cardBgHex }}
+    >
       {/* Widget Header */}
-      <div className="px-5 py-3.5 border-b border-zinc-200 bg-white flex items-center justify-between sticky top-0 z-20 shadow-2xs">
+      <div 
+        className={`px-5 py-3.5 border-b flex items-center justify-between sticky top-0 z-20 shadow-2xs ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}
+        style={{ 
+          backgroundColor: isDark ? '#121215' : currentPreset.headerBgHex,
+          borderColor: isDark ? '#27272a' : currentPreset.borderHex 
+        }}
+      >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center text-white font-bold text-xs shadow-xs">
-            {agent?.avatar_url ? (
-              <img src={agent.avatar_url} alt={agent.name} className="w-full h-full object-cover rounded-xl" />
+          <div 
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-xs overflow-hidden shrink-0"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {logoUrl || agent?.avatar_url ? (
+              <img src={logoUrl || agent.avatar_url} alt={agent?.name || 'ShopMate'} className="w-full h-full object-cover" />
             ) : (
               <Bot className="w-4.5 h-4.5" />
             )}
           </div>
           <div>
-            <h3 className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+            <h3 
+              className="text-xs font-bold flex items-center gap-1.5"
+              style={{ color: isDark ? '#ffffff' : (currentPreset.headerTextColor || primaryColor) }}
+            >
               {agent?.name || 'ShopMate Concierge'}
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: primaryColor }}></span>
             </h3>
             <p className="text-[10px] text-zinc-500 font-mono">Live Catalog • Verified Assistant</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <PortalSwitcher />
-          <span className="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-600 font-semibold">
+          <span 
+            className={`hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full border font-semibold ${
+              isDark ? 'bg-zinc-800 border-zinc-700 text-zinc-300' : 'bg-white/80 border-zinc-200 text-zinc-600'
+            }`}
+          >
             ShopMate AaaS
           </span>
         </div>
@@ -327,9 +306,14 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
             className={`flex items-start gap-2.5 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
           >
             <div
-              className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 font-mono text-[10px] shadow-2xs ${
-                m.role === 'user' ? 'bg-zinc-900 text-white font-bold' : 'bg-white text-zinc-700 border border-zinc-200'
+              className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 font-mono text-[10px] shadow-2xs font-bold ${
+                m.role === 'user' 
+                  ? 'text-white' 
+                  : isDark 
+                    ? 'bg-zinc-800 text-zinc-200 border border-zinc-700' 
+                    : 'bg-white text-zinc-700 border border-zinc-200'
               }`}
+              style={m.role === 'user' ? { backgroundColor: primaryColor } : undefined}
             >
               {m.role === 'user' ? 'U' : 'AI'}
             </div>
@@ -339,7 +323,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
               {m.imageUrl && (
                 <div 
                   onClick={() => { setPreviewModal({ url: m.imageUrl!, title: 'Uploaded Image' }); setZoomScale(1); }}
-                  className="rounded-2xl overflow-hidden border border-zinc-200 max-w-[240px] cursor-pointer group relative shadow-2xs"
+                  className={`rounded-2xl overflow-hidden border max-w-[240px] cursor-pointer group relative shadow-2xs ${
+                    isDark ? 'border-zinc-800' : 'border-zinc-200'
+                  }`}
                 >
                   <img src={m.imageUrl} alt="Attached" className="w-full h-auto max-h-48 object-cover rounded-2xl" />
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
@@ -353,9 +339,12 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
               <div
                 className={`p-3.5 rounded-2xl text-xs leading-relaxed break-words shadow-2xs ${
                   m.role === 'user'
-                    ? 'bg-zinc-900 text-white rounded-tr-xs'
-                    : 'bg-white border border-zinc-200 text-zinc-800 rounded-tl-xs'
+                    ? 'text-white rounded-tr-xs'
+                    : isDark
+                      ? 'bg-[#18181b] border border-zinc-800 text-zinc-100 rounded-tl-xs'
+                      : 'bg-white border border-zinc-200 text-zinc-800 rounded-tl-xs'
                 }`}
+                style={m.role === 'user' ? { backgroundColor: primaryColor } : undefined}
               >
                 {renderMessageContent(m.content)}
               </div>
@@ -366,7 +355,12 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                   {m.metadata.products.map((p) => {
                     const imgSrc = p.imageUrl || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
                     return (
-                      <div key={p.id} className="bg-white border border-zinc-200 hover:border-zinc-300 transition rounded-2xl p-3.5 flex flex-col justify-between gap-3 shadow-2xs group">
+                      <div 
+                        key={p.id} 
+                        className={`border hover:border-zinc-400 transition rounded-2xl p-3.5 flex flex-col justify-between gap-3 shadow-2xs group ${
+                          isDark ? 'bg-[#18181b] border-zinc-800 text-white' : 'bg-white border-zinc-200 text-zinc-900'
+                        }`}
+                      >
                         <div className="flex items-start gap-3">
                           {/* Image thumbnail with zoom trigger */}
                           <div 
@@ -379,7 +373,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                               });
                               setZoomScale(1);
                             }}
-                            className="w-16 h-16 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer relative group/img shadow-2xs"
+                            className={`w-16 h-16 rounded-xl border flex items-center justify-center shrink-0 overflow-hidden cursor-pointer relative group/img shadow-2xs ${
+                              isDark ? 'bg-zinc-900 border-zinc-700' : 'bg-zinc-100 border-zinc-200'
+                            }`}
                             title="Click to view full HD image"
                           >
                             <img 
@@ -396,9 +392,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-zinc-900 truncate group-hover:text-zinc-700 transition">{p.title}</p>
+                            <p className={`text-xs font-bold truncate transition ${isDark ? 'text-white group-hover:text-zinc-300' : 'text-zinc-900 group-hover:text-zinc-700'}`}>{p.title}</p>
                             <div className="flex items-center gap-1.5 mt-1">
-                              <span className="text-xs font-mono font-bold text-zinc-900">₹{p.price?.toLocaleString('en-IN') || p.price}</span>
+                              <span className="text-xs font-mono font-bold" style={{ color: primaryColor }}>₹{p.price?.toLocaleString('en-IN') || p.price}</span>
                               {p.comparePrice && (
                                 <span className="text-[10px] font-mono text-zinc-400 line-through">₹{p.comparePrice?.toLocaleString('en-IN') || p.comparePrice}</span>
                               )}
@@ -406,7 +402,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 pt-2 border-t border-zinc-100">
+                        <div className={`flex items-center gap-1.5 pt-2 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
                           <button 
                             onClick={() => {
                               setPreviewModal({
@@ -417,13 +413,16 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                               });
                               setZoomScale(1);
                             }}
-                            className="px-2.5 py-1 rounded-xl text-[11px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition flex items-center gap-1 shrink-0"
+                            className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition flex items-center gap-1 shrink-0 ${
+                              isDark ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                            }`}
                           >
                             <Eye className="w-3 h-3" /> View
                           </button>
                           <button 
                             onClick={() => handleSend(`Add ${p.title} to my cart`)}
-                            className="flex-1 py-1.5 px-2.5 rounded-xl text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                            className="flex-1 py-1.5 px-2.5 rounded-xl text-xs font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer hover:opacity-90"
+                            style={{ backgroundColor: primaryColor }}
                           >
                             <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart
                           </button>
@@ -436,29 +435,31 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
 
               {/* Dynamic Order Card */}
               {m.metadata?.order && (
-                <div className="w-full bg-white border border-zinc-200 rounded-2xl p-4 mt-1 space-y-2 text-xs shadow-2xs">
-                  <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-                    <span className="font-bold text-zinc-900 flex items-center gap-1.5">
-                      <Truck className="w-4 h-4 text-zinc-600" /> Order #{m.metadata.order.orderNumber}
+                <div className={`w-full border rounded-2xl p-4 mt-1 space-y-2 text-xs shadow-2xs ${
+                  isDark ? 'bg-[#18181b] border-zinc-800 text-white' : 'bg-white border-zinc-200 text-zinc-900'
+                }`}>
+                  <div className={`flex items-center justify-between border-b pb-2 ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                    <span className="font-bold flex items-center gap-1.5">
+                      <Truck className="w-4 h-4 text-zinc-400" /> Order #{m.metadata.order.orderNumber}
                     </span>
-                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
+                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold">
                       {m.metadata.order.status}
                     </span>
                   </div>
-                  <div className="text-xs text-zinc-600 space-y-0.5 font-mono text-[11px]">
+                  <div className="text-xs space-y-0.5 font-mono text-[11px]">
                     <div className="flex justify-between">
-                      <span className="font-sans">Carrier:</span>
-                      <span className="text-zinc-900 font-semibold">{m.metadata.order.carrier || 'FedEx Express'}</span>
+                      <span className="font-sans text-zinc-400">Carrier:</span>
+                      <span className="font-semibold">{m.metadata.order.carrier || 'FedEx Express'}</span>
                     </div>
                     {m.metadata.order.trackingNumber && (
                       <div className="flex justify-between">
-                        <span className="font-sans">Tracking:</span>
-                        <span className="text-zinc-900 select-all font-semibold">{m.metadata.order.trackingNumber}</span>
+                        <span className="font-sans text-zinc-400">Tracking:</span>
+                        <span className="select-all font-semibold">{m.metadata.order.trackingNumber}</span>
                       </div>
                     )}
-                    <div className="flex justify-between font-bold pt-1.5 border-t border-zinc-100 text-zinc-900">
-                      <span className="font-sans">Total:</span>
-                      <span>${m.metadata.order.total.toFixed(2)} {m.metadata.order.currency}</span>
+                    <div className={`flex justify-between font-bold pt-1.5 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                      <span className="font-sans text-zinc-400">Total:</span>
+                      <span style={{ color: primaryColor }}>${m.metadata.order.total.toFixed(2)} {m.metadata.order.currency}</span>
                     </div>
                   </div>
                 </div>
@@ -466,12 +467,14 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
 
               {/* Return Status Card */}
               {m.metadata?.returnStatus && (
-                <div className="w-full bg-white border border-zinc-200 rounded-2xl p-4 mt-1 space-y-1.5 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-900">
-                    <RotateCcw className="w-4 h-4 text-zinc-600" />
+                <div className={`w-full border rounded-2xl p-4 mt-1 space-y-1.5 shadow-2xs ${
+                  isDark ? 'bg-[#18181b] border-zinc-800 text-white' : 'bg-white border-zinc-200 text-zinc-900'
+                }`}>
+                  <div className="flex items-center gap-1.5 text-xs font-bold">
+                    <RotateCcw className="w-4 h-4 text-zinc-400" />
                     <span>Return Policy</span>
                   </div>
-                  <p className="text-xs text-zinc-600 leading-relaxed">{m.metadata.returnStatus.policy}</p>
+                  <p className="text-xs text-zinc-400 leading-relaxed">{m.metadata.returnStatus.policy}</p>
                 </div>
               )}
             </div>
@@ -480,11 +483,15 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
 
         {sending && (
           <div className="flex items-start gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-white text-zinc-700 border border-zinc-200 flex items-center justify-center font-mono text-[10px] shadow-2xs">
+            <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-mono text-[10px] shadow-2xs ${
+              isDark ? 'bg-zinc-800 text-zinc-300 border border-zinc-700' : 'bg-white text-zinc-700 border border-zinc-200'
+            }`}>
               AI
             </div>
-            <div className="bg-white border border-zinc-200 p-3 rounded-2xl rounded-tl-xs text-xs text-zinc-600 flex items-center gap-2 font-mono text-[11px] shadow-2xs">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            <div className={`border p-3 rounded-2xl rounded-tl-xs text-xs flex items-center gap-2 font-mono text-[11px] shadow-2xs ${
+              isDark ? 'bg-[#18181b] border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-600'
+            }`}>
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: primaryColor }}></span>
               <span>Checking store catalog and inventory...</span>
             </div>
           </div>
@@ -494,12 +501,18 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
 
       {/* Suggested Prompts */}
       {messages.length <= 2 && (
-        <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto bg-white/80 border-t border-zinc-200">
+        <div className={`px-4 py-2 flex items-center gap-2 overflow-x-auto border-t ${
+          isDark ? 'bg-[#121215]/80 border-zinc-800' : 'bg-white/80 border-zinc-200'
+        }`}>
           {['Recommend running shoes under $150', 'Track my order #10482', 'What is your return policy?', 'Show pictures of winter coats'].map((quickText, idx) => (
             <button
               key={idx}
               onClick={() => handleSend(quickText)}
-              className="text-xs whitespace-nowrap bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-700 px-3 py-1.5 rounded-xl transition shrink-0 font-medium shadow-2xs cursor-pointer"
+              className={`text-xs whitespace-nowrap border px-3 py-1.5 rounded-xl transition shrink-0 font-medium shadow-2xs cursor-pointer ${
+                isDark 
+                  ? 'bg-[#18181b] hover:bg-zinc-800 border-zinc-800 text-zinc-200' 
+                  : 'bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-700'
+              }`}
             >
               {quickText}
             </button>
@@ -509,20 +522,24 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
 
       {/* Attached Image Preview Bar */}
       {attachedImage && (
-        <div className="px-4 py-2.5 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between gap-3">
+        <div className={`px-4 py-2.5 border-t flex items-center justify-between gap-3 ${
+          isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+        }`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl border border-zinc-200 overflow-hidden bg-white shrink-0 shadow-2xs">
+            <div className={`w-10 h-10 rounded-xl border overflow-hidden shrink-0 shadow-2xs ${
+              isDark ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'
+            }`}>
               <img src={attachedImage} alt="Preview" className="w-full h-full object-cover" />
             </div>
             <div className="text-xs">
-              <p className="text-zinc-900 font-semibold">Image attached for Visual Search</p>
+              <p className={`font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Image attached for Visual Search</p>
               <p className="text-[10px] text-zinc-500 font-mono">Agent will match catalog items</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setAttachedImage(null)}
-            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-200 transition"
+            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition"
           >
             <X className="w-4 h-4" />
           </button>
@@ -532,7 +549,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
       {/* Input Form */}
       <form 
         onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-        className="p-3.5 border-t border-zinc-200 bg-white flex items-center gap-2"
+        className={`p-3.5 border-t flex items-center gap-2 ${
+          isDark ? 'bg-[#121215] border-zinc-800' : 'bg-white border-zinc-200'
+        }`}
       >
         <input 
           type="file" 
@@ -549,7 +568,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
           className={`p-2.5 rounded-xl border transition shrink-0 cursor-pointer ${
             attachedImage 
               ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-              : 'bg-zinc-50 border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+              : isDark
+                ? 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+                : 'bg-zinc-50 border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
           }`}
         >
           <ImageIcon className="w-4 h-4" />
@@ -560,12 +581,17 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={attachedImage ? "Add query for attached image..." : "Ask anything about products, orders, returns..."}
-          className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition"
+          className={`flex-1 border rounded-xl px-3.5 py-2.5 text-xs placeholder:text-zinc-400 focus:outline-none transition ${
+            isDark 
+              ? 'bg-[#18181b] border-zinc-800 text-white focus:border-zinc-700' 
+              : 'bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-zinc-400 focus:bg-white'
+          }`}
         />
         <button
           type="submit"
           disabled={(!input.trim() && !attachedImage) || sending}
-          className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold disabled:opacity-40 transition shrink-0 text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+          className="px-4 py-2.5 rounded-xl text-white font-semibold disabled:opacity-40 transition shrink-0 text-xs flex items-center gap-1.5 shadow-xs cursor-pointer hover:opacity-90"
+          style={{ backgroundColor: primaryColor }}
         >
           <Send className="w-3.5 h-3.5" />
         </button>

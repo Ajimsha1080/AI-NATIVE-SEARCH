@@ -98,7 +98,7 @@ class DatabaseEngine {
         parsed.processed_webhook_events = parsed.processed_webhook_events || [];
         parsed.workspace_integrations = parsed.workspace_integrations || [];
         parsed.integration_sync_jobs = parsed.integration_sync_jobs || [];
-        if (parsed.agents && parsed.agents.length > 0 && parsed.commerce_products && parsed.commerce_products.length > 0) {
+        if (parsed.users !== undefined && parsed.workspaces !== undefined) {
           return parsed;
         }
       }

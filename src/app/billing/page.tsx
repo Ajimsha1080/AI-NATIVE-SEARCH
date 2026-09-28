@@ -355,53 +355,45 @@ export default function BillingWorkspacePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
-                    {(billingData?.invoices || [
-                      {
-                        id: 'INV-2026-0901',
-                        date: '01 Sep 2026',
-                        amount: '₹14,999',
-                        amount_usd: '$199.00',
-                        status: 'PAID',
-                        plan: 'GROWTH'
-                      },
-                      {
-                        id: 'INV-2026-0801',
-                        date: '01 Aug 2026',
-                        amount: '₹14,999',
-                        amount_usd: '$199.00',
-                        status: 'PAID',
-                        plan: 'GROWTH'
-                      }
-                    ]).map((inv) => (
-                      <tr key={inv.id} className="hover:bg-zinc-50/60 transition">
-                        <td className="py-3 font-semibold text-zinc-900">{inv.id}</td>
-                        <td className="py-3 text-zinc-600">{inv.date}</td>
-                        <td className="py-3">
-                          <span className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 text-[10px] font-bold">
-                            {inv.plan}
-                          </span>
-                        </td>
-                        <td className="py-3 font-bold text-zinc-900">
-                          {currencyMode === 'INR' ? inv.amount : inv.amount_usd}
-                        </td>
-                        <td className="py-3">
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold flex items-center gap-1 w-fit">
-                            <CheckCircle className="w-3 h-3 text-emerald-600" /> {inv.status}
-                          </span>
-                        </td>
-                        <td className="py-3 text-right">
-                          <button 
-                            onClick={() => {
-                              setNotification(`Receipt ${inv.id}.pdf generated and downloaded.`);
-                              setTimeout(() => setNotification(null), 3000);
-                            }}
-                            className="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 ml-auto text-[11px] cursor-pointer"
-                          >
-                            <Download className="w-3 h-3" /> PDF
-                          </button>
+                    {billingData?.invoices && billingData.invoices.length > 0 ? (
+                      billingData.invoices.map((inv) => (
+                        <tr key={inv.id} className="hover:bg-zinc-50/60 transition">
+                          <td className="py-3 font-semibold text-zinc-900">{inv.id}</td>
+                          <td className="py-3 text-zinc-600">{inv.date}</td>
+                          <td className="py-3">
+                            <span className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 text-[10px] font-bold">
+                              {inv.plan}
+                            </span>
+                          </td>
+                          <td className="py-3 font-bold text-zinc-900">
+                            {currencyMode === 'INR' ? inv.amount : inv.amount_usd}
+                          </td>
+                          <td className="py-3">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold flex items-center gap-1 w-fit">
+                              <CheckCircle className="w-3 h-3 text-emerald-600" /> {inv.status}
+                            </span>
+                          </td>
+                          <td className="py-3 text-right">
+                            <button 
+                              onClick={() => {
+                                setNotification(`Receipt ${inv.id}.pdf generated and downloaded.`);
+                                setTimeout(() => setNotification(null), 3000);
+                              }}
+                              className="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 ml-auto text-[11px] cursor-pointer"
+                            >
+                              <Download className="w-3 h-3" /> PDF
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-zinc-400 font-sans text-xs">
+                          <FileText className="w-6 h-6 mx-auto mb-2 text-zinc-300" />
+                          No invoices generated yet. Payment receipts and renewal invoices will appear here.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
