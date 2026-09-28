@@ -12,33 +12,10 @@ export async function GET(req: Request) {
   const ordersCount = db.commerce_orders.filter(o => o.workspace_id === session.workspaceId).length;
   const knowledgeCount = db.knowledge_chunks.filter(c => c.workspace_id === session.workspaceId).length;
   
-  let auditLogs = db.audit_logs
+  const auditLogs = db.audit_logs
     .filter(a => a.workspace_id === session.workspaceId && a.action === 'CONNECTOR_SYNC')
     .slice(-10)
     .reverse();
-
-  if (auditLogs.length === 0 && productsCount > 0) {
-    const initialLog = {
-      id: generateId('aud'),
-      workspace_id: session.workspaceId,
-      actor_user_id: session.user.id,
-      actor_email: session.user.email,
-      action: 'CONNECTOR_SYNC',
-      resource_type: 'Integration',
-      resource_id: 'local_catalog',
-      metadata: {
-        connectorName: 'Direct Store Catalog & Live Orders',
-        actionType: 'CATALOG_SYNC',
-        message: `${productsCount} live catalog products and ${ordersCount} customer orders synchronized.`,
-        latencyMs: 18
-      },
-      ip_address: '127.0.0.1',
-      created_at: new Date().toISOString()
-    };
-    db.audit_logs.push(initialLog);
-    db.saveImmediate();
-    auditLogs = [initialLog];
-  }
 
   const connectorTimestamps: Record<string, string> = {
     shopify_storefront: 'Active',
