@@ -268,7 +268,13 @@ export default function ConversationsWorkspacePage() {
                   <span>Loading live sessions...</span>
                 </div>
               ) : filteredConversations.length === 0 ? (
-                <div className="p-8 text-center text-xs text-zinc-400 font-mono">No conversations matching filters.</div>
+                <div className="p-8 text-center flex flex-col items-center justify-center space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-semibold text-zinc-700">No active sessions</p>
+                  <p className="text-[11px] text-zinc-400 max-w-[200px]">Live conversations will appear here when customers chat with your store widget.</p>
+                </div>
               ) : (
                 filteredConversations.map((convo) => {
                   const isSelected = selectedConvo?.id === convo.id;
@@ -536,8 +542,16 @@ export default function ConversationsWorkspacePage() {
               </form>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-center p-8 text-zinc-400 text-xs font-mono">
-              Select a session from the list to view transcript and manage human handoff.
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-3 bg-[#f4f5f7]">
+              <div className="w-12 h-12 rounded-2xl bg-white border border-zinc-200 shadow-2xs flex items-center justify-center text-zinc-400">
+                <Headphones className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xs font-bold text-zinc-800">Live Support Inbox</h3>
+                <p className="text-xs text-zinc-400 max-w-sm">
+                  Select a live conversation from the list to view real-time chat transcripts, monitor agent tool executions, and take over sessions.
+                </p>
+              </div>
             </div>
           )}
         </div>
