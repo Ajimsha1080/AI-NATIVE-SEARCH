@@ -7,7 +7,8 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm install --prefer-offline --no-audit
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps || npm install --prefer-offline --no-audit
 
 # Step 2: Rebuild the source code
 FROM base AS builder
@@ -19,7 +20,8 @@ ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_ENV production
 ENV NODE_OPTIONS "--max-old-space-size=2048"
 
-RUN npm run build
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 # Step 3: Production image using standalone bundle
 FROM base AS runner
