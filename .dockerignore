@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.gitignore
+.dockerignore
+*.log
+python-backend
+data/*.json
+README.md
+SECURITY.md
+.github
