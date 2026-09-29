@@ -32,127 +32,23 @@ async function runTestSuite() {
   console.log(`${BOLD}${CYAN}  RUNNING AGENTIC E-COMMERCE EVALUATION TEST SUITE (18+ SCENARIOS)${RESET}`);
   console.log(`${BOLD}${CYAN}================================================================${RESET}\n`);
 
-  // Initialize and seed database
-  await seedDatabaseIfEmpty(true);
+  // Ensure workspace ID
   const workspaceId = 'ws_acme_corp';
   const agentId = 'agent_shopmate_01';
 
-  // Seed sample Mydesignation products to test real-world catalog truth
-  const sampleProducts: CommerceProduct[] = [
-    {
-      id: 'prod_my_corduroy_shirt',
+  // Add store policy knowledge chunk if not already present
+  if (!db.knowledge_chunks.some(c => c.workspace_id === workspaceId && c.document_id === 'doc_policy_01')) {
+    db.knowledge_chunks.push({
+      id: generateId('chunk'),
+      document_id: 'doc_policy_01',
       workspace_id: workspaceId,
-      title: 'Corduroy Shirt Combined listing',
-      description: 'Premium heavyweight ribbed corduroy long sleeve shirt for men.',
-      category: 'Shirts',
-      tags: ['shirt', 'corduroy', 'men', 'mens', 'casual', 'autumn', 'wine', 'navy', 'brown'],
-      price: 1499,
-      compare_at_price: 2499,
-      currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80'],
-      in_stock: true,
-      total_inventory: 40,
-      variants: [
-        { id: 'var_cord_m_wine', sku: 'SKU-CORD-M-WINE', title: 'M / Wine Red', price: 1499, inventory_quantity: 20, attributes: { size: 'M', color: 'Wine' } },
-        { id: 'var_cord_l_navy', sku: 'SKU-CORD-L-NVY', title: 'L / Navy Blue', price: 1499, inventory_quantity: 20, attributes: { size: 'L', color: 'Navy' } }
-      ],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'prod_my_royal_saree',
-      workspace_id: workspaceId,
-      title: 'Royal Heritage Saree',
-      description: 'Off-white Poly Chambray saree with delicate multicolored diamond butis and heritage borders.',
-      category: 'Sarees',
-      tags: ['saree', 'women', 'womens', 'ethnic', 'festive', 'traditional', 'off-white'],
-      price: 1699,
-      compare_at_price: 2999,
-      currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80'],
-      in_stock: true,
-      total_inventory: 35,
-      variants: [
-        { id: 'var_saree_free', sku: 'SKU-ROYAL-FREE', title: 'Free Size', price: 1699, inventory_quantity: 35, attributes: { size: 'Free Size', color: 'Off White' } }
-      ],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'prod_my_yellow_kurta_combo',
-      workspace_id: workspaceId,
-      title: 'Yellow Floral Kurta Pant Combo',
-      description: 'Yellow Floral Poly Chambray kurta paired with an Off White Cotton Poplin pant.',
-      category: 'Kurtas',
-      tags: ['kurta', 'combo', 'women', 'womens', 'festive', 'yellow', 'floral'],
-      price: 2399,
-      compare_at_price: 3697,
-      currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80'],
-      in_stock: true,
-      total_inventory: 25,
-      variants: [
-        { id: 'var_kurta_m_yel', sku: 'SKU-YEL-M', title: 'M', price: 2399, inventory_quantity: 15, attributes: { size: 'M', color: 'Yellow' } },
-        { id: 'var_kurta_l_yel', sku: 'SKU-YEL-L', title: 'L', price: 2399, inventory_quantity: 10, attributes: { size: 'L', color: 'Yellow' } }
-      ],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'prod_my_red_shirt',
-      workspace_id: workspaceId,
-      title: 'Relaxed Fit Shirt — Shadow Red',
-      description: 'Breathable lightweight 100% cotton casual button-down shirt in rich shadow red tone.',
-      category: 'Shirts',
-      tags: ['shirt', 'red', 'shadow red', 'men', 'casual', 'cotton'],
-      price: 1199,
-      compare_at_price: 1399,
-      currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80'],
-      in_stock: true,
-      total_inventory: 30,
-      variants: [
-        { id: 'var_red_s', sku: 'SKU-RED-S', title: 'S', price: 1199, inventory_quantity: 15, attributes: { size: 'S', color: 'Red' } },
-        { id: 'var_red_m', sku: 'SKU-RED-M', title: 'M', price: 1199, inventory_quantity: 15, attributes: { size: 'M', color: 'Red' } }
-      ],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'prod_my_black_shirt',
-      workspace_id: workspaceId,
-      title: 'Classic Linen Shirt — Obsidian Black',
-      description: 'Premium breathable 100% pure linen button-down shirt in jet obsidian black.',
-      category: 'Shirts',
-      tags: ['shirt', 'black', 'men', 'casual', 'linen', 'obsidian'],
-      price: 1399,
-      compare_at_price: 1899,
-      currency: 'INR',
-      images: ['https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80'],
-      in_stock: true,
-      total_inventory: 25,
-      variants: [
-        { id: 'var_blk_m', sku: 'SKU-BLK-M', title: 'M', price: 1399, inventory_quantity: 15, attributes: { size: 'M', color: 'Black' } },
-        { id: 'var_blk_l', sku: 'SKU-BLK-L', title: 'L', price: 1399, inventory_quantity: 10, attributes: { size: 'L', color: 'Black' } }
-      ],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ];
-
-  db.commerce_products.push(...sampleProducts);
-
-  // Add store policy knowledge chunk
-  db.knowledge_chunks.push({
-    id: generateId('chunk'),
-    document_id: 'doc_policy_01',
-    workspace_id: workspaceId,
-    chunk_index: 0,
-    content: 'Return & Exchange Policy: Customers can exchange or return unworn items within 7 days of delivery. Free doorstep reverse pickup is provided for all eligible pin codes.',
-    embedding: [0.1, 0.2, 0.3],
-    metadata: { source_name: 'Store Policies' },
-    created_at: new Date().toISOString()
-  });
+      chunk_index: 0,
+      content: 'Return & Exchange Policy: Customers can exchange or return unworn items within 7 days of delivery. Free doorstep reverse pickup is provided for all eligible pin codes.',
+      embedding: [0.1, 0.2, 0.3],
+      metadata: { source_name: 'Store Policies' },
+      created_at: new Date().toISOString()
+    });
+  }
 
   // ------------------------------------------------------------------------
   // 1. PRODUCT DISCOVERY & OCCASION QUERIES
@@ -289,6 +185,9 @@ async function runTestSuite() {
   const unseenProducts = resUnseenCat.interactive_payload?.data || [];
   assert(unseenProducts.length === 1 && unseenProducts[0].category === 'Mechanical Keyboards', 'Dynamically extracted unseen category "Mechanical Keyboards" and excluded "Ceramic Planters" with zero hardcoding');
 
+  // Clean up unseen test fixtures so database remains 100% clean
+  db.commerce_products = db.commerce_products.filter(p => p.workspace_id !== unseenWorkspaceId);
+
   // ------------------------------------------------------------------------
   // 6. DEMOGRAPHIC & ATTRIBUTE FILTERING
   // ------------------------------------------------------------------------
@@ -318,7 +217,7 @@ async function runTestSuite() {
   const hasRedMatch = redProds.some((p: any) => 
     /red|wine|maroon|crimson/i.test(p.title + ' ' + p.tags.join(' ') + ' ' + JSON.stringify(p.variants))
   );
-  assert(hasRedMatch, 'Red shirts query matches Shadow Red and Wine Red products');
+  assert(hasRedMatch, 'Red shirts query matches real red/maroon shirts');
   assert(!resRed.response_text.includes('[Product Card]'), 'No fake text tags in red shirts response');
 
   // ------------------------------------------------------------------------
@@ -349,9 +248,9 @@ async function runTestSuite() {
   assert(resCheaper.interactive_payload?.type === 'PRODUCTS', 'Comparison returns structured products for visual reference');
 
   // ------------------------------------------------------------------------
-  // 4. CONVERSATIONAL PRONOUN & ORDINAL RESOLUTION
+  // 8. CONVERSATIONAL PRONOUN & ORDINAL RESOLUTION
   // ------------------------------------------------------------------------
-  console.log(`\n${BOLD}--- 4. Contextual Pronouns & Ordinals (First, Second, That) ---${RESET}`);
+  console.log(`\n${BOLD}--- 8. Contextual Pronouns & Ordinals (First, Second, That) ---${RESET}`);
 
   // Turn 3: Add the second one to cart
   const resAddSecond = await runAgentCycle({
@@ -365,9 +264,9 @@ async function runTestSuite() {
   assert(resAddSecond.interactive_payload?.type === 'PRODUCTS', 'Returns structured card for the added item');
 
   // ------------------------------------------------------------------------
-  // 5. LIVE INVENTORY VERIFICATION
+  // 9. LIVE INVENTORY VERIFICATION
   // ------------------------------------------------------------------------
-  console.log(`\n${BOLD}--- 5. Authoritative Inventory Lookup ---${RESET}`);
+  console.log(`\n${BOLD}--- 9. Authoritative Inventory Lookup ---${RESET}`);
 
   const resInventory = await runAgentCycle({
     agent_id: agentId,
@@ -379,9 +278,9 @@ async function runTestSuite() {
   assert(/In Stock|available/i.test(resInventory.response_text), 'Authoritative inventory check verifies size M availability');
 
   // ------------------------------------------------------------------------
-  // 6. ORDER TRACKING & FULFILLMENT
+  // 10. ORDER TRACKING & FULFILLMENT
   // ------------------------------------------------------------------------
-  console.log(`\n${BOLD}--- 6. Real-Time Order Lookup ---${RESET}`);
+  console.log(`\n${BOLD}--- 10. Real-Time Order Lookup ---${RESET}`);
 
   // Seed sample order
   db.commerce_orders.push({
@@ -394,8 +293,8 @@ async function runTestSuite() {
     carrier: 'Bluedart Express',
     tracking_number: 'BLUEDART-8839201',
     shipping_address: 'Flat 402, Lotus Heights, Bengaluru, KA',
-    items: [{ product_id: 'prod_my_red_shirt', title: 'Relaxed Fit Shirt — Shadow Red', quantity: 1, price: 1199 }],
-    total_amount: 1199,
+    items: [{ product_id: 'prod_live_mumqr1q1gppk6ewj', title: 'Wild West | Relaxed Fit | Luxe Cotton Shirt', quantity: 1, price: 1499 }],
+    total_amount: 1499,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   });
@@ -411,9 +310,9 @@ async function runTestSuite() {
   assert(/IN_TRANSIT/i.test(resOrder.response_text), 'Order response reflects live order status');
 
   // ------------------------------------------------------------------------
-  // 7. RETURN & POLICY INQUIRIES
+  // 11. RETURN & POLICY INQUIRIES
   // ------------------------------------------------------------------------
-  console.log(`\n${BOLD}--- 7. Grounded Policy Inquiries ---${RESET}`);
+  console.log(`\n${BOLD}--- 11. Grounded Policy Inquiries ---${RESET}`);
 
   const resPolicy = await runAgentCycle({
     agent_id: agentId,
@@ -424,14 +323,14 @@ async function runTestSuite() {
   assert(/7|return|exchange|reverse pickup/i.test(resPolicy.response_text), 'Return policy answered from verified store knowledge chunk');
 
   // ------------------------------------------------------------------------
-  // 8. MIXED MULTI-INTENT QUERIES
+  // 12. MIXED MULTI-INTENT QUERIES
   // ------------------------------------------------------------------------
-  console.log(`\n${BOLD}--- 8. Mixed Multi-Intent (Product Discovery + Policy) ---${RESET}`);
+  console.log(`\n${BOLD}--- 12. Mixed Multi-Intent (Product Discovery + Policy) ---${RESET}`);
 
   const resMixed = await runAgentCycle({
     agent_id: agentId,
     workspace_id: workspaceId,
-    user_message: 'show me a black shirt under ₹2000 and tell me if I can return it',
+    user_message: 'show me a green shirt under ₹2000 and tell me if I can return it',
     channel: 'PLAYGROUND'
   });
   assert(resMixed.interactive_payload?.type === 'PRODUCTS', 'Mixed query returns structured product cards');
