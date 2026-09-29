@@ -3,6 +3,63 @@ import { verifyApiKey } from '@/lib/auth';
 import { runAgentCycle } from '@/lib/agent-runtime';
 import { db } from '@/lib/db';
 
+function resolveProductCards(responseText: string, userMessage: string, workspaceId: string, currentPayload?: any) {
+  if (currentPayload?.type === 'PRODUCTS' && Array.isArray(currentPayload.data) && currentPayload.data.length > 0) {
+    return currentPayload;
+  }
+
+  const respLower = (responseText || '').toLowerCase();
+  const userLower = (userMessage || '').toLowerCase();
+  const catalog = db.commerce_products.filter(p => p.workspace_id === workspaceId);
+  const matched: any[] = [];
+
+  catalog.forEach(p => {
+    const pTitle = p.title.toLowerCase();
+    if (respLower.includes(pTitle)) {
+      if (!matched.some(m => m.id === p.id)) matched.push(p);
+    } else {
+      const tokens = pTitle.split(/\s+/).filter(w => w.length >= 4);
+      if (tokens.length >= 2 && tokens.every(tok => respLower.includes(tok))) {
+        if (!matched.some(m => m.id === p.id)) matched.push(p);
+      }
+    }
+  });
+
+  const lineRegex = /(?:^|[\r\n]|•|\*|-)\s*([A-Za-z0-9\s&'()/-]{3,50}?)\s*(?:—|–|-|:)\s*(?:(?:₹|Rs\.?|\$)\s*([\d,]+)|([A-Za-z\s]{5,}))/gim;
+  let match;
+  while ((match = lineRegex.exec(responseText)) !== null) {
+    const title = match[1].trim();
+    let price = match[2] ? parseFloat(match[2].replace(/,/g, '')) : 1699;
+    
+    let existing = catalog.find(p => p.title.toLowerCase() === title.toLowerCase() || p.title.toLowerCase().includes(title.toLowerCase()));
+    if (existing) {
+      if (!matched.some(m => m.id === existing!.id)) matched.push(existing);
+    }
+  }
+
+  if (matched.length === 0 && /product|dress|women|woman|men|saree|kurta|shirt|festive|festival|combo|new|latest/i.test(userLower)) {
+    const tokens = userLower.split(/\s+/).filter(w => w.length > 2);
+    const categoryMatches = catalog.filter(p => {
+      const full = `${p.title} ${p.description} ${p.category} ${p.tags?.join(' ')}`.toLowerCase();
+      return tokens.some(tok => full.includes(tok));
+    });
+    matched.push(...categoryMatches);
+
+    if (matched.length === 0 && catalog.length > 0) {
+      matched.push(...catalog.slice(0, 4));
+    }
+  }
+
+  if (matched.length > 0) {
+    return {
+      type: 'PRODUCTS',
+      data: matched.slice(0, 6)
+    };
+  }
+
+  return currentPayload || null;
+}
+
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const authHeader = req.headers.get('Authorization') || req.headers.get('authorization') || '';
@@ -68,11 +125,17 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       channel: isPublicDeployment ? 'WEBSITE' : 'API'
     });
 
+    const finalPayload = resolveProductCards(result.response_text || '', message, workspaceId, result.interactive_payload);
+
     return NextResponse.json({
       conversation_id: result.conversation_id,
       message_id: result.message_id,
       response: result.response_text,
-      interactive_payload: result.interactive_payload,
+      interactive_payload: finalPayload,
+      metadata: {
+        products: finalPayload?.type === 'PRODUCTS' ? finalPayload.data : undefined,
+        order: finalPayload?.type === 'ORDER_TRACKING' ? finalPayload.data : undefined,
+      },
       trace: {
         latency_ms: result.trace.latency_ms,
         tokens_used: result.trace.tokens_used,
