@@ -276,7 +276,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
       const text = (matchedChunk as any).chunk_text || (matchedChunk as any).content || '';
       return text.replace(/^=+|=+$/gm, '').trim();
     }
-    return "Blue Tyga specializes in technical dailywear including UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, and cooling activewear. Free shipping across India with standard delivery in 3 to 9 working days!";
+    return `Welcome to **${brand}**! Feel free to ask about our store products, sizing, order tracking, shipping, and exchange policies.`;
   };
 
   // Phase C: Policies
@@ -388,28 +388,22 @@ Guidelines:
         responseText = sarvamProductAnswer;
       } else {
         if (matchedList.length === 1) {
-          responseText = `Here is our popular **${matchedList[0].title}**! It features high-performance breathable techwear fabric engineered for daily comfort.`;
+          responseText = `Here is our **${matchedList[0].title}**! ${matchedList[0].description ? matchedList[0].description.slice(0, 150) : ''}`;
         } else if (/new|latest|arrival/i.test(user_message)) {
-          responseText = `Here are our latest new arrivals at **${brand}**! These pieces feature our signature UPF 50+ sun protection and active cooling technology:`;
-        } else if (/jacket|sunscreen/i.test(user_message)) {
-          responseText = `Here are our top UPF 50+ Sunscreen and Thermal Jackets—engineered to protect you from harsh UV rays and AC chill without adding bulk:`;
-        } else if (/tee|tshirt|shirt/i.test(user_message)) {
-          responseText = `Here are our quick-dry, anti-odor active tees designed to keep you cool, fresh, and restricted-free all day:`;
-        } else if (/visor|balaclava|accessory|accessories|mask/i.test(user_message)) {
-          responseText = `Here are our outdoor UV protection accessories crafted for cycling, running, and daily travel:`;
+          responseText = `Here are our latest arrivals at **${brand}**:`;
         } else {
           responseText = `Here are our featured pieces from **${brand}** that match what you're looking for:`;
         }
       }
 
       if (requestedSize) {
-        responseText += `\n\n✅ Size **${requestedSize}** is in stock and ready for same-day dispatch.`;
+        responseText += `\n\n✅ Size **${requestedSize}** is in stock.`;
       }
     } else {
       // Unrestricted conversational answer for open styling, recommendations, and search
-      const naturalPrompt = `You are a helpful, knowledgeable, and friendly shopping specialist for Blue Tyga (bluetyga.com).
+      const naturalPrompt = `You are a helpful, knowledgeable, and friendly shopping specialist for ${brand}.
 The user asked a question or searched for an item. Use the store catalog and past conversation context to give a clear, accurate, and direct answer.
-If the customer asks about an item we don't have, explain politely what we do have (UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, No-Sweat Tech Tees, Cooling Headwear) and offer recommendations.`;
+If the customer asks about an item we don't have, explain politely and offer recommendations from our active collection.`;
 
       const sarvamAnswer = await callSarvamLLM(
         naturalPrompt,
@@ -421,9 +415,9 @@ If the customer asks about an item we don't have, explain politely what we do ha
       if (sarvamAnswer) {
         responseText = sarvamAnswer;
       } else if (citations.length > 0) {
-        responseText = `${citations[0].chunk_text}\n\nLet me know if you would like me to help you find something else!`;
+        responseText = `${citations[0].chunk_text}\n\nLet me know if you would like me to help you find anything else!`;
       } else {
-        responseText = "We don't currently have that specific piece listed in our collection, but we carry a wide range of UPF 50+ Sunscreen Jackets, Anti-AC Thermal Jackets, No-Sweat Tech Tees, and cooling headwear. Let me know what you're looking for!";
+        responseText = `We don't currently have that specific item listed in our collection at **${brand}**, but feel free to let me know what style or category you're looking for!`;
       }
 
       searchReturnedEmpty = true;
@@ -582,7 +576,7 @@ Core Capabilities:
       agent_id,
       conversation_id: conversation.id
     });
-    responseText = "I've let our team know! A support specialist will connect with you right here shortly. You can also reach us directly at **+91 63817 49310** or **contact@bluetyga.com**.";
+    responseText = "I've notified our support team! A specialist will connect with you right here in this chat shortly.";
   } else {
     // General freeform conversation or question -> Sarvam AI / Citations
     planningSteps.push('4. Calling Sarvam AI conversational model.');

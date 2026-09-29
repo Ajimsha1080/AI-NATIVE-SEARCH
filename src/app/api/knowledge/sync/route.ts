@@ -183,7 +183,29 @@ Comprehensive Store Intelligence & Policy Defaults:
       console.error('Products JSON crawl error:', crawlErr);
     }
 
-    return NextResponse.json({ success: true, document: doc, syncedProductsCount: db.commerce_products.filter(p => p.workspace_id === session.workspaceId).length });
+    // Auto-update active agent config brand identity to the synced store
+    const cleanBrandName = parsedHostname.replace(/^(www\.)/i, '').replace(/\.(com|in|org|net|co|io|store|shop|app)$/i, '').split('.')[0];
+    const formattedBrandName = cleanBrandName.charAt(0).toUpperCase() + cleanBrandName.slice(1);
+    
+    const activeConfigs = db.agent_configs.filter(c => {
+      const a = db.agents.find(ag => ag.id === c.agent_id);
+      return a && a.workspace_id === session.workspaceId;
+    });
+
+    activeConfigs.forEach(cfg => {
+      cfg.identity.brand_name = formattedBrandName || cfg.identity.brand_name;
+      cfg.identity.greeting = `Hello! I'm ${cfg.identity.name}, your AI shopping concierge for ${cfg.identity.brand_name}. How can I assist you today?`;
+      cfg.instructions.system_prompt = `You are ${cfg.identity.name}, the official AI commerce assistant for ${cfg.identity.brand_name}.\nResponsibilities:\n- Search store catalog and recommend products based on budget, style, and size constraints.\n- Provide real-time stock checks and answer store policy inquiries.\n- Assist customers with order tracking and return requests.\n- Strictly adhere to company return and shipping policies in the knowledge base.`;
+    });
+
+    db.scheduleSave();
+
+    return NextResponse.json({ 
+      success: true, 
+      document: doc, 
+      brandName: formattedBrandName,
+      syncedProductsCount: db.commerce_products.filter(p => p.workspace_id === session.workspaceId).length 
+    });
   } catch (err: any) {
     return NextResponse.json({ error: { message: err.message || 'URL ingestion failed' } }, { status: 500 });
   }
