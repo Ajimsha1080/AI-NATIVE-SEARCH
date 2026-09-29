@@ -68,27 +68,45 @@ export function sanitizeImageUrl(url: string | undefined | null): string {
 export function getProductFallbackImage(title?: string, category?: string, tags?: string[]): string {
   const combined = `${title || ''} ${category || ''} ${(tags || []).join(' ')}`.toLowerCase();
   
-  if (/\b(red|wine|maroon|crimson|ruby|coral|rust|cherry)\b/i.test(combined)) {
-    return 'https://cdn.shopify.com/s/files/1/0798/9710/0596/files/red-sparrow-embroidered-shirt-men-shirt-mydesignation-9055241.jpg?v=1768400762';
-  }
-  if (/\b(saree|sari|ethnic|traditional|silk)\b/i.test(combined)) {
-    return 'https://cdn.shopify.com/s/files/1/0798/9710/0596/files/royal-heritage-saree-saree-mydesignation-9088859.jpg?v=1790346254';
+  if (/\b(saree|sari|kanjivaram|banarasi|silk|georgette)\b/i.test(combined)) {
+    if (/\b(green|emerald)\b/i.test(combined)) {
+      return 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80';
+    }
+    if (/\b(yellow|floral)\b/i.test(combined)) {
+      return 'https://images.unsplash.com/photo-1610030469668-935cb17fa6b8?w=600&auto=format&fit=crop&q=80';
+    }
+    return 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=600&auto=format&fit=crop&q=80';
   }
   if (/\b(kurta|kurti|anarkali|combo|festive)\b/i.test(combined)) {
-    return 'https://cdn.shopify.com/s/files/1/0798/9710/0596/files/yellow-floral-kurta-pant-combo-box-combo-mydesignation-2391080.jpg?v=1790346252';
+    if (/\b(pant|trouser)\b/i.test(combined)) {
+      return 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&auto=format&fit=crop&q=80';
+    }
+    if (/\b(yellow|floral)\b/i.test(combined)) {
+      return 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=600&auto=format&fit=crop&q=80';
+    }
+    if (/\b(emerald|green)\b/i.test(combined)) {
+      return 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=600&auto=format&fit=crop&q=80';
+    }
+    return 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?w=600&auto=format&fit=crop&q=80';
   }
-  if (/\b(dress|frock|gown|women|ladies|girl)\b/i.test(combined)) {
-    return 'https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dragon-couple-combo-856570.jpg?v=1736815273';
+  if (/\b(red|wine|maroon|crimson|ruby|coral|rust|cherry)\b/i.test(combined)) {
+    return 'https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&auto=format&fit=crop&q=80';
+  }
+  if (/\b(corduroy|brown)\b/i.test(combined)) {
+    return 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80';
   }
   if (/\b(jogger|pant|pants|bottom|bottoms|trousers|jeans|denim)\b/i.test(combined)) {
-    return 'https://cdn.shopify.com/s/files/1/0798/9710/0596/files/bottle-green-everyday-pants-premium-cotton-968745.jpg?v=1743081831';
+    return 'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&auto=format&fit=crop&q=80';
   }
-  if (/\b(corduroy|casual|formal|button|shirt)\b/i.test(combined)) {
-    return 'https://cdn.shopify.com/s/files/1/0798/9710/0596/files/wild-west-relaxed-fit-luxe-cotton-shirt-men-shirt-mydesignation-2435595.jpg?v=1757544283';
+  if (/\b(shirt|cotton|casual|button|bamboo)\b/i.test(combined)) {
+    return 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80';
   }
   if (/\b(tee|tshirt|graphic|anime|streetwear|oversized)\b/i.test(combined)) {
-    return 'https://cdn.shopify.com/s/files/1/0798/9710/0596/files/snake-embroidered-oversized-t-shirt-mydesignation-1958453.jpg?v=1778972889';
+    return 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80';
   }
-  return 'https://cdn.shopify.com/s/files/1/0798/9710/0596/files/aristotle-relaxed-fit-premium-rayon-shirt-men-shirt-mydesignation-7158773.jpg?v=1764389887';
+  if (/\b(jacket|outerwear|sunscreen|hoodie)\b/i.test(combined)) {
+    return 'https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748';
+  }
+  return 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80';
 }
 

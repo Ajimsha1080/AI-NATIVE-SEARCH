@@ -360,7 +360,8 @@ export default function ChatBox({
                     {productsList.map((p: any) => {
                       const fallbackImg = getProductFallbackImage(p.title, p.category, p.tags);
                       const rawImg = p.imageUrl || p.images?.[0];
-                      const imgSrc = (rawImg && !rawImg.includes('red_shirt.jpg') && !rawImg.includes('saree.jpg') && !rawImg.includes('corduroy.jpg')) ? rawImg : fallbackImg;
+                      const isMismatchedJacketPlaceholder = rawImg && rawImg.includes('SJ1-1-100') && !p.category?.toLowerCase().includes('outerwear') && !p.title?.toLowerCase().includes('jacket');
+                      const imgSrc = (rawImg && !rawImg.includes('red_shirt.jpg') && !rawImg.includes('saree.jpg') && !rawImg.includes('corduroy.jpg') && !isMismatchedJacketPlaceholder) ? rawImg : fallbackImg;
                       const formattedPrice = typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price;
                       const comparePrice = p.compare_at_price || p.comparePrice;
                       const formattedComparePrice = typeof comparePrice === 'number' ? comparePrice.toLocaleString('en-IN') : comparePrice;

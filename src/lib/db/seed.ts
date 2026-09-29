@@ -473,7 +473,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'corduroy', 'men', 'navy', 'casual', 'dinner', 'apparel'],
       price: 1499.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 40,
       variants: [
@@ -492,7 +492,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'corduroy', 'men', 'brown', 'casual', 'apparel'],
       price: 1499.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 35,
       variants: [
@@ -511,7 +511,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'corduroy', 'men', 'wine', 'red', 'crimson', 'dinner', 'apparel'],
       price: 1499.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 30,
       variants: [
@@ -530,7 +530,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'corduroy', 'men', 'green', 'evergreen', 'apparel'],
       price: 1499.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 35,
       variants: [
@@ -549,7 +549,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'cotton', 'men', 'green', 'casual', 'office', 'apparel'],
       price: 1299.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 50,
       variants: [
@@ -568,7 +568,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'cotton', 'men', 'yellow', 'casual', 'summer', 'apparel'],
       price: 1299.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 45,
       variants: [
@@ -587,7 +587,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'plaid', 'men', 'brown', 'casual', 'apparel'],
       price: 1199.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 50,
       variants: [
@@ -606,7 +606,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'plaid', 'men', 'navy', 'blue', 'casual', 'apparel'],
       price: 1199.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 50,
       variants: [
@@ -625,7 +625,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'men', 'blue', 'navy', 'dinner', 'apparel'],
       price: 1299.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 40,
       variants: [
@@ -644,7 +644,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'bamboo', 'men', 'mauve', 'premium', 'luxe', 'apparel'],
       price: 2299.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 35,
       variants: [
@@ -663,7 +663,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'bamboo', 'men', 'khaki', 'premium', 'luxe', 'apparel'],
       price: 2299.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 35,
       variants: [
@@ -682,7 +682,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'bamboo', 'men', 'beige', 'premium', 'luxe', 'apparel'],
       price: 2299.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 35,
       variants: [
@@ -701,7 +701,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'bamboo', 'men', 'mauve', 'summer', 'apparel'],
       price: 1699.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 40,
       variants: [
@@ -720,7 +720,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'bamboo', 'men', 'green', 'sage', 'summer', 'apparel'],
       price: 1699.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 40,
       variants: [
@@ -739,7 +739,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['shirt', 'bamboo', 'men', 'khaki', 'summer', 'apparel'],
       price: 1699.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 40,
       variants: [
@@ -759,7 +759,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['kurta', 'ethnic', 'women', 'festive', 'wedding', 'mandala', 'embroidered', 'apparel'],
       price: 1699.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1609357605129-26f69add5d6e?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 45,
       variants: [
@@ -778,7 +778,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['kurta', 'ethnic', 'women', 'yellow floral', 'yellow', 'festive', 'apparel'],
       price: 1699.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 40,
       variants: [
@@ -797,7 +797,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['kurta', 'ethnic', 'women', 'festive', 'wedding', 'royal', 'heritage', 'apparel'],
       price: 1699.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 35,
       variants: [
@@ -816,7 +816,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['kurta', 'ethnic', 'women', 'green', 'emerald', 'festive', 'wedding', 'apparel'],
       price: 1699.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 40,
       variants: [
@@ -835,7 +835,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['kurta', 'pant', 'ethnic', 'black', 'men', 'women', 'apparel'],
       price: 899.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 60,
       variants: [
@@ -854,7 +854,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['kurta', 'pant', 'ethnic', 'white', 'men', 'women', 'apparel'],
       price: 899.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 60,
       variants: [
@@ -874,7 +874,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['saree', 'ethnic', 'women', 'yellow floral', 'yellow', 'festive', 'wedding', 'apparel'],
       price: 1699.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1610030469668-935cb17fa6b8?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 30,
       variants: [
@@ -892,7 +892,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['saree', 'ethnic', 'women', 'royal', 'heritage', 'festive', 'wedding', 'red', 'maroon', 'apparel'],
       price: 1699.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 25,
       variants: [
@@ -910,7 +910,7 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       tags: ['saree', 'ethnic', 'women', 'green', 'emerald', 'festive', 'wedding', 'silk', 'apparel'],
       price: 1999.00,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      images: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 25,
       variants: [
