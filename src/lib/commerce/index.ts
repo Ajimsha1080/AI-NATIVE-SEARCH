@@ -65,8 +65,18 @@ export class LocalCommerceProvider {
       const synonyms: Record<string, string[]> = {
         men: ['mens', 'male', 'gent', 'gents'],
         mens: ['men', 'male', 'gent', 'gents'],
-        women: ['womens', 'ladies', 'lady', 'female'],
-        womens: ['women', 'ladies', 'lady', 'female'],
+        women: ['womens', 'ladies', 'lady', 'female', 'girl', 'girls'],
+        womens: ['women', 'ladies', 'lady', 'female', 'girl', 'girls'],
+        saree: ['saree', 'sarees', 'sari', 'saris', 'drape', 'ethnic', 'silk'],
+        sarees: ['saree', 'sarees', 'sari', 'saris', 'drape', 'ethnic', 'silk'],
+        kurta: ['kurta', 'kurtas', 'kurti', 'kurtis', 'pant combo', 'box combo'],
+        kurtas: ['kurta', 'kurtas', 'kurti', 'kurtis', 'pant combo', 'box combo'],
+        dress: ['dress', 'dresses', 'saree', 'kurta', 'gown', 'outfit', 'apparel', 'festive'],
+        dresses: ['dress', 'dresses', 'saree', 'kurta', 'gown', 'outfit', 'apparel', 'festive'],
+        festive: ['festive', 'festival', 'diwali', 'celebration', 'royal', 'heritage', 'combo', 'saree', 'kurta'],
+        festival: ['festive', 'festival', 'diwali', 'celebration', 'royal', 'heritage', 'combo', 'saree', 'kurta'],
+        combo: ['combo', 'combos', 'box combo', 'couple combo', 'kurta pant combo', 'set', 'sets'],
+        combos: ['combo', 'combos', 'box combo', 'couple combo', 'kurta pant combo', 'set', 'sets'],
         cap: ['visor', 'hat', 'headwear'],
         caps: ['visor', 'hat', 'headwear'],
         hat: ['visor', 'cap', 'headwear'],
@@ -77,14 +87,21 @@ export class LocalCommerceProvider {
         mask: ['balaclava', 'face cover'],
         tee: ['tshirt', 't-shirt', 'nosweat', 'tee'],
         tees: ['tshirt', 't-shirt', 'nosweat', 'tee'],
-        shirt: ['tshirt', 't-shirt', 'nosweat', 'tee'],
-        shirts: ['tshirt', 't-shirt', 'nosweat', 'tee'],
-        top: ['tee', 'tshirt', 'jacket'],
-        tops: ['tee', 'tshirt', 'jacket'],
+        shirt: ['tshirt', 't-shirt', 'nosweat', 'tee', 'shacket', 'corduroy'],
+        shirts: ['tshirt', 't-shirt', 'nosweat', 'tee', 'shacket', 'corduroy'],
+        shacket: ['shirt', 'jacket', 'outerwear', 'shacket'],
+        top: ['tee', 'tshirt', 'jacket', 'kurti', 'top'],
+        tops: ['tee', 'tshirt', 'jacket', 'kurti', 'top'],
         hoodie: ['thermal', 'jacket', 'anti-ac'],
         hoodies: ['thermal', 'jacket', 'anti-ac'],
         jacket: ['sunscreen jacket', 'thermal', 'anti-ac'],
         jackets: ['sunscreen jacket', 'thermal', 'anti-ac'],
+        red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral'],
+        blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky'],
+        green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest'],
+        black: ['black', 'stealth', 'charcoal', 'jet', 'dark'],
+        white: ['white', 'off-white', 'off white', 'ivory', 'cream'],
+        yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon']
       };
 
       const demographicWords = new Set(['men', 'mens', 'male', 'gent', 'gents', 'guy', 'guys', 'women', 'womens', 'lady', 'ladies', 'female', 'girl', 'girls']);
@@ -100,6 +117,18 @@ export class LocalCommerceProvider {
         }
       }
 
+      const checkIsWomenProduct = (p: CommerceProduct) => {
+        const titleL = p.title.toLowerCase();
+        const tagsL = p.tags.map(t => t.toLowerCase()).join(' ');
+        const catL = (p.category || '').toLowerCase();
+        const descL = (p.description || '').toLowerCase();
+        const full = `${titleL} ${tagsL} ${catL} ${descL}`;
+        return full.includes('women') || full.includes('womens') || full.includes('female') ||
+          full.includes('saree') || full.includes('kurta') || full.includes('kurti') ||
+          full.includes('dress') || full.includes('lehenga') || full.includes('gown') ||
+          full.includes('skirt') || full.includes('blouse') || full.includes('combo');
+      };
+
       let filtered = list.filter(p => {
         const titleLower = p.title.toLowerCase();
         const tagsLower = p.tags.map(t => t.toLowerCase());
@@ -108,15 +137,15 @@ export class LocalCommerceProvider {
         const wordsInText = new Set(fullText.split(/[\s,._\-/+():;]+/));
 
         // Demographic enforcement:
-        const isWomenProduct = titleLower.includes('women') || tagsLower.includes('women') || tagsLower.includes('womens') || tagsLower.includes('female');
-        if (isMenQuery && !isWomenQuery && isWomenProduct) {
-          return false; // Exclude women's products for explicit men's query
+        const isWomenProd = checkIsWomenProduct(p);
+        if (isMenQuery && !isWomenQuery && isWomenProd && !fullText.includes('men') && !fullText.includes('couple')) {
+          return false; // Exclude exclusively women's products for explicit men's query
         }
-        if (isWomenQuery && !isMenQuery && !isWomenProduct) {
+        if (isWomenQuery && !isMenQuery && !isWomenProd) {
           return false; // Exclude men-only products for explicit women's query
         }
 
-        // If no specific product type was queried (e.g. "mens products", "men collection", "all"), return all demographic-matching items
+        // If no specific product type was queried (e.g. "women products", "new products", "all"), return all demographic-matching items
         if (searchTypeTokens.size === 0) {
           return true;
         }
@@ -132,20 +161,12 @@ export class LocalCommerceProvider {
 
       // Demographic filter refinement:
       if (isWomenQuery) {
-        const womenOnly = filtered.filter(p => {
-          const tLower = p.title.toLowerCase();
-          const tagsLower = p.tags.map(t => t.toLowerCase());
-          return tLower.includes('women') || tagsLower.includes('women') || tagsLower.includes('womens');
-        });
+        const womenOnly = filtered.filter(checkIsWomenProduct);
         if (womenOnly.length > 0) {
           filtered = womenOnly;
         }
       } else if (isMenQuery) {
-        const menOnly = filtered.filter(p => {
-          const tLower = p.title.toLowerCase();
-          const tagsLower = p.tags.map(t => t.toLowerCase());
-          return !tLower.includes('women') && !tagsLower.includes('women') && !tagsLower.includes('womens');
-        });
+        const menOnly = filtered.filter(p => !checkIsWomenProduct(p) || p.title.toLowerCase().includes('men') || p.tags.some(t => t.toLowerCase().includes('men')));
         if (menOnly.length > 0) {
           filtered = menOnly;
         }
@@ -170,8 +191,7 @@ export class LocalCommerceProvider {
         });
         list = filtered;
       } else if (tokens.length === 0 && isBroadQuery) {
-        // Pure discovery query without specific unmatched keywords -> return top catalog products
-        list = list.slice(0, 4);
+        list = list.slice(0, 6);
       } else {
         list = [];
       }
@@ -198,16 +218,43 @@ export class LocalCommerceProvider {
 
     if (params.color) {
       const colorLower = params.color.toLowerCase();
-      list = list.filter(p =>
-        p.variants.some(v => v.attributes.color?.toLowerCase().includes(colorLower))
-      );
+      const colorSynonyms: Record<string, string[]> = {
+        red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral'],
+        blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky'],
+        green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest'],
+        black: ['black', 'stealth', 'charcoal', 'jet', 'dark'],
+        white: ['white', 'off-white', 'off white', 'ivory', 'cream'],
+        yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon']
+      };
+      const colorFamily = [colorLower, ...(colorSynonyms[colorLower] || [])];
+
+      list = list.filter(p => {
+        const full = `${p.title} ${p.description} ${p.tags.join(' ')}`.toLowerCase();
+        const hasColorInText = colorFamily.some(c => full.includes(c));
+        const hasColorInVariant = p.variants.some(v => {
+          const vColor = `${v.attributes.color || ''} ${v.title || ''}`.toLowerCase();
+          return colorFamily.some(c => vColor.includes(c));
+        });
+        return hasColorInText || hasColorInVariant;
+      });
     }
 
     if (params.inStockOnly) {
       list = list.filter(p => p.in_stock && p.total_inventory > 0);
     }
 
-    return list;
+    // Deduplicate by title to ensure clean, unique product cards
+    const seenTitles = new Set<string>();
+    const deduplicated: CommerceProduct[] = [];
+    for (const p of list) {
+      const norm = p.title.trim().toLowerCase();
+      if (!seenTitles.has(norm)) {
+        seenTitles.add(norm);
+        deduplicated.push(p);
+      }
+    }
+
+    return deduplicated;
   }
 
   async getProduct(workspaceId: string, productId: string): Promise<CommerceProduct | null> {

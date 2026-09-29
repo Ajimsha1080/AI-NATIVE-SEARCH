@@ -122,7 +122,13 @@ function cleanConversationalResponse(text: string, brand: string, hasProductCard
   cleaned = cleaned.replace(/While we (?:don't|do not) have a specific [^.\n]+(?:catalog|inventory|section|collection)[^.\n]*[.\n]\s*/gi, '');
   cleaned = cleaned.replace(/As an AI(?: language model)?[^.\n]*[.\n]\s*/gi, '');
 
-  // 2. If product cards are attached and the LLM dumped a long markdown bullet list of products
+  // 2. Remove fake text-based product card annotations like [Product Card] ... — Add to Cart
+  cleaned = cleaned.replace(/\[Product Card\][^\n\r]+/gi, '');
+  cleaned = cleaned.replace(/—\s*Add to Cart/gi, '');
+  cleaned = cleaned.replace(/\[Add to Cart\]/gi, '');
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+
+  // 3. If product cards are attached and the LLM dumped a long markdown bullet list of products
   if (hasProductCards && (cleaned.includes('•') || cleaned.includes('* ') || cleaned.includes('🌟') || cleaned.includes('👕') || cleaned.includes('👖'))) {
     const parts = cleaned.split(/(?:\n\s*(?:🌟|👕|👖|👗|•|\*|-)\s*)/);
     if (parts.length > 1 && parts[0].trim().length > 20) {

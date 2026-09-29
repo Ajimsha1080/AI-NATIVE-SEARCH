@@ -51,9 +51,20 @@ function resolveProductCards(responseText: string, userMessage: string, workspac
   }
 
   if (matched.length > 0) {
+    const seenIds = new Set<string>();
+    const seenTitles = new Set<string>();
+    const uniqueMatched: any[] = [];
+    for (const p of matched) {
+      const pTitle = p.title?.trim().toLowerCase();
+      if (!seenIds.has(p.id) && !seenTitles.has(pTitle)) {
+        seenIds.add(p.id);
+        seenTitles.add(pTitle);
+        uniqueMatched.push(p);
+      }
+    }
     return {
       type: 'PRODUCTS',
-      data: matched.slice(0, 6)
+      data: uniqueMatched.slice(0, 6)
     };
   }
 
