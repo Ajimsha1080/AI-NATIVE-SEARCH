@@ -198,51 +198,57 @@ export class LocalCommerceProvider {
         return true;
       });
 
-      // 6. Multi-Signal Hybrid Ranking
+      // 6. Multi-Signal Hybrid Ranking & Relevance Filtering
+      const computeRelevance = (p: CommerceProduct) => {
+        let s = 0;
+        const tLower = p.title.toLowerCase();
+        const dLower = (p.description || '').toLowerCase();
+        const catLower = (p.category || '').toLowerCase();
+        const tagsLower = (p.tags || []).map(t => t.toLowerCase());
+
+        // Explicit category alignment
+        if (explicitCategoryMatch) {
+          const expL = explicitCategoryMatch.toLowerCase();
+          if (catLower === expL) s += 250;
+          else if (stemWord(catLower) === stemWord(expL)) s += 200;
+          if (tLower.includes(expL)) s += 150;
+        }
+
+        // Exact query match
+        if (tLower.includes(cleanQ)) s += 120;
+
+        // Lexical Content token matches
+        for (const token of contentTokens) {
+          const tokenStem = stemWord(token);
+          if (tLower.includes(token)) s += 60;
+          else if (stemWord(tLower).includes(tokenStem)) s += 40;
+
+          if (tagsLower.includes(token)) s += 30;
+          if (catLower.includes(token)) s += 25;
+          if (dLower.includes(token)) s += 15;
+        }
+
+        // Semantic use-case matches
+        for (const semTerm of matchedSemanticTerms) {
+          if (tLower.includes(semTerm)) s += 35;
+          if (tagsLower.includes(semTerm)) s += 25;
+          if (dLower.includes(semTerm)) s += 15;
+        }
+
+        return s;
+      };
+
+      // If user provided specific search tokens or explicit categories or semantic terms,
+      // require positive relevance so unrelated items are not returned for non-matching queries (e.g. 'shoes').
+      const hasSpecificSearchTerms = contentTokens.length > 0 || explicitCategoryMatch !== null || matchedSemanticTerms.size > 0;
+      if (hasSpecificSearchTerms) {
+        candidates = candidates.filter(p => computeRelevance(p) > 0);
+      }
+
       candidates.sort((a, b) => {
-        const computeScore = (p: CommerceProduct) => {
-          let s = 0;
-          const tLower = p.title.toLowerCase();
-          const dLower = (p.description || '').toLowerCase();
-          const catLower = (p.category || '').toLowerCase();
-          const tagsLower = (p.tags || []).map(t => t.toLowerCase());
-
-          // Explicit category alignment
-          if (explicitCategoryMatch) {
-            const expL = explicitCategoryMatch.toLowerCase();
-            if (catLower === expL) s += 250;
-            else if (stemWord(catLower) === stemWord(expL)) s += 200;
-            if (tLower.includes(expL)) s += 150;
-          }
-
-          // Exact query match
-          if (tLower.includes(cleanQ)) s += 120;
-
-          // Lexical Content token matches
-          for (const token of contentTokens) {
-            const tokenStem = stemWord(token);
-            if (tLower.includes(token)) s += 60;
-            else if (stemWord(tLower).includes(tokenStem)) s += 40;
-
-            if (tagsLower.includes(token)) s += 30;
-            if (catLower.includes(token)) s += 25;
-            if (dLower.includes(token)) s += 15;
-          }
-
-          // Semantic use-case matches
-          for (const semTerm of matchedSemanticTerms) {
-            if (tLower.includes(semTerm)) s += 35;
-            if (tagsLower.includes(semTerm)) s += 25;
-            if (dLower.includes(semTerm)) s += 15;
-          }
-
-          // In-Stock preference
-          if (p.in_stock && p.total_inventory > 0) s += 20;
-
-          return s;
-        };
-
-        return computeScore(b) - computeScore(a);
+        const scoreA = computeRelevance(a) + (a.in_stock && a.total_inventory > 0 ? 20 : 0);
+        const scoreB = computeRelevance(b) + (b.in_stock && b.total_inventory > 0 ? 20 : 0);
+        return scoreB - scoreA;
       });
 
       list = candidates;
