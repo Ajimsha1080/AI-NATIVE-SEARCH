@@ -11,7 +11,7 @@ import {
   Sparkles, SlidersHorizontal, BookOpen, ChevronDown, User, MessageSquare,
   ArrowUpRight, Database, CheckSquare, Square, Folder
 } from 'lucide-react';
-import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
+import { fetchWithCache, getClientCachedData, invalidateClientCache } from '@/lib/client-cache';
 import ChatBox from '@/components/chat/ChatBox';
 
 export default function KnowledgeWorkspacePage() {
@@ -252,6 +252,7 @@ export default function KnowledgeWorkspacePage() {
     try {
       const res = await fetch(`/api/knowledge?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
+        invalidateClientCache('/api/knowledge');
         setSelectedIds(prev => prev.filter(i => i !== id));
         await loadKnowledge();
       }
@@ -265,6 +266,7 @@ export default function KnowledgeWorkspacePage() {
     for (const id of selectedIds) {
       await fetch(`/api/knowledge?id=${id}`, { method: 'DELETE' });
     }
+    invalidateClientCache('/api/knowledge');
     setSelectedIds([]);
     await loadKnowledge();
   }

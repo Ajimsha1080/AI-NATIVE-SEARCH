@@ -9,7 +9,7 @@ import {
   Layers, ShoppingBag, ArrowUpRight, Plus, Sliders, Trash2
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
+import { fetchWithCache, getClientCachedData, invalidateClientCache } from '@/lib/client-cache';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>(() => getClientCachedData('/api/commerce/products')?.products || []);
@@ -72,6 +72,7 @@ export default function ProductsPage() {
     try {
       const res = await fetch('/api/commerce/sync', { method: 'POST' });
       if (res.ok) {
+        invalidateClientCache('/api/commerce/products');
         await loadProducts(true);
         showToast('Store catalog synchronized successfully!');
       }
@@ -104,6 +105,7 @@ export default function ProductsPage() {
         body: JSON.stringify({ id: productId, inventory: nextInv })
       });
       if (res.ok) {
+        invalidateClientCache('/api/commerce/products');
         showToast(`Stock updated to ${nextInv} units in real time!`);
       }
     } catch (err) {
@@ -117,6 +119,7 @@ export default function ProductsPage() {
     try {
       const res = await fetch(`/api/commerce/products?id=${productId}`, { method: 'DELETE' });
       if (res.ok) {
+        invalidateClientCache('/api/commerce/products');
         showToast('Product removed from catalog');
       }
     } catch (err) {
@@ -130,6 +133,7 @@ export default function ProductsPage() {
       for (const p of products) {
         await fetch(`/api/commerce/products?id=${p.id}`, { method: 'DELETE' });
       }
+      invalidateClientCache('/api/commerce/products');
       setProducts([]);
       showToast('All products removed from catalog');
     } catch (err) {
