@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "test:integration": "npx tsx scripts/test-integration.ts",
     "test:acceptance": "npx tsx scripts/test-acceptance.ts",
+    "test:agentic": "npx tsx scripts/test-agentic-commerce.ts",
     "seed:dev": "npx tsx scripts/seed-dev.ts",
     "test:rag": "npx tsx scripts/verify-rag-flow.ts",
     "test:routes": "npx tsx scripts/verify-routes.ts",
