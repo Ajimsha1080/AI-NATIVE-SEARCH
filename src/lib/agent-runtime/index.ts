@@ -167,10 +167,12 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   }
 
   const config = db.agent_configs.find(c => c.agent_id === agent_id) || ({
-    identity: { name: agent.name, greeting: 'Hello!', brand_name: 'Blue Tyga Store' },
+    identity: { name: agent.name, greeting: 'Hello!', brand_name: 'Store' },
     instructions: { system_prompt: 'You are an AI commerce assistant.' },
     personality: { tone: 'friendly' },
   } as unknown as AgentConfig);
+
+  const brand = config?.identity?.brand_name || agent.name || 'Store';
 
   let conversation = db.conversations.find(c => c.id === params.conversation_id);
   if (!conversation) {
@@ -360,7 +362,6 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
         latency_ms: invRes.latency_ms
       });
 
-      const brand = config.identity?.brand_name || 'Blue Tyga';
       const matchedList = searchRes.data.slice(0, 4);
       const matchedSummary = matchedList.map((p: any) => 
         `• ${p.title} (₹${typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price}) — ${p.description || p.category}`
@@ -495,7 +496,7 @@ If the customer asks about an item we don't have, explain politely and offer rec
         responseText = `You currently have **${cartRes.data.items.length}** item(s) in your bag totaling **₹${cartRes.data.total.toLocaleString('en-IN')}**.`;
         interactivePayload = cartRes.interactive_payload;
       } else {
-        responseText = `Your shopping bag is currently empty. Which Blue Tyga piece would you like to add?`;
+        responseText = `Your shopping bag is currently empty. Which item from **${brand}** would you like to add?`;
       }
     }
   } else if (detectedIntent === 'ORDER_TRACKING') {
