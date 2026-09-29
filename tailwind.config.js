@@ -11,8 +11,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-sans)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        display: ['var(--font-display)', 'var(--font-sans)', 'Inter', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-display)', 'Plus Jakarta Sans', 'var(--font-sans)', 'Geist', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['var(--font-display)', 'Plus Jakarta Sans', 'Inter', '-apple-system', 'sans-serif'],
         mono: ['var(--font-mono)', 'JetBrains Mono', 'ui-monospace', 'monospace'],
       },
     },
