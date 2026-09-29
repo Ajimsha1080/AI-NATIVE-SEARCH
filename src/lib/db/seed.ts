@@ -462,6 +462,462 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
+    },
+    // Shirts Collection
+    {
+      id: 'prod_shirt_cord_nvy',
+      workspace_id: workspace.id,
+      title: 'Corduroy Shirt: Navy',
+      description: 'Luxe fine-wale corduroy button-down shirt designed for casual styling and evening dinner occasions.',
+      category: 'Shirts',
+      tags: ['shirt', 'corduroy', 'men', 'navy', 'casual', 'dinner', 'apparel'],
+      price: 1499.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 40,
+      variants: [
+        { id: 'var_sc_nvy_m', title: 'Medium / Navy', sku: 'CS-NVY-M', price: 1499.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Navy' } },
+        { id: 'var_sc_nvy_l', title: 'Large / Navy', sku: 'CS-NVY-L', price: 1499.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Navy' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_cord_brn',
+      workspace_id: workspace.id,
+      title: 'Corduroy Shirt: Brown',
+      description: 'Rich earth-tone fine-wale corduroy shirt for relaxed weekends and layering.',
+      category: 'Shirts',
+      tags: ['shirt', 'corduroy', 'men', 'brown', 'casual', 'apparel'],
+      price: 1499.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 35,
+      variants: [
+        { id: 'var_sc_brn_m', title: 'Medium / Brown', sku: 'CS-BRN-M', price: 1499.00, inventory_quantity: 15, attributes: { size: 'M', color: 'Brown' } },
+        { id: 'var_sc_brn_l', title: 'Large / Brown', sku: 'CS-BRN-L', price: 1499.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Brown' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_cord_wine',
+      workspace_id: workspace.id,
+      title: 'Corduroy Shirt: Wine',
+      description: 'Sophisticated deep crimson wine corduroy shirt with tailored fit and mother-of-pearl buttons.',
+      category: 'Shirts',
+      tags: ['shirt', 'corduroy', 'men', 'wine', 'red', 'crimson', 'dinner', 'apparel'],
+      price: 1499.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 30,
+      variants: [
+        { id: 'var_sc_wine_m', title: 'Medium / Wine', sku: 'CS-WINE-M', price: 1499.00, inventory_quantity: 15, attributes: { size: 'M', color: 'Wine' } },
+        { id: 'var_sc_wine_l', title: 'Large / Wine', sku: 'CS-WINE-L', price: 1499.00, inventory_quantity: 15, attributes: { size: 'L', color: 'Wine' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_cord_grn',
+      workspace_id: workspace.id,
+      title: 'Corduroy Shirt: Evergreen',
+      description: 'Forest evergreen corduroy overshirt crafted from soft breathable pure cotton.',
+      category: 'Shirts',
+      tags: ['shirt', 'corduroy', 'men', 'green', 'evergreen', 'apparel'],
+      price: 1499.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 35,
+      variants: [
+        { id: 'var_sc_grn_m', title: 'Medium / Green', sku: 'CS-GRN-M', price: 1499.00, inventory_quantity: 15, attributes: { size: 'M', color: 'Green' } },
+        { id: 'var_sc_grn_l', title: 'Large / Green', sku: 'CS-GRN-L', price: 1499.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Green' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_grn_cot',
+      workspace_id: workspace.id,
+      title: 'Green Cotton Shirt',
+      description: 'Breathable lightweight green cotton shirt suited for daily office and casual wear.',
+      category: 'Shirts',
+      tags: ['shirt', 'cotton', 'men', 'green', 'casual', 'office', 'apparel'],
+      price: 1299.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 50,
+      variants: [
+        { id: 'var_gc_m', title: 'Medium / Green', sku: 'GC-M', price: 1299.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Green' } },
+        { id: 'var_gc_l', title: 'Large / Green', sku: 'GC-L', price: 1299.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Green' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_ylw_cot',
+      workspace_id: workspace.id,
+      title: 'Yellow Cotton Shirt',
+      description: 'Vibrant mustard yellow tailored cotton shirt with crisp collar and soft texture.',
+      category: 'Shirts',
+      tags: ['shirt', 'cotton', 'men', 'yellow', 'casual', 'summer', 'apparel'],
+      price: 1299.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 45,
+      variants: [
+        { id: 'var_yc_m', title: 'Medium / Yellow', sku: 'YC-M', price: 1299.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Yellow' } },
+        { id: 'var_yc_l', title: 'Large / Yellow', sku: 'YC-L', price: 1299.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Yellow' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_plaid_re',
+      workspace_id: workspace.id,
+      title: 'Plaid: Rustic Earth',
+      description: 'Classic yarn-dyed plaid check casual shirt made with premium brushed cotton.',
+      category: 'Shirts',
+      tags: ['shirt', 'plaid', 'men', 'brown', 'casual', 'apparel'],
+      price: 1199.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 50,
+      variants: [
+        { id: 'var_pre_m', title: 'Medium / Brown', sku: 'PRE-M', price: 1199.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Brown' } },
+        { id: 'var_pre_l', title: 'Large / Brown', sku: 'PRE-L', price: 1199.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Brown' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_plaid_nf',
+      workspace_id: workspace.id,
+      title: 'Plaid: Navy Frost',
+      description: 'Crisp navy and cool blue check shirt designed for all-season versatility.',
+      category: 'Shirts',
+      tags: ['shirt', 'plaid', 'men', 'navy', 'blue', 'casual', 'apparel'],
+      price: 1199.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 50,
+      variants: [
+        { id: 'var_pnf_m', title: 'Medium / Navy', sku: 'PNF-M', price: 1199.00, inventory_quantity: 25, attributes: { size: 'M', color: 'Navy' } },
+        { id: 'var_pnf_l', title: 'Large / Navy', sku: 'PNF-L', price: 1199.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Navy' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_celestial',
+      workspace_id: workspace.id,
+      title: 'Celestial Mystique',
+      description: 'Deep midnight navy printed designer casual shirt with subtle geometric motifs.',
+      category: 'Shirts',
+      tags: ['shirt', 'men', 'blue', 'navy', 'dinner', 'apparel'],
+      price: 1299.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 40,
+      variants: [
+        { id: 'var_cm_m', title: 'Medium / Navy', sku: 'CM-M', price: 1299.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Navy' } },
+        { id: 'var_cm_l', title: 'Large / Navy', sku: 'CM-L', price: 1299.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Navy' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_bamboo_mauve_fs',
+      workspace_id: workspace.id,
+      title: 'Mauve Bamboo Full Sleeve Shirt',
+      description: 'Eco-luxe organic bamboo fiber full-sleeve shirt with ultra-soft drape and natural thermo-regulation.',
+      category: 'Shirts',
+      tags: ['shirt', 'bamboo', 'men', 'mauve', 'premium', 'luxe', 'apparel'],
+      price: 2299.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 35,
+      variants: [
+        { id: 'var_bmfs_m', title: 'Medium / Mauve', sku: 'BMFS-M', price: 2299.00, inventory_quantity: 15, attributes: { size: 'M', color: 'Mauve' } },
+        { id: 'var_bmfs_l', title: 'Large / Mauve', sku: 'BMFS-L', price: 2299.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Mauve' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_bamboo_khaki_fs',
+      workspace_id: workspace.id,
+      title: 'Khaki Bamboo Full Sleeve Shirt',
+      description: 'Sophisticated khaki bamboo fiber full-sleeve shirt offering silky touch and effortless breathability.',
+      category: 'Shirts',
+      tags: ['shirt', 'bamboo', 'men', 'khaki', 'premium', 'luxe', 'apparel'],
+      price: 2299.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 35,
+      variants: [
+        { id: 'var_bkfs_m', title: 'Medium / Khaki', sku: 'BKFS-M', price: 2299.00, inventory_quantity: 15, attributes: { size: 'M', color: 'Khaki' } },
+        { id: 'var_bkfs_l', title: 'Large / Khaki', sku: 'BKFS-L', price: 2299.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Khaki' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_bamboo_beige_fs',
+      workspace_id: workspace.id,
+      title: 'Dark Beige Bamboo Full Sleeve Shirt',
+      description: 'Tailored dark beige bamboo shirt crafted with natural antimicrobial properties and elegant matte sheen.',
+      category: 'Shirts',
+      tags: ['shirt', 'bamboo', 'men', 'beige', 'premium', 'luxe', 'apparel'],
+      price: 2299.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 35,
+      variants: [
+        { id: 'var_bbfs_m', title: 'Medium / Beige', sku: 'BBFS-M', price: 2299.00, inventory_quantity: 15, attributes: { size: 'M', color: 'Beige' } },
+        { id: 'var_bbfs_l', title: 'Large / Beige', sku: 'BBFS-L', price: 2299.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Beige' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_bamboo_mauve_ss',
+      workspace_id: workspace.id,
+      title: 'Mauve Bamboo Shirt',
+      description: 'Short sleeve organic bamboo casual shirt for resort wear and warm climates.',
+      category: 'Shirts',
+      tags: ['shirt', 'bamboo', 'men', 'mauve', 'summer', 'apparel'],
+      price: 1699.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 40,
+      variants: [
+        { id: 'var_bmss_m', title: 'Medium / Mauve', sku: 'BMSS-M', price: 1699.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Mauve' } },
+        { id: 'var_bmss_l', title: 'Large / Mauve', sku: 'BMSS-L', price: 1699.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Mauve' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_bamboo_sage_ss',
+      workspace_id: workspace.id,
+      title: 'Sage Green Bamboo Shirt',
+      description: 'Subtle sage green breathable short-sleeve bamboo shirt with spread collar.',
+      category: 'Shirts',
+      tags: ['shirt', 'bamboo', 'men', 'green', 'sage', 'summer', 'apparel'],
+      price: 1699.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 40,
+      variants: [
+        { id: 'var_bsss_m', title: 'Medium / Sage', sku: 'BSSS-M', price: 1699.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Green' } },
+        { id: 'var_bsss_l', title: 'Large / Sage', sku: 'BSSS-L', price: 1699.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Green' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_shirt_bamboo_khaki_ss',
+      workspace_id: workspace.id,
+      title: 'Khaki Bamboo Shirt',
+      description: 'Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.',
+      category: 'Shirts',
+      tags: ['shirt', 'bamboo', 'men', 'khaki', 'summer', 'apparel'],
+      price: 1699.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 40,
+      variants: [
+        { id: 'var_bkss_m', title: 'Medium / Khaki', sku: 'BKSS-M', price: 1699.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Khaki' } },
+        { id: 'var_bkss_l', title: 'Large / Khaki', sku: 'BKSS-L', price: 1699.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Khaki' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    // Kurtas & Ethnic Wear Collection
+    {
+      id: 'prod_kurta_mandala',
+      workspace_id: workspace.id,
+      title: 'Mandala Elephant Embroidered Kurta',
+      description: 'Intricate royal mandala elephant embroidery on pure silk blend fabric for festive occasions and weddings.',
+      category: 'Kurtas',
+      tags: ['kurta', 'ethnic', 'women', 'festive', 'wedding', 'mandala', 'embroidered', 'apparel'],
+      price: 1699.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 45,
+      variants: [
+        { id: 'var_km_m', title: 'Medium / Teal Blue', sku: 'KM-M', price: 1699.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Teal' } },
+        { id: 'var_km_l', title: 'Large / Teal Blue', sku: 'KM-L', price: 1699.00, inventory_quantity: 25, attributes: { size: 'L', color: 'Teal' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_kurta_yellow_floral',
+      workspace_id: workspace.id,
+      title: 'Yellow Floral Kurta',
+      description: 'Bright cheerful yellow floral handcrafted festive kurta with zari work detailing.',
+      category: 'Kurtas',
+      tags: ['kurta', 'ethnic', 'women', 'yellow floral', 'yellow', 'festive', 'apparel'],
+      price: 1699.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 40,
+      variants: [
+        { id: 'var_ky_m', title: 'Medium / Yellow', sku: 'KY-M', price: 1699.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Yellow' } },
+        { id: 'var_ky_l', title: 'Large / Yellow', sku: 'KY-L', price: 1699.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Yellow' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_kurta_royal_heritage',
+      workspace_id: workspace.id,
+      title: 'Royal Heritage Kurta',
+      description: 'Majestic royal heritage long kurta with artisan hand-embroidery and mandarin collar.',
+      category: 'Kurtas',
+      tags: ['kurta', 'ethnic', 'women', 'festive', 'wedding', 'royal', 'heritage', 'apparel'],
+      price: 1699.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 35,
+      variants: [
+        { id: 'var_kr_m', title: 'Medium / Maroon', sku: 'KR-M', price: 1699.00, inventory_quantity: 15, attributes: { size: 'M', color: 'Maroon' } },
+        { id: 'var_kr_l', title: 'Large / Maroon', sku: 'KR-L', price: 1699.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Maroon' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_kurta_emerald_tiger',
+      workspace_id: workspace.id,
+      title: 'Emerald Paisley Tiger Kurta',
+      description: 'Stunning deep emerald green kurta embellished with regal paisley and tiger motifs.',
+      category: 'Kurtas',
+      tags: ['kurta', 'ethnic', 'women', 'green', 'emerald', 'festive', 'wedding', 'apparel'],
+      price: 1699.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 40,
+      variants: [
+        { id: 'var_ke_m', title: 'Medium / Emerald Green', sku: 'KE-M', price: 1699.00, inventory_quantity: 20, attributes: { size: 'M', color: 'Green' } },
+        { id: 'var_ke_l', title: 'Large / Emerald Green', sku: 'KE-L', price: 1699.00, inventory_quantity: 20, attributes: { size: 'L', color: 'Green' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_kurta_pant_blk',
+      workspace_id: workspace.id,
+      title: 'Black Kurta Pant',
+      description: 'Tailored straight-cut cotton-silk blend trousers to complement festive and formal kurtas.',
+      category: 'Kurtas',
+      tags: ['kurta', 'pant', 'ethnic', 'black', 'men', 'women', 'apparel'],
+      price: 899.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 60,
+      variants: [
+        { id: 'var_kpb_m', title: 'Medium / Black', sku: 'KPB-M', price: 899.00, inventory_quantity: 30, attributes: { size: 'M', color: 'Black' } },
+        { id: 'var_kpb_l', title: 'Large / Black', sku: 'KPB-L', price: 899.00, inventory_quantity: 30, attributes: { size: 'L', color: 'Black' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_kurta_pant_wht',
+      workspace_id: workspace.id,
+      title: 'Off White Kurta Pant',
+      description: 'Classic off-white ethnic comfort trousers with drawstring and elasticated waistband.',
+      category: 'Kurtas',
+      tags: ['kurta', 'pant', 'ethnic', 'white', 'men', 'women', 'apparel'],
+      price: 899.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 60,
+      variants: [
+        { id: 'var_kpw_m', title: 'Medium / Off White', sku: 'KPW-M', price: 899.00, inventory_quantity: 30, attributes: { size: 'M', color: 'White' } },
+        { id: 'var_kpw_l', title: 'Large / Off White', sku: 'KPW-L', price: 899.00, inventory_quantity: 30, attributes: { size: 'L', color: 'White' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    // Sarees Collection
+    {
+      id: 'prod_saree_yellow_floral',
+      workspace_id: workspace.id,
+      title: 'Yellow Floral Saree',
+      description: 'Hand-block printed yellow floral pure georgette saree with scalloped golden border.',
+      category: 'Sarees',
+      tags: ['saree', 'ethnic', 'women', 'yellow floral', 'yellow', 'festive', 'wedding', 'apparel'],
+      price: 1699.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 30,
+      variants: [
+        { id: 'var_syf_uni', title: 'Free Size / Yellow', sku: 'SYF-UNI', price: 1699.00, inventory_quantity: 30, attributes: { size: 'Free Size', color: 'Yellow' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_saree_royal_heritage',
+      workspace_id: workspace.id,
+      title: 'Royal Heritage Saree',
+      description: 'Opulent royal heritage Banarasi zari woven saree with rich pallu and contrast blouse piece.',
+      category: 'Sarees',
+      tags: ['saree', 'ethnic', 'women', 'royal', 'heritage', 'festive', 'wedding', 'red', 'maroon', 'apparel'],
+      price: 1699.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 25,
+      variants: [
+        { id: 'var_srh_uni', title: 'Free Size / Maroon', sku: 'SRH-UNI', price: 1699.00, inventory_quantity: 25, attributes: { size: 'Free Size', color: 'Maroon' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_saree_emerald_silk',
+      workspace_id: workspace.id,
+      title: 'Emerald Paisley Silk Saree',
+      description: 'Exquisite emerald green Kanjivaram silk saree with traditional paisley jaal and gold zari.',
+      category: 'Sarees',
+      tags: ['saree', 'ethnic', 'women', 'green', 'emerald', 'festive', 'wedding', 'silk', 'apparel'],
+      price: 1999.00,
+      currency: 'INR',
+      images: ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+      in_stock: true,
+      total_inventory: 25,
+      variants: [
+        { id: 'var_ses_uni', title: 'Free Size / Emerald Green', sku: 'SES-UNI', price: 1999.00, inventory_quantity: 25, attributes: { size: 'Free Size', color: 'Green' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ];
   db.commerce_products.push(...products);

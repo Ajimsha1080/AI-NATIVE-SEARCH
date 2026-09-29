@@ -28,6 +28,7 @@ function assert(condition: boolean, testName: string, failureDetail?: string) {
 }
 
 async function runTestSuite() {
+  db.reload();
   console.log(`\n${BOLD}${CYAN}================================================================${RESET}`);
   console.log(`${BOLD}${CYAN}  RUNNING AGENTIC E-COMMERCE EVALUATION TEST SUITE (18+ SCENARIOS)${RESET}`);
   console.log(`${BOLD}${CYAN}================================================================${RESET}\n`);

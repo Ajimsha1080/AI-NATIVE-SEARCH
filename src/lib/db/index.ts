@@ -168,6 +168,10 @@ class DatabaseEngine {
     }
   }
 
+  public reload(): void {
+    this.data = this.loadDatabase();
+  }
+
   public scheduleSave(): void {
     if (this.saveTimeout) {
       clearTimeout(this.saveTimeout);
