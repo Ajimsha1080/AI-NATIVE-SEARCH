@@ -268,16 +268,36 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   // Helper for dynamic local knowledge extraction if LLM is unavailable
   const dynamicFallbackAnswer = (query: string): string => {
     const qLower = query.toLowerCase();
-    const matchedChunk = workspaceChunks.find(c => {
-      const cLower = c.content.toLowerCase();
-      const tokens = qLower.split(/\s+/).filter(w => w.length > 3);
-      return tokens.some(t => cLower.includes(t));
-    }) || citations[0];
+    const queryTokens = qLower.split(/[\s,?.!]+/).filter(w => w.length >= 3);
 
-    if (matchedChunk) {
-      const text = (matchedChunk as any).chunk_text || (matchedChunk as any).content || '';
-      return text.replace(/^=+|=+$/gm, '').trim();
+    // Score all workspace chunks by relevance
+    const scoredChunks = workspaceChunks.map(c => {
+      const cText = (c.content || '').toLowerCase();
+      let score = 0;
+      queryTokens.forEach(tok => {
+        if (cText.includes(tok)) score += (tok.length > 5 ? 2 : 1);
+      });
+      return { chunk: c, score };
+    }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
+
+    if (scoredChunks.length > 0) {
+      const best = scoredChunks.slice(0, 2).map(s => s.chunk.content.replace(/^=+|=+$/gm, '').trim()).join('\n\n');
+      return best;
     }
+
+    if (citations.length > 0) {
+      return citations[0].chunk_text.replace(/^=+|=+$/gm, '').trim();
+    }
+
+    // Search workspace documents directly
+    const workspaceDocs = db.knowledge_documents.filter(d => d.workspace_id === workspace_id);
+    for (const doc of workspaceDocs) {
+      const dLower = (doc.raw_content || '').toLowerCase();
+      if (queryTokens.some(tok => dLower.includes(tok))) {
+        return doc.raw_content.slice(0, 500).trim();
+      }
+    }
+
     return `Welcome to **${brand}**! Feel free to ask about our store products, sizing, order tracking, shipping, and exchange policies.`;
   };
 
@@ -547,14 +567,13 @@ If the customer asks about an item we don't have, explain politely and offer rec
     planningSteps.push(`5. Grounding verification: ${Math.round(ragResult.grounding_verification.confidence_score * 100)}% factual confidence.`);
     
     // Call Sarvam AI with full workspace knowledge & conversation history
-    const naturalPrompt = `You are ShopMate AI, the intelligent assistant and knowledge expert for this workspace.
+    const naturalPrompt = `You are the official AI shopping concierge and knowledge specialist for ${brand}.
 
-Core Capabilities:
-- Answer questions accurately, clearly, and conversationally based on previous messages and workspace knowledge.
-- When questions relate to company policies, operational SOPs (such as BrightForge Operations SOP), internal guidelines, shipping, returns, pricing, or products, use the provided Knowledge Base Documents as your primary factual guide.
-- Explain the procedures, principles, roles, and rules described in the knowledge documents clearly and thoroughly.
-- For general questions (styling, weather suitability, science, procedures), answer helpfully and professionally.
-- Speak naturally and warmly.`;
+Strict Guidelines:
+1. ALWAYS answer the user's question directly, accurately, and thoroughly using the provided Relevant Store Knowledge Context and live product catalog.
+2. If the user asks about shipping times, delivery areas, return/exchange policies, material quality, pricing, contact details, or brand background, extract and explain the exact details from the store knowledge documents.
+3. Never use generic or ungrounded fallback statements.
+4. Speak naturally, warmly, and helpfully.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,
@@ -581,13 +600,13 @@ Core Capabilities:
   } else {
     // General freeform conversation or question -> Sarvam AI / Citations
     planningSteps.push('4. Calling Sarvam AI conversational model.');
-    const naturalPrompt = `You are ShopMate AI, the intelligent assistant and knowledge expert for this workspace.
+    const naturalPrompt = `You are the official AI shopping concierge and knowledge specialist for ${brand}.
 
-Core Capabilities:
-- Answer ANY question the user asks naturally, intelligently, and contextually based on their prior conversation queries and workspace documents.
-- When questions relate to company operations, SOP manuals (e.g. BrightForge Technologies Internal Operations SOP), policies, shipping, returns, pricing, or catalog products, use the provided knowledge base documents to explain the details thoroughly.
-- Explain the key sections, workflows, objectives, and policies directly from the knowledge context.
-- Speak naturally, warmly, and authoritatively like an experienced specialist.`;
+Strict Guidelines:
+1. Answer ANY question the customer asks naturally, intelligently, and contextually based on their prior messages and the provided workspace documents.
+2. When questions relate to store policies, shipping, delivery times, return procedures, sizing, fabric, materials, or products, explain the details directly from the provided store knowledge documents.
+3. Never use generic placeholder or ungrounded fallback responses.
+4. Speak warmly, authoritatively, and professionally.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,
