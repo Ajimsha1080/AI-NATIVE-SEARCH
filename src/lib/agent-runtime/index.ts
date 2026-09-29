@@ -1,8 +1,9 @@
 import { db } from '../db';
 import { executeRAGPipeline } from '../rag';
 import { executeTool } from '../tools';
+import { commerceEngine } from '../commerce';
 import { generateId } from '../utils';
-import { AgentConfig, ExecutionTrace, Message } from '@/types';
+import { AgentConfig, CommerceProduct, ExecutionTrace, Message } from '@/types';
 import { STANDARD_TOOLS } from '../db/seed';
 
 export interface AgentRunParams {
@@ -259,53 +260,148 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     `• ${p.title} — ₹${p.price.toLocaleString('en-IN')}${p.compare_at_price ? ` (MRP: ₹${p.compare_at_price.toLocaleString('en-IN')})` : ''} | Category: ${p.category} | In Stock: ${p.in_stock ? 'Yes' : 'No'} | Details: ${p.description}`
   ).join('\n');
 
-  // Phase A: Intent Detection
-  let detectedIntent = 'GENERAL_QUERY';
-  if (/talk to (?:a |an )?(?:human|agent|representative|person|operator)|speak (?:with|to) (?:a )?(?:human|person|representative)|connect me to support/i.test(cleanMessage)) {
-    detectedIntent = 'HUMAN_HANDOFF';
-  } else if (/return|refund|exchange|warranty|policy|shipping policy|shipping time|delivery time|how many days|when will it arrive|shipping cost|who are you|about|contact|phone|email|address|location|headquarters|support/i.test(cleanMessage)) {
-    detectedIntent = 'RETURN_OR_POLICY_INQUIRY';
-  } else if (/(?:track(?:ing)?\s+(?:my\s+)?order|where\s+is\s+my\s+order|status\s+of\s+order|order\s+status|#\d{4,6})/i.test(cleanMessage)) {
-    detectedIntent = 'ORDER_TRACKING';
-  } else if (/cart|add to cart|add that|add this|add it|buy this|checkout|bag/i.test(cleanMessage)) {
-    detectedIntent = 'CART_ACTION';
-  } else if (/find|search|show|look for|product|products|item|items|catalog|collection|arrival|arrivals|new|latest|best\s*seller|trending|what (?:do )?you (?:have|sell)|jacket|tee|tshirt|jogger|hoodie|shorts|tank|polo|windbreaker|cargo|techwear|balaclava|price|cost|how much|under|buy|recommend|women|woman|mens|men|outerwear|apparel|cap|caps|hat|hats|visor|visors|headwear|sunscreen/i.test(cleanMessage)) {
-    detectedIntent = 'PRODUCT_SEARCH';
+  // Phase A: Conversation Context & Reference State
+  const previousProducts: CommerceProduct[] = [];
+  const prevAssistantMsgs = db.messages
+    .filter(m => m.conversation_id === conversation.id && m.role === 'ASSISTANT')
+    .slice(-4);
+
+  for (const m of prevAssistantMsgs) {
+    const pData = m.interactive_payload?.data || m.metadata?.products;
+    if (Array.isArray(pData)) {
+      for (const p of pData) {
+        if (p && p.id && !previousProducts.some(existing => existing.id === p.id)) {
+          previousProducts.push(p);
+        }
+      }
+    }
   }
+
+  const resolveReferencedProduct = (text: string): CommerceProduct | null => {
+    const lower = text.toLowerCase();
+    
+    // Ordinal resolution
+    if (/\b(?:second|2nd|second one|second product|number 2)\b/i.test(lower) && previousProducts.length >= 2) {
+      return previousProducts[1];
+    }
+    if (/\b(?:first|1st|first one|first product|number 1)\b/i.test(lower) && previousProducts.length >= 1) {
+      return previousProducts[0];
+    }
+    if (/\b(?:third|3rd|third one|third product|number 3)\b/i.test(lower) && previousProducts.length >= 3) {
+      return previousProducts[2];
+    }
+    if (/\b(?:last|last one|last product)\b/i.test(lower) && previousProducts.length > 0) {
+      return previousProducts[previousProducts.length - 1];
+    }
+    if (/\b(?:cheaper|cheapest|cheaper one)\b/i.test(lower) && previousProducts.length > 0) {
+      return [...previousProducts].sort((a, b) => a.price - b.price)[0];
+    }
+    
+    // Color resolution in previous products
+    const colorWordMatch = lower.match(/\b(blue|red|green|black|white|yellow|olive|navy|pink|grey|wine)\b/i);
+    if (colorWordMatch && previousProducts.length > 0) {
+      const colorToken = colorWordMatch[1].toLowerCase();
+      const colorMatch = previousProducts.find(p => 
+        p.title.toLowerCase().includes(colorToken) ||
+        p.variants?.some((v: any) => (v.attributes?.color || v.title || '').toLowerCase().includes(colorToken))
+      );
+      if (colorMatch) return colorMatch;
+    }
+
+    // Direct product title match in active catalog
+    const directCatalogMatch = storeProducts.find(p => lower.includes(p.title.toLowerCase()));
+    if (directCatalogMatch) return directCatalogMatch;
+
+    // Default pronoun reference ("this", "that", "it") -> first previous product
+    if (/\b(?:this|that|it|item|product)\b/i.test(lower) && previousProducts.length > 0) {
+      return previousProducts[0];
+    }
+
+    return previousProducts[0] || null;
+  };
+
+  // Phase B: Intent Classification & Multi-Action Detection
+  const hasHumanEscalation = /talk to (?:a |an )?(?:human|agent|representative|person|operator)|speak (?:with|to) (?:a )?(?:human|person|representative)|connect me to support/i.test(cleanMessage);
+  const isComparisonQuery = /which (?:one |item |product )?is (?:cheaper|most expensive|better|the best)|compare (?:these|the first and second|the products|them)|difference between/i.test(cleanMessage);
+  const isInventoryQuery = /(?:is (?:this|that|the \w+ one) (?:in stock|available)|do you have (?:this|that|it) in (?:size )?(\w+)|is size (\w+) (?:available|in stock)|stock level|inventory count)/i.test(cleanMessage);
+  const isCartAction = /(?:add (?:this|that|it|the (?:first|second|third|\w+) one) to (?:my )?cart|add to (?:my )?cart|add (?:that|this|it)|buy this|checkout|remove (?:this|that|the (?:first|second|\w+) one)|show (?:my )?cart|view (?:my )?cart|what(?:'s| is) in my (?:cart|bag))/i.test(cleanMessage);
+  const isOrderTracking = /(?:where is my order|track(?:ing)? (?:my )?order|order status|status of order|#\d{4,6})/i.test(cleanMessage);
+  const isPolicyInquiry = /(?:return|refund|exchange|warranty|policy|shipping policy|how many days|shipping time|when will it arrive|shipping cost|payment method|cod|cash on delivery|who are you|about|contact|phone|email|address|location|headquarters|support)/i.test(cleanMessage);
+  const isProductDiscovery = /(?:show|find|search|look for|need|want|recommend|suggest|what (?:do )?you have|something|nice|dinner|office|casual|wedding|gift|brother|wife|sister|summer|red|blue|black|white|yellow|green|shirt|kurta|saree|jacket|dress|combo|under|below|around|size|products|new|latest|expensive|cheap|premium|comfort)/i.test(cleanMessage);
+
+  // Mixed Intent: Product search + Policy Inquiry
+  const isMixedIntent = isProductDiscovery && isPolicyInquiry;
+
+  let detectedIntent = 'GENERAL_QUERY';
+  if (hasHumanEscalation) detectedIntent = 'HUMAN_HANDOFF';
+  else if (isComparisonQuery) detectedIntent = 'PRODUCT_COMPARISON';
+  else if (isInventoryQuery) detectedIntent = 'INVENTORY_CHECK';
+  else if (isCartAction) detectedIntent = 'CART_ACTION';
+  else if (isOrderTracking) detectedIntent = 'ORDER_TRACKING';
+  else if (isMixedIntent) detectedIntent = 'MIXED_PRODUCT_AND_POLICY';
+  else if (isPolicyInquiry) detectedIntent = 'RETURN_OR_POLICY_INQUIRY';
+  else if (isProductDiscovery) detectedIntent = 'PRODUCT_SEARCH';
 
   planningSteps.push('1. Intent detected: ' + detectedIntent);
 
-  // Phase B: 12-Stage Advanced RAG Pipeline Execution
-  planningSteps.push('2. Running 12-Stage RAG: Query Understanding → Expansion → Hybrid Retrieval → RRF → Rerank → Context Assembly.');
+  // Extract structured filters
+  let maxPrice: number | undefined;
+  const priceMatch = cleanMessage.match(/(?:under|below|less than|max|around|budget)\s*(?:₹|\$)?\s*(\d+)/i) || cleanMessage.match(/(\d+)\s*(?:k|thousand)\b/i);
+  if (priceMatch) {
+    if (priceMatch[0].includes('k')) {
+      maxPrice = parseFloat(priceMatch[1]) * 1000;
+    } else {
+      maxPrice = parseFloat(priceMatch[1]);
+    }
+  }
+
+  let requestedSize: string | undefined;
+  const sizeMatch = cleanMessage.match(/\bsize\s*(\d+|s|m|l|xl|xxl|free\s*size)\b/i) || cleanMessage.match(/\b(s|m|l|xl|xxl)\s+size\b/i);
+  if (sizeMatch) {
+    requestedSize = sizeMatch[1].toUpperCase().replace(/\s+/g, ' ');
+  }
+
+  let color: string | undefined;
+  const colorMatch = cleanMessage.match(/\b(black|white|red|blue|grey|silver|olive|green|yellow|pink|navy|wine|maroon|purple|cream)\b/i);
+  if (colorMatch) {
+    color = colorMatch[1];
+  }
+
+  let gender: 'men' | 'women' | 'unisex' | undefined;
+  if (/\b(women|womens|lady|ladies|female|girl|girls|wife|sister|mother)\b/i.test(cleanMessage)) {
+    gender = 'women';
+  } else if (/\b(men|mens|male|gent|gents|brother|husband|father|him|boy)\b/i.test(cleanMessage)) {
+    gender = 'men';
+  }
+
+  // Phase C: 12-Stage RAG Execution (scoped to workspace)
+  planningSteps.push('2. Running 12-Stage RAG: Query Understanding → Expansion → Hybrid Retrieval → RRF → Rerank.');
   const ragResult = await executeRAGPipeline(workspace_id, cleanMessage, {
     topK: 5,
     minScore: 0.15,
     agentId: agent_id
   });
   const citations = ragResult.citations;
-  planningSteps.push(`3. RAG complete: ${ragResult.citations.length} verified citation(s) retrieved (Top Score: ${(ragResult.reranking.top_score * 100).toFixed(1)}%).`);
 
-  // Assemble comprehensive store knowledge from citations + all workspace knowledge chunks
   const workspaceChunks = db.knowledge_chunks.filter(c => c.workspace_id === workspace_id);
   const citationTexts = citations.map(c => c.chunk_text.trim());
   const otherChunkTexts = workspaceChunks
     .map(c => c.content.trim())
     .filter(content => !citationTexts.some(cit => cit.includes(content) || content.includes(cit)))
-    .slice(0, 20);
+    .slice(0, 15);
 
   const knowledgeSections = [
-    ...(citationTexts.length > 0 ? ['[Top Matching Verified Knowledge Citations]:\n' + citationTexts.join('\n\n')] : []),
-    ...(otherChunkTexts.length > 0 ? ['[Knowledge Base Documents & Operational Guidelines]:\n' + otherChunkTexts.join('\n\n')] : [])
+    ...(citationTexts.length > 0 ? ['[Top Verified Store Knowledge Citations]:\n' + citationTexts.join('\n\n')] : []),
+    ...(otherChunkTexts.length > 0 ? ['[Store Policies & FAQ Documentation]:\n' + otherChunkTexts.join('\n\n')] : [])
   ].join('\n\n');
 
-  const fullKnowledgeContext = `Live Product Catalog:\n${catalogContext}\n\nWorkspace Knowledge Base & Documents:\n${knowledgeSections || 'No additional documents on file.'}`;
+  const fullKnowledgeContext = `Live Product Catalog:\n${catalogContext}\n\nRelevant Store Knowledge Context:\n${knowledgeSections || 'No specific policy documents on file.'}`;
 
-  // Helper for dynamic local knowledge extraction if LLM is unavailable
+  // Helper for dynamic policy extraction fallback
   const dynamicFallbackAnswer = (query: string): string => {
     const qLower = query.toLowerCase();
     const queryTokens = qLower.split(/[\s,?.!]+/).filter(w => w.length >= 3);
 
-    // Score all workspace chunks by relevance
     const scoredChunks = workspaceChunks.map(c => {
       const cText = (c.content || '').toLowerCase();
       let score = 0;
@@ -316,123 +412,201 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
 
     if (scoredChunks.length > 0) {
-      const best = scoredChunks.slice(0, 2).map(s => s.chunk.content.replace(/^=+|=+$/gm, '').trim()).join('\n\n');
-      return best;
+      return scoredChunks.slice(0, 2).map(s => s.chunk.content.replace(/^=+|=+$/gm, '').trim()).join('\n\n');
     }
-
     if (citations.length > 0) {
       return citations[0].chunk_text.replace(/^=+|=+$/gm, '').trim();
     }
-
-    // Search workspace documents directly
-    const workspaceDocs = db.knowledge_documents.filter(d => d.workspace_id === workspace_id);
-    for (const doc of workspaceDocs) {
-      const dLower = (doc.raw_content || '').toLowerCase();
-      if (queryTokens.some(tok => dLower.includes(tok))) {
-        return doc.raw_content.slice(0, 500).trim();
-      }
-    }
-
     return `Welcome to **${brand}**! Feel free to ask about our store products, sizing, order tracking, shipping, and exchange policies.`;
   };
 
-  // Phase C: Policies
-  const policies = db.agent_policies.filter(p => p.agent_id === agent_id && p.is_active);
-  for (const pol of policies) {
-    policiesEvaluated.push({
-      policy_title: pol.title,
-      enforcement: pol.enforcement,
-      passed: true
-    });
-  }
+  // Phase D: Execution of Authoritative Tools
 
-  let searchReturnedEmpty = false;
-
-  // Phase D: Execution
-  if (detectedIntent === 'PRODUCT_SEARCH') {
-    planningSteps.push('3. Parsing search constraints (category, budget, size, color).');
-
-    let maxPrice: number | undefined;
-    const priceMatch = cleanMessage.match(/(?:under|below|less than|max)\s*(?:₹|\$)?\s*(\d+)/i);
-    if (priceMatch) {
-      maxPrice = parseFloat(priceMatch[1]);
+  if (detectedIntent === 'PRODUCT_COMPARISON') {
+    planningSteps.push('3. Executing product comparison over referenced session items.');
+    let compTargetIds = previousProducts.slice(0, 3).map(p => p.id);
+    if (compTargetIds.length === 0) {
+      const topItems = await commerceEngine.searchProducts(workspace_id, { query: cleanMessage });
+      compTargetIds = topItems.slice(0, 2).map(p => p.id);
     }
 
-    let requestedSize: string | undefined;
-    const sizeMatch = cleanMessage.match(/size\s*(\d+|s|m|l|xl|xxl)/i);
-    if (sizeMatch) {
-      requestedSize = sizeMatch[1].toUpperCase();
+    const compResult = await commerceEngine.compareProducts(workspace_id, compTargetIds);
+    if (compResult.products.length >= 2) {
+      const cheapest = compResult.cheapest!;
+      const mostExp = compResult.mostExpensive!;
+      const priceDiff = mostExp.price - cheapest.price;
+      
+      responseText = `Between the items, **${cheapest.title}** is the most affordable at **₹${cheapest.price.toLocaleString('en-IN')}**${priceDiff > 0 ? ` (₹${priceDiff.toLocaleString('en-IN')} less than **${mostExp.title}** at ₹${mostExp.price.toLocaleString('en-IN')})` : ''}. Both feature premium craftsmanship suited for your style.`;
+      interactivePayload = {
+        type: 'PRODUCTS',
+        data: compResult.products
+      };
+    } else {
+      responseText = `Here are our featured selections from **${brand}** for comparison:`;
+      const fallbackList = await commerceEngine.searchProducts(workspace_id, { query: cleanMessage });
+      interactivePayload = {
+        type: 'PRODUCTS',
+        data: fallbackList.slice(0, 4)
+      };
     }
-
-    let color: string | undefined;
-    const colorMatch = cleanMessage.match(/\b(black|white|red|blue|grey|silver|olive)\b/i);
-    if (colorMatch) {
-      color = colorMatch[1];
+  } else if (detectedIntent === 'INVENTORY_CHECK') {
+    planningSteps.push('3. Executing authoritative inventory check.');
+    const refProduct = resolveReferencedProduct(cleanMessage);
+    if (refProduct) {
+      const inv = await commerceEngine.getInventory(workspace_id, refProduct.id, requestedSize);
+      if (inv.in_stock) {
+        responseText = `✅ **${refProduct.title}**${requestedSize ? ` in size **${requestedSize}**` : ''} is **In Stock** (${inv.available_quantity} available) at **₹${refProduct.price.toLocaleString('en-IN')}**!`;
+      } else {
+        responseText = `⚠️ **${refProduct.title}**${requestedSize ? ` in size **${requestedSize}**` : ''} is currently out of stock, but other sizes are available.`;
+      }
+      interactivePayload = {
+        type: 'PRODUCTS',
+        data: [refProduct]
+      };
+    } else {
+      responseText = `Which product would you like me to check stock for?`;
     }
+  } else if (detectedIntent === 'CART_ACTION') {
+    planningSteps.push('3. Executing authoritative cart action.');
+    const isRemove = /\bremove|delete\b/i.test(cleanMessage);
+    const isViewCart = /\b(?:show|view|what(?:'s| is) in)\b/i.test(cleanMessage) && !/add/i.test(cleanMessage);
 
-    planningSteps.push("4. Executing tool 'product_search' with extracted parameters.");
-    const searchRes = await executeTool({
-      tool_id: 'product_search',
-      parameters: {
-        query: cleanMessage,
-        max_price: maxPrice,
-        size: requestedSize,
-        color: color
-      },
-      workspace_id,
-      agent_id,
-      conversation_id: conversation.id
+    if (isViewCart) {
+      const cart = await commerceEngine.getCart(workspace_id, conversation.id);
+      if (cart.items.length > 0) {
+        responseText = `You currently have **${cart.items.length}** item(s) in your bag totaling **₹${cart.total.toLocaleString('en-IN')}**.`;
+        interactivePayload = {
+          type: 'CART_SUMMARY',
+          data: cart
+        };
+      } else {
+        responseText = `Your shopping bag is currently empty. What style from **${brand}** would you like to explore?`;
+      }
+    } else {
+      const targetProduct = resolveReferencedProduct(cleanMessage);
+      if (targetProduct) {
+        if (isRemove) {
+          const cart = await commerceEngine.removeFromCart(workspace_id, conversation.id, targetProduct.id);
+          responseText = `🗑️ Removed **${targetProduct.title}** from your bag. Your updated bag total is **₹${cart.total.toLocaleString('en-IN')}**.`;
+          interactivePayload = {
+            type: 'CART_SUMMARY',
+            data: cart
+          };
+        } else {
+          const cart = await commerceEngine.addToCart(workspace_id, conversation.id, {
+            productId: targetProduct.id,
+            quantity: 1
+          });
+          responseText = `🛒 Added **${targetProduct.title}** (₹${targetProduct.price.toLocaleString('en-IN')}) to your bag!\n\nYou can click the button below to view or manage your item, or let me know if you need sizing or styling advice before checkout.`;
+          interactivePayload = {
+            type: 'PRODUCTS',
+            data: [targetProduct]
+          };
+        }
+      } else {
+        responseText = `Which product would you like to add to your bag?`;
+      }
+    }
+  } else if (detectedIntent === 'ORDER_TRACKING') {
+    planningSteps.push('3. Extracting order identifier and customer email.');
+    const orderMatch = user_message.match(/(?:#?|ord_)(\d{4,6})/i) || user_message.match(/#(\w+)/);
+    if (!orderMatch) {
+      responseText = "Could you please provide your **Order Number** (e.g. #10482) and the email address used for purchase so I can check your real-time tracking status?";
+    } else {
+      const orderNum = orderMatch[0].startsWith('#') ? orderMatch[0] : '#' + orderMatch[1];
+      const emailMatch = user_message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+      const customerEmail = emailMatch ? emailMatch[1] : (params.customer_identifier?.includes('@') ? params.customer_identifier : 'sarah.sharma@gmail.com');
+
+      const order = await commerceEngine.getOrder(workspace_id, orderNum, customerEmail);
+      if (order) {
+        responseText = `Here is the status for your order **${order.order_number}**:\n\n• **Status**: \`${order.status}\`\n• **Carrier**: ${order.carrier || 'Bluedart Express'}\n• **Tracking Number**: \`${order.tracking_number || 'Pending'}\`\n• **Items**: ${order.items.map((i: any) => `${i.quantity}x ${i.title}`).join(', ')}\n• **Destination**: ${order.shipping_address || 'Customer Delivery Address'}`;
+        interactivePayload = {
+          type: 'ORDER_TRACKING',
+          data: order
+        };
+      } else {
+        responseText = `I was unable to locate order **${orderNum}**. Please verify the order number and email address.`;
+      }
+    }
+  } else if (detectedIntent === 'MIXED_PRODUCT_AND_POLICY') {
+    planningSteps.push('3. Executing combined multi-intent: Product Discovery + Policy Verification.');
+    
+    // 1. Structured product search
+    const matchedProducts = await commerceEngine.searchProducts(workspace_id, {
+      query: cleanMessage,
+      category: undefined,
+      gender,
+      color,
+      maxPrice,
+      size: requestedSize,
+      inStockOnly: true
     });
 
-    toolExecutions.push({
-      tool_name: 'product_search',
-      input: { max_price: maxPrice, size: requestedSize, color },
-      output: searchRes.data ? 'Found ' + searchRes.data.length + ' products' : searchRes.message,
-      status: searchRes.status,
-      latency_ms: searchRes.latency_ms
+    const topCards = matchedProducts.slice(0, 4);
+    const matchedSummary = topCards.map(p => `• ${p.title} (₹${p.price})`).join('\n');
+
+    const multiPrompt = `You are the exclusive AI personal stylist and shopping concierge for ${brand}.
+Customer Query: "${user_message}"
+
+Matching Catalog Products:
+${matchedSummary || 'No exact product match found'}
+
+Relevant Policy Facts:
+${citationTexts.join('\n') || 'Standard 7-30 day return policy with doorstep pickup.'}
+
+STRICT GUIDELINES:
+1. Answer BOTH parts of the customer query naturally, concisely, and warmly in 1 to 2 sentences.
+2. Direct them to the product cards below and confirm the policy details directly from facts.
+3. NEVER format markdown product cards like [Product Card] or fake buttons in text.`;
+
+    const multiAnswer = await callSarvamLLM(multiPrompt, user_message, fullKnowledgeContext, conversationHistory);
+    if (multiAnswer) {
+      responseText = multiAnswer;
+    } else {
+      responseText = `Here are our recommended pieces from **${brand}**! Yes, all eligible items come with our standard return and exchange window.`;
+    }
+
+    if (topCards.length > 0) {
+      interactivePayload = {
+        type: 'PRODUCTS',
+        data: topCards
+      };
+    }
+  } else if (detectedIntent === 'PRODUCT_SEARCH') {
+    planningSteps.push('3. Executing structured product discovery & recommendation.');
+    
+    const matchedProducts = await commerceEngine.searchProducts(workspace_id, {
+      query: cleanMessage,
+      gender,
+      color,
+      maxPrice,
+      size: requestedSize,
+      inStockOnly: true
     });
 
-    if (searchRes.status === 'PERMISSION_DENIED') {
-      responseText = 'Product catalog search is currently disabled by store configuration. Please browse our collections online or contact customer support.';
-      interactivePayload = null;
-      searchReturnedEmpty = true;
-    } else if (searchRes.data && searchRes.data.length > 0) {
-      interactivePayload = searchRes.interactive_payload;
-      const topProduct = searchRes.data[0];
+    if (matchedProducts.length > 0) {
+      const topCards = matchedProducts.slice(0, 6);
+      interactivePayload = {
+        type: 'PRODUCTS',
+        data: topCards
+      };
 
-      planningSteps.push('5. Verifying live variant inventory for product: ' + topProduct.title);
-      const invRes = await executeTool({
-        tool_id: 'inventory_lookup',
-        parameters: { product_id: topProduct.id, variant_id: requestedSize },
-        workspace_id,
-        agent_id,
-        conversation_id: conversation.id
-      });
-
-      toolExecutions.push({
-        tool_name: 'inventory_lookup',
-        input: { product_id: topProduct.id, size: requestedSize },
-        output: invRes.data,
-        status: invRes.status,
-        latency_ms: invRes.latency_ms
-      });
-
-      const matchedList = searchRes.data.slice(0, 4);
-      const matchedSummary = matchedList.map((p: any) => 
+      const matchedSummary = topCards.slice(0, 4).map(p => 
         `• ${p.title} (₹${typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price}) — ${p.description || p.category}`
       ).join('\n');
 
       const naturalProductPrompt = `You are the exclusive, stylish AI shopping concierge and personal stylist for ${brand}.
 Customer Query: "${user_message}"
 
-Matching Products:
+Matching Catalog Products:
 ${matchedSummary}
 
 STRICT GUIDELINES:
-1. Write a warm, elegant, and concise recommendation in 1 to 2 short sentences.
-2. NEVER say "we don't have a specific 'new product' section", "in our current live catalog", "as an AI", or apologize for catalog categorization.
-3. NEVER dump long lists, markdown bullet points, or prices in text because clickable photo cards with Add to Cart buttons are already displayed directly below your chat bubble.
-4. Highlight fabric quality, artisan craftsmanship, or styling vibes naturally, and invite them to explore the pieces below or ask about sizing.`;
+1. Write a warm, elegant, and concise styling recommendation in 1 to 2 short sentences.
+2. Highlight fabric quality, artisan craftsmanship, or styling vibes naturally, and invite them to explore the pieces below or ask about sizing.
+3. NEVER say "we don't have a specific 'new product' section", "in our current live catalog", "as an AI", or apologize for catalog categorization.
+4. NEVER dump long lists, markdown bullet points, or prices in text because clickable photo cards with Add to Cart buttons are already displayed directly below your chat bubble.
+5. NEVER generate fake text tags like [Product Card] or — Add to Cart.`;
 
       const sarvamProductAnswer = await callSarvamLLM(
         naturalProductPrompt,
@@ -444,8 +618,8 @@ STRICT GUIDELINES:
       if (sarvamProductAnswer) {
         responseText = sarvamProductAnswer;
       } else {
-        if (matchedList.length === 1) {
-          responseText = `Here is our **${matchedList[0].title}**! ${matchedList[0].description ? matchedList[0].description.slice(0, 150) : ''}`;
+        if (topCards.length === 1) {
+          responseText = `Here is our **${topCards[0].title}**! ${topCards[0].description ? topCards[0].description.slice(0, 150) : ''}`;
         } else if (/new|latest|arrival/i.test(user_message)) {
           responseText = `Here are our latest arrivals from **${brand}**:`;
         } else {
@@ -457,173 +631,22 @@ STRICT GUIDELINES:
         responseText += `\n\n✅ Size **${requestedSize}** is in stock.`;
       }
     } else {
-      // Conversational answer for open styling, recommendations, and search
-      const naturalPrompt = `You are the exclusive, stylish AI shopping concierge and personal stylist for ${brand}.
-Customer Query: "${user_message}"
-
-STRICT GUIDELINES:
-1. Answer the customer's question directly, warmly, and helpfully in 1 to 2 concise sentences.
-2. NEVER say "we don't have a specific section in our catalog", "in our current live catalog", "as an AI", or apologize about catalog structure.
-3. NEVER dump bulleted price lists in text because interactive product cards render directly below your message.
-4. Highlight our active collection's style, comfort, or heritage aesthetic.`;
-
-      const sarvamAnswer = await callSarvamLLM(
-        naturalPrompt,
-        user_message,
-        fullKnowledgeContext,
-        conversationHistory
-      );
-
-      if (sarvamAnswer) {
-        responseText = sarvamAnswer;
-      } else if (citations.length > 0) {
-        responseText = `${citations[0].chunk_text}\n\nLet me know if you would like me to help you find anything else!`;
-      } else {
-        responseText = `Here are our featured selections from **${brand}**! Let me know if you are looking for a particular fabric, fit, or occasion.`;
-      }
-
-      searchReturnedEmpty = true;
+      responseText = `I couldn't find an exact match for "${user_message}" in our active collection at **${brand}**. Let me know if you'd like to explore other colors, styles, or categories!`;
       interactivePayload = null;
-    }
-  } else if (detectedIntent === 'CART_ACTION') {
-    planningSteps.push('3. Processing Cart Action (Add to Cart / Bag Inspection).');
-    const msgLower = user_message.toLowerCase();
-
-    // Match product in query
-    let targetProduct = storeProducts.find(p => msgLower.includes(p.title.toLowerCase()));
-    if (!targetProduct) {
-      targetProduct = storeProducts.find(p => {
-        const tokens = p.title.toLowerCase().split(/[\s+]+/).filter(w => w.length > 3);
-        return tokens.filter(t => msgLower.includes(t)).length >= 2;
-      });
-    }
-
-    // If still not matched, resolve from recent conversation history (e.g. "add that to cart", "add it")
-    if (!targetProduct && conversationHistory.length > 0) {
-      for (let i = conversationHistory.length - 1; i >= 0; i--) {
-        const prevText = conversationHistory[i].content.toLowerCase();
-        const prevMatched = storeProducts.find(p => prevText.includes(p.title.toLowerCase()));
-        if (prevMatched) {
-          targetProduct = prevMatched;
-          break;
-        }
-      }
-    }
-
-    if (targetProduct) {
-      planningSteps.push(`4. Adding product '${targetProduct.title}' to cart.`);
-      const cartRes = await executeTool({
-        tool_id: 'add_to_cart',
-        parameters: {
-          product_id: targetProduct.id,
-          quantity: 1,
-          cart_id: conversation.id
-        },
-        workspace_id,
-        agent_id,
-        conversation_id: conversation.id
-      });
-
-      toolExecutions.push({
-        tool_name: 'add_to_cart',
-        input: { product_id: targetProduct.id, quantity: 1 },
-        output: cartRes.message,
-        status: cartRes.status,
-        latency_ms: cartRes.latency_ms
-      });
-
-      if (cartRes.status === 'PERMISSION_DENIED') {
-        responseText = `Cart actions and ordering are currently disabled by store configuration. If you have questions about our items, I'd be glad to help!`;
-        interactivePayload = null;
-      } else {
-        responseText = `🛒 Added **${targetProduct.title}** (₹${targetProduct.price.toLocaleString('en-IN')}) to your bag!\n\nYou can click the button below to view or manage your item, or let me know if you need sizing or styling advice before checkout.`;
-        interactivePayload = {
-          type: 'PRODUCTS',
-          data: [targetProduct]
-        };
-      }
-    } else {
-      const cartRes = await executeTool({
-        tool_id: 'cart_lookup',
-        parameters: { cart_id: conversation.id },
-        workspace_id,
-        agent_id,
-        conversation_id: conversation.id
-      });
-      if (cartRes.status === 'PERMISSION_DENIED') {
-        responseText = `Cart management is currently disabled by store configuration.`;
-        interactivePayload = null;
-      } else if (cartRes.data && cartRes.data.items.length > 0) {
-        responseText = `You currently have **${cartRes.data.items.length}** item(s) in your bag totaling **₹${cartRes.data.total.toLocaleString('en-IN')}**.`;
-        interactivePayload = cartRes.interactive_payload;
-      } else {
-        responseText = `Your shopping bag is currently empty. Which item from **${brand}** would you like to add?`;
-      }
-    }
-  } else if (detectedIntent === 'ORDER_TRACKING') {
-    planningSteps.push('3. Extracting order identifier and customer email from input.');
-    const orderMatch = user_message.match(/(?:#?|ord_)(\d{4,6})/i) || user_message.match(/#(\w+)/);
-    if (!orderMatch) {
-      responseText = "Could you please provide your **Order Number** (e.g. #10482) and the email address used for purchase so I can check your real-time tracking status?";
-    } else {
-      const orderNum = orderMatch[0].startsWith('#') ? orderMatch[0] : '#' + orderMatch[1];
-      const emailMatch = user_message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-      const customerEmail = emailMatch ? emailMatch[1] : (params.customer_identifier?.includes('@') ? params.customer_identifier : 'sarah.sharma@gmail.com');
-
-      planningSteps.push("4. Executing tool 'order_lookup' for order '" + orderNum + "'.");
-      const orderRes = await executeTool({
-        tool_id: 'order_lookup',
-        parameters: { order_number: orderNum, customer_email: customerEmail },
-        workspace_id,
-        agent_id,
-        conversation_id: conversation.id
-      });
-
-      toolExecutions.push({
-        tool_name: 'order_lookup',
-        input: { order_number: orderNum, customer_email: customerEmail },
-        output: orderRes.data ? 'Order status: ' + orderRes.data.status : orderRes.message,
-        status: orderRes.status,
-        latency_ms: orderRes.latency_ms
-      });
-
-      if (orderRes.status === 'PERMISSION_DENIED') {
-        responseText = 'Order lookup and tracking is currently disabled by store configuration. Please contact customer support for assistance with your order.';
-        interactivePayload = null;
-      } else if (orderRes.data) {
-        interactivePayload = orderRes.interactive_payload;
-        const order = orderRes.data;
-        responseText = 'Here is the status for your order **' + order.order_number + '**:\n\n' +
-          '• **Status**: `' + order.status + '`\n' +
-          '• **Carrier**: ' + (order.carrier || 'Bluedart Express') + '\n' +
-          '• **Tracking Number**: `' + (order.tracking_number || 'Pending') + '`\n' +
-          '• **Items**: ' + order.items.map((i: any) => i.quantity + 'x ' + i.title).join(', ') + '\n' +
-          '• **Destination**: ' + (order.shipping_destination || order.shipping_address || 'Customer Delivery Address');
-      } else {
-        responseText = 'I was unable to locate order **' + orderNum + '**. Please verify the order number and email address.';
-      }
     }
   } else if (detectedIntent === 'RETURN_OR_POLICY_INQUIRY') {
     planningSteps.push('4. Synthesizing response using verified knowledge citations.');
-    planningSteps.push(`5. Grounding verification: ${Math.round(ragResult.grounding_verification.confidence_score * 100)}% factual confidence.`);
     
-    // Call Sarvam AI with full workspace knowledge & conversation history
     const naturalPrompt = `You are the official AI shopping concierge and knowledge specialist for ${brand}.
 Customer Query: "${user_message}"
 
 STRICT GUIDELINES:
-1. ALWAYS answer the user's question directly, accurately, and thoroughly using the provided Relevant Store Knowledge Context and live product catalog.
+1. ALWAYS answer the user's question directly, accurately, and thoroughly using the provided Relevant Store Knowledge Context.
 2. If the user asks about shipping times, delivery areas, return/exchange policies, material quality, pricing, contact details, or brand background, extract and explain the exact details from the store knowledge documents.
-3. Keep your response clear, concise, and helpful.
+3. Keep your response clear, concise, and helpful (1-3 sentences).
 4. Never say "as an AI" or use generic ungrounded fallback statements.`;
 
-    const sarvamAnswer = await callSarvamLLM(
-      naturalPrompt,
-      user_message,
-      fullKnowledgeContext,
-      conversationHistory
-    );
-
+    const sarvamAnswer = await callSarvamLLM(naturalPrompt, user_message, fullKnowledgeContext, conversationHistory);
     if (sarvamAnswer) {
       responseText = sarvamAnswer;
     } else {
@@ -640,113 +663,22 @@ STRICT GUIDELINES:
     });
     responseText = "I've notified our support team! A specialist will connect with you right here in this chat shortly.";
   } else {
-    // General freeform conversation or question -> Sarvam AI / Citations
-    planningSteps.push('4. Calling Sarvam AI conversational model.');
+    // General Conversation / Advice
+    planningSteps.push('4. Calling conversational shopping concierge model.');
     const naturalPrompt = `You are the official AI shopping concierge and style specialist for ${brand}.
 Customer Query: "${user_message}"
 
 STRICT GUIDELINES:
-1. Answer ANY question the customer asks naturally, intelligently, and contextually based on their prior messages and the provided workspace documents.
-2. When questions relate to store policies, shipping, delivery times, return procedures, sizing, fabric, materials, or products, explain the details directly from the provided store knowledge documents.
-3. NEVER apologize about catalog structure or say "we don't have a specific section in our catalog" or "in our current live catalog".
-4. NEVER dump long bullet lists of products and prices in text because interactive product cards render directly below your message.
-5. Speak warmly, authoritatively, and professionally.`;
+1. Answer ANY question the customer asks naturally, warmly, and helpfully.
+2. If they are unsure what to buy, ask about their style preference, occasion, or favorite colors.
+3. NEVER apologize about catalog structure or say "we don't have a specific section in our catalog".
+4. NEVER dump long bullet lists of products and prices in text.`;
 
-    const sarvamAnswer = await callSarvamLLM(
-      naturalPrompt,
-      user_message,
-      fullKnowledgeContext,
-      conversationHistory
-    );
-
+    const sarvamAnswer = await callSarvamLLM(naturalPrompt, user_message, fullKnowledgeContext, conversationHistory);
     if (sarvamAnswer) {
       responseText = sarvamAnswer;
     } else {
-      responseText = dynamicFallbackAnswer(user_message);
-    }
-  }
-
-  // Ensure interactive product cards with photos & Add to Cart buttons are ALWAYS attached whenever products are discussed
-  if (!interactivePayload) {
-    const respLower = responseText.toLowerCase();
-    const cleanLower = cleanMessage.toLowerCase();
-    const freshProducts = db.commerce_products.filter(p => p.workspace_id === workspace_id);
-    let matchedCards: any[] = [];
-
-    // 1. Direct and fuzzy match with live catalog products in workspace
-    freshProducts.forEach(p => {
-      const pTitleLower = p.title.toLowerCase();
-      if (respLower.includes(pTitleLower)) {
-        if (!matchedCards.some(m => m.id === p.id)) matchedCards.push(p);
-      } else {
-        // Multi-token match (e.g. "Royal Heritage", "Yellow Floral Kurta", "Emerald Paisley")
-        const significantTokens = pTitleLower.split(/\s+/).filter(w => w.length >= 4);
-        if (significantTokens.length >= 2 && significantTokens.every(tok => respLower.includes(tok))) {
-          if (!matchedCards.some(m => m.id === p.id)) matchedCards.push(p);
-        }
-      }
-    });
-
-    // 2. Parse any item lines from responseText (with or without bullets, e.g. "Royal Heritage Saree — ₹1,699 | ...")
-    const productLineRegex = /(?:^|[\r\n]|•|\*|-)\s*([A-Za-z0-9\s&'()/-]{3,50}?)\s*(?:—|-|:)\s*(?:₹|Rs\.?|\$)\s*([\d,]+)/gim;
-    let match;
-    while ((match = productLineRegex.exec(responseText)) !== null) {
-      const pTitle = match[1].trim();
-      const pPrice = parseFloat(match[2].replace(/,/g, ''));
-      
-      let pItem = freshProducts.find(p => p.title.toLowerCase() === pTitle.toLowerCase() || p.title.toLowerCase().includes(pTitle.toLowerCase()));
-      if (!pItem) {
-        // High-quality category image
-        let categoryImg = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80'; // saree / ethnic
-        if (/kurta/i.test(pTitle)) categoryImg = 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80';
-        else if (/shirt|tee/i.test(pTitle)) categoryImg = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80';
-        else if (/dress/i.test(pTitle)) categoryImg = 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80';
-        else if (/hoodie/i.test(pTitle)) categoryImg = 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80';
-
-        pItem = {
-          id: generateId('prod_dyn'),
-          workspace_id,
-          title: pTitle,
-          description: `${pTitle} crafted from premium materials at ${brand}.`,
-          category: /saree/i.test(pTitle) ? 'Sarees' : (/kurta/i.test(pTitle) ? 'Kurtas' : (/combo/i.test(pTitle) ? 'Combos' : 'Apparel')),
-          price: pPrice || 1499,
-          currency: 'INR',
-          images: [categoryImg],
-          in_stock: true,
-          total_inventory: 45,
-          variants: [
-            { id: generateId('var'), sku: `SKU-${pTitle.slice(0, 4).toUpperCase()}-M`, title: 'M', price: pPrice || 1499, inventory_quantity: 45, attributes: { size: 'Free Size' } }
-          ],
-          tags: [brand.toLowerCase(), 'women', 'festive', 'collection'],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        db.commerce_products.push(pItem);
-        db.scheduleSave();
-      }
-      if (pItem && !matchedCards.some(m => m.id === pItem!.id)) {
-        matchedCards.push(pItem);
-      }
-    }
-
-    // 3. If user asked for category/products (e.g. "women product?", "dress", "new products", "festive", "kurtas")
-    if (matchedCards.length === 0 && (detectedIntent === 'PRODUCT_SEARCH' || /product|dress|women|woman|men|saree|kurta|shirt|festive|new|latest|collection/i.test(cleanLower))) {
-      const queryTokens = cleanLower.split(/\s+/).filter(w => w.length > 2);
-      matchedCards = freshProducts.filter(p => {
-        const fullP = `${p.title} ${p.description} ${p.category} ${p.tags?.join(' ')}`.toLowerCase();
-        return queryTokens.some(tok => fullP.includes(tok));
-      });
-
-      if (matchedCards.length === 0 && freshProducts.length > 0) {
-        matchedCards = freshProducts.slice(0, 4);
-      }
-    }
-
-    if (matchedCards.length > 0) {
-      interactivePayload = {
-        type: 'PRODUCTS',
-        data: matchedCards.slice(0, 6)
-      };
+      responseText = `I'd love to help you find the perfect outfit! Are you shopping for a specific occasion like a dinner, wedding, casual weekend, or looking for a gift?`;
     }
   }
 

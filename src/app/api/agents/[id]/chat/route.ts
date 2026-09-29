@@ -50,6 +50,7 @@ function resolveProductCards(responseText: string, userMessage: string, workspac
         title: title,
         description: `${title} available in our store collection.`,
         category: /saree/i.test(title) ? 'Sarees' : (/kurta/i.test(title) ? 'Kurtas' : (/combo/i.test(title) ? 'Combos' : 'Apparel')),
+        tags: [title.toLowerCase(), 'apparel'],
         price: price || 1699,
         currency: 'INR',
         images: [categoryImg],

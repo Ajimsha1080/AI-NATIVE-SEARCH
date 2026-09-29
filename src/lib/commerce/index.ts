@@ -4,16 +4,34 @@ import { CommerceProduct, CommerceOrder, CommerceCart } from '@/types';
 export interface ProductSearchParams {
   query?: string;
   category?: string;
+  gender?: 'men' | 'women' | 'unisex' | 'kids';
   minPrice?: number;
   maxPrice?: number;
   size?: string;
   color?: string;
+  occasion?: string;
+  style?: string;
   inStockOnly?: boolean;
 }
 
 export class LocalCommerceProvider {
   async searchProducts(workspaceId: string, params: ProductSearchParams): Promise<CommerceProduct[]> {
     let list = db.commerce_products.filter(p => p.workspace_id === workspaceId);
+
+    const occasionKeywords: Record<string, string[]> = {
+      dinner: ['shirt', 'shacket', 'kurta', 'combo', 'saree', 'palace', 'embroidered', 'corduroy', 'dress', 'elegant', 'black'],
+      office: ['shirt', 'corduroy', 'pant', 'anti-ac', 'thermal', 'kurta', 'poplin', 'formal', 'classic', 'cotton'],
+      casual: ['tee', 'tshirt', 'jogger', 'hoodie', 'nosweat', 'shacket', 'jacket', 'cotton', 'relaxed'],
+      wedding: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'zari', 'dori', 'mandala', 'embroidered', 'festive', 'silk'],
+      festive: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive'],
+      festival: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive'],
+      summer: ['sunscreen', 'ice', 'cooling', 'tee', 'nosweat', 'visor', 'balaclava', 'upf50', 'lightweight', 'breathable'],
+      vacation: ['sunscreen', 'visor', 'tee', 'jogger', 'jacket', 'balaclava', 'combo', 'yellow floral'],
+      comfort: ['nosweat', 'poplin', 'thermal', 'jogger', 'tee', 'cotton', 'relaxed', 'breathable', 'ice pro'],
+      brother: ['shirt', 'tee', 'jogger', 'jacket', 'shacket', 'corduroy', 'men'],
+      wife: ['saree', 'kurta', 'combo', 'dress', 'women', 'yellow floral', 'emerald'],
+      premium: ['royal', 'heritage', 'shacket', 'embroidered', 'palace', 'ice pro', 'thermal', 'zari']
+    };
 
     if (params.query) {
       const typoMap: Record<string, string> = {
@@ -59,14 +77,15 @@ export class LocalCommerceProvider {
         q = q.replace(new RegExp(`\\b${typo}\\b`, 'gi'), fix);
       }
 
-      const isBroadQuery = /new|latest|arrival|arrivals|product|products|item|items|catalog|collection|bestseller|trending|recommend|what do you have|what you sell|all/i.test(q);
-      const stopWords = new Set(['show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the', 'please', 'can', 'you', 'give', 'what', 'are', 'your', 'any', 'new', 'latest', 'product', 'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival']);
+      const isBroadQuery = /new|latest|arrival|arrivals|product|products|item|items|catalog|collection|bestseller|trending|recommend|what do you have|what you sell|all|something|nice|anything|gift/i.test(q);
+      const stopWords = new Set(['show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the', 'please', 'can', 'you', 'give', 'what', 'are', 'your', 'any', 'new', 'latest', 'product', 'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival', 'good', 'something', 'nice', 'need', 'want', 'buy', 'recommend', 'would', 'like', 'there', 'have']);
       const tokens = q.split(/[\s,?!]+/).filter(w => w.length > 2 && !stopWords.has(w) && isNaN(Number(w)));
+
       const synonyms: Record<string, string[]> = {
-        men: ['mens', 'male', 'gent', 'gents'],
-        mens: ['men', 'male', 'gent', 'gents'],
-        women: ['womens', 'ladies', 'lady', 'female', 'girl', 'girls'],
-        womens: ['women', 'ladies', 'lady', 'female', 'girl', 'girls'],
+        men: ['mens', 'male', 'gent', 'gents', 'brother', 'husband', 'guy', 'guys', 'father', 'him'],
+        mens: ['men', 'male', 'gent', 'gents', 'brother', 'husband', 'guy', 'guys', 'father', 'him'],
+        women: ['womens', 'ladies', 'lady', 'female', 'girl', 'girls', 'wife', 'mother', 'sister', 'her'],
+        womens: ['women', 'ladies', 'lady', 'female', 'girl', 'girls', 'wife', 'mother', 'sister', 'her'],
         saree: ['saree', 'sarees', 'sari', 'saris', 'drape', 'ethnic', 'silk'],
         sarees: ['saree', 'sarees', 'sari', 'saris', 'drape', 'ethnic', 'silk'],
         kurta: ['kurta', 'kurtas', 'kurti', 'kurtis', 'pant combo', 'box combo'],
@@ -87,15 +106,15 @@ export class LocalCommerceProvider {
         mask: ['balaclava', 'face cover'],
         tee: ['tshirt', 't-shirt', 'nosweat', 'tee'],
         tees: ['tshirt', 't-shirt', 'nosweat', 'tee'],
-        shirt: ['tshirt', 't-shirt', 'nosweat', 'tee', 'shacket', 'corduroy'],
-        shirts: ['tshirt', 't-shirt', 'nosweat', 'tee', 'shacket', 'corduroy'],
-        shacket: ['shirt', 'jacket', 'outerwear', 'shacket'],
+        shirt: ['tshirt', 't-shirt', 'nosweat', 'tee', 'shacket', 'corduroy', 'palace', 'embroidered'],
+        shirts: ['tshirt', 't-shirt', 'nosweat', 'tee', 'shacket', 'corduroy', 'palace', 'embroidered'],
+        shacket: ['shirt', 'jacket', 'outerwear', 'shacket', 'tribal'],
         top: ['tee', 'tshirt', 'jacket', 'kurti', 'top'],
         tops: ['tee', 'tshirt', 'jacket', 'kurti', 'top'],
         hoodie: ['thermal', 'jacket', 'anti-ac'],
         hoodies: ['thermal', 'jacket', 'anti-ac'],
-        jacket: ['sunscreen jacket', 'thermal', 'anti-ac'],
-        jackets: ['sunscreen jacket', 'thermal', 'anti-ac'],
+        jacket: ['sunscreen jacket', 'thermal', 'anti-ac', 'shacket'],
+        jackets: ['sunscreen jacket', 'thermal', 'anti-ac', 'shacket'],
         red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral'],
         blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky'],
         green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest'],
@@ -104,16 +123,23 @@ export class LocalCommerceProvider {
         yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon']
       };
 
-      const demographicWords = new Set(['men', 'mens', 'male', 'gent', 'gents', 'guy', 'guys', 'women', 'womens', 'lady', 'ladies', 'female', 'girl', 'girls']);
+      const demographicWords = new Set(['men', 'mens', 'male', 'gent', 'gents', 'guy', 'guys', 'women', 'womens', 'lady', 'ladies', 'female', 'girl', 'girls', 'brother', 'sister', 'wife', 'husband', 'him', 'her']);
       const productTypeTokens = tokens.filter(t => !demographicWords.has(t));
 
-      const isMenQuery = /\b(men|mens|male|gent|gents|guy|guys)\b/i.test(q);
-      const isWomenQuery = /\b(women|womens|lady|ladies|female|girl|girls)\b/i.test(q);
+      const isMenQuery = params.gender === 'men' || /\b(men|mens|male|gent|gents|guy|guys|brother|husband|him|father|boy)\b/i.test(q);
+      const isWomenQuery = params.gender === 'women' || /\b(women|womens|lady|ladies|female|girl|girls|wife|sister|her|mother)\b/i.test(q);
 
       const searchTypeTokens = new Set<string>(productTypeTokens);
       for (const t of productTypeTokens) {
         if (synonyms[t]) {
           synonyms[t].forEach(s => searchTypeTokens.add(s));
+        }
+      }
+
+      // Check for occasion intent
+      for (const [occ, related] of Object.entries(occasionKeywords)) {
+        if (q.includes(occ)) {
+          related.forEach(r => searchTypeTokens.add(r));
         }
       }
 
@@ -145,7 +171,7 @@ export class LocalCommerceProvider {
           return false; // Exclude men-only products for explicit women's query
         }
 
-        // If no specific product type was queried (e.g. "women products", "new products", "all"), return all demographic-matching items
+        // If no specific product type was queried (e.g. "women products", "new products", "all", "something nice"), return all demographic-matching items
         if (searchTypeTokens.size === 0) {
           return true;
         }
@@ -173,18 +199,29 @@ export class LocalCommerceProvider {
       }
 
       if (filtered.length > 0) {
-        // Relevance ranking: Title matches rank higher than description matches
+        // Relevance ranking: Title matches rank higher than description matches, occasion matches given high weight
         filtered.sort((a, b) => {
           const score = (p: CommerceProduct) => {
             let s = 0;
             const tLower = p.title.toLowerCase();
             const dLower = p.description.toLowerCase();
             const tagsLower = p.tags.map(t => t.toLowerCase());
+            const fullText = `${tLower} ${dLower} ${tagsLower.join(' ')}`;
+
             for (const token of tokens) {
               if (tLower.includes(token)) s += 100;
               if (tagsLower.includes(token)) s += 50;
               if (dLower.includes(token)) s += 20;
             }
+
+            for (const t of searchTypeTokens) {
+              if (tLower.includes(t)) s += 40;
+              if (tagsLower.includes(t)) s += 25;
+            }
+
+            // In-stock preference
+            if (p.in_stock) s += 15;
+
             return s;
           };
           return score(b) - score(a);
@@ -257,6 +294,48 @@ export class LocalCommerceProvider {
     return deduplicated;
   }
 
+  async compareProducts(workspaceId: string, productIds: string[]): Promise<{
+    products: CommerceProduct[];
+    cheapest: CommerceProduct | null;
+    mostExpensive: CommerceProduct | null;
+    comparisonPoints: string[];
+  }> {
+    const products = db.commerce_products.filter(
+      p => p.workspace_id === workspaceId && productIds.includes(p.id)
+    );
+
+    if (products.length === 0) {
+      return { products: [], cheapest: null, mostExpensive: null, comparisonPoints: [] };
+    }
+
+    const sortedByPrice = [...products].sort((a, b) => a.price - b.price);
+    const cheapest = sortedByPrice[0];
+    const mostExpensive = sortedByPrice[sortedByPrice.length - 1];
+
+    const comparisonPoints = products.map(p => 
+      `• **${p.title}**: ₹${p.price.toLocaleString('en-IN')}${p.compare_at_price ? ` (MRP ₹${p.compare_at_price.toLocaleString('en-IN')})` : ''} — ${p.category} (${p.in_stock ? 'In Stock' : 'Out of Stock'})`
+    );
+
+    return {
+      products,
+      cheapest,
+      mostExpensive,
+      comparisonPoints
+    };
+  }
+
+  async removeFromCart(workspaceId: string, cartId: string, productId: string, variantId?: string): Promise<CommerceCart> {
+    const cart = await this.getCart(workspaceId, cartId);
+    cart.items = cart.items.filter(
+      i => !(i.product_id === productId && (!variantId || i.variant_id === variantId))
+    );
+    cart.subtotal = cart.items.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
+    cart.total = Math.max(0, cart.subtotal - cart.discount_amount);
+    cart.updated_at = new Date().toISOString();
+    db.scheduleSave();
+    return cart;
+  }
+
   async getProduct(workspaceId: string, productId: string): Promise<CommerceProduct | null> {
     return db.commerce_products.find(p => p.workspace_id === workspaceId && p.id === productId) || null;
   }
@@ -307,8 +386,8 @@ export class LocalCommerceProvider {
 
     const order = db.commerce_orders.find(o =>
       o.workspace_id === workspaceId &&
-      (o.order_number.replace('#', '') === cleanNum || o.id === orderNumber) &&
-      o.customer_email.toLowerCase().trim() === cleanEmail
+      (o.order_number?.replace('#', '') === cleanNum || o.id === orderNumber) &&
+      o.customer_email?.toLowerCase().trim() === cleanEmail
     );
     return order || null;
   }

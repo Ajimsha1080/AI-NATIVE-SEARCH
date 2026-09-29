@@ -131,6 +131,7 @@ Comprehensive Store Intelligence & Policy Defaults:
         }
       }
 
+      let productsIngested = 0;
       let page = 1;
       let hasMore = true;
       const maxPages = 10; // Ingests up to 2,500 catalog products per sync
@@ -245,6 +246,48 @@ Comprehensive Store Intelligence & Policy Defaults:
           });
           productsIngested++;
         }
+      }
+
+      // Parse Schema.org JSON-LD Product records from scraped HTML
+      const jsonLdRegex = /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+      let jsonLdMatch;
+      while ((jsonLdMatch = jsonLdRegex.exec(scrapedText)) !== null) {
+        try {
+          const parsedLd = JSON.parse(jsonLdMatch[1].trim());
+          const ldProducts = Array.isArray(parsedLd) ? parsedLd : (parsedLd['@graph'] || [parsedLd]);
+          for (const item of ldProducts) {
+            if (item && (item['@type'] === 'Product' || item['@type']?.includes?.('Product'))) {
+              const pTitle = item.name;
+              const pPrice = parseFloat(item.offers?.price || item.offers?.[0]?.price || '0');
+              if (pTitle && pPrice > 0) {
+                const existing = db.commerce_products.find(cp => 
+                  cp.workspace_id === session.workspaceId && cp.title.toLowerCase() === pTitle.toLowerCase()
+                );
+                if (!existing) {
+                  db.commerce_products.push({
+                    id: generateId('prod_live'),
+                    workspace_id: session.workspaceId,
+                    title: pTitle,
+                    description: item.description || `${pTitle} from ${formattedBrandName}.`,
+                    category: item.category || 'Apparel',
+                    tags: [formattedBrandName.toLowerCase(), 'jsonld', 'catalog'],
+                    price: pPrice,
+                    currency: item.offers?.priceCurrency || 'INR',
+                    images: Array.isArray(item.image) ? item.image : (item.image ? [item.image] : ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80']),
+                    in_stock: item.offers?.availability ? !item.offers.availability.includes('OutOfStock') : true,
+                    total_inventory: 60,
+                    variants: [
+                      { id: generateId('var'), sku: item.sku || `SKU-${pTitle.slice(0, 4).toUpperCase()}`, title: 'Standard', price: pPrice, inventory_quantity: 60, attributes: { size: 'Free Size' } }
+                    ],
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  });
+                  productsIngested++;
+                }
+              }
+            }
+          }
+        } catch {}
       }
 
       // If no products were discovered, auto-generate standard brand collection pieces for the store
