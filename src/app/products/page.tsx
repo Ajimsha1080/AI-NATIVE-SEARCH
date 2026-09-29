@@ -401,7 +401,7 @@ export default function ProductsPage() {
                         </div>
                       </div>
 
-                      {/* Real-time Inventory Stepper & Live Stock Control */}
+                      {/* Live Store Sync & Stock Badge */}
                       <div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5">
                           <span className={`font-mono text-[10px] px-2 py-0.5 rounded-full border font-semibold flex items-center gap-1 ${
@@ -414,39 +414,9 @@ export default function ProductsPage() {
                           </span>
                         </div>
 
-                        {/* Real-time Quick Stock Adjuster (+ / -) */}
-                        <div className="flex items-center gap-1 bg-zinc-100 border border-zinc-200/90 rounded-xl p-0.5 shadow-2xs">
-                          <button
-                            onClick={() => handleUpdateStock(p.id, -5, currentStock)}
-                            className="w-6 h-6 rounded-lg bg-white hover:bg-zinc-200 text-zinc-700 flex items-center justify-center text-xs font-bold transition shadow-2xs"
-                            title="Decrease stock by 5"
-                          >
-                            -5
-                          </button>
-                          <button
-                            onClick={() => handleUpdateStock(p.id, -1, currentStock)}
-                            className="w-6 h-6 rounded-lg bg-white hover:bg-zinc-200 text-zinc-700 flex items-center justify-center text-xs font-bold transition shadow-2xs"
-                            title="Decrease stock by 1"
-                          >
-                            -1
-                          </button>
-                          <span className="px-1.5 text-[11px] font-mono font-bold text-zinc-800 select-none">
-                            {currentStock}
-                          </span>
-                          <button
-                            onClick={() => handleUpdateStock(p.id, 1, currentStock)}
-                            className="w-6 h-6 rounded-lg bg-white hover:bg-zinc-200 text-zinc-700 flex items-center justify-center text-xs font-bold transition shadow-2xs"
-                            title="Increase stock by 1"
-                          >
-                            +1
-                          </button>
-                          <button
-                            onClick={() => handleUpdateStock(p.id, 5, currentStock)}
-                            className="w-6 h-6 rounded-lg bg-white hover:bg-zinc-200 text-zinc-700 flex items-center justify-center text-xs font-bold transition shadow-2xs"
-                            title="Increase stock by 5"
-                          >
-                            +5
-                          </button>
+                        <div className="flex items-center gap-1 text-[11px] font-mono text-zinc-500">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Auto Synced</span>
                         </div>
                       </div>
                     </div>
