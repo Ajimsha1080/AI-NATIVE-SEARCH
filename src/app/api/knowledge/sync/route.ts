@@ -192,7 +192,48 @@ Comprehensive Store Intelligence & Policy Defaults:
         }
       }
 
-      // If /products.json was not accessible, auto-generate standard brand collection pieces for the store
+      // Parse products mentioned anywhere in the scraped text (e.g. • Royal Heritage Saree — ₹1,699)
+      const productMentionRegex = /(?:•|\*|-)\s*([A-Za-z0-9\s&'()/-]{3,40})\s*(?:—|-|:)\s*(?:₹|Rs\.?|\$)\s*([\d,]+)(?:[\r\n]+([^\n\r•*-]{10,250}))?/gi;
+      let textMatch;
+      while ((textMatch = productMentionRegex.exec(scrapedText)) !== null) {
+        const pTitle = textMatch[1].trim();
+        const pPrice = parseFloat(textMatch[2].replace(/,/g, ''));
+        const pDesc = textMatch[3]?.trim() || `${pTitle} from the official ${formattedBrandName} collection.`;
+
+        const existing = db.commerce_products.find(cp => 
+          cp.workspace_id === session.workspaceId && cp.title.toLowerCase() === pTitle.toLowerCase()
+        );
+
+        if (!existing && pPrice > 0) {
+          let categoryImg = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80';
+          if (/kurta/i.test(pTitle)) categoryImg = 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80';
+          else if (/shirt|tee/i.test(pTitle)) categoryImg = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80';
+          else if (/dress|frock/i.test(pTitle)) categoryImg = 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80';
+          else if (/hoodie/i.test(pTitle)) categoryImg = 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80';
+
+          db.commerce_products.push({
+            id: generateId('prod_live'),
+            workspace_id: session.workspaceId,
+            title: pTitle,
+            description: pDesc,
+            category: /saree/i.test(pTitle) ? 'Sarees' : (/kurta/i.test(pTitle) ? 'Kurtas' : (/shirt|tee/i.test(pTitle) ? 'T-Shirts' : 'Apparel')),
+            tags: [formattedBrandName.toLowerCase(), 'featured', 'collection', 'women', 'men'],
+            price: pPrice,
+            currency: 'INR',
+            images: [categoryImg],
+            in_stock: true,
+            total_inventory: 50,
+            variants: [
+              { id: generateId('var'), sku: `SKU-${pTitle.slice(0, 4).toUpperCase()}-M`, title: 'Free Size', price: pPrice, inventory_quantity: 50, attributes: { size: 'Free Size' } }
+            ],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+          productsIngested++;
+        }
+      }
+
+      // If no products were discovered, auto-generate standard brand collection pieces for the store
       const currentWorkspaceProducts = db.commerce_products.filter(p => p.workspace_id === session.workspaceId);
       if (currentWorkspaceProducts.length === 0 && formattedBrandName.toLowerCase() !== 'bluetyga') {
         const defaultStoreItems: Partial<CommerceProduct>[] = [
