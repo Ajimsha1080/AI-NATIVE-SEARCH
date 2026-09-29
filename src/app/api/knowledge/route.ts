@@ -97,17 +97,33 @@ export async function DELETE(req: Request) {
   }
 
   const url = new URL(req.url);
+  const isAll = url.searchParams.get('all') === 'true';
+  if (isAll) {
+    for (let i = db.knowledge_documents.length - 1; i >= 0; i--) {
+      if (db.knowledge_documents[i].workspace_id === session.workspaceId) {
+        db.knowledge_documents.splice(i, 1);
+      }
+    }
+    for (let i = db.knowledge_chunks.length - 1; i >= 0; i--) {
+      if (db.knowledge_chunks[i].workspace_id === session.workspaceId) {
+        db.knowledge_chunks.splice(i, 1);
+      }
+    }
+    db.saveImmediate();
+    return NextResponse.json({ success: true, message: 'All knowledge documents removed' });
+  }
+
   const id = url.searchParams.get('id');
   if (!id) return NextResponse.json({ error: { message: 'Missing document ID' } }, { status: 400 });
 
   const docIdx = db.knowledge_documents.findIndex(d => d.id === id && d.workspace_id === session.workspaceId);
   if (docIdx >= 0) {
     db.knowledge_documents.splice(docIdx, 1);
-    const chunkIndices = db.knowledge_chunks
-      .map((c, i) => c.document_id === id ? i : -1)
-      .filter(i => i !== -1)
-      .reverse();
-    chunkIndices.forEach(idx => db.knowledge_chunks.splice(idx, 1));
+    for (let i = db.knowledge_chunks.length - 1; i >= 0; i--) {
+      if (db.knowledge_chunks[i].document_id === id && db.knowledge_chunks[i].workspace_id === session.workspaceId) {
+        db.knowledge_chunks.splice(i, 1);
+      }
+    }
 
     db.saveImmediate();
     return NextResponse.json({ success: true });

@@ -129,13 +129,13 @@ export default function ProductsPage() {
 
   const handleClearAllProducts = async () => {
     if (!confirm('Are you sure you want to remove all products from the store catalog?')) return;
+    setProducts([]);
     try {
-      for (const p of products) {
-        await fetch(`/api/commerce/products?id=${p.id}`, { method: 'DELETE' });
+      const res = await fetch('/api/commerce/products?all=true', { method: 'DELETE' });
+      if (res.ok) {
+        invalidateClientCache('/api/commerce/products');
+        showToast('All products removed from catalog');
       }
-      invalidateClientCache('/api/commerce/products');
-      setProducts([]);
-      showToast('All products removed from catalog');
     } catch (err) {
       console.error(err);
     }

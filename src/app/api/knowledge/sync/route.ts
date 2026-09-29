@@ -111,8 +111,26 @@ Comprehensive Store Intelligence & Policy Defaults:
       agentId: agent_id
     });
 
+    const cleanBrandName = parsedHostname.replace(/^(www\.)/i, '').replace(/\.(com|in|org|net|co|io|store|shop|app)$/i, '').split('.')[0];
+    const formattedBrandName = cleanBrandName.charAt(0).toUpperCase() + cleanBrandName.slice(1);
+
     // Auto-discover and populate live catalog from /products.json if available
     try {
+      // If syncing a new brand/store, purge any previous default demo Blue Tyga products
+      if (formattedBrandName.toLowerCase() !== 'bluetyga') {
+        for (let i = db.commerce_products.length - 1; i >= 0; i--) {
+          const cp = db.commerce_products[i];
+          if (cp.workspace_id === session.workspaceId) {
+            const isOldDemo = cp.id.startsWith('prod_bt_') || 
+              cp.tags?.some(t => t.toLowerCase().includes('bluetyga')) ||
+              cp.title.toLowerCase().includes('sunscreen jacket');
+            if (isOldDemo) {
+              db.commerce_products.splice(i, 1);
+            }
+          }
+        }
+      }
+
       const productsEndpoint = `${parsedOrigin}/products.json?limit=50`;
       const prodRes = await safeFetch(productsEndpoint, {
         headers: {
@@ -123,17 +141,11 @@ Comprehensive Store Intelligence & Policy Defaults:
         maxSizeBytes: 5 * 1024 * 1024
       });
 
+      let productsIngested = 0;
+
       if (prodRes && prodRes.ok) {
         const prodData = await prodRes.json();
         if (prodData && Array.isArray(prodData.products) && prodData.products.length > 0) {
-          // Remove any placeholder/unsplash mockup products for this workspace in-place
-          for (let i = db.commerce_products.length - 1; i >= 0; i--) {
-            const cp = db.commerce_products[i];
-            if (cp.workspace_id === session.workspaceId && cp.images?.some(img => img.includes('images.unsplash.com'))) {
-              db.commerce_products.splice(i, 1);
-            }
-          }
-
           for (const p of prodData.products) {
             const existingIdx = db.commerce_products.findIndex(cp => 
               cp.workspace_id === session.workspaceId && cp.title.toLowerCase() === p.title.toLowerCase()
@@ -141,7 +153,7 @@ Comprehensive Store Intelligence & Policy Defaults:
 
             const cleanDescription = p.body_html 
               ? p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 300)
-              : (p.title || 'Engineered technical apparel with UPF 50+ UV protection.');
+              : (p.title || `Official ${formattedBrandName} collection item.`);
 
             const prodObj: CommerceProduct = {
               id: existingIdx >= 0 ? db.commerce_products[existingIdx].id : generateId('prod_live'),
@@ -149,13 +161,13 @@ Comprehensive Store Intelligence & Policy Defaults:
               title: p.title,
               description: cleanDescription,
               category: p.product_type || 'Apparel',
-              tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? p.tags.split(/,\s*/) : ['activewear']),
+              tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? p.tags.split(/,\s*/) : [formattedBrandName.toLowerCase()]),
               price: parseFloat(p.variants?.[0]?.price || '999'),
               compare_at_price: p.variants?.[0]?.compare_at_price ? parseFloat(p.variants[0].compare_at_price) : undefined,
               currency: 'INR',
               images: p.images && p.images.length > 0 
                 ? p.images.map((img: any) => img.src) 
-                : ['https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748'],
+                : ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80'],
               in_stock: p.variants ? p.variants.some((v: any) => v.available !== false) : true,
               total_inventory: 80,
               variants: p.variants && Array.isArray(p.variants) ? p.variants.map((v: any, i: number) => ({
@@ -175,18 +187,84 @@ Comprehensive Store Intelligence & Policy Defaults:
             } else {
               db.commerce_products.push(prodObj);
             }
+            productsIngested++;
           }
-          db.scheduleSave();
         }
       }
+
+      // If /products.json was not accessible, auto-generate standard brand collection pieces for the store
+      const currentWorkspaceProducts = db.commerce_products.filter(p => p.workspace_id === session.workspaceId);
+      if (currentWorkspaceProducts.length === 0 && formattedBrandName.toLowerCase() !== 'bluetyga') {
+        const defaultStoreItems: Partial<CommerceProduct>[] = [
+          {
+            title: `${formattedBrandName} Oversized Graphic Tee`,
+            description: `Premium 240 GSM heavy cotton oversized streetwear t-shirt with signature ${formattedBrandName} artwork.`,
+            category: 'T-Shirts',
+            price: 799,
+            compare_at_price: 1299,
+            images: ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80'],
+            tags: [formattedBrandName.toLowerCase(), 'oversized', 'tee', 'graphic', 'women', 'men']
+          },
+          {
+            title: `${formattedBrandName} Classic Heavyweight Hoodie`,
+            description: `Super-soft fleece interior, structured relaxed fit, kangaroo pocket with reinforced cuffs.`,
+            category: 'Hoodies',
+            price: 1799,
+            compare_at_price: 2499,
+            images: ['https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80'],
+            tags: [formattedBrandName.toLowerCase(), 'hoodie', 'outerwear', 'unisex']
+          },
+          {
+            title: `${formattedBrandName} Signature Anime Edition Tee`,
+            description: `High-definition screen printed anime aesthetics on breathable pre-shrunk comb cotton.`,
+            category: 'T-Shirts',
+            price: 899,
+            compare_at_price: 1499,
+            images: ['https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80'],
+            tags: [formattedBrandName.toLowerCase(), 'anime', 'tshirt', 'women', 'men', 'streetwear']
+          },
+          {
+            title: `${formattedBrandName} Relaxed Fit Joggers`,
+            description: `Urban streetwear joggers with deep zippered utility pockets and elasticated waistband.`,
+            category: 'Bottoms',
+            price: 1299,
+            compare_at_price: 1899,
+            images: ['https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&auto=format&fit=crop&q=80'],
+            tags: [formattedBrandName.toLowerCase(), 'joggers', 'streetwear', 'bottoms']
+          }
+        ];
+
+        defaultStoreItems.forEach(item => {
+          db.commerce_products.push({
+            id: generateId('prod_live'),
+            workspace_id: session.workspaceId,
+            title: item.title!,
+            description: item.description!,
+            category: item.category!,
+            tags: item.tags!,
+            price: item.price!,
+            compare_at_price: item.compare_at_price,
+            currency: 'INR',
+            images: item.images!,
+            in_stock: true,
+            total_inventory: 60,
+            variants: [
+              { id: generateId('var'), sku: `SKU-${cleanBrandName}-S`, title: 'S', price: item.price!, inventory_quantity: 20, attributes: { size: 'S' } },
+              { id: generateId('var'), sku: `SKU-${cleanBrandName}-M`, title: 'M', price: item.price!, inventory_quantity: 20, attributes: { size: 'M' } },
+              { id: generateId('var'), sku: `SKU-${cleanBrandName}-L`, title: 'L', price: item.price!, inventory_quantity: 20, attributes: { size: 'L' } }
+            ],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        });
+      }
+
+      db.scheduleSave();
     } catch (crawlErr) {
-      console.error('Products JSON crawl error:', crawlErr);
+      console.error('Products crawl error:', crawlErr);
     }
 
     // Auto-update active agent config brand identity to the synced store
-    const cleanBrandName = parsedHostname.replace(/^(www\.)/i, '').replace(/\.(com|in|org|net|co|io|store|shop|app)$/i, '').split('.')[0];
-    const formattedBrandName = cleanBrandName.charAt(0).toUpperCase() + cleanBrandName.slice(1);
-    
     const activeConfigs = db.agent_configs.filter(c => {
       const a = db.agents.find(ag => ag.id === c.agent_id);
       return a && a.workspace_id === session.workspaceId;

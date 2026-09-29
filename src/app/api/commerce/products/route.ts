@@ -110,7 +110,20 @@ export async function DELETE(req: Request) {
   }
 
   const url = new URL(req.url);
+  const isAll = url.searchParams.get('all') === 'true';
+  if (isAll) {
+    for (let i = db.commerce_products.length - 1; i >= 0; i--) {
+      if (db.commerce_products[i].workspace_id === session.workspaceId) {
+        db.commerce_products.splice(i, 1);
+      }
+    }
+    db.saveImmediate();
+    return NextResponse.json({ success: true, message: 'All products removed' });
+  }
+
   const id = url.searchParams.get('id');
+  if (!id) return NextResponse.json({ error: { message: 'Product ID is required' } }, { status: 400 });
+
   const idx = db.commerce_products.findIndex(p => p.id === id && p.workspace_id === session.workspaceId);
   if (idx >= 0) {
     db.commerce_products.splice(idx, 1);
