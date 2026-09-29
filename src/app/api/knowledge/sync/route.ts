@@ -131,64 +131,78 @@ Comprehensive Store Intelligence & Policy Defaults:
         }
       }
 
-      const productsEndpoint = `${parsedOrigin}/products.json?limit=50`;
-      const prodRes = await safeFetch(productsEndpoint, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          'Accept': 'application/json'
-        },
-        timeoutMs: 6000,
-        maxSizeBytes: 5 * 1024 * 1024
-      });
+      let page = 1;
+      let hasMore = true;
+      const maxPages = 10; // Ingests up to 2,500 catalog products per sync
 
-      let productsIngested = 0;
+      while (hasMore && page <= maxPages) {
+        const productsEndpoint = `${parsedOrigin}/products.json?limit=250&page=${page}`;
+        const prodRes = await safeFetch(productsEndpoint, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'application/json'
+          },
+          timeoutMs: 8000,
+          maxSizeBytes: 10 * 1024 * 1024
+        });
 
-      if (prodRes && prodRes.ok) {
-        const prodData = await prodRes.json();
-        if (prodData && Array.isArray(prodData.products) && prodData.products.length > 0) {
-          for (const p of prodData.products) {
-            const existingIdx = db.commerce_products.findIndex(cp => 
-              cp.workspace_id === session.workspaceId && cp.title.toLowerCase() === p.title.toLowerCase()
-            );
+        if (prodRes && prodRes.ok) {
+          const prodData = await prodRes.json();
+          if (prodData && Array.isArray(prodData.products) && prodData.products.length > 0) {
+            for (const p of prodData.products) {
+              const existingIdx = db.commerce_products.findIndex(cp => 
+                cp.workspace_id === session.workspaceId && cp.title.toLowerCase() === p.title.toLowerCase()
+              );
 
-            const cleanDescription = p.body_html 
-              ? p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 300)
-              : (p.title || `Official ${formattedBrandName} collection item.`);
+              const cleanDescription = p.body_html 
+                ? p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 300)
+                : (p.title || `Official ${formattedBrandName} collection item.`);
 
-            const prodObj: CommerceProduct = {
-              id: existingIdx >= 0 ? db.commerce_products[existingIdx].id : generateId('prod_live'),
-              workspace_id: session.workspaceId,
-              title: p.title,
-              description: cleanDescription,
-              category: p.product_type || 'Apparel',
-              tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? p.tags.split(/,\s*/) : [formattedBrandName.toLowerCase()]),
-              price: parseFloat(p.variants?.[0]?.price || '999'),
-              compare_at_price: p.variants?.[0]?.compare_at_price ? parseFloat(p.variants[0].compare_at_price) : undefined,
-              currency: 'INR',
-              images: p.images && p.images.length > 0 
-                ? p.images.map((img: any) => img.src) 
-                : ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80'],
-              in_stock: p.variants ? p.variants.some((v: any) => v.available !== false) : true,
-              total_inventory: 80,
-              variants: p.variants && Array.isArray(p.variants) ? p.variants.map((v: any, i: number) => ({
-                id: generateId('var'),
-                sku: v.sku || `SKU-${p.id}-${i}`,
-                title: v.title || 'Standard',
-                price: parseFloat(v.price || '999'),
-                inventory_quantity: 25,
-                attributes: { size: v.option1 || 'Universal', color: v.option2 || 'Black' }
-              })) : [],
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
+              const prodObj: CommerceProduct = {
+                id: existingIdx >= 0 ? db.commerce_products[existingIdx].id : generateId('prod_live'),
+                workspace_id: session.workspaceId,
+                title: p.title,
+                description: cleanDescription,
+                category: p.product_type || 'Apparel',
+                tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? p.tags.split(/,\s*/) : [formattedBrandName.toLowerCase()]),
+                price: parseFloat(p.variants?.[0]?.price || '999'),
+                compare_at_price: p.variants?.[0]?.compare_at_price ? parseFloat(p.variants[0].compare_at_price) : undefined,
+                currency: 'INR',
+                images: p.images && p.images.length > 0 
+                  ? p.images.map((img: any) => img.src) 
+                  : ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80'],
+                in_stock: p.variants ? p.variants.some((v: any) => v.available !== false) : true,
+                total_inventory: 80,
+                variants: p.variants && Array.isArray(p.variants) ? p.variants.map((v: any, i: number) => ({
+                  id: generateId('var'),
+                  sku: v.sku || `SKU-${p.id}-${i}`,
+                  title: v.title || 'Standard',
+                  price: parseFloat(v.price || '999'),
+                  inventory_quantity: 25,
+                  attributes: { size: v.option1 || 'Universal', color: v.option2 || 'Black' }
+                })) : [],
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
 
-            if (existingIdx >= 0) {
-              db.commerce_products[existingIdx] = prodObj;
-            } else {
-              db.commerce_products.push(prodObj);
+              if (existingIdx >= 0) {
+                db.commerce_products[existingIdx] = prodObj;
+              } else {
+                db.commerce_products.push(prodObj);
+              }
+              productsIngested++;
             }
-            productsIngested++;
+
+            if (prodData.products.length < 250) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
           }
+        } else {
+          hasMore = false;
         }
       }
 
