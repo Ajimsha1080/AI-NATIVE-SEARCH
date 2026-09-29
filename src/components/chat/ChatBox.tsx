@@ -7,6 +7,7 @@ import {
   X, ZoomIn, ZoomOut, Maximize2, Download, Eye, Sparkles, MessageSquare
 } from 'lucide-react';
 import { getThemePreset, ThemePreset } from '@/lib/theme-presets';
+import { getProductFallbackImage } from '@/lib/utils';
 import MarkdownContent from './MarkdownContent';
 
 interface ChatBoxProps {
@@ -357,7 +358,9 @@ export default function ChatBox({
                 return (
                   <div className="grid grid-cols-1 gap-2 w-full mt-2">
                     {productsList.map((p: any) => {
-                      const imgSrc = p.imageUrl || p.images?.[0] || 'https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748';
+                      const fallbackImg = getProductFallbackImage(p.title, p.category, p.tags);
+                      const rawImg = p.imageUrl || p.images?.[0];
+                      const imgSrc = (rawImg && !rawImg.includes('red_shirt.jpg') && !rawImg.includes('saree.jpg') && !rawImg.includes('corduroy.jpg')) ? rawImg : fallbackImg;
                       const formattedPrice = typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price;
                       const comparePrice = p.compare_at_price || p.comparePrice;
                       const formattedComparePrice = typeof comparePrice === 'number' ? comparePrice.toLocaleString('en-IN') : comparePrice;
@@ -386,7 +389,7 @@ export default function ChatBox({
                                 src={imgSrc} 
                                 alt={p.title}
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = 'https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748';
+                                  (e.target as HTMLImageElement).src = fallbackImg;
                                 }}
                                 className="w-full h-full object-cover group-hover/thumb:scale-105 transition duration-300"
                               />

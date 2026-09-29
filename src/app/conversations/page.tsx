@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
+import { getProductFallbackImage } from '@/lib/utils';
 
 interface ProductCardData {
   id: string;
@@ -423,7 +424,9 @@ export default function ConversationsWorkspacePage() {
                           {productsList.length > 0 && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full mt-1.5">
                               {productsList.map((p, pIdx) => {
-                                const imgSrc = p.imageUrl || p.images?.[0] || 'https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748';
+                                const fallbackImg = getProductFallbackImage(p.title, p.category);
+                                const rawImg = p.imageUrl || p.images?.[0];
+                                const imgSrc = (rawImg && !rawImg.includes('red_shirt.jpg') && !rawImg.includes('saree.jpg') && !rawImg.includes('corduroy.jpg')) ? rawImg : fallbackImg;
                                 return (
                                   <div 
                                     key={p.id || pIdx} 
@@ -443,7 +446,14 @@ export default function ConversationsWorkspacePage() {
                                         className="w-16 h-16 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer relative group/img shadow-2xs"
                                         title="Click to zoom image"
                                       >
-                                        <img src={imgSrc} alt={p.title} className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300" />
+                                        <img 
+                                          src={imgSrc} 
+                                          alt={p.title} 
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = fallbackImg;
+                                          }}
+                                          className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300" 
+                                        />
                                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center">
                                           <ZoomIn className="w-3.5 h-3.5 text-white" />
                                         </div>

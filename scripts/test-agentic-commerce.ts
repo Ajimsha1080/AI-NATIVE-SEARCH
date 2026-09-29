@@ -49,7 +49,7 @@ async function runTestSuite() {
       price: 1499,
       compare_at_price: 2499,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/corduroy.jpg'],
+      images: ['https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 40,
       variants: [
@@ -69,7 +69,7 @@ async function runTestSuite() {
       price: 1699,
       compare_at_price: 2999,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/saree.jpg'],
+      images: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 35,
       variants: [
@@ -88,7 +88,7 @@ async function runTestSuite() {
       price: 2399,
       compare_at_price: 3697,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/kurta_combo.jpg'],
+      images: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 25,
       variants: [
@@ -108,7 +108,7 @@ async function runTestSuite() {
       price: 1199,
       compare_at_price: 1399,
       currency: 'INR',
-      images: ['https://cdn.shopify.com/s/files/1/red_shirt.jpg'],
+      images: ['https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80'],
       in_stock: true,
       total_inventory: 30,
       variants: [

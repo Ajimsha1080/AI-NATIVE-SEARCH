@@ -6,7 +6,7 @@ import {
   AlertCircle, Sparkles, Image as ImageIcon, X, ZoomIn, ZoomOut, Eye, ExternalLink 
 } from 'lucide-react';
 import PortalSwitcher from '@/components/layout/PortalSwitcher';
-import { sanitizeImageUrl } from '@/lib/utils';
+import { sanitizeImageUrl, getProductFallbackImage } from '@/lib/utils';
 import MarkdownContent from '@/components/chat/MarkdownContent';
 import { getThemePreset } from '@/lib/theme-presets';
 
@@ -353,7 +353,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
               {m.metadata?.products && m.metadata.products.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full mt-1.5">
                   {m.metadata.products.map((p) => {
-                    const imgSrc = p.imageUrl || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
+                    const fallbackImg = getProductFallbackImage(p.title);
+                    const rawImg = p.imageUrl;
+                    const imgSrc = (rawImg && !rawImg.includes('red_shirt.jpg') && !rawImg.includes('saree.jpg') && !rawImg.includes('corduroy.jpg')) ? rawImg : fallbackImg;
                     return (
                       <div 
                         key={p.id} 
@@ -382,7 +384,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                               src={imgSrc} 
                               alt={p.title} 
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://cdn.shopify.com/s/files/1/0446/5629/6087/files/SJ1-1-100.webp?v=1776246748';
+                                (e.target as HTMLImageElement).src = fallbackImg;
                               }}
                               className="w-full h-full object-cover group-hover/img:scale-110 transition duration-300" 
                             />
