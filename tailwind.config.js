@@ -12,8 +12,8 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['var(--font-sans)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        display: ['var(--font-sans)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        mono: ['var(--font-mono)', 'JetBrains Mono', 'Fira Code', 'monospace'],
+        display: ['var(--font-display)', 'var(--font-sans)', 'Inter', '-apple-system', 'sans-serif'],
+        mono: ['var(--font-mono)', 'JetBrains Mono', 'ui-monospace', 'monospace'],
       },
     },
   },
