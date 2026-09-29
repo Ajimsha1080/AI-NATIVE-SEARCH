@@ -86,6 +86,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       if (pythonRes.ok) {
         const pythonData = await pythonRes.json();
         const finalPayload = resolveProductCards(pythonData.response || '', message, workspaceId, pythonData.interactive_payload);
+        const pagination = finalPayload?.pagination || pythonData.interactive_payload?.pagination || pythonData.metadata?.pagination;
         return NextResponse.json({
           ...pythonData,
           conversationId: pythonData.conversation_id || conversationId,
@@ -96,6 +97,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           metadata: {
             products: finalPayload?.type === 'PRODUCTS' ? finalPayload.data : undefined,
             order: finalPayload?.type === 'ORDER_TRACKING' || finalPayload?.type === 'ORDER' ? finalPayload.data : undefined,
+            pagination: pagination || undefined,
           },
           trace: pythonData.trace
         });
@@ -114,15 +116,18 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     });
 
     const finalPayload = resolveProductCards(result.response_text || '', message, workspaceId, result.interactive_payload);
+    const pagination = finalPayload?.pagination || result.interactive_payload?.pagination || result.metadata?.pagination;
 
     return NextResponse.json({
       ...result,
       response: result.response_text,
       conversationId: result.conversation_id,
+      conversation_id: result.conversation_id,
       interactive_payload: finalPayload,
       metadata: {
         products: finalPayload?.type === 'PRODUCTS' ? finalPayload.data : undefined,
         order: finalPayload?.type === 'ORDER_TRACKING' ? finalPayload.data : undefined,
+        pagination: pagination || undefined,
       }
     });
 

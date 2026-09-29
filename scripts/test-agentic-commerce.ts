@@ -437,6 +437,81 @@ async function runTestSuite() {
   assert(/couldn't find|not find|active collection/i.test(resNonExistent.response_text), 'Politely clarifies no exact match exists in current store collection');
 
   // ------------------------------------------------------------------------
+  // 17. GENERIC PAGINATION & DETERMINISTIC "SHOW MORE" METADATA
+  // ------------------------------------------------------------------------
+  console.log(`\n${BOLD}--- 17. Generic Search Pagination & Deterministic "Show More" Metadata ---${RESET}`);
+
+  // Test A: Single-item or low-count query where totalMatches <= pageSize
+  const resLowCount = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    user_message: 'Heritage Silk Banarasi Saree',
+    channel: 'PLAYGROUND'
+  });
+  assert(resLowCount.interactive_payload?.type === 'PRODUCTS', 'Low count search returns PRODUCTS payload');
+  const lowCountPagination = resLowCount.interactive_payload?.pagination;
+  assert(lowCountPagination !== undefined, 'Low count search returns pagination metadata');
+  assert(lowCountPagination?.totalMatches <= 6 && lowCountPagination?.total_matches <= 6, 'totalMatches is <= 6 for specific query');
+  assert(lowCountPagination?.hasMore === false && lowCountPagination?.has_more === false, 'hasMore is false when totalMatches <= pageSize (Hides Show More button)');
+
+  // Test B: High-count query across pages (Page 1 -> Page 2 -> Page 3)
+  const pagConvId = 'conv_pag_test_' + Date.now();
+  const resPag1 = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    conversation_id: pagConvId,
+    user_message: 'show me shirts',
+    channel: 'PLAYGROUND'
+  });
+  assert(resPag1.interactive_payload?.type === 'PRODUCTS', 'Page 1 returns PRODUCTS payload');
+  const pag1Meta = resPag1.interactive_payload?.pagination;
+  assert(pag1Meta?.page === 1, 'Page 1 reports page = 1');
+  assert(pag1Meta?.pageSize === 6 && pag1Meta?.page_size === 6, 'Page size is 6');
+  assert(pag1Meta?.totalMatches > 6 && pag1Meta?.total_matches > 6, 'Total matches is greater than 6');
+  assert(pag1Meta?.hasMore === true && pag1Meta?.has_more === true, 'Page 1 hasMore is true (Displays Show More button)');
+  const page1Ids = (resPag1.interactive_payload?.data || []).map((p: any) => p.id);
+  assert(page1Ids.length === 6, 'Page 1 returns exactly 6 products');
+
+  // Turn 2: Click Show More -> Page 2
+  const resPag2 = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    conversation_id: pagConvId,
+    user_message: 'show more',
+    channel: 'PLAYGROUND'
+  });
+  assert(resPag2.interactive_payload?.type === 'PRODUCTS', 'Page 2 returns PRODUCTS payload');
+  const pag2Meta = resPag2.interactive_payload?.pagination;
+  assert(pag2Meta?.page === 2, 'Page 2 reports page = 2');
+  const page2Ids = (resPag2.interactive_payload?.data || []).map((p: any) => p.id);
+  assert(page2Ids.length > 0, 'Page 2 returns next set of products');
+  const noDuplicates = page2Ids.every((id: string) => !page1Ids.includes(id));
+  assert(noDuplicates, 'Page 2 contains zero duplicate products from Page 1');
+  const allPage2AreShirts = (resPag2.interactive_payload?.data || []).every((p: any) => 
+    p.category.toLowerCase() === 'shirts' || p.title.toLowerCase().includes('shirt')
+  );
+  assert(allPage2AreShirts, 'Page 2 strictly preserves original "shirts" query category');
+
+  // Turn 3: Final page check (if hasMore or reached end)
+  if (pag2Meta?.hasMore) {
+    const resPag3 = await runAgentCycle({
+      agent_id: agentId,
+      workspace_id: workspaceId,
+      conversation_id: pagConvId,
+      user_message: 'show more',
+      channel: 'PLAYGROUND'
+    });
+    const pag3Meta = resPag3.interactive_payload?.pagination;
+    assert(pag3Meta?.page === 3, 'Page 3 reports page = 3');
+    const page3Ids = (resPag3.interactive_payload?.data || []).map((p: any) => p.id);
+    const noPage3Dupes = page3Ids.every((id: string) => !page1Ids.includes(id) && !page2Ids.includes(id));
+    assert(noPage3Dupes, 'Page 3 contains zero duplicate products from previous pages');
+    if ((pag3Meta?.page - 1) * pag3Meta?.pageSize + page3Ids.length >= pag3Meta?.totalMatches) {
+      assert(pag3Meta?.hasMore === false && pag3Meta?.has_more === false, 'Final page hasMore is false');
+    }
+  }
+
+  // ------------------------------------------------------------------------
   // SUMMARY
   // ------------------------------------------------------------------------
   console.log(`\n${BOLD}${CYAN}================================================================${RESET}`);

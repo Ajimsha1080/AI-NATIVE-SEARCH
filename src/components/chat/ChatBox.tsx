@@ -442,15 +442,24 @@ export default function ChatBox({
                       );
                     })}
 
-                    {m.metadata?.pagination?.hasMore && (
-                      <button
-                        onClick={() => handleSend("show more")}
-                        className="w-full py-2 px-3 text-xs font-semibold text-zinc-700 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-xl transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer mt-1"
-                      >
-                        <span>Show More Products ({productsList.length} of {m.metadata.pagination.totalMatches})</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
-                      </button>
-                    )}
+                    {(() => {
+                      const pagination = m.metadata?.pagination || m.interactive_payload?.pagination || (m.metadata?.hasMore !== undefined || m.metadata?.has_more !== undefined ? m.metadata : undefined);
+                      const hasMore = Boolean(pagination?.hasMore ?? pagination?.has_more);
+                      const totalMatches = pagination?.totalMatches ?? pagination?.total_matches ?? productsList.length;
+                      const displayedCount = pagination?.displayed_count ?? pagination?.total_displayed ?? productsList.length;
+
+                      if (!hasMore) return null;
+
+                      return (
+                        <button
+                          onClick={() => handleSend("show more")}
+                          className="w-full py-2.5 px-3 text-xs font-semibold text-zinc-700 bg-zinc-50 hover:bg-zinc-100 active:bg-zinc-200 border border-zinc-200 rounded-xl transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer mt-1.5"
+                        >
+                          <span>Show More Products ({displayedCount} of {totalMatches})</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
+                        </button>
+                      );
+                    })()}
                   </div>
                 );
               })()}

@@ -20,6 +20,7 @@ export interface AgentRunResponse {
   message_id: string;
   response_text: string;
   interactive_payload?: any;
+  metadata?: any;
   trace: ExecutionTrace;
 }
 
@@ -575,8 +576,13 @@ STRICT GUIDELINES:
         pagination: {
           page: searchResult.page,
           pageSize: searchResult.pageSize,
+          page_size: searchResult.pageSize,
           totalMatches: searchResult.totalMatches,
-          hasMore: searchResult.hasMore
+          total_matches: searchResult.totalMatches,
+          hasMore: searchResult.hasMore,
+          has_more: searchResult.hasMore,
+          displayed_count: (searchResult.page - 1) * searchResult.pageSize + topCards.length,
+          total_displayed: (searchResult.page - 1) * searchResult.pageSize + topCards.length
         }
       };
     }
@@ -607,8 +613,13 @@ STRICT GUIDELINES:
         pagination: {
           page: searchResult.page,
           pageSize: searchResult.pageSize,
+          page_size: searchResult.pageSize,
           totalMatches: searchResult.totalMatches,
-          hasMore: searchResult.hasMore
+          total_matches: searchResult.totalMatches,
+          hasMore: searchResult.hasMore,
+          has_more: searchResult.hasMore,
+          displayed_count: (searchResult.page - 1) * searchResult.pageSize + matchedProducts.length,
+          total_displayed: (searchResult.page - 1) * searchResult.pageSize + matchedProducts.length
         }
       };
 
@@ -726,7 +737,25 @@ STRICT GUIDELINES:
     interactive_payload: interactivePayload,
     metadata: {
       ...(interactivePayload || {}),
-      ...(interactivePayload?.type === 'PRODUCTS' ? { last_search_state: parsedSearch } : {})
+      products: interactivePayload?.type === 'PRODUCTS' ? interactivePayload.data : undefined,
+      pagination: interactivePayload?.pagination,
+      ...(interactivePayload?.type === 'PRODUCTS' ? {
+        last_search_state: {
+          ...parsedSearch,
+          original_query: lastSearchState?.original_query || cleanMessage,
+          page: interactivePayload.pagination?.page || parsedSearch.page,
+          pageSize: interactivePayload.pagination?.pageSize || parsedSearch.pageSize,
+          page_size: interactivePayload.pagination?.pageSize || parsedSearch.pageSize,
+          totalMatches: interactivePayload.pagination?.totalMatches,
+          total_matches: interactivePayload.pagination?.totalMatches,
+          hasMore: interactivePayload.pagination?.hasMore,
+          has_more: interactivePayload.pagination?.hasMore,
+          seen_product_ids: Array.from(new Set([
+            ...(lastSearchState?.seen_product_ids || []),
+            ...(Array.isArray(interactivePayload.data) ? interactivePayload.data.map((p: any) => p.id) : [])
+          ]))
+        }
+      } : {})
     },
     created_at: new Date().toISOString()
   };
@@ -801,6 +830,7 @@ STRICT GUIDELINES:
     message_id: asstMsgId,
     response_text: responseText,
     interactive_payload: interactivePayload,
+    metadata: asstMsg.metadata,
     trace
   };
 }

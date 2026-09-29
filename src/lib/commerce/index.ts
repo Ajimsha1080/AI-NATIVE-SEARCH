@@ -34,9 +34,12 @@ export interface ProductSearchParams {
 export interface ProductSearchResult {
   products: CommerceProduct[];
   totalMatches: number;
+  total_matches: number;
   page: number;
   pageSize: number;
+  page_size: number;
   hasMore: boolean;
+  has_more: boolean;
   appliedConstraints: Record<string, any>;
   categoriesMatched: string[];
 }
@@ -358,7 +361,8 @@ export class LocalCommerceProvider {
       'some', 'of', 'and', 'or', 'is', 'it', 'this', 'that', 'from', 'best', 'top', 'do', 'help', 'choose',
       'more', 'page', 'see', 'load', 'all', 'entire', 'everything', 'give', 'ones', 'only'
     ]);
-    const contentTokens = queryTokens.filter(t => !stopWords.has(t) && isNaN(Number(t)));
+    let contentTokens = queryTokens.filter(t => !stopWords.has(t) && isNaN(Number(t)));
+    let parsedSemanticTerms = Array.from(semanticTerms);
 
     // 6. Inherit Previous State on Refinement / Pagination
     let page = 1;
@@ -366,7 +370,7 @@ export class LocalCommerceProvider {
 
     if (isPagination && lastSearchState) {
       page = (lastSearchState.page || 1) + 1;
-      pageSize = lastSearchState.pageSize || pageSize;
+      pageSize = lastSearchState.pageSize || lastSearchState.page_size || pageSize;
       if (!explicitCategory) explicitCategory = lastSearchState.explicitCategory || lastSearchState.category;
       if (!gender) gender = lastSearchState.gender;
       if (!color) color = lastSearchState.color;
@@ -374,6 +378,12 @@ export class LocalCommerceProvider {
       if (minPrice === undefined) minPrice = lastSearchState.minPrice;
       if (!size) size = lastSearchState.size;
       if (!sort) sort = lastSearchState.sort;
+      if (contentTokens.length === 0 && Array.isArray(lastSearchState.contentTokens)) {
+        contentTokens = lastSearchState.contentTokens;
+      }
+      if (parsedSemanticTerms.length === 0 && Array.isArray(lastSearchState.semanticTerms)) {
+        parsedSemanticTerms = lastSearchState.semanticTerms;
+      }
     } else if (isRefinement && lastSearchState) {
       if (!explicitCategory) explicitCategory = lastSearchState.explicitCategory || lastSearchState.category;
       if (!gender) gender = lastSearchState.gender;
@@ -382,6 +392,12 @@ export class LocalCommerceProvider {
       if (minPrice === undefined) minPrice = lastSearchState.minPrice;
       if (!size) size = lastSearchState.size;
       if (!sort) sort = lastSearchState.sort;
+      if (contentTokens.length === 0 && Array.isArray(lastSearchState.contentTokens)) {
+        contentTokens = lastSearchState.contentTokens;
+      }
+      if (parsedSemanticTerms.length === 0 && Array.isArray(lastSearchState.semanticTerms)) {
+        parsedSemanticTerms = lastSearchState.semanticTerms;
+      }
     }
 
     return {
@@ -395,7 +411,7 @@ export class LocalCommerceProvider {
       color,
       attributes,
       inStockOnly,
-      semanticTerms: Array.from(semanticTerms),
+      semanticTerms: parsedSemanticTerms,
       contentTokens,
       sort,
       page,
@@ -447,9 +463,12 @@ export class LocalCommerceProvider {
         return {
           products: [],
           totalMatches: 0,
+          total_matches: 0,
           page,
           pageSize,
+          page_size: pageSize,
           hasMore: false,
+          has_more: false,
           appliedConstraints: { category: explicitCategory, gender, minPrice, maxPrice, size, color, inStockOnly, sort, page, pageSize },
           categoriesMatched: []
         };
@@ -611,7 +630,7 @@ export class LocalCommerceProvider {
     const totalMatches = deduplicated.length;
     const startIndex = (page - 1) * pageSize;
     const pagedProducts = deduplicated.slice(startIndex, startIndex + pageSize);
-    const hasMore = startIndex + pageSize < totalMatches;
+    const hasMore = (startIndex + pagedProducts.length) < totalMatches;
 
     const appliedConstraints: Record<string, any> = {
       category: explicitCategory,
@@ -623,15 +642,19 @@ export class LocalCommerceProvider {
       inStockOnly,
       sort,
       page,
-      pageSize
+      pageSize,
+      page_size: pageSize
     };
 
     return {
       products: pagedProducts,
       totalMatches,
+      total_matches: totalMatches,
       page,
       pageSize,
+      page_size: pageSize,
       hasMore,
+      has_more: hasMore,
       appliedConstraints,
       categoriesMatched: explicitCategory ? [explicitCategory] : []
     };

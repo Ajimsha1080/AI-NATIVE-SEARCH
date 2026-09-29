@@ -107,6 +107,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     });
 
     const finalPayload = resolveProductCards(result.response_text || '', message, workspaceId, result.interactive_payload);
+    const pagination = finalPayload?.pagination || result.interactive_payload?.pagination || result.metadata?.pagination;
 
     return NextResponse.json({
       conversation_id: result.conversation_id,
@@ -116,6 +117,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       metadata: {
         products: finalPayload?.type === 'PRODUCTS' ? finalPayload.data : undefined,
         order: finalPayload?.type === 'ORDER_TRACKING' ? finalPayload.data : undefined,
+        pagination: pagination || undefined,
       },
       trace: {
         latency_ms: result.trace.latency_ms,
