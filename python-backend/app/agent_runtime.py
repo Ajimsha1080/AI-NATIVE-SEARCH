@@ -180,6 +180,49 @@ def run_agent_cycle(
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
 
+    if interactive_payload is None and (
+        re.search(r'product|women|woman|men|saree|kurta|shirt|dress|item|collection|stock|recommend', message, re.I) or
+        re.search(r'₹|Rs\.?|\$|saree|kurta|shirt|pant|combo', response_text, re.I)
+    ):
+        from .db.seed import get_seed_products
+        all_prods = get_seed_products(workspace_id)
+        matched = []
+        for p in all_prods:
+            if p["title"].lower() in response_text.lower() or any(w.lower() in p["title"].lower() for w in message.split() if len(w) > 3):
+                matched.append(p)
+        
+        if not matched:
+            lines = re.findall(r'(?:^|[\r\n]|•|\*|-)\s*([A-Za-z0-9\s&\'()/-]{3,50}?)\s*(?:—|-|:)\s*(?:₹|Rs\.?|\$)\s*([\d,]+)', response_text, re.M)
+            for title_match, price_match in lines:
+                clean_t = title_match.strip()
+                try:
+                    price_val = float(price_match.replace(',', ''))
+                except Exception:
+                    price_val = 1499.0
+                
+                cat_img = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80'
+                if re.search(r'kurta', clean_t, re.I):
+                    cat_img = 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80'
+                elif re.search(r'shirt|tee', clean_t, re.I):
+                    cat_img = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80'
+
+                matched.append({
+                    "id": f"prod_dyn_{uuid.uuid4().hex[:8]}",
+                    "title": clean_t,
+                    "description": f"{clean_t} crafted from premium quality fabric.",
+                    "category": "Sarees" if re.search(r'saree', clean_t, re.I) else ("Kurtas" if re.search(r'kurta', clean_t, re.I) else "Apparel"),
+                    "price": price_val,
+                    "images": [cat_img],
+                    "in_stock": True,
+                    "total_inventory": 40
+                })
+        
+        if not matched and all_prods:
+            matched = all_prods[:4]
+            
+        if matched:
+            interactive_payload = {"type": "PRODUCTS", "data": matched[:6]}
+
     return {
         "conversation_id": conv_id,
         "message_id": msg_id,
