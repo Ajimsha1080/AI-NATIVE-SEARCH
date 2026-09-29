@@ -6,79 +6,21 @@ import { runAgentCycle } from '@/lib/agent-runtime';
 const PYTHON_BACKEND_URL = process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:8000';
 
 function resolveProductCards(responseText: string, userMessage: string, workspaceId: string, currentPayload?: any) {
-  if (currentPayload?.type === 'PRODUCTS' && Array.isArray(currentPayload.data) && currentPayload.data.length > 0) {
+  if (currentPayload?.type === 'PRODUCTS' && Array.isArray(currentPayload.data)) {
     return currentPayload;
   }
 
   const respLower = (responseText || '').toLowerCase();
-  const userLower = (userMessage || '').toLowerCase();
   const catalog = db.commerce_products.filter(p => p.workspace_id === workspaceId);
   const matched: any[] = [];
 
-  // 1. Direct and multi-token matching with catalog products
+  // Direct title matching with catalog products mentioned in response
   catalog.forEach(p => {
     const pTitle = p.title.toLowerCase();
     if (respLower.includes(pTitle)) {
       if (!matched.some(m => m.id === p.id)) matched.push(p);
-    } else {
-      const tokens = pTitle.split(/\s+/).filter(w => w.length >= 4);
-      if (tokens.length >= 2 && tokens.every(tok => respLower.includes(tok))) {
-        if (!matched.some(m => m.id === p.id)) matched.push(p);
-      }
     }
   });
-
-  // 2. Multi-line pattern matching (handles -, –, —, :, |, with or without price)
-  const lineRegex = /(?:^|[\r\n]|•|\*|-)\s*([A-Za-z0-9\s&'()/-]{3,50}?)\s*(?:—|–|-|:)\s*(?:(?:₹|Rs\.?|\$)\s*([\d,]+)|([A-Za-z\s]{5,}))/gim;
-  let match;
-  while ((match = lineRegex.exec(responseText)) !== null) {
-    const title = match[1].trim();
-    let price = match[2] ? parseFloat(match[2].replace(/,/g, '')) : 1699;
-    
-    let existing = catalog.find(p => p.title.toLowerCase() === title.toLowerCase() || p.title.toLowerCase().includes(title.toLowerCase()));
-    if (existing) {
-      if (!matched.some(m => m.id === existing!.id)) matched.push(existing);
-    } else if (title.length >= 4 && !/here are|if you|we also|let me|our active|feel free|for a festive/i.test(title)) {
-      let categoryImg = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80';
-      if (/kurta/i.test(title)) categoryImg = 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80';
-      else if (/shirt|tee/i.test(title)) categoryImg = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80';
-      else if (/dress/i.test(title)) categoryImg = 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80';
-
-      const newProd = {
-        id: `prod_dyn_${Math.random().toString(36).substring(2, 9)}`,
-        workspace_id: workspaceId,
-        title: title,
-        description: `${title} available in our store collection.`,
-        category: /saree/i.test(title) ? 'Sarees' : (/kurta/i.test(title) ? 'Kurtas' : (/combo/i.test(title) ? 'Combos' : 'Apparel')),
-        tags: [title.toLowerCase(), 'apparel'],
-        price: price || 1699,
-        currency: 'INR',
-        images: [categoryImg],
-        in_stock: true,
-        total_inventory: 50,
-        variants: [{ id: `var_${Math.random().toString(36).substring(2, 9)}`, sku: `SKU-${title.slice(0, 4).toUpperCase()}-M`, title: 'Free Size', price: price || 1699, inventory_quantity: 50, attributes: { size: 'Free Size' } }],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      db.commerce_products.push(newProd);
-      db.scheduleSave();
-      matched.push(newProd);
-    }
-  }
-
-  // 3. Category / user query matching (e.g. "festival dress", "women product", "sarees", "kurtas", "new products")
-  if (matched.length === 0 && /product|dress|women|woman|men|saree|kurta|shirt|festive|festival|combo|new|latest/i.test(userLower)) {
-    const tokens = userLower.split(/\s+/).filter(w => w.length > 2);
-    const categoryMatches = catalog.filter(p => {
-      const full = `${p.title} ${p.description} ${p.category} ${p.tags?.join(' ')}`.toLowerCase();
-      return tokens.some(tok => full.includes(tok));
-    });
-    matched.push(...categoryMatches);
-
-    if (matched.length === 0 && catalog.length > 0) {
-      matched.push(...catalog.slice(0, 4));
-    }
-  }
 
   if (matched.length > 0) {
     const seenIds = new Set<string>();

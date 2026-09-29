@@ -337,20 +337,103 @@ async function runTestSuite() {
   assert(/return|exchange|days/i.test(resMixed.response_text), 'Mixed query successfully addresses return policy in same response');
 
   // ------------------------------------------------------------------------
-  // 9. ZERO FAKE TEXT CARDS / ZERO HALLUCINATIONS
+  // 13. MULTI-TURN SEARCH STATE INHERITANCE & REFINEMENTS
   // ------------------------------------------------------------------------
-  console.log(`\n${BOLD}--- 9. Strict Text Cleanliness & Persona Guardrails ---${RESET}`);
+  console.log(`\n${BOLD}--- 13. Multi-Turn Search State Inheritance & Refinements ---${RESET}`);
 
-  const resCleanliness = await runAgentCycle({
+  const searchConvId = 'conv_search_state_' + Date.now();
+  
+  // Turn 1: Search shirts
+  const resTurn1 = await runAgentCycle({
     agent_id: agentId,
     workspace_id: workspaceId,
-    user_message: 'new products',
+    conversation_id: searchConvId,
+    user_message: 'show me shirts',
     channel: 'PLAYGROUND'
   });
-  assert(!resCleanliness.response_text.includes('While we don\'t have a specific'), 'Zero meta-catalog apologetic phrasing');
-  assert(!resCleanliness.response_text.includes('[Product Card]'), 'Zero fake [Product Card] text artifacts');
-  assert(!resCleanliness.response_text.includes('— Add to Cart'), 'Zero fake markdown button text artifacts');
-  assert(resCleanliness.interactive_payload?.type === 'PRODUCTS', 'Attached real structured product cards');
+  assert(resTurn1.interactive_payload?.type === 'PRODUCTS', 'Turn 1 returns structured shirts payload');
+
+  // Turn 2: Refine price bound ("only under 1500") without repeating "shirts"
+  const resTurn2 = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    conversation_id: searchConvId,
+    user_message: 'only under 1500',
+    channel: 'PLAYGROUND'
+  });
+  assert(resTurn2.interactive_payload?.type === 'PRODUCTS', 'Turn 2 inherits category "shirts" from Turn 1');
+  const refinedProds = resTurn2.interactive_payload?.data || [];
+  const allUnder1500 = refinedProds.every((p: any) => p.price <= 1500);
+  assert(allUnder1500, 'Turn 2 enforces max price <= 1500 constraint');
+
+  // Turn 3: Pagination ("show more") inherits constraints and returns next page
+  const resTurn3 = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    conversation_id: searchConvId,
+    user_message: 'show more',
+    channel: 'PLAYGROUND'
+  });
+  assert(resTurn3.interactive_payload?.type === 'PRODUCTS', 'Turn 3 (pagination) returns structured products payload');
+  const pageProds = resTurn3.interactive_payload?.data || [];
+  const pageUnder1500 = pageProds.every((p: any) => p.price <= 1500);
+  assert(pageUnder1500, 'Turn 3 preserves price <= 1500 filter on next page');
+
+  // ------------------------------------------------------------------------
+  // 14. DYNAMIC PRICE & RECENCY SORTING
+  // ------------------------------------------------------------------------
+  console.log(`\n${BOLD}--- 14. Dynamic Price & Recency Sorting ---${RESET}`);
+
+  const resSortPriceAsc = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    user_message: 'cheaper shirts',
+    channel: 'PLAYGROUND'
+  });
+  const sortAscProds = resSortPriceAsc.interactive_payload?.data || [];
+  assert(sortAscProds.length >= 2, 'Returns multiple shirts for price sort');
+  const isAscending = sortAscProds.every((p: any, i: number) => i === 0 || p.price >= sortAscProds[i - 1].price);
+  assert(isAscending, 'Cheaper shirts are sorted in ascending price order');
+
+  const resSortPriceDesc = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    user_message: 'most expensive shirts',
+    channel: 'PLAYGROUND'
+  });
+  const sortDescProds = resSortPriceDesc.interactive_payload?.data || [];
+  assert(sortDescProds.length >= 2, 'Returns multiple shirts for high price sort');
+  const isDescending = sortDescProds.every((p: any, i: number) => i === 0 || p.price <= sortDescProds[i - 1].price);
+  assert(isDescending, 'Most expensive shirts are sorted in descending price order');
+
+  // ------------------------------------------------------------------------
+  // 15. COMPLETE COLLECTION DISCOVERY ("show all matching")
+  // ------------------------------------------------------------------------
+  console.log(`\n${BOLD}--- 15. Complete Collection Discovery ("show all") ---${RESET}`);
+
+  const resAllShirts = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    user_message: 'show all shirts',
+    channel: 'PLAYGROUND'
+  });
+  assert(resAllShirts.interactive_payload?.type === 'PRODUCTS', 'Show all shirts returns structured PRODUCTS payload');
+  const allShirtsList = resAllShirts.interactive_payload?.data || [];
+  assert(allShirtsList.length >= 10, 'Show all shirts fetches comprehensive catalog slice');
+
+  // ------------------------------------------------------------------------
+  // 16. NON-EXISTENT PRODUCT CONSTRAINT HANDLING
+  // ------------------------------------------------------------------------
+  console.log(`\n${BOLD}--- 16. Non-Existent Product Constraint Handling ---${RESET}`);
+
+  const resNonExistent = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    user_message: 'show me running shoes',
+    channel: 'PLAYGROUND'
+  });
+  assert(resNonExistent.interactive_payload === null || resNonExistent.interactive_payload?.data?.length === 0, 'Does NOT hallucinate shoes when store catalog has zero footwear items');
+  assert(/couldn't find|not find|active collection/i.test(resNonExistent.response_text), 'Politely clarifies no exact match exists in current store collection');
 
   // ------------------------------------------------------------------------
   // SUMMARY

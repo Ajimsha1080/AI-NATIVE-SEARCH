@@ -262,9 +262,10 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
 
   // Phase A: Conversation Context & Reference State
   const previousProducts: CommerceProduct[] = [];
+  let lastSearchState: any = null;
   const prevAssistantMsgs = db.messages
     .filter(m => m.conversation_id === conversation.id && m.role === 'ASSISTANT')
-    .slice(-4);
+    .slice(-6);
 
   for (const m of prevAssistantMsgs) {
     const pData = m.interactive_payload?.data || m.metadata?.products;
@@ -277,10 +278,31 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     }
   }
 
+  for (let i = prevAssistantMsgs.length - 1; i >= 0; i--) {
+    const m = prevAssistantMsgs[i];
+    if (m.metadata?.last_search_state) {
+      lastSearchState = m.metadata.last_search_state;
+      break;
+    }
+  }
+
+  // Introspect schema and dynamically parse query
+  const parsedSearch = commerceEngine.parseQuery(workspace_id, cleanMessage, lastSearchState);
+
   const resolveReferencedProduct = (text: string): CommerceProduct | null => {
     const lower = text.toLowerCase();
     
-    // Ordinal resolution
+    // Ordinal resolution from parsed query or text
+    if (parsedSearch.referencedOrdinal !== undefined) {
+      if (parsedSearch.referencedOrdinal === -1 && previousProducts.length > 0) {
+        return previousProducts[previousProducts.length - 1];
+      }
+      const idx = parsedSearch.referencedOrdinal - 1;
+      if (idx >= 0 && idx < previousProducts.length) {
+        return previousProducts[idx];
+      }
+    }
+
     if (/\b(?:second|2nd|second one|second product|number 2)\b/i.test(lower) && previousProducts.length >= 2) {
       return previousProducts[1];
     }
@@ -298,9 +320,8 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     }
     
     // Color resolution in previous products
-    const colorWordMatch = lower.match(/\b(blue|red|green|black|white|yellow|olive|navy|pink|grey|wine)\b/i);
-    if (colorWordMatch && previousProducts.length > 0) {
-      const colorToken = colorWordMatch[1].toLowerCase();
+    if (parsedSearch.referencedColor && previousProducts.length > 0) {
+      const colorToken = parsedSearch.referencedColor;
       const colorMatch = previousProducts.find(p => 
         p.title.toLowerCase().includes(colorToken) ||
         p.variants?.some((v: any) => (v.attributes?.color || v.title || '').toLowerCase().includes(colorToken))
@@ -321,13 +342,13 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   };
 
   // Phase B: Intent Classification & Multi-Action Detection
-  const hasHumanEscalation = /talk to (?:a |an )?(?:human|agent|representative|person|operator)|speak (?:with|to) (?:a )?(?:human|person|representative)|connect me to support/i.test(cleanMessage);
-  const isComparisonQuery = /which (?:one |item |product )?is (?:cheaper|most expensive|better|the best)|compare (?:these|the first and second|the products|them)|difference between/i.test(cleanMessage);
-  const isInventoryQuery = /(?:is (?:this|that|the \w+ one) (?:in stock|available)|do you have (?:this|that|it) in (?:size )?(\w+)|is size (\w+) (?:available|in stock)|stock level|inventory count)/i.test(cleanMessage);
-  const isCartAction = /(?:add (?:this|that|it|the (?:first|second|third|\w+) one) to (?:my )?cart|add to (?:my )?cart|add (?:that|this|it)|buy this|checkout|remove (?:this|that|the (?:first|second|\w+) one)|show (?:my )?cart|view (?:my )?cart|what(?:'s| is) in my (?:cart|bag))/i.test(cleanMessage);
-  const isOrderTracking = /(?:where is my order|track(?:ing)? (?:my )?order|order status|status of order|#\d{4,6})/i.test(cleanMessage);
-  const isPolicyInquiry = /(?:return|refund|exchange|warranty|policy|shipping policy|how many days|shipping time|when will it arrive|shipping cost|payment method|cod|cash on delivery|who are you|about|contact|phone|email|address|location|headquarters|support)/i.test(cleanMessage);
-  const isProductDiscovery = /(?:show|find|search|look for|need|want|recommend|suggest|what (?:do )?you have|something|nice|dinner|office|casual|wedding|gift|brother|wife|sister|summer|red|blue|black|white|yellow|green|shirt|kurta|saree|jacket|dress|combo|under|below|around|size|products|new|latest|expensive|cheap|premium|comfort)/i.test(cleanMessage);
+  const hasHumanEscalation = parsedSearch.intent === 'HUMAN_HANDOFF';
+  const isComparisonQuery = parsedSearch.intent === 'PRODUCT_COMPARISON';
+  const isInventoryQuery = parsedSearch.intent === 'INVENTORY_CHECK';
+  const isCartAction = parsedSearch.intent === 'CART_ACTION';
+  const isOrderTracking = parsedSearch.intent === 'ORDER_TRACKING';
+  const isPolicyInquiry = /return|refund|exchange|warranty|policy|shipping policy|how many days|shipping time|when will it arrive|shipping cost|payment method|cod|cash on delivery|who are you|about|contact|phone|email|address|location|headquarters|support/i.test(cleanMessage);
+  const isProductDiscovery = parsedSearch.intent === 'PRODUCT_SEARCH' || /show|find|search|look for|need|want|recommend|suggest|what (?:do )?you have|something|nice|dinner|office|casual|wedding|gift|brother|wife|sister|summer|red|blue|black|white|yellow|green|shirt|kurta|saree|jacket|dress|combo|under|below|around|size|products|new|latest|expensive|cheap|premium|comfort|more/i.test(cleanMessage);
 
   // Mixed Intent: Product search + Policy Inquiry
   const isMixedIntent = isProductDiscovery && isPolicyInquiry;
@@ -345,34 +366,11 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   planningSteps.push('1. Intent detected: ' + detectedIntent);
 
   // Extract structured filters
-  let maxPrice: number | undefined;
-  const priceMatch = cleanMessage.match(/(?:under|below|less than|max|around|budget)\s*(?:₹|\$)?\s*(\d+)/i) || cleanMessage.match(/(\d+)\s*(?:k|thousand)\b/i);
-  if (priceMatch) {
-    if (priceMatch[0].includes('k')) {
-      maxPrice = parseFloat(priceMatch[1]) * 1000;
-    } else {
-      maxPrice = parseFloat(priceMatch[1]);
-    }
-  }
-
-  let requestedSize: string | undefined;
-  const sizeMatch = cleanMessage.match(/\bsize\s*(\d+|s|m|l|xl|xxl|free\s*size)\b/i) || cleanMessage.match(/\b(s|m|l|xl|xxl)\s+size\b/i);
-  if (sizeMatch) {
-    requestedSize = sizeMatch[1].toUpperCase().replace(/\s+/g, ' ');
-  }
-
-  let color: string | undefined;
-  const colorMatch = cleanMessage.match(/\b(black|white|red|blue|grey|silver|olive|green|yellow|pink|navy|wine|maroon|purple|cream)\b/i);
-  if (colorMatch) {
-    color = colorMatch[1];
-  }
-
-  let gender: 'men' | 'women' | 'unisex' | undefined;
-  if (/\b(women|womens|lady|ladies|female|girl|girls|wife|sister|mother)\b/i.test(cleanMessage)) {
-    gender = 'women';
-  } else if (/\b(men|mens|male|gent|gents|brother|husband|father|him|boy)\b/i.test(cleanMessage)) {
-    gender = 'men';
-  }
+  let maxPrice: number | undefined = parsedSearch.maxPrice;
+  let minPrice: number | undefined = parsedSearch.minPrice;
+  let requestedSize: string | undefined = parsedSearch.size;
+  let color: string | undefined = parsedSearch.color;
+  let gender: 'men' | 'women' | 'unisex' | 'kids' | undefined = parsedSearch.gender;
 
   // Phase C: 12-Stage RAG Execution (scoped to workspace)
   planningSteps.push('2. Running 12-Stage RAG: Query Understanding → Expansion → Hybrid Retrieval → RRF → Rerank.');
@@ -531,18 +529,22 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
   } else if (detectedIntent === 'MIXED_PRODUCT_AND_POLICY') {
     planningSteps.push('3. Executing combined multi-intent: Product Discovery + Policy Verification.');
     
-    // 1. Structured product search
-    const matchedProducts = await commerceEngine.searchProducts(workspace_id, {
+    const searchResult = await commerceEngine.searchProductsDetailed(workspace_id, {
       query: cleanMessage,
-      category: undefined,
-      gender,
+      category: parsedSearch.explicitCategory,
+      gender: gender as any,
       color,
+      minPrice,
       maxPrice,
       size: requestedSize,
-      inStockOnly: true
-    });
+      inStockOnly: true,
+      sort: parsedSearch.sort,
+      page: parsedSearch.page,
+      pageSize: parsedSearch.pageSize,
+      scope: parsedSearch.scope
+    }, lastSearchState);
 
-    const topCards = matchedProducts.slice(0, 4);
+    const topCards = searchResult.products.slice(0, 4);
     const matchedSummary = topCards.map(p => `• ${p.title} (₹${p.price})`).join('\n');
 
     const multiPrompt = `You are the exclusive AI personal stylist and shopping concierge for ${brand}.
@@ -569,33 +571,57 @@ STRICT GUIDELINES:
     if (topCards.length > 0) {
       interactivePayload = {
         type: 'PRODUCTS',
-        data: topCards
+        data: topCards,
+        pagination: {
+          page: searchResult.page,
+          pageSize: searchResult.pageSize,
+          totalMatches: searchResult.totalMatches,
+          hasMore: searchResult.hasMore
+        }
       };
     }
   } else if (detectedIntent === 'PRODUCT_SEARCH') {
     planningSteps.push('3. Executing structured product discovery & recommendation.');
     
-    const matchedProducts = await commerceEngine.searchProducts(workspace_id, {
+    const searchResult = await commerceEngine.searchProductsDetailed(workspace_id, {
       query: cleanMessage,
-      gender,
+      category: parsedSearch.explicitCategory,
+      gender: gender as any,
       color,
+      minPrice,
       maxPrice,
       size: requestedSize,
-      inStockOnly: true
-    });
+      inStockOnly: true,
+      sort: parsedSearch.sort,
+      page: parsedSearch.page,
+      pageSize: parsedSearch.pageSize,
+      scope: parsedSearch.scope
+    }, lastSearchState);
+
+    const matchedProducts = searchResult.products;
 
     if (matchedProducts.length > 0) {
-      const topCards = matchedProducts.slice(0, 6);
       interactivePayload = {
         type: 'PRODUCTS',
-        data: topCards
+        data: matchedProducts,
+        pagination: {
+          page: searchResult.page,
+          pageSize: searchResult.pageSize,
+          totalMatches: searchResult.totalMatches,
+          hasMore: searchResult.hasMore
+        }
       };
 
-      const matchedSummary = topCards.slice(0, 4).map(p => 
-        `• ${p.title} (₹${typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price}) — ${p.description || p.category}`
-      ).join('\n');
+      if (parsedSearch.scope === 'pagination') {
+        responseText = `Here are more selections from our collection at **${brand}**:`;
+      } else if (parsedSearch.scope === 'all_matching') {
+        responseText = `Found **${searchResult.totalMatches}** matching items in our collection at **${brand}**:`;
+      } else {
+        const matchedSummary = matchedProducts.slice(0, 4).map(p => 
+          `• ${p.title} (₹${typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price}) — ${p.description || p.category}`
+        ).join('\n');
 
-      const naturalProductPrompt = `You are the exclusive, stylish AI shopping concierge and personal stylist for ${brand}.
+        const naturalProductPrompt = `You are the exclusive, stylish AI shopping concierge and personal stylist for ${brand}.
 Customer Query: "${user_message}"
 
 Matching Catalog Products:
@@ -608,27 +634,28 @@ STRICT GUIDELINES:
 4. NEVER dump long lists, markdown bullet points, or prices in text because clickable photo cards with Add to Cart buttons are already displayed directly below your chat bubble.
 5. NEVER generate fake text tags like [Product Card] or — Add to Cart.`;
 
-      const sarvamProductAnswer = await callSarvamLLM(
-        naturalProductPrompt,
-        user_message,
-        `Live Catalog Items:\n${matchedSummary}\n\n${fullKnowledgeContext}`,
-        conversationHistory
-      );
+        const sarvamProductAnswer = await callSarvamLLM(
+          naturalProductPrompt,
+          user_message,
+          `Live Catalog Items:\n${matchedSummary}\n\n${fullKnowledgeContext}`,
+          conversationHistory
+        );
 
-      if (sarvamProductAnswer) {
-        responseText = sarvamProductAnswer;
-      } else {
-        if (topCards.length === 1) {
-          responseText = `Here is our **${topCards[0].title}**! ${topCards[0].description ? topCards[0].description.slice(0, 150) : ''}`;
-        } else if (/new|latest|arrival/i.test(user_message)) {
-          responseText = `Here are our latest arrivals from **${brand}**:`;
+        if (sarvamProductAnswer) {
+          responseText = sarvamProductAnswer;
         } else {
-          responseText = `Here are our top recommended pieces from **${brand}**:`;
+          if (matchedProducts.length === 1) {
+            responseText = `Here is our **${matchedProducts[0].title}**! ${matchedProducts[0].description ? matchedProducts[0].description.slice(0, 150) : ''}`;
+          } else if (/new|latest|arrival/i.test(user_message)) {
+            responseText = `Here are our latest arrivals from **${brand}**:`;
+          } else {
+            responseText = `Here are our top recommended pieces from **${brand}**:`;
+          }
         }
-      }
 
-      if (requestedSize) {
-        responseText += `\n\n✅ Size **${requestedSize}** is in stock.`;
+        if (requestedSize) {
+          responseText += `\n\n✅ Size **${requestedSize}** is in stock.`;
+        }
       }
     } else {
       responseText = `I couldn't find an exact match for "${user_message}" in our active collection at **${brand}**. Let me know if you'd like to explore other colors, styles, or categories!`;
@@ -697,6 +724,10 @@ STRICT GUIDELINES:
     role: 'ASSISTANT',
     content: finalResponseText,
     interactive_payload: interactivePayload,
+    metadata: {
+      ...(interactivePayload || {}),
+      ...(interactivePayload?.type === 'PRODUCTS' ? { last_search_state: parsedSearch } : {})
+    },
     created_at: new Date().toISOString()
   };
   db.messages.push(asstMsg);
