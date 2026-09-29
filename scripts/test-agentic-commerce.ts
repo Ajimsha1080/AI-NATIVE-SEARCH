@@ -117,6 +117,26 @@ async function runTestSuite() {
       ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_my_black_shirt',
+      workspace_id: workspaceId,
+      title: 'Classic Linen Shirt — Obsidian Black',
+      description: 'Premium breathable 100% pure linen button-down shirt in jet obsidian black.',
+      category: 'Shirts',
+      tags: ['shirt', 'black', 'men', 'casual', 'linen', 'obsidian'],
+      price: 1399,
+      compare_at_price: 1899,
+      currency: 'INR',
+      images: ['https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80'],
+      in_stock: true,
+      total_inventory: 25,
+      variants: [
+        { id: 'var_blk_m', sku: 'SKU-BLK-M', title: 'M', price: 1399, inventory_quantity: 15, attributes: { size: 'M', color: 'Black' } },
+        { id: 'var_blk_l', sku: 'SKU-BLK-L', title: 'L', price: 1399, inventory_quantity: 10, attributes: { size: 'L', color: 'Black' } }
+      ],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ];
 
@@ -161,9 +181,118 @@ async function runTestSuite() {
   assert(brotherFitsBudget, 'Returns products fitting the ₹1500 budget constraint');
 
   // ------------------------------------------------------------------------
-  // 2. DEMOGRAPHIC & ATTRIBUTE FILTERING
+  // 2. EXPLICIT CONSTRAINT VS SEMANTIC RETRIEVAL ("men shirts")
   // ------------------------------------------------------------------------
-  console.log(`\n${BOLD}--- 2. Demographic & Color Attribute Filtering ---${RESET}`);
+  console.log(`\n${BOLD}--- 2. Explicit Constraint Enforcement ("men shirts") ---${RESET}`);
+
+  const resMenShirts = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    user_message: 'men shirts',
+    channel: 'PLAYGROUND'
+  });
+  assert(resMenShirts.interactive_payload?.type === 'PRODUCTS', 'Men shirts query returns structured PRODUCTS payload');
+  const menShirtProducts = resMenShirts.interactive_payload?.data || [];
+  assert(menShirtProducts.length > 0, 'Returns at least 1 shirt');
+  const allAreShirts = menShirtProducts.every((p: any) => 
+    p.category.toLowerCase() === 'shirts' || p.title.toLowerCase().includes('shirt')
+  );
+  assert(allAreShirts, 'Strict constraint: All results belong to Shirts category and exclude hoodies/jackets/t-shirts');
+  const noHoodiesOrJackets = menShirtProducts.every((p: any) =>
+    !p.category.toLowerCase().includes('hoodie') && !p.category.toLowerCase().includes('outerwear')
+  );
+  assert(noHoodiesOrJackets, 'Strictly zero hoodies, outerwear, or sarees in "men shirts" results');
+
+  // ------------------------------------------------------------------------
+  // 3. SEMANTIC USE-CASE RETRIEVAL ("something for the gym")
+  // ------------------------------------------------------------------------
+  console.log(`\n${BOLD}--- 3. Semantic Use-Case & Occasion Queries ---${RESET}`);
+
+  const resGym = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    user_message: 'I need something for the gym',
+    channel: 'PLAYGROUND'
+  });
+  assert(resGym.interactive_payload?.type === 'PRODUCTS', 'Gym query returns structured PRODUCTS payload');
+  const gymProducts = resGym.interactive_payload?.data || [];
+  const hasGymActivewear = gymProducts.some((p: any) =>
+    /tee|nosweat|jacket|cooling|active|breathable/i.test(p.title + ' ' + (p.tags || []).join(' ') + ' ' + (p.description || ''))
+  );
+  assert(hasGymActivewear, 'Semantic mapping returns activewear/breathable gear for gym query without hardcoded category rule');
+
+  // ------------------------------------------------------------------------
+  // 4. VAGUE SHOPPING REQUEST ("I want something nice")
+  // ------------------------------------------------------------------------
+  console.log(`\n${BOLD}--- 4. Vague & Underspecified Shopping Requests ---${RESET}`);
+
+  const resVague = await runAgentCycle({
+    agent_id: agentId,
+    workspace_id: workspaceId,
+    user_message: 'I want something nice',
+    channel: 'PLAYGROUND'
+  });
+  assert(resVague.interactive_payload?.type === 'PRODUCTS', 'Vague query returns featured catalog products');
+  assert(!resVague.response_text.includes('While we don\'t have a specific'), 'Zero meta-catalog apologizing on vague request');
+
+  // ------------------------------------------------------------------------
+  // 5. DYNAMIC TAXONOMY ON TOTALLY UNSEEN MERCHANTS / DOMAINS
+  // ------------------------------------------------------------------------
+  console.log(`\n${BOLD}--- 5. Dynamic Taxonomy Extraction for Unseen Domains ---${RESET}`);
+
+  const unseenWorkspaceId = 'ws_custom_hardware_store';
+  const unseenAgentId = 'agent_hardware_01';
+
+  // Seed non-fashion custom merchant catalog (Keyboards & Audio)
+  db.commerce_products.push(
+    {
+      id: 'prod_kb_01',
+      workspace_id: unseenWorkspaceId,
+      title: 'Apex Pro Mechanical Keyboard',
+      description: 'Custom mechanical keyboard with hot-swappable switches and RGB backlighting.',
+      category: 'Mechanical Keyboards',
+      tags: ['keyboard', 'switches', 'rgb', 'gaming', 'hardware'],
+      price: 8999,
+      currency: 'INR',
+      images: ['https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&auto=format&fit=crop&q=80'],
+      in_stock: true,
+      total_inventory: 15,
+      variants: [{ id: 'var_kb_01', sku: 'KB-APEX', title: 'Standard', price: 8999, inventory_quantity: 15, attributes: {} }],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prod_plant_01',
+      workspace_id: unseenWorkspaceId,
+      title: 'Nordic Minimalist Ceramic Planter',
+      description: 'Handcrafted ceramic planter with drainage tray for indoor succulents.',
+      category: 'Ceramic Planters',
+      tags: ['planter', 'pots', 'ceramic', 'decor', 'plants'],
+      price: 1299,
+      currency: 'INR',
+      images: ['https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=600&auto=format&fit=crop&q=80'],
+      in_stock: true,
+      total_inventory: 20,
+      variants: [{ id: 'var_pl_01', sku: 'PL-NORDIC', title: 'Medium', price: 1299, inventory_quantity: 20, attributes: {} }],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  );
+
+  const resUnseenCat = await runAgentCycle({
+    agent_id: unseenAgentId,
+    workspace_id: unseenWorkspaceId,
+    user_message: 'show me mechanical keyboards',
+    channel: 'PLAYGROUND'
+  });
+  assert(resUnseenCat.interactive_payload?.type === 'PRODUCTS', 'Unseen domain query returns PRODUCTS payload');
+  const unseenProducts = resUnseenCat.interactive_payload?.data || [];
+  assert(unseenProducts.length === 1 && unseenProducts[0].category === 'Mechanical Keyboards', 'Dynamically extracted unseen category "Mechanical Keyboards" and excluded "Ceramic Planters" with zero hardcoding');
+
+  // ------------------------------------------------------------------------
+  // 6. DEMOGRAPHIC & ATTRIBUTE FILTERING
+  // ------------------------------------------------------------------------
+  console.log(`\n${BOLD}--- 6. Demographic & Color Attribute Filtering ---${RESET}`);
 
   const resWomen = await runAgentCycle({
     agent_id: agentId,
@@ -193,9 +322,9 @@ async function runTestSuite() {
   assert(!resRed.response_text.includes('[Product Card]'), 'No fake text tags in red shirts response');
 
   // ------------------------------------------------------------------------
-  // 3. PRODUCT COMPARISON
+  // 7. PRODUCT COMPARISON
   // ------------------------------------------------------------------------
-  console.log(`\n${BOLD}--- 3. Multi-Product Comparison & Ordinals ---${RESET}`);
+  console.log(`\n${BOLD}--- 7. Multi-Product Comparison & Ordinals ---${RESET}`);
 
   const convId = 'conv_comp_test_' + Date.now();
   

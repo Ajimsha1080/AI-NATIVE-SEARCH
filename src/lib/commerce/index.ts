@@ -18,21 +18,6 @@ export class LocalCommerceProvider {
   async searchProducts(workspaceId: string, params: ProductSearchParams): Promise<CommerceProduct[]> {
     let list = db.commerce_products.filter(p => p.workspace_id === workspaceId);
 
-    const occasionKeywords: Record<string, string[]> = {
-      dinner: ['shirt', 'shacket', 'kurta', 'combo', 'saree', 'palace', 'embroidered', 'corduroy', 'dress', 'elegant', 'black'],
-      office: ['shirt', 'corduroy', 'pant', 'anti-ac', 'thermal', 'kurta', 'poplin', 'formal', 'classic', 'cotton'],
-      casual: ['tee', 'tshirt', 'jogger', 'hoodie', 'nosweat', 'shacket', 'jacket', 'cotton', 'relaxed'],
-      wedding: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'zari', 'dori', 'mandala', 'embroidered', 'festive', 'silk'],
-      festive: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive'],
-      festival: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive'],
-      summer: ['sunscreen', 'ice', 'cooling', 'tee', 'nosweat', 'visor', 'balaclava', 'upf50', 'lightweight', 'breathable'],
-      vacation: ['sunscreen', 'visor', 'tee', 'jogger', 'jacket', 'balaclava', 'combo', 'yellow floral'],
-      comfort: ['nosweat', 'poplin', 'thermal', 'jogger', 'tee', 'cotton', 'relaxed', 'breathable', 'ice pro'],
-      brother: ['shirt', 'tee', 'jogger', 'jacket', 'shacket', 'corduroy', 'men'],
-      wife: ['saree', 'kurta', 'combo', 'dress', 'women', 'yellow floral', 'emerald'],
-      premium: ['royal', 'heritage', 'shacket', 'embroidered', 'palace', 'ice pro', 'thermal', 'zari']
-    };
-
     if (params.query) {
       const typoMap: Record<string, string> = {
         wmoen: 'women',
@@ -47,14 +32,6 @@ export class LocalCommerceProvider {
         produtcs: 'products',
         proucts: 'products',
         porducts: 'products',
-        jaket: 'jacket',
-        jakets: 'jackets',
-        jakcet: 'jacket',
-        jackt: 'jacket',
-        sunscren: 'sunscreen',
-        suncrean: 'sunscreen',
-        suncream: 'sunscreen',
-        suncreen: 'sunscreen',
         shrit: 'shirt',
         shrits: 'shirts',
         tshrit: 'tshirt',
@@ -72,166 +49,203 @@ export class LocalCommerceProvider {
         oder: 'order',
       };
 
-      let q = params.query.toLowerCase();
+      let q = params.query.toLowerCase().trim();
       for (const [typo, fix] of Object.entries(typoMap)) {
         q = q.replace(new RegExp(`\\b${typo}\\b`, 'gi'), fix);
       }
 
-      const isBroadQuery = /new|latest|arrival|arrivals|product|products|item|items|catalog|collection|bestseller|trending|recommend|what do you have|what you sell|all|something|nice|anything|gift/i.test(q);
-      const stopWords = new Set(['show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the', 'please', 'can', 'you', 'give', 'what', 'are', 'your', 'any', 'new', 'latest', 'product', 'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival', 'good', 'something', 'nice', 'need', 'want', 'buy', 'recommend', 'would', 'like', 'there', 'have']);
-      const tokens = q.split(/[\s,?!]+/).filter(w => w.length > 2 && !stopWords.has(w) && isNaN(Number(w)));
+      const cleanQ = q.replace(/[^\w\s\-\/₹$]/g, ' ').replace(/\s+/g, ' ').trim();
+      const queryTokens = cleanQ.split(/\s+/).filter(w => w.length > 1);
 
-      const synonyms: Record<string, string[]> = {
-        men: ['mens', 'male', 'gent', 'gents', 'brother', 'husband', 'guy', 'guys', 'father', 'him'],
-        mens: ['men', 'male', 'gent', 'gents', 'brother', 'husband', 'guy', 'guys', 'father', 'him'],
-        women: ['womens', 'ladies', 'lady', 'female', 'girl', 'girls', 'wife', 'mother', 'sister', 'her'],
-        womens: ['women', 'ladies', 'lady', 'female', 'girl', 'girls', 'wife', 'mother', 'sister', 'her'],
-        saree: ['saree', 'sarees', 'sari', 'saris', 'drape', 'ethnic', 'silk'],
-        sarees: ['saree', 'sarees', 'sari', 'saris', 'drape', 'ethnic', 'silk'],
-        kurta: ['kurta', 'kurtas', 'kurti', 'kurtis', 'pant combo', 'box combo'],
-        kurtas: ['kurta', 'kurtas', 'kurti', 'kurtis', 'pant combo', 'box combo'],
-        dress: ['dress', 'dresses', 'saree', 'kurta', 'gown', 'outfit', 'apparel', 'festive'],
-        dresses: ['dress', 'dresses', 'saree', 'kurta', 'gown', 'outfit', 'apparel', 'festive'],
-        festive: ['festive', 'festival', 'diwali', 'celebration', 'royal', 'heritage', 'combo', 'saree', 'kurta'],
-        festival: ['festive', 'festival', 'diwali', 'celebration', 'royal', 'heritage', 'combo', 'saree', 'kurta'],
-        combo: ['combo', 'combos', 'box combo', 'couple combo', 'kurta pant combo', 'set', 'sets'],
-        combos: ['combo', 'combos', 'box combo', 'couple combo', 'kurta pant combo', 'set', 'sets'],
-        cap: ['visor', 'hat', 'headwear'],
-        caps: ['visor', 'hat', 'headwear'],
-        hat: ['visor', 'cap', 'headwear'],
-        hats: ['visor', 'cap', 'headwear'],
-        visor: ['visor', 'hat', 'cap', 'headwear'],
-        visors: ['visor', 'hat', 'cap', 'headwear'],
-        balaclava: ['mask', 'face cover', 'neck gaiter'],
-        mask: ['balaclava', 'face cover'],
-        tee: ['tshirt', 't-shirt', 'nosweat', 'tee'],
-        tees: ['tshirt', 't-shirt', 'nosweat', 'tee'],
-        shirt: ['tshirt', 't-shirt', 'nosweat', 'tee', 'shacket', 'corduroy', 'palace', 'embroidered'],
-        shirts: ['tshirt', 't-shirt', 'nosweat', 'tee', 'shacket', 'corduroy', 'palace', 'embroidered'],
-        shacket: ['shirt', 'jacket', 'outerwear', 'shacket', 'tribal'],
-        top: ['tee', 'tshirt', 'jacket', 'kurti', 'top'],
-        tops: ['tee', 'tshirt', 'jacket', 'kurti', 'top'],
-        hoodie: ['thermal', 'jacket', 'anti-ac'],
-        hoodies: ['thermal', 'jacket', 'anti-ac'],
-        jacket: ['sunscreen jacket', 'thermal', 'anti-ac', 'shacket'],
-        jackets: ['sunscreen jacket', 'thermal', 'anti-ac', 'shacket'],
-        red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral'],
-        blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky'],
-        green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest'],
-        black: ['black', 'stealth', 'charcoal', 'jet', 'dark'],
-        white: ['white', 'off-white', 'off white', 'ivory', 'cream'],
-        yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon']
+      // Dynamic Catalog Taxonomy Extraction (from active merchant products)
+      const catalogCategories = Array.from(new Set(list.map(p => p.category.trim()).filter(Boolean)));
+      const catalogTags = Array.from(new Set(list.flatMap(p => (p.tags || []).map(t => t.trim().toLowerCase())).filter(Boolean)));
+
+      const stemWord = (word: string): string => {
+        const w = word.toLowerCase().trim();
+        if (w.endsWith('ies') && w.length > 4) return w.slice(0, -3) + 'y';
+        if (w.endsWith('es') && !w.endsWith('ses') && w.length > 3) return w.slice(0, -2);
+        if (w.endsWith('s') && !w.endsWith('ss') && w.length > 2) return w.slice(0, -1);
+        return w;
       };
 
-      const demographicWords = new Set(['men', 'mens', 'male', 'gent', 'gents', 'guy', 'guys', 'women', 'womens', 'lady', 'ladies', 'female', 'girl', 'girls', 'brother', 'sister', 'wife', 'husband', 'him', 'her']);
-      const productTypeTokens = tokens.filter(t => !demographicWords.has(t));
+      const queryStemmed = queryTokens.map(stemWord);
 
-      const isMenQuery = params.gender === 'men' || /\b(men|mens|male|gent|gents|guy|guys|brother|husband|him|father|boy)\b/i.test(q);
-      const isWomenQuery = params.gender === 'women' || /\b(women|womens|lady|ladies|female|girl|girls|wife|sister|her|mother)\b/i.test(q);
+      // 1. Identify Explicit Category / Product Concept Constraint
+      let explicitCategoryMatch: string | null = null;
 
-      const searchTypeTokens = new Set<string>(productTypeTokens);
-      for (const t of productTypeTokens) {
-        if (synonyms[t]) {
-          synonyms[t].forEach(s => searchTypeTokens.add(s));
+      // Check multi-word categories first (e.g. "T-Shirts", "Ceramic Planters", "Kurta Pant Combo")
+      for (const cat of catalogCategories) {
+        const catNorm = cat.toLowerCase().trim();
+        const catStemmed = catNorm.split(/[\s\-_]+/).map(stemWord).join(' ');
+        if (cleanQ.includes(catNorm) || cleanQ.includes(catStemmed)) {
+          explicitCategoryMatch = cat;
+          break;
         }
       }
 
-      // Check for occasion intent
-      for (const [occ, related] of Object.entries(occasionKeywords)) {
-        if (q.includes(occ)) {
-          related.forEach(r => searchTypeTokens.add(r));
+      // Check single-word category matches
+      if (!explicitCategoryMatch) {
+        for (const cat of catalogCategories) {
+          const catNorm = cat.toLowerCase().trim();
+          const catStem = stemWord(catNorm);
+
+          // Disambiguate compound vs base categories (e.g. "T-Shirts" vs "Shirts")
+          const isTShirtCat = /t-?shirt|tee/i.test(catNorm);
+          const hasTShirtToken = queryTokens.some(t => /t-?shirt|tee/i.test(t));
+
+          if (isTShirtCat && !hasTShirtToken) continue;
+          if (!isTShirtCat && /shirt/i.test(catNorm) && hasTShirtToken) continue;
+
+          if (queryStemmed.includes(catStem) || queryTokens.includes(catNorm)) {
+            explicitCategoryMatch = cat;
+            break;
+          }
         }
       }
+
+      // 2. Demographic & Gender Constraints
+      const isMenQuery = params.gender === 'men' || /\b(men|mens|male|gent|gents|guy|guys|brother|husband|him|father|boy)\b/i.test(cleanQ);
+      const isWomenQuery = params.gender === 'women' || /\b(women|womens|lady|ladies|female|girl|girls|wife|sister|her|mother)\b/i.test(cleanQ);
 
       const checkIsWomenProduct = (p: CommerceProduct) => {
         const titleL = p.title.toLowerCase();
-        const tagsL = p.tags.map(t => t.toLowerCase()).join(' ');
+        const tagsL = (p.tags || []).map(t => t.toLowerCase()).join(' ');
         const catL = (p.category || '').toLowerCase();
         const descL = (p.description || '').toLowerCase();
         const full = `${titleL} ${tagsL} ${catL} ${descL}`;
         return full.includes('women') || full.includes('womens') || full.includes('female') ||
           full.includes('saree') || full.includes('kurta') || full.includes('kurti') ||
           full.includes('dress') || full.includes('lehenga') || full.includes('gown') ||
-          full.includes('skirt') || full.includes('blouse') || full.includes('combo');
+          full.includes('skirt') || full.includes('blouse');
       };
 
-      let filtered = list.filter(p => {
-        const titleLower = p.title.toLowerCase();
-        const tagsLower = p.tags.map(t => t.toLowerCase());
-        const descLower = p.description.toLowerCase();
-        const fullText = `${titleLower} ${descLower} ${p.category.toLowerCase()} ${tagsLower.join(' ')}`;
-        const wordsInText = new Set(fullText.split(/[\s,._\-/+():;]+/));
+      // 3. General Semantic & Occasion Understanding
+      const semanticUseCases: Record<string, string[]> = {
+        gym: ['activewear', 'nosweat', 'quick-dry', 'stretch', 'breathable', 'jogger', 'tee', 'performance', 'tank', 'athletic', 'workout'],
+        fitness: ['activewear', 'nosweat', 'quick-dry', 'stretch', 'breathable', 'jogger', 'tee', 'performance', 'athletic'],
+        workout: ['activewear', 'nosweat', 'quick-dry', 'stretch', 'breathable', 'jogger', 'tee', 'performance'],
+        sports: ['activewear', 'nosweat', 'quick-dry', 'stretch', 'jogger', 'tee', 'visor', 'balaclava'],
+        running: ['activewear', 'nosweat', 'quick-dry', 'stretch', 'jogger', 'tee', 'visor'],
+        dinner: ['shirt', 'shacket', 'kurta', 'combo', 'saree', 'palace', 'embroidered', 'corduroy', 'dress', 'elegant', 'black', 'luxe'],
+        office: ['shirt', 'corduroy', 'pant', 'anti-ac', 'thermal', 'kurta', 'poplin', 'formal', 'classic', 'cotton', 'clean'],
+        work: ['shirt', 'corduroy', 'pant', 'anti-ac', 'thermal', 'kurta', 'poplin', 'formal', 'classic', 'cotton'],
+        casual: ['tee', 'tshirt', 'jogger', 'hoodie', 'nosweat', 'shacket', 'jacket', 'cotton', 'relaxed', 'casual', 'denim'],
+        weekend: ['relaxed', 'casual', 'cotton', 'jogger', 'tee', 'hoodie', 'comfortable', 'denim'],
+        trip: ['jogger', 'jacket', 'hoodie', 'tee', 'visor', 'comfort', 'cotton', 'travel'],
+        wedding: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'zari', 'dori', 'mandala', 'embroidered', 'festive', 'silk', 'traditional'],
+        festive: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive'],
+        festival: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive'],
+        summer: ['sunscreen', 'ice', 'cooling', 'tee', 'nosweat', 'visor', 'balaclava', 'upf50', 'lightweight', 'breathable', 'cotton'],
+        winter: ['thermal', 'anti-ac', 'fleece', 'hoodie', 'jacket', 'warm', 'insulation', 'corduroy'],
+        brother: ['shirt', 'tee', 'jogger', 'jacket', 'shacket', 'corduroy', 'men'],
+        wife: ['saree', 'kurta', 'combo', 'dress', 'women', 'yellow floral', 'emerald'],
+        comfortable: ['nosweat', 'poplin', 'thermal', 'jogger', 'tee', 'cotton', 'relaxed', 'breathable', 'comfort'],
+        comfort: ['nosweat', 'poplin', 'thermal', 'jogger', 'tee', 'cotton', 'relaxed', 'breathable', 'comfort']
+      };
 
-        // Demographic enforcement:
-        const isWomenProd = checkIsWomenProduct(p);
-        if (isMenQuery && !isWomenQuery && isWomenProd && !fullText.includes('men') && !fullText.includes('couple')) {
-          return false; // Exclude exclusively women's products for explicit men's query
+      const matchedSemanticTerms = new Set<string>();
+      for (const [key, terms] of Object.entries(semanticUseCases)) {
+        if (cleanQ.includes(key)) {
+          terms.forEach(t => matchedSemanticTerms.add(t));
         }
-        if (isWomenQuery && !isMenQuery && !isWomenProd) {
-          return false; // Exclude men-only products for explicit women's query
+      }
+
+      // 4. Content Tokens
+      const stopWords = new Set([
+        'show', 'me', 'find', 'look', 'for', 'under', 'below', 'in', 'size', 'with', 'a', 'an', 'the',
+        'please', 'can', 'you', 'give', 'what', 'are', 'your', 'any', 'new', 'latest', 'product',
+        'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival', 'good', 'something',
+        'nice', 'need', 'want', 'buy', 'recommend', 'would', 'like', 'there', 'have', 'i', 'get', 'to',
+        'some', 'of', 'and', 'or', 'is', 'it', 'this', 'that', 'from', 'best', 'top', 'do', 'help', 'choose'
+      ]);
+      const contentTokens = queryTokens.filter(t => !stopWords.has(t) && isNaN(Number(t)));
+
+      // 5. Candidate Filtering
+      let candidates = list.filter(p => {
+        const titleL = p.title.toLowerCase();
+        const tagsL = (p.tags || []).map(t => t.toLowerCase());
+        const catL = (p.category || '').toLowerCase();
+        const descL = (p.description || '').toLowerCase();
+        const fullText = `${titleL} ${descL} ${catL} ${tagsL.join(' ')}`;
+
+        // Demographic enforcement
+        const isWomen = checkIsWomenProduct(p);
+        if (isMenQuery && !isWomenQuery && isWomen && !fullText.includes('men') && !fullText.includes('couple')) {
+          return false;
+        }
+        if (isWomenQuery && !isMenQuery && !isWomen) {
+          return false;
         }
 
-        // If no specific product type was queried (e.g. "women products", "new products", "all", "something nice"), return all demographic-matching items
-        if (searchTypeTokens.size === 0) {
-          return true;
+        // Explicit Category constraint enforcement:
+        // When user requested an explicit product category (e.g. "men shirts"),
+        // eliminate products belonging to other disjoint categories (e.g. "Hoodies", "Jackets", "Bottoms").
+        if (explicitCategoryMatch) {
+          const expCatL = explicitCategoryMatch.toLowerCase().trim();
+          const expCatStem = stemWord(expCatL);
+
+          const isCategoryExact = catL === expCatL;
+          const isCategoryStemmed = stemWord(catL) === expCatStem;
+          const isTitleExact = titleL.includes(expCatL) || titleL.split(/\s+/).map(stemWord).includes(expCatStem);
+          const isTagExact = tagsL.includes(expCatL) || tagsL.map(stemWord).includes(expCatStem);
+
+          if (!isCategoryExact && !isCategoryStemmed && !isTitleExact && !isTagExact) {
+            return false;
+          }
         }
 
-        if (fullText.includes(q)) return true;
-
-        for (const t of searchTypeTokens) {
-          if (wordsInText.has(t)) return true;
-          if (t.length >= 4 && fullText.includes(t)) return true;
-        }
-        return false;
+        return true;
       });
 
-      // Demographic filter refinement:
-      if (isWomenQuery) {
-        const womenOnly = filtered.filter(checkIsWomenProduct);
-        if (womenOnly.length > 0) {
-          filtered = womenOnly;
-        }
-      } else if (isMenQuery) {
-        const menOnly = filtered.filter(p => !checkIsWomenProduct(p) || p.title.toLowerCase().includes('men') || p.tags.some(t => t.toLowerCase().includes('men')));
-        if (menOnly.length > 0) {
-          filtered = menOnly;
-        }
-      }
+      // 6. Multi-Signal Hybrid Ranking
+      candidates.sort((a, b) => {
+        const computeScore = (p: CommerceProduct) => {
+          let s = 0;
+          const tLower = p.title.toLowerCase();
+          const dLower = (p.description || '').toLowerCase();
+          const catLower = (p.category || '').toLowerCase();
+          const tagsLower = (p.tags || []).map(t => t.toLowerCase());
 
-      if (filtered.length > 0) {
-        // Relevance ranking: Title matches rank higher than description matches, occasion matches given high weight
-        filtered.sort((a, b) => {
-          const score = (p: CommerceProduct) => {
-            let s = 0;
-            const tLower = p.title.toLowerCase();
-            const dLower = p.description.toLowerCase();
-            const tagsLower = p.tags.map(t => t.toLowerCase());
-            const fullText = `${tLower} ${dLower} ${tagsLower.join(' ')}`;
+          // Explicit category alignment
+          if (explicitCategoryMatch) {
+            const expL = explicitCategoryMatch.toLowerCase();
+            if (catLower === expL) s += 250;
+            else if (stemWord(catLower) === stemWord(expL)) s += 200;
+            if (tLower.includes(expL)) s += 150;
+          }
 
-            for (const token of tokens) {
-              if (tLower.includes(token)) s += 100;
-              if (tagsLower.includes(token)) s += 50;
-              if (dLower.includes(token)) s += 20;
-            }
+          // Exact query match
+          if (tLower.includes(cleanQ)) s += 120;
 
-            for (const t of searchTypeTokens) {
-              if (tLower.includes(t)) s += 40;
-              if (tagsLower.includes(t)) s += 25;
-            }
+          // Lexical Content token matches
+          for (const token of contentTokens) {
+            const tokenStem = stemWord(token);
+            if (tLower.includes(token)) s += 60;
+            else if (stemWord(tLower).includes(tokenStem)) s += 40;
 
-            // In-stock preference
-            if (p.in_stock) s += 15;
+            if (tagsLower.includes(token)) s += 30;
+            if (catLower.includes(token)) s += 25;
+            if (dLower.includes(token)) s += 15;
+          }
 
-            return s;
-          };
-          return score(b) - score(a);
-        });
-        list = filtered;
-      } else if (tokens.length === 0 && isBroadQuery) {
-        list = list.slice(0, 6);
-      } else {
-        list = [];
-      }
+          // Semantic use-case matches
+          for (const semTerm of matchedSemanticTerms) {
+            if (tLower.includes(semTerm)) s += 35;
+            if (tagsLower.includes(semTerm)) s += 25;
+            if (dLower.includes(semTerm)) s += 15;
+          }
+
+          // In-Stock preference
+          if (p.in_stock && p.total_inventory > 0) s += 20;
+
+          return s;
+        };
+
+        return computeScore(b) - computeScore(a);
+      });
+
+      list = candidates;
     }
 
     if (params.category) {
@@ -266,7 +280,7 @@ export class LocalCommerceProvider {
       const colorFamily = [colorLower, ...(colorSynonyms[colorLower] || [])];
 
       list = list.filter(p => {
-        const full = `${p.title} ${p.description} ${p.tags.join(' ')}`.toLowerCase();
+        const full = `${p.title} ${p.description} ${(p.tags || []).join(' ')}`.toLowerCase();
         const hasColorInText = colorFamily.some(c => full.includes(c));
         const hasColorInVariant = p.variants.some(v => {
           const vColor = `${v.attributes.color || ''} ${v.title || ''}`.toLowerCase();
