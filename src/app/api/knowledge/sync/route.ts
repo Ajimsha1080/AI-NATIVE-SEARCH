@@ -89,65 +89,17 @@ export async function POST(req: Request) {
 
     let scrapedText = scrapedSections.join('\n\n');
 
-    // Specialized high-fidelity store intelligence for Blue Tyga and Indian E-Commerce
-    if (parsedHostname.includes('bluetyga')) {
-      scrapedText = `BLUE TYGA (bluetyga.com) - COMPLETE ALL-PAGES STORE INTELLIGENCE & POLICIES
-
-================================================================================
-1. [ABOUT & BRAND OVERVIEW] (https://bluetyga.com/pages/about-us)
-================================================================================
-• Brand Origin: Blue Tyga is an Indian technical apparel and engineered techwear brand based in Coimbatore, Tamil Nadu. Associated with the legacy of Walkaroo.
-• Core Mission: Solves daily discomforts caused by tropical heat, sweat, humidity, and harmful UV radiation through fabric innovation.
-• Engineering Highlights: Moisture-wicking microfibers, 4-way stretch polymers, UPF 50+ UV-blocking weave, and anti-static finishes.
-
-================================================================================
-2. [PRODUCT CATALOG & CATEGORIES] (https://bluetyga.com/collections/all)
-================================================================================
-• 1. Sunscreen Jackets (Men): Standard (₹999), Pro (₹1,299), Ice Pro (₹1,999) with certified UPF 50+ UV protection.
-• 2. Women's Sunscreen Jackets: Women Sunscreen Jacket (₹999), Women Sunscreen Jacket Pro (₹1,299), Women Sunscreen Jacket Ice Pro (₹1,999) with tailored feminine fit, thumbholes, and ponytail apertures.
-• 3. Anti-AC Thermal Jacket 2 Pro (₹1,799): Dual-layer fleece insulation engineered for office AC and chill protection.
-• 4. No-Sweat Tech Tees (₹799): Quick-dry, ultralight, anti-odor, breathable active fit.
-• 5. Headwear & Sun Protection: Sunscreen WIDE VISOR PRO (₹999), Balaclava Pro (₹499).
-• 6. Sizing Standards: S, M, L, XL, XXL (True to Indian athletic sizing chart).
-
-================================================================================
-3. [SHIPPING & DELIVERY POLICY] (https://bluetyga.com/pages/shipping-policy)
-================================================================================
-• Delivery Timeline: Standard shipping takes 3 to 9 working days across all major Indian pin codes.
-• Order Processing: Orders placed before 2:00 PM are dispatched same-day from the fulfillment center.
-• Courier Partners: Bluedart Express, Delhivery, and DTDC with real-time tracking links.
-• Package Delivery Issues: Delivery discrepancies must be reported within 24 hours of notification for carrier investigation.
-
-================================================================================
-4. [RETURNS, EXCHANGES & REFUNDS] (https://bluetyga.com/pages/return-exchange-policy)
-================================================================================
-• Return / Exchange Window: Eligible requests can be initiated within the return window through the return portal.
-• Eligibility Condition: Products must be unwashed, unworn, in original packaging with all tags attached.
-• Request Limit: 1 return/exchange request per order.
-• Refunds: Credited to the original payment method upon warehouse inspection. A nominal reverse courier fee of ₹200 may apply for select returns.
-• Manufacturing Defects: 100% free immediate replacement.
-
-================================================================================
-5. [CUSTOMER SUPPORT & REGISTERED OFFICE] (https://bluetyga.com/pages/contact-us)
-================================================================================
-• Email Support: contact@bluetyga.com
-• Phone / WhatsApp Helpline: +91 63817 49310
-• Support Operating Hours: Monday to Saturday, 9:00 AM - 6:00 PM IST
-• Registered Office: BlueTyga Fashions PVT LTD, Site No. 4A & 4B, SF No. 397/1, SIDCO Industrial Estate, Malumichampatti, Coimbatore, Tamil Nadu - 641050.
-
-================================================================================
-6. [MULTI-PAGE LIVE WEB CONTENT EXTRACTED]
-================================================================================
-${scrapedText || 'Live sitemap and subpages indexed into knowledge vector store.'}`;
-    } else if (!scrapedText || scrapedText.length < 50) {
+    if (!scrapedText || scrapedText.length < 50) {
       scrapedText = `Website Knowledge Sync: ${normalizedUrl}
 Domain: ${parsedHostname}
 
-Comprehensive Store Intelligence:
-1. Shipping & Logistics: Standard ground shipping takes 3-5 business days. Real-time courier tracking enabled.
-2. Returns & Customer Satisfaction: 30-day return policy for unworn merchandise in original packaging.
-3. Support & Contact: 24/7 AI shopping concierge with merchant escalation during business hours.
-4. Security & Payment: 256-bit SSL encrypted checkout supporting Cards, UPI, Net Banking, and COD.`;
+Comprehensive Store Intelligence & Policy Defaults:
+1. Shipping & Logistics: Standard express shipping across all regional pin codes. Real-time carrier tracking enabled.
+2. Returns & Customer Exchanges: 7-day to 30-day return policy for unworn merchandise in original packaging.
+3. Support & Customer Care: 24/7 AI shopping concierge with human support escalation during business hours.
+4. Security & Payment: 256-bit SSL encrypted checkout supporting UPI, Credit/Debit Cards, Net Banking, and COD.`;
+    } else {
+      scrapedText = `${parsedHostname.toUpperCase()} - LIVE ALL-PAGES STORE INTELLIGENCE & POLICIES\nOrigin: ${parsedOrigin}\nSynced: ${new Date().toISOString()}\n\n${scrapedText}`;
     }
 
     const docName = name || `${parsedHostname} (All Pages & Store Policies)`;
