@@ -112,6 +112,35 @@ function normalizeUserMessage(text: string): string {
   return normalized;
 }
 
+function cleanConversationalResponse(text: string, brand: string, hasProductCards: boolean): string {
+  if (!text) return text;
+
+  let cleaned = text;
+
+  // 1. Remove apologetic meta-catalog sentences or robotic AI disclaimers
+  cleaned = cleaned.replace(/^(?:Hi there! 👋\s*)?(?:Welcome to [^.\n]+[.\n]\s*)?(?:While we (?:don't|do not) have a specific [^.\n]+(?:catalog|inventory|section|collection)[^.\n]*[.\n]\s*)+/gi, '');
+  cleaned = cleaned.replace(/While we (?:don't|do not) have a specific [^.\n]+(?:catalog|inventory|section|collection)[^.\n]*[.\n]\s*/gi, '');
+  cleaned = cleaned.replace(/As an AI(?: language model)?[^.\n]*[.\n]\s*/gi, '');
+
+  // 2. If product cards are attached and the LLM dumped a long markdown bullet list of products
+  if (hasProductCards && (cleaned.includes('•') || cleaned.includes('* ') || cleaned.includes('🌟') || cleaned.includes('👕') || cleaned.includes('👖'))) {
+    const parts = cleaned.split(/(?:\n\s*(?:🌟|👕|👖|👗|•|\*|-)\s*)/);
+    if (parts.length > 1 && parts[0].trim().length > 20) {
+      let lead = parts[0].trim();
+      lead = lead.replace(/(?:Here are (?:some highlights|our featured pieces|our top picks)[^:]*:?\s*)$/i, '').trim();
+      if (lead.length > 20) {
+        cleaned = `${lead} Here are our featured pieces from **${brand}**:`;
+      } else {
+        cleaned = `Here are our top featured pieces from **${brand}**:`;
+      }
+    } else if (parts.length > 1) {
+      cleaned = `Here are our top featured pieces from **${brand}**:`;
+    }
+  }
+
+  return cleaned.trim();
+}
+
 export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunResponse> {
   const startTime = Date.now();
   const { agent_id, workspace_id, user_message, channel = 'PLAYGROUND' } = params;
@@ -387,21 +416,22 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
         `• ${p.title} (₹${typeof p.price === 'number' ? p.price.toLocaleString('en-IN') : p.price}) — ${p.description || p.category}`
       ).join('\n');
 
-      const naturalProductPrompt = `You are a warm, stylish, and highly engaging AI shopping concierge for ${brand}.
-The user asked: "${user_message}".
-We found these matching products from our store catalog:
+      const naturalProductPrompt = `You are the exclusive, stylish AI shopping concierge and personal stylist for ${brand}.
+Customer Query: "${user_message}"
+
+Matching Products:
 ${matchedSummary}
 
-Guidelines:
-- Write an authentic, natural, and helpful recommendation in 1 to 2 short sentences.
-- Highlight key benefits (e.g. UPF 50+ UV protection, Arctic Ice cooling tech, quick-dry anti-sweat fabric) with an enthusiastic, friendly tone.
-- Do NOT repeat all price tags or dump raw lists since interactive product cards will appear directly below your message.
-- Be conversational and offer help with sizing, fabric advice, or styling.`;
+STRICT GUIDELINES:
+1. Write a warm, elegant, and concise recommendation in 1 to 2 short sentences.
+2. NEVER say "we don't have a specific 'new product' section", "in our current live catalog", "as an AI", or apologize for catalog categorization.
+3. NEVER dump long lists, markdown bullet points, or prices in text because clickable photo cards with Add to Cart buttons are already displayed directly below your chat bubble.
+4. Highlight fabric quality, artisan craftsmanship, or styling vibes naturally, and invite them to explore the pieces below or ask about sizing.`;
 
       const sarvamProductAnswer = await callSarvamLLM(
         naturalProductPrompt,
         user_message,
-        `Matched Products:\n${matchedSummary}\n\n${fullKnowledgeContext}`,
+        `Live Catalog Items:\n${matchedSummary}\n\n${fullKnowledgeContext}`,
         conversationHistory
       );
 
@@ -411,9 +441,9 @@ Guidelines:
         if (matchedList.length === 1) {
           responseText = `Here is our **${matchedList[0].title}**! ${matchedList[0].description ? matchedList[0].description.slice(0, 150) : ''}`;
         } else if (/new|latest|arrival/i.test(user_message)) {
-          responseText = `Here are our latest arrivals at **${brand}**:`;
+          responseText = `Here are our latest arrivals from **${brand}**:`;
         } else {
-          responseText = `Here are our featured pieces from **${brand}** that match what you're looking for:`;
+          responseText = `Here are our top recommended pieces from **${brand}**:`;
         }
       }
 
@@ -421,10 +451,15 @@ Guidelines:
         responseText += `\n\n✅ Size **${requestedSize}** is in stock.`;
       }
     } else {
-      // Unrestricted conversational answer for open styling, recommendations, and search
-      const naturalPrompt = `You are a helpful, knowledgeable, and friendly shopping specialist for ${brand}.
-The user asked a question or searched for an item. Use the store catalog and past conversation context to give a clear, accurate, and direct answer.
-If the customer asks about an item we don't have, explain politely and offer recommendations from our active collection.`;
+      // Conversational answer for open styling, recommendations, and search
+      const naturalPrompt = `You are the exclusive, stylish AI shopping concierge and personal stylist for ${brand}.
+Customer Query: "${user_message}"
+
+STRICT GUIDELINES:
+1. Answer the customer's question directly, warmly, and helpfully in 1 to 2 concise sentences.
+2. NEVER say "we don't have a specific section in our catalog", "in our current live catalog", "as an AI", or apologize about catalog structure.
+3. NEVER dump bulleted price lists in text because interactive product cards render directly below your message.
+4. Highlight our active collection's style, comfort, or heritage aesthetic.`;
 
       const sarvamAnswer = await callSarvamLLM(
         naturalPrompt,
@@ -438,7 +473,7 @@ If the customer asks about an item we don't have, explain politely and offer rec
       } else if (citations.length > 0) {
         responseText = `${citations[0].chunk_text}\n\nLet me know if you would like me to help you find anything else!`;
       } else {
-        responseText = `We don't currently have that specific item listed in our collection at **${brand}**, but feel free to let me know what style or category you're looking for!`;
+        responseText = `Here are our featured selections from **${brand}**! Let me know if you are looking for a particular fabric, fit, or occasion.`;
       }
 
       searchReturnedEmpty = true;
@@ -568,12 +603,13 @@ If the customer asks about an item we don't have, explain politely and offer rec
     
     // Call Sarvam AI with full workspace knowledge & conversation history
     const naturalPrompt = `You are the official AI shopping concierge and knowledge specialist for ${brand}.
+Customer Query: "${user_message}"
 
-Strict Guidelines:
+STRICT GUIDELINES:
 1. ALWAYS answer the user's question directly, accurately, and thoroughly using the provided Relevant Store Knowledge Context and live product catalog.
 2. If the user asks about shipping times, delivery areas, return/exchange policies, material quality, pricing, contact details, or brand background, extract and explain the exact details from the store knowledge documents.
-3. Never use generic or ungrounded fallback statements.
-4. Speak naturally, warmly, and helpfully.`;
+3. Keep your response clear, concise, and helpful.
+4. Never say "as an AI" or use generic ungrounded fallback statements.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,
@@ -600,13 +636,15 @@ Strict Guidelines:
   } else {
     // General freeform conversation or question -> Sarvam AI / Citations
     planningSteps.push('4. Calling Sarvam AI conversational model.');
-    const naturalPrompt = `You are the official AI shopping concierge and knowledge specialist for ${brand}.
+    const naturalPrompt = `You are the official AI shopping concierge and style specialist for ${brand}.
+Customer Query: "${user_message}"
 
-Strict Guidelines:
+STRICT GUIDELINES:
 1. Answer ANY question the customer asks naturally, intelligently, and contextually based on their prior messages and the provided workspace documents.
 2. When questions relate to store policies, shipping, delivery times, return procedures, sizing, fabric, materials, or products, explain the details directly from the provided store knowledge documents.
-3. Never use generic placeholder or ungrounded fallback responses.
-4. Speak warmly, authoritatively, and professionally.`;
+3. NEVER apologize about catalog structure or say "we don't have a specific section in our catalog" or "in our current live catalog".
+4. NEVER dump long bullet lists of products and prices in text because interactive product cards render directly below your message.
+5. Speak warmly, authoritatively, and professionally.`;
 
     const sarvamAnswer = await callSarvamLLM(
       naturalPrompt,
@@ -706,13 +744,20 @@ Strict Guidelines:
     }
   }
 
+  // Sanitize conversational response for clean, elegant output
+  const finalResponseText = cleanConversationalResponse(
+    responseText,
+    brand,
+    interactivePayload?.type === 'PRODUCTS'
+  );
+
   const asstMsgId = generateId('msg');
   const asstMsg: Message = {
     id: asstMsgId,
     conversation_id: conversation.id,
     workspace_id: workspace_id,
     role: 'ASSISTANT',
-    content: responseText,
+    content: finalResponseText,
     interactive_payload: interactivePayload,
     created_at: new Date().toISOString()
   };
