@@ -1,5 +1,6 @@
 import { db } from '../db';
 import { CommerceProduct, CommerceOrder, CommerceCart } from '@/types';
+import { generateEmbedding, cosineSimilarity } from '../rag';
 
 export interface CatalogSchema {
   categories: string[];
@@ -47,6 +48,7 @@ export interface ProductSearchResult {
 export interface ParsedSearchQuery {
   intent: 'PRODUCT_SEARCH' | 'PRODUCT_COMPARISON' | 'INVENTORY_CHECK' | 'CART_ACTION' | 'ORDER_TRACKING' | 'RETURN_OR_POLICY_INQUIRY' | 'HUMAN_HANDOFF' | 'GENERAL_CONVERSATION';
   scope: 'all_matching' | 'recommendations' | 'specific_product' | 'similar' | 'refinement' | 'pagination';
+  originalQuery?: string;
   explicitCategory?: string;
   categoryNegation?: string;
   gender?: 'men' | 'women' | 'unisex' | 'kids';
@@ -185,9 +187,12 @@ export class LocalCommerceProvider {
       q = q.replace(new RegExp(`\\b${typo}\\b`, 'gi'), fix);
     }
 
+    // Normalize compound apparel terms
+    q = q.replace(/\bt[\s\-]+shirts?\b/gi, 't-shirt');
+    q = q.replace(/\bt[\s\-]+tees?\b/gi, 't-shirt');
+
     const cleanQ = q.replace(/[^\w\s\-\/₹$]/g, ' ').replace(/\s+/g, ' ').trim();
-    const queryTokens = cleanQ.split(/\s+/).filter(w => w.length > 1);
-    const queryStemmed = queryTokens.map(t => this.stemWord(t));
+    const queryTokens = cleanQ.split(/[\s]+/).filter(w => w.length >= 2 || w === 't');
 
     const schema = this.introspectSchema(workspaceId);
 
@@ -234,10 +239,18 @@ export class LocalCommerceProvider {
 
     // 3. Dynamic Category Matching against Catalog Schema
     let explicitCategory: string | undefined;
+    
+    // Check compound terms first
+    const hasTshirtToken = /t-?shirt|tshirt|tee/i.test(cleanQ);
+    
     for (const cat of schema.categories) {
       const catNorm = cat.toLowerCase().trim();
-      const catStemmed = catNorm.split(/[\s\-_]+/).map(t => this.stemWord(t)).join(' ');
-      if (cleanQ.includes(catNorm) || cleanQ.includes(catStemmed)) {
+      const isCompoundCat = /t-?shirt|tee/i.test(catNorm);
+      if (isCompoundCat && hasTshirtToken) {
+        explicitCategory = cat;
+        break;
+      }
+      if (!isCompoundCat && /shirt/i.test(catNorm) && !hasTshirtToken && /\bshirts?\b/i.test(cleanQ)) {
         explicitCategory = cat;
         break;
       }
@@ -246,15 +259,8 @@ export class LocalCommerceProvider {
     if (!explicitCategory) {
       for (const cat of schema.categories) {
         const catNorm = cat.toLowerCase().trim();
-        const catStem = this.stemWord(catNorm);
-
-        // Disambiguate compound categories (e.g. "T-Shirts" vs "Shirts")
-        const isCompound = /t-?shirt|tee/i.test(catNorm);
-        const hasCompoundToken = queryTokens.some(t => /t-?shirt|tee/i.test(t));
-        if (isCompound && !hasCompoundToken) continue;
-        if (!isCompound && /shirt/i.test(catNorm) && hasCompoundToken) continue;
-
-        if (queryStemmed.includes(catStem) || queryTokens.includes(catNorm)) {
+        const catStemmed = catNorm.split(/[\s\-_]+/).map(t => this.stemWord(t)).join(' ');
+        if (cleanQ.includes(catNorm) || cleanQ.includes(catStemmed)) {
           explicitCategory = cat;
           break;
         }
@@ -328,20 +334,21 @@ export class LocalCommerceProvider {
       fitness: ['activewear', 'nosweat', 'quick-dry', 'stretch', 'breathable', 'jogger', 'tee', 'performance', 'athletic'],
       workout: ['activewear', 'nosweat', 'quick-dry', 'stretch', 'breathable', 'jogger', 'tee', 'performance'],
       sports: ['activewear', 'nosweat', 'quick-dry', 'stretch', 'jogger', 'tee', 'visor', 'balaclava'],
-      running: ['activewear', 'nosweat', 'quick-dry', 'stretch', 'jogger', 'tee', 'visor'],
       dinner: ['shirt', 'shacket', 'kurta', 'combo', 'saree', 'palace', 'embroidered', 'corduroy', 'dress', 'elegant', 'black', 'luxe'],
       office: ['shirt', 'corduroy', 'pant', 'anti-ac', 'thermal', 'kurta', 'poplin', 'formal', 'classic', 'cotton', 'clean'],
       work: ['shirt', 'corduroy', 'pant', 'anti-ac', 'thermal', 'kurta', 'poplin', 'formal', 'classic', 'cotton'],
-      casual: ['tee', 'tshirt', 'jogger', 'hoodie', 'nosweat', 'shacket', 'jacket', 'cotton', 'relaxed', 'casual', 'denim'],
-      weekend: ['relaxed', 'casual', 'cotton', 'jogger', 'tee', 'hoodie', 'comfortable', 'denim'],
-      trip: ['jogger', 'jacket', 'hoodie', 'tee', 'visor', 'comfort', 'cotton', 'travel'],
-      wedding: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'zari', 'dori', 'mandala', 'embroidered', 'festive', 'silk', 'traditional'],
-      festive: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive'],
-      festival: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive'],
-      summer: ['sunscreen', 'ice', 'cooling', 'tee', 'nosweat', 'visor', 'balaclava', 'upf50', 'lightweight', 'breathable', 'cotton'],
+      casual: ['tee', 'tshirt', 't-shirt', 'jogger', 'hoodie', 'nosweat', 'shacket', 'jacket', 'cotton', 'relaxed', 'casual', 'denim'],
+      weekend: ['relaxed', 'casual', 'cotton', 'jogger', 'tee', 'tshirt', 't-shirt', 'hoodie', 'comfortable', 'denim'],
+      trip: ['jogger', 'jacket', 'hoodie', 'tee', 't-shirt', 'visor', 'comfort', 'cotton', 'travel'],
+      wedding: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'zari', 'dori', 'mandala', 'embroidered', 'festive', 'silk', 'traditional', 'dress', 'gown'],
+      festive: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive', 'silk', 'traditional', 'dress'],
+      festival: ['royal', 'heritage', 'saree', 'kurta', 'combo', 'yellow floral', 'emerald', 'mandala', 'embroidered', 'festive', 'silk', 'traditional', 'dress'],
+      summer: ['sunscreen', 'ice', 'cooling', 'tee', 'tshirt', 't-shirt', 'nosweat', 'visor', 'balaclava', 'upf50', 'lightweight', 'breathable', 'cotton'],
       winter: ['thermal', 'anti-ac', 'fleece', 'hoodie', 'jacket', 'warm', 'insulation', 'corduroy'],
-      brother: ['shirt', 'tee', 'jogger', 'jacket', 'shacket', 'corduroy', 'men'],
-      wife: ['saree', 'kurta', 'combo', 'dress', 'women', 'yellow floral', 'emerald'],
+      brother: ['shirt', 'tee', 'tshirt', 't-shirt', 'jogger', 'jacket', 'shacket', 'corduroy', 'men'],
+      wife: ['saree', 'kurta', 'combo', 'dress', 'women', 'yellow floral', 'emerald', 'gown', 'ethnic'],
+      dress: ['saree', 'kurta', 'combo', 'dress', 'gown', 'frock', 'lehenga', 'ethnic', 'silk', 'women'],
+      dresses: ['saree', 'kurta', 'combo', 'dress', 'gown', 'frock', 'lehenga', 'ethnic', 'silk', 'women'],
       comfortable: ['nosweat', 'poplin', 'thermal', 'jogger', 'tee', 'cotton', 'relaxed', 'breathable', 'comfort'],
       comfort: ['nosweat', 'poplin', 'thermal', 'jogger', 'tee', 'cotton', 'relaxed', 'breathable', 'comfort']
     };
@@ -367,10 +374,12 @@ export class LocalCommerceProvider {
     // 6. Inherit Previous State on Refinement / Pagination
     let page = 1;
     let pageSize = scope === 'all_matching' ? 12 : 6;
+    let originalQuery = cleanQ;
 
     if (isPagination && lastSearchState) {
       page = (lastSearchState.page || 1) + 1;
       pageSize = lastSearchState.pageSize || lastSearchState.page_size || pageSize;
+      originalQuery = lastSearchState.originalQuery || lastSearchState.original_query || cleanQ;
       if (!explicitCategory) explicitCategory = lastSearchState.explicitCategory || lastSearchState.category;
       if (!gender) gender = lastSearchState.gender;
       if (!color) color = lastSearchState.color;
@@ -378,13 +387,14 @@ export class LocalCommerceProvider {
       if (minPrice === undefined) minPrice = lastSearchState.minPrice;
       if (!size) size = lastSearchState.size;
       if (!sort) sort = lastSearchState.sort;
-      if (contentTokens.length === 0 && Array.isArray(lastSearchState.contentTokens)) {
+      if (Array.isArray(lastSearchState.contentTokens) && lastSearchState.contentTokens.length > 0) {
         contentTokens = lastSearchState.contentTokens;
       }
-      if (parsedSemanticTerms.length === 0 && Array.isArray(lastSearchState.semanticTerms)) {
+      if (Array.isArray(lastSearchState.semanticTerms) && lastSearchState.semanticTerms.length > 0) {
         parsedSemanticTerms = lastSearchState.semanticTerms;
       }
     } else if (isRefinement && lastSearchState) {
+      originalQuery = lastSearchState.originalQuery || lastSearchState.original_query || cleanQ;
       if (!explicitCategory) explicitCategory = lastSearchState.explicitCategory || lastSearchState.category;
       if (!gender) gender = lastSearchState.gender;
       if (!color) color = lastSearchState.color;
@@ -403,6 +413,7 @@ export class LocalCommerceProvider {
     return {
       intent,
       scope,
+      originalQuery,
       explicitCategory,
       gender,
       minPrice,
@@ -423,7 +434,7 @@ export class LocalCommerceProvider {
   }
 
   /**
-   * Detailed search returning structured candidates, metadata, pagination, and applied constraints.
+   * Detailed hybrid search returning structured candidates, vector embeddings, pagination, and applied constraints.
    */
   async searchProductsDetailed(workspaceId: string, params: ProductSearchParams, lastSearchState?: any): Promise<ProductSearchResult> {
     let list = db.commerce_products.filter(p => p.workspace_id === workspaceId);
@@ -442,17 +453,21 @@ export class LocalCommerceProvider {
 
     const contentTokens = parsed?.contentTokens || [];
     const semanticTerms = parsed?.semanticTerms || [];
-    const cleanQ = params.query?.toLowerCase().trim() || '';
+    
+    // On pagination, preserve the original query string for deterministic score ordering
+    const queryForScoring = (parsed?.scope === 'pagination' && (parsed?.originalQuery || lastSearchState?.original_query))
+      ? (parsed?.originalQuery || lastSearchState?.original_query).toLowerCase().trim()
+      : (params.query?.toLowerCase().trim() || '');
 
-    // Gate: Check if user requested an explicit product entity that does NOT exist in the catalog
+    // Check if the query requested an explicit noun entity (like "shoes") that does not exist in any catalog product
     const nonSemanticTokens = contentTokens.filter(tok => {
       const tokL = tok.toLowerCase();
-      return !['gym', 'fitness', 'workout', 'sports', 'running', 'dinner', 'office', 'work', 'casual', 'weekend', 'trip', 'wedding', 'festive', 'festival', 'summer', 'winter', 'brother', 'wife', 'comfortable', 'comfort', 'men', 'mens', 'women', 'womens', 'male', 'female', 'kids', 'boy', 'girl', 'cheap', 'expensive', 'premium', 'luxe', 'affordable', 'new', 'latest'].includes(tokL);
+      return !['gym', 'fitness', 'workout', 'sports', 'running', 'dinner', 'office', 'work', 'casual', 'weekend', 'trip', 'wedding', 'festive', 'festival', 'summer', 'winter', 'brother', 'wife', 'comfortable', 'comfort', 'men', 'mens', 'women', 'womens', 'male', 'female', 'kids', 'boy', 'girl', 'cheap', 'expensive', 'premium', 'luxe', 'affordable', 'new', 'latest', 'red', 'blue', 'green', 'black', 'white', 'yellow', 'brown', 'wine', 'dress', 'dresses'].includes(tokL);
     });
 
     if (nonSemanticTokens.length > 0 && !explicitCategory) {
       const catalogHasToken = list.some(p => {
-        const pText = `${p.title} ${p.category} ${(p.tags || []).join(' ')}`.toLowerCase();
+        const pText = `${p.title} ${p.category} ${(p.tags || []).join(' ')} ${p.description || ''}`.toLowerCase();
         return nonSemanticTokens.some(tok => {
           const tokStem = this.stemWord(tok);
           return pText.includes(tok) || pText.split(/\s+/).some(w => this.stemWord(w) === tokStem);
@@ -475,12 +490,16 @@ export class LocalCommerceProvider {
       }
     }
 
+    // Generate query embedding for hybrid dense vector matching
+    const queryEmbedding = queryForScoring ? generateEmbedding(queryForScoring) : null;
+
     const checkIsWomenProduct = (p: CommerceProduct) => {
       const titleL = p.title.toLowerCase();
       const tagsL = (p.tags || []).map(t => t.toLowerCase()).join(' ');
       const catL = (p.category || '').toLowerCase();
       const descL = (p.description || '').toLowerCase();
-      const full = `${titleL} ${tagsL} ${catL} ${descL}`;
+      const crumbsL = (p.breadcrumbs || []).join(' ').toLowerCase();
+      const full = `${titleL} ${tagsL} ${catL} ${descL} ${crumbsL}`;
       return full.includes('women') || full.includes('womens') || full.includes('female') ||
         full.includes('saree') || full.includes('kurta') || full.includes('kurti') ||
         full.includes('dress') || full.includes('lehenga') || full.includes('gown') ||
@@ -490,13 +509,14 @@ export class LocalCommerceProvider {
     const isMenQuery = gender === 'men';
     const isWomenQuery = gender === 'women';
 
-    // 1. Candidate Filtering
+    // 1. Candidate Filtering by Hard Constraints
     let candidates = list.filter(p => {
       const titleL = p.title.toLowerCase();
       const tagsL = (p.tags || []).map(t => t.toLowerCase());
       const catL = (p.category || '').toLowerCase();
       const descL = (p.description || '').toLowerCase();
-      const fullText = `${titleL} ${descL} ${catL} ${tagsL.join(' ')}`;
+      const crumbsL = (p.breadcrumbs || []).join(' ').toLowerCase();
+      const fullText = `${titleL} ${descL} ${catL} ${tagsL.join(' ')} ${crumbsL}`;
 
       // Demographic constraint
       const isWomen = checkIsWomenProduct(p);
@@ -516,8 +536,9 @@ export class LocalCommerceProvider {
         const isCategoryStemmed = this.stemWord(catL) === expCatStem;
         const isTitleExact = titleL.includes(expCatL) || titleL.split(/\s+/).map(t => this.stemWord(t)).includes(expCatStem);
         const isTagExact = tagsL.includes(expCatL) || tagsL.map(t => this.stemWord(t)).includes(expCatStem);
+        const isCrumbExact = crumbsL.includes(expCatL);
 
-        if (!isCategoryExact && !isCategoryStemmed && !isTitleExact && !isTagExact) {
+        if (!isCategoryExact && !isCategoryStemmed && !isTitleExact && !isTagExact && !isCrumbExact) {
           return false;
         }
       }
@@ -549,10 +570,10 @@ export class LocalCommerceProvider {
           brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha']
         };
         const colorFamily = [colorL, ...(colorSynonyms[colorL] || [])];
-        const hasColorInText = colorFamily.some(c => fullText.includes(c));
+        const hasColorInText = colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(fullText));
         const hasColorInVariant = p.variants.some(v => {
           const vColor = `${v.attributes.color || ''} ${v.title || ''}`.toLowerCase();
-          return colorFamily.some(c => vColor.includes(c));
+          return colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(vColor));
         });
         if (!hasColorInText && !hasColorInVariant) return false;
       }
@@ -560,45 +581,112 @@ export class LocalCommerceProvider {
       return true;
     });
 
-    // 2. Multi-Signal Hybrid Scoring & Relevance Filtering
+    // 2. Multi-Signal Hybrid Scoring (Lexical Overlap + Dense Vector Cosine Similarity)
     const computeRelevance = (p: CommerceProduct) => {
-      let s = 0;
+      let lexicalScore = 0;
       const tLower = p.title.toLowerCase();
       const dLower = (p.description || '').toLowerCase();
       const catLower = (p.category || '').toLowerCase();
       const tagsLower = (p.tags || []).map(t => t.toLowerCase());
+      const crumbsLower = (p.breadcrumbs || []).join(' ').toLowerCase();
+      const fullText = `${tLower} ${dLower} ${catLower} ${tagsLower.join(' ')} ${crumbsLower}`;
 
-      if (explicitCategory) {
-        const expL = explicitCategory.toLowerCase();
-        if (catLower === expL) s += 250;
-        else if (this.stemWord(catLower) === this.stemWord(expL)) s += 200;
-        if (tLower.includes(expL)) s += 150;
-      }
+      // Exact full query substring in title
+      if (queryForScoring && tLower.includes(queryForScoring)) lexicalScore += 120;
 
-      if (cleanQ && tLower.includes(cleanQ)) s += 120;
-
+      // Token overlap scoring
+      let matchedTokensCount = 0;
       for (const token of contentTokens) {
         const tokenStem = this.stemWord(token);
-        if (tLower.includes(token)) s += 60;
-        else if (this.stemWord(tLower).includes(tokenStem)) s += 40;
+        let tokenMatched = false;
 
-        if (tagsLower.includes(token)) s += 30;
-        if (catLower.includes(token)) s += 25;
-        if (dLower.includes(token)) s += 15;
+        if (new RegExp(`\\b${token}\\b`, 'i').test(tLower)) {
+          lexicalScore += 45;
+          tokenMatched = true;
+        } else if (this.stemWord(tLower).includes(tokenStem)) {
+          lexicalScore += 30;
+          tokenMatched = true;
+        }
+
+        if (tagsLower.some(t => new RegExp(`\\b${token}\\b`, 'i').test(t)) || crumbsLower.includes(token)) {
+          lexicalScore += 25;
+          tokenMatched = true;
+        }
+        if (catLower.includes(token)) {
+          lexicalScore += 20;
+          tokenMatched = true;
+        }
+        if (dLower.includes(token)) {
+          lexicalScore += 15;
+          tokenMatched = true;
+        }
+
+        if (tokenMatched) matchedTokensCount++;
       }
 
+      // Precision bonus: If query has multiple content tokens and product matches all of them
+      if (contentTokens.length >= 2 && matchedTokensCount === contentTokens.length) {
+        lexicalScore += 120;
+      }
+
+      // Color family bonus
+      if (color) {
+        const colorL = color.toLowerCase();
+        const colorSynonyms: Record<string, string[]> = {
+          red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral'],
+          blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky'],
+          green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest'],
+          black: ['black', 'stealth', 'charcoal', 'jet', 'dark', 'obsidian'],
+          white: ['white', 'off-white', 'off white', 'ivory', 'cream'],
+          yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon'],
+          brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha']
+        };
+        const colorFamily = [colorL, ...(colorSynonyms[colorL] || [])];
+        if (colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(fullText))) {
+          lexicalScore += 100;
+        }
+      }
+
+      // Semantic use case terms
       for (const semTerm of semanticTerms) {
-        if (tLower.includes(semTerm)) s += 35;
-        if (tagsLower.includes(semTerm)) s += 25;
-        if (dLower.includes(semTerm)) s += 15;
+        if (tLower.includes(semTerm)) lexicalScore += 35;
+        if (tagsLower.includes(semTerm)) lexicalScore += 25;
+        if (dLower.includes(semTerm)) lexicalScore += 15;
       }
 
-      return s;
+      // Explicit category boost
+      if (explicitCategory) {
+        const expL = explicitCategory.toLowerCase();
+        if (catLower === expL) lexicalScore += 40;
+        else if (this.stemWord(catLower) === this.stemWord(expL)) lexicalScore += 30;
+      }
+
+      // Dense vector similarity score
+      let vectorScore = 0;
+      if (queryEmbedding) {
+        const prodEmbedding = p.embedding || generateEmbedding(p.searchable_text || `${p.title} ${p.category} ${tagsLower.join(' ')} ${dLower}`);
+        vectorScore = cosineSimilarity(queryEmbedding, prodEmbedding);
+      }
+
+      // Hybrid combination
+      const totalScore = (lexicalScore * 0.65) + (vectorScore * 100 * 0.35) + (p.in_stock ? 5 : 0);
+      return totalScore;
     };
 
-    const hasSpecificSearchTerms = contentTokens.length > 0 || explicitCategory !== undefined || semanticTerms.length > 0;
+    const hasSpecificSearchTerms = contentTokens.length > 0 || explicitCategory !== undefined || semanticTerms.length > 0 || color !== undefined || gender !== undefined;
+
     if (hasSpecificSearchTerms) {
-      candidates = candidates.filter(p => computeRelevance(p) > 0);
+      const minThreshold = (contentTokens.length >= 2) ? 40 : 15;
+      const scoredCandidates = candidates.map(p => ({ product: p, score: computeRelevance(p) }));
+      const maxScore = scoredCandidates.length > 0 ? Math.max(...scoredCandidates.map(s => s.score)) : 0;
+
+      if (maxScore >= minThreshold) {
+        candidates = scoredCandidates
+          .filter(s => s.score >= minThreshold && (contentTokens.length < 2 || s.score >= maxScore * 0.35))
+          .map(s => s.product);
+      } else {
+        candidates = [];
+      }
     }
 
     // 3. Sorting & Deduplication
@@ -611,22 +699,24 @@ export class LocalCommerceProvider {
         return timeB - timeA;
       }
 
-      const scoreA = computeRelevance(a) + (a.in_stock && a.total_inventory > 0 ? 20 : 0);
-      const scoreB = computeRelevance(b) + (b.in_stock && b.total_inventory > 0 ? 20 : 0);
+      const scoreA = computeRelevance(a);
+      const scoreB = computeRelevance(b);
       return scoreB - scoreA;
     });
 
+    const seenIds = new Set<string>();
     const seenTitles = new Set<string>();
     const deduplicated: CommerceProduct[] = [];
     for (const p of candidates) {
       const norm = p.title.trim().toLowerCase();
-      if (!seenTitles.has(norm)) {
+      if (!seenIds.has(p.id) && !seenTitles.has(norm)) {
+        seenIds.add(p.id);
         seenTitles.add(norm);
         deduplicated.push(p);
       }
     }
 
-    // 4. Pagination
+    // 4. Authoritative Pagination Calculation
     const totalMatches = deduplicated.length;
     const startIndex = (page - 1) * pageSize;
     const pagedProducts = deduplicated.slice(startIndex, startIndex + pageSize);

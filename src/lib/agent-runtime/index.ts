@@ -54,7 +54,7 @@ async function callSarvamLLM(
         messages: messages,
         temperature: 0.3
       }),
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(3500)
     });
 
     if (res.ok) {

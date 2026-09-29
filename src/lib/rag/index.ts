@@ -79,7 +79,7 @@ export async function executeRAGPipeline(
         question: question,
         top_k: topK
       }),
-      signal: AbortSignal.timeout(6000)
+      signal: AbortSignal.timeout(600)
     });
 
 

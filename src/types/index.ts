@@ -218,6 +218,12 @@ export interface CommerceProduct {
   in_stock: boolean;
   total_inventory: number;
   variants: CommerceProductVariant[];
+  source_url?: string;
+  searchable_text?: string;
+  embedding?: number[];
+  breadcrumbs?: string[];
+  collections?: string[];
+  attributes?: Record<string, string>;
   created_at: string;
   updated_at: string;
 }
