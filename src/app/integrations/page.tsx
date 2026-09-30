@@ -549,9 +549,9 @@ export default function IntegrationsWorkspacePage() {
                         ) : (
                           <button
                             onClick={() => openConnectModal(connector)}
-                            className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                            className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition shadow-xs cursor-pointer"
                           >
-                            <Key className="w-3.5 h-3.5" /> Connect
+                            Connect
                           </button>
                         )}
                       </div>
