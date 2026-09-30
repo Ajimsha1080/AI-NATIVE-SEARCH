@@ -1,0 +1,2172 @@
+{
+  "configs": {
+    "ws_enterprise_demo_01": {
+      "enabled": true,
+      "model": "gemini-1.5-pro",
+      "temperature": 0.35,
+      "confidence_threshold": 0.7,
+      "system_instructions": "Custom enterprise shopping rules",
+      "enable_comparisons": true,
+      "enable_recommendations": true,
+      "enable_cart_actions": true,
+      "updated_at": "2026-09-30T18:30:32.323Z"
+    },
+    "ws_acme_corp": {
+      "enabled": true,
+      "model": "gemini-1.5-pro",
+      "temperature": 0.35,
+      "confidence_threshold": 0.7,
+      "system_instructions": "Custom enterprise shopping rules",
+      "enable_comparisons": true,
+      "enable_recommendations": true,
+      "enable_cart_actions": true,
+      "updated_at": "2026-09-30T18:32:35.747Z"
+    }
+  },
+  "knowledge_sources": [
+    {
+      "id": "aimode_ks_1790793032324_7wifi",
+      "workspace_id": "ws_enterprise_demo_01",
+      "type": "WEBSITE_URL",
+      "name": "Main Brand Catalog",
+      "url": "https://example-shop.com/catalog",
+      "status": "SYNCING",
+      "document_count": 1,
+      "product_count": 0,
+      "last_synced_at": "2026-09-30T18:30:32.324Z",
+      "created_at": "2026-09-30T18:30:32.324Z",
+      "updated_at": "2026-09-30T18:30:32.342Z"
+    }
+  ],
+  "deployments": [
+    {
+      "id": "aimode_dep_1790793057912_p04k",
+      "workspace_id": "ws_acme_corp",
+      "name": "Production AI Mode Widget",
+      "status": "LIVE",
+      "allowed_domains": [
+        "*"
+      ],
+      "theme": {
+        "primary_color": "#4f46e5",
+        "theme_mode": "light",
+        "position": "bottom-right",
+        "launcher_style": "bubble",
+        "launcher_text": "Shop with AI",
+        "widget_title": "ShopMate AI Assistant",
+        "welcome_message": "Hi there! Looking for something special or need product recommendations? I can help you find, compare, and discover products.",
+        "placeholder_text": "Ask anything (e.g. \"Find something for a wedding\", \"Compare top items\")...",
+        "starter_prompts": [
+          "Find gift ideas under $50",
+          "Show popular products",
+          "Compare best sellers"
+        ],
+        "show_branding": true
+      },
+      "created_at": "2026-09-30T18:30:57.912Z",
+      "updated_at": "2026-09-30T18:30:57.912Z"
+    }
+  ],
+  "conversations": [
+    {
+      "id": "aimode_conv_1790793057907_3llz",
+      "workspace_id": "ws_acme_corp",
+      "session_id": "test_session_1790793057906",
+      "messages": [
+        {
+          "id": "msg_user_1790793057907",
+          "role": "user",
+          "content": "I am looking for shirts",
+          "timestamp": "2026-09-30T18:30:57.907Z"
+        },
+        {
+          "id": "msg_asst_1790793057909",
+          "role": "assistant",
+          "content": "Found 15 matching products:",
+          "timestamp": "2026-09-30T18:30:57.909Z",
+          "products": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Sage Green Bamboo Shirt",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "sku": "BSSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "sku": "BSSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Mauve Bamboo Shirt",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "sku": "BMSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "sku": "BMSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Khaki Bamboo Shirt",
+              "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bkss_m",
+                  "title": "Medium / Khaki",
+                  "sku": "BKSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkss_l",
+                  "title": "Large / Khaki",
+                  "sku": "BKSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_fs",
+              "workspace_id": "ws_acme_corp",
+              "title": "Mauve Bamboo Full Sleeve Shirt",
+              "description": "Eco-luxe organic bamboo fiber full-sleeve shirt with ultra-soft drape and natural thermo-regulation.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "premium",
+                "luxe",
+                "apparel"
+              ],
+              "price": 2299,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 35,
+              "variants": [
+                {
+                  "id": "var_bmfs_m",
+                  "title": "Medium / Mauve",
+                  "sku": "BMFS-M",
+                  "price": 2299,
+                  "inventory_quantity": 15,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmfs_l",
+                  "title": "Large / Mauve",
+                  "sku": "BMFS-L",
+                  "price": 2299,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_fs",
+              "workspace_id": "ws_acme_corp",
+              "title": "Khaki Bamboo Full Sleeve Shirt",
+              "description": "Sophisticated khaki bamboo fiber full-sleeve shirt offering silky touch and effortless breathability.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "premium",
+                "luxe",
+                "apparel"
+              ],
+              "price": 2299,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 35,
+              "variants": [
+                {
+                  "id": "var_bkfs_m",
+                  "title": "Medium / Khaki",
+                  "sku": "BKFS-M",
+                  "price": 2299,
+                  "inventory_quantity": 15,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkfs_l",
+                  "title": "Large / Khaki",
+                  "sku": "BKFS-L",
+                  "price": 2299,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_beige_fs",
+              "workspace_id": "ws_acme_corp",
+              "title": "Dark Beige Bamboo Full Sleeve Shirt",
+              "description": "Tailored dark beige bamboo shirt crafted with natural antimicrobial properties and elegant matte sheen.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "beige",
+                "premium",
+                "luxe",
+                "apparel"
+              ],
+              "price": 2299,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 35,
+              "variants": [
+                {
+                  "id": "var_bbfs_m",
+                  "title": "Medium / Beige",
+                  "sku": "BBFS-M",
+                  "price": 2299,
+                  "inventory_quantity": 15,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Beige"
+                  }
+                },
+                {
+                  "id": "var_bbfs_l",
+                  "title": "Large / Beige",
+                  "sku": "BBFS-L",
+                  "price": 2299,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Beige"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "pageSize": 6,
+            "totalMatches": 15,
+            "hasMore": true
+          },
+          "suggested_actions": [
+            "Show more",
+            "Compare top results",
+            "Filter cheaper options"
+          ]
+        },
+        {
+          "id": "msg_user_1790793057910",
+          "role": "user",
+          "content": "compare the top products",
+          "timestamp": "2026-09-30T18:30:57.910Z"
+        },
+        {
+          "id": "msg_asst_1790793057910",
+          "role": "assistant",
+          "content": "Here is a side-by-side comparison of the items:\n\nCompared 3 products. \"Sage Green Bamboo Shirt\" is the most affordable at INR1699.",
+          "timestamp": "2026-09-30T18:30:57.910Z",
+          "products": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Sage Green Bamboo Shirt",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "sku": "BSSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "sku": "BSSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Mauve Bamboo Shirt",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "sku": "BMSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "sku": "BMSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Khaki Bamboo Shirt",
+              "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bkss_m",
+                  "title": "Medium / Khaki",
+                  "sku": "BKSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkss_l",
+                  "title": "Large / Khaki",
+                  "sku": "BKSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            }
+          ],
+          "comparison": {
+            "products": [
+              {
+                "id": "prod_shirt_bamboo_sage_ss",
+                "workspace_id": "ws_acme_corp",
+                "title": "Sage Green Bamboo Shirt",
+                "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+                "category": "Shirts",
+                "tags": [
+                  "shirt",
+                  "bamboo",
+                  "men",
+                  "green",
+                  "sage",
+                  "summer",
+                  "apparel"
+                ],
+                "price": 1699,
+                "currency": "INR",
+                "images": [
+                  "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+                ],
+                "in_stock": true,
+                "total_inventory": 40,
+                "variants": [
+                  {
+                    "id": "var_bsss_m",
+                    "title": "Medium / Sage",
+                    "sku": "BSSS-M",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "M",
+                      "color": "Green"
+                    }
+                  },
+                  {
+                    "id": "var_bsss_l",
+                    "title": "Large / Sage",
+                    "sku": "BSSS-L",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "L",
+                      "color": "Green"
+                    }
+                  }
+                ],
+                "created_at": "2026-09-30T18:25:03.875Z",
+                "updated_at": "2026-09-30T18:25:03.875Z"
+              },
+              {
+                "id": "prod_shirt_bamboo_mauve_ss",
+                "workspace_id": "ws_acme_corp",
+                "title": "Mauve Bamboo Shirt",
+                "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+                "category": "Shirts",
+                "tags": [
+                  "shirt",
+                  "bamboo",
+                  "men",
+                  "mauve",
+                  "summer",
+                  "apparel"
+                ],
+                "price": 1699,
+                "currency": "INR",
+                "images": [
+                  "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+                ],
+                "in_stock": true,
+                "total_inventory": 40,
+                "variants": [
+                  {
+                    "id": "var_bmss_m",
+                    "title": "Medium / Mauve",
+                    "sku": "BMSS-M",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "M",
+                      "color": "Mauve"
+                    }
+                  },
+                  {
+                    "id": "var_bmss_l",
+                    "title": "Large / Mauve",
+                    "sku": "BMSS-L",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "L",
+                      "color": "Mauve"
+                    }
+                  }
+                ],
+                "created_at": "2026-09-30T18:25:03.875Z",
+                "updated_at": "2026-09-30T18:25:03.875Z"
+              },
+              {
+                "id": "prod_shirt_bamboo_khaki_ss",
+                "workspace_id": "ws_acme_corp",
+                "title": "Khaki Bamboo Shirt",
+                "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+                "category": "Shirts",
+                "tags": [
+                  "shirt",
+                  "bamboo",
+                  "men",
+                  "khaki",
+                  "summer",
+                  "apparel"
+                ],
+                "price": 1699,
+                "currency": "INR",
+                "images": [
+                  "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+                ],
+                "in_stock": true,
+                "total_inventory": 40,
+                "variants": [
+                  {
+                    "id": "var_bkss_m",
+                    "title": "Medium / Khaki",
+                    "sku": "BKSS-M",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "M",
+                      "color": "Khaki"
+                    }
+                  },
+                  {
+                    "id": "var_bkss_l",
+                    "title": "Large / Khaki",
+                    "sku": "BKSS-L",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "L",
+                      "color": "Khaki"
+                    }
+                  }
+                ],
+                "created_at": "2026-09-30T18:25:03.875Z",
+                "updated_at": "2026-09-30T18:25:03.875Z"
+              }
+            ],
+            "comparison_points": [
+              {
+                "attribute": "Price",
+                "values": {
+                  "Sage Green Bamboo Shirt": "INR1699",
+                  "Mauve Bamboo Shirt": "INR1699",
+                  "Khaki Bamboo Shirt": "INR1699"
+                }
+              },
+              {
+                "attribute": "Category",
+                "values": {
+                  "Sage Green Bamboo Shirt": "Shirts",
+                  "Mauve Bamboo Shirt": "Shirts",
+                  "Khaki Bamboo Shirt": "Shirts"
+                }
+              },
+              {
+                "attribute": "Availability",
+                "values": {
+                  "Sage Green Bamboo Shirt": "In Stock",
+                  "Mauve Bamboo Shirt": "In Stock",
+                  "Khaki Bamboo Shirt": "In Stock"
+                }
+              },
+              {
+                "attribute": "Key Details",
+                "values": {
+                  "Sage Green Bamboo Shirt": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar....",
+                  "Mauve Bamboo Shirt": "Short sleeve organic bamboo casual shirt for resort wear and warm climates....",
+                  "Khaki Bamboo Shirt": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort...."
+                }
+              }
+            ],
+            "summary": "Compared 3 products. \"Sage Green Bamboo Shirt\" is the most affordable at INR1699."
+          },
+          "suggested_actions": [
+            "Add the first one to cart",
+            "Add the second one to cart",
+            "Show cheaper options"
+          ]
+        },
+        {
+          "id": "msg_user_1790793057911",
+          "role": "user",
+          "content": "add the first one to cart",
+          "timestamp": "2026-09-30T18:30:57.911Z"
+        },
+        {
+          "id": "msg_asst_1790793057912",
+          "role": "assistant",
+          "content": "I've added **Sage Green Bamboo Shirt** to your cart for INR1699. Would you like to view more items or proceed to checkout?",
+          "timestamp": "2026-09-30T18:30:57.912Z",
+          "products": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Sage Green Bamboo Shirt",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "sku": "BSSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "sku": "BSSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:25:03.875Z",
+              "updated_at": "2026-09-30T18:25:03.875Z"
+            }
+          ],
+          "suggested_actions": [
+            "Show similar products",
+            "View more options",
+            "Checkout now"
+          ]
+        }
+      ],
+      "context": {
+        "last_search_plan": {
+          "intent": "SEARCH",
+          "scope": "all_matching",
+          "semantic_query": "i am looking for shirts",
+          "extracted_keywords": [
+            "am",
+            "shirts"
+          ],
+          "category": "Shirts",
+          "page": 1,
+          "page_size": 6
+        },
+        "last_products": [
+          {
+            "id": "prod_shirt_bamboo_sage_ss",
+            "workspace_id": "ws_acme_corp",
+            "title": "Sage Green Bamboo Shirt",
+            "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "green",
+              "sage",
+              "summer",
+              "apparel"
+            ],
+            "price": 1699,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 40,
+            "variants": [
+              {
+                "id": "var_bsss_m",
+                "title": "Medium / Sage",
+                "sku": "BSSS-M",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "M",
+                  "color": "Green"
+                }
+              },
+              {
+                "id": "var_bsss_l",
+                "title": "Large / Sage",
+                "sku": "BSSS-L",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Green"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:25:03.875Z",
+            "updated_at": "2026-09-30T18:25:03.875Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_mauve_ss",
+            "workspace_id": "ws_acme_corp",
+            "title": "Mauve Bamboo Shirt",
+            "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "mauve",
+              "summer",
+              "apparel"
+            ],
+            "price": 1699,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 40,
+            "variants": [
+              {
+                "id": "var_bmss_m",
+                "title": "Medium / Mauve",
+                "sku": "BMSS-M",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "M",
+                  "color": "Mauve"
+                }
+              },
+              {
+                "id": "var_bmss_l",
+                "title": "Large / Mauve",
+                "sku": "BMSS-L",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Mauve"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:25:03.875Z",
+            "updated_at": "2026-09-30T18:25:03.875Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_khaki_ss",
+            "workspace_id": "ws_acme_corp",
+            "title": "Khaki Bamboo Shirt",
+            "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "khaki",
+              "summer",
+              "apparel"
+            ],
+            "price": 1699,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 40,
+            "variants": [
+              {
+                "id": "var_bkss_m",
+                "title": "Medium / Khaki",
+                "sku": "BKSS-M",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "M",
+                  "color": "Khaki"
+                }
+              },
+              {
+                "id": "var_bkss_l",
+                "title": "Large / Khaki",
+                "sku": "BKSS-L",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Khaki"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:25:03.875Z",
+            "updated_at": "2026-09-30T18:25:03.875Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_mauve_fs",
+            "workspace_id": "ws_acme_corp",
+            "title": "Mauve Bamboo Full Sleeve Shirt",
+            "description": "Eco-luxe organic bamboo fiber full-sleeve shirt with ultra-soft drape and natural thermo-regulation.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "mauve",
+              "premium",
+              "luxe",
+              "apparel"
+            ],
+            "price": 2299,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 35,
+            "variants": [
+              {
+                "id": "var_bmfs_m",
+                "title": "Medium / Mauve",
+                "sku": "BMFS-M",
+                "price": 2299,
+                "inventory_quantity": 15,
+                "attributes": {
+                  "size": "M",
+                  "color": "Mauve"
+                }
+              },
+              {
+                "id": "var_bmfs_l",
+                "title": "Large / Mauve",
+                "sku": "BMFS-L",
+                "price": 2299,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Mauve"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:25:03.875Z",
+            "updated_at": "2026-09-30T18:25:03.875Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_khaki_fs",
+            "workspace_id": "ws_acme_corp",
+            "title": "Khaki Bamboo Full Sleeve Shirt",
+            "description": "Sophisticated khaki bamboo fiber full-sleeve shirt offering silky touch and effortless breathability.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "khaki",
+              "premium",
+              "luxe",
+              "apparel"
+            ],
+            "price": 2299,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 35,
+            "variants": [
+              {
+                "id": "var_bkfs_m",
+                "title": "Medium / Khaki",
+                "sku": "BKFS-M",
+                "price": 2299,
+                "inventory_quantity": 15,
+                "attributes": {
+                  "size": "M",
+                  "color": "Khaki"
+                }
+              },
+              {
+                "id": "var_bkfs_l",
+                "title": "Large / Khaki",
+                "sku": "BKFS-L",
+                "price": 2299,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Khaki"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:25:03.875Z",
+            "updated_at": "2026-09-30T18:25:03.875Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_beige_fs",
+            "workspace_id": "ws_acme_corp",
+            "title": "Dark Beige Bamboo Full Sleeve Shirt",
+            "description": "Tailored dark beige bamboo shirt crafted with natural antimicrobial properties and elegant matte sheen.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "beige",
+              "premium",
+              "luxe",
+              "apparel"
+            ],
+            "price": 2299,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 35,
+            "variants": [
+              {
+                "id": "var_bbfs_m",
+                "title": "Medium / Beige",
+                "sku": "BBFS-M",
+                "price": 2299,
+                "inventory_quantity": 15,
+                "attributes": {
+                  "size": "M",
+                  "color": "Beige"
+                }
+              },
+              {
+                "id": "var_bbfs_l",
+                "title": "Large / Beige",
+                "sku": "BBFS-L",
+                "price": 2299,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Beige"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:25:03.875Z",
+            "updated_at": "2026-09-30T18:25:03.875Z"
+          }
+        ]
+      },
+      "created_at": "2026-09-30T18:30:57.907Z",
+      "updated_at": "2026-09-30T18:30:57.912Z"
+    },
+    {
+      "id": "aimode_conv_1790793156238_y13p",
+      "workspace_id": "ws_acme_corp",
+      "session_id": "test_session_1790793156237",
+      "messages": [
+        {
+          "id": "msg_user_1790793156239",
+          "role": "user",
+          "content": "I am looking for shirts",
+          "timestamp": "2026-09-30T18:32:36.239Z"
+        },
+        {
+          "id": "msg_asst_1790793156241",
+          "role": "assistant",
+          "content": "Found 15 matching products:",
+          "timestamp": "2026-09-30T18:32:36.241Z",
+          "products": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Sage Green Bamboo Shirt",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "sku": "BSSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "sku": "BSSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Mauve Bamboo Shirt",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "sku": "BMSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "sku": "BMSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Khaki Bamboo Shirt",
+              "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bkss_m",
+                  "title": "Medium / Khaki",
+                  "sku": "BKSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkss_l",
+                  "title": "Large / Khaki",
+                  "sku": "BKSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_fs",
+              "workspace_id": "ws_acme_corp",
+              "title": "Mauve Bamboo Full Sleeve Shirt",
+              "description": "Eco-luxe organic bamboo fiber full-sleeve shirt with ultra-soft drape and natural thermo-regulation.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "premium",
+                "luxe",
+                "apparel"
+              ],
+              "price": 2299,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 35,
+              "variants": [
+                {
+                  "id": "var_bmfs_m",
+                  "title": "Medium / Mauve",
+                  "sku": "BMFS-M",
+                  "price": 2299,
+                  "inventory_quantity": 15,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmfs_l",
+                  "title": "Large / Mauve",
+                  "sku": "BMFS-L",
+                  "price": 2299,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_fs",
+              "workspace_id": "ws_acme_corp",
+              "title": "Khaki Bamboo Full Sleeve Shirt",
+              "description": "Sophisticated khaki bamboo fiber full-sleeve shirt offering silky touch and effortless breathability.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "premium",
+                "luxe",
+                "apparel"
+              ],
+              "price": 2299,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 35,
+              "variants": [
+                {
+                  "id": "var_bkfs_m",
+                  "title": "Medium / Khaki",
+                  "sku": "BKFS-M",
+                  "price": 2299,
+                  "inventory_quantity": 15,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkfs_l",
+                  "title": "Large / Khaki",
+                  "sku": "BKFS-L",
+                  "price": 2299,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_beige_fs",
+              "workspace_id": "ws_acme_corp",
+              "title": "Dark Beige Bamboo Full Sleeve Shirt",
+              "description": "Tailored dark beige bamboo shirt crafted with natural antimicrobial properties and elegant matte sheen.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "beige",
+                "premium",
+                "luxe",
+                "apparel"
+              ],
+              "price": 2299,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 35,
+              "variants": [
+                {
+                  "id": "var_bbfs_m",
+                  "title": "Medium / Beige",
+                  "sku": "BBFS-M",
+                  "price": 2299,
+                  "inventory_quantity": 15,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Beige"
+                  }
+                },
+                {
+                  "id": "var_bbfs_l",
+                  "title": "Large / Beige",
+                  "sku": "BBFS-L",
+                  "price": 2299,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Beige"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "pageSize": 6,
+            "totalMatches": 15,
+            "hasMore": true
+          },
+          "suggested_actions": [
+            "Show more",
+            "Compare top results",
+            "Filter cheaper options"
+          ]
+        },
+        {
+          "id": "msg_user_1790793156241",
+          "role": "user",
+          "content": "compare the top products",
+          "timestamp": "2026-09-30T18:32:36.241Z"
+        },
+        {
+          "id": "msg_asst_1790793156242",
+          "role": "assistant",
+          "content": "Here is a side-by-side comparison of the items:\n\nCompared 3 products. \"Sage Green Bamboo Shirt\" is the most affordable at INR1699.",
+          "timestamp": "2026-09-30T18:32:36.242Z",
+          "products": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Sage Green Bamboo Shirt",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "sku": "BSSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "sku": "BSSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Mauve Bamboo Shirt",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "sku": "BMSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "sku": "BMSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Khaki Bamboo Shirt",
+              "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bkss_m",
+                  "title": "Medium / Khaki",
+                  "sku": "BKSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkss_l",
+                  "title": "Large / Khaki",
+                  "sku": "BKSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            }
+          ],
+          "comparison": {
+            "products": [
+              {
+                "id": "prod_shirt_bamboo_sage_ss",
+                "workspace_id": "ws_acme_corp",
+                "title": "Sage Green Bamboo Shirt",
+                "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+                "category": "Shirts",
+                "tags": [
+                  "shirt",
+                  "bamboo",
+                  "men",
+                  "green",
+                  "sage",
+                  "summer",
+                  "apparel"
+                ],
+                "price": 1699,
+                "currency": "INR",
+                "images": [
+                  "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+                ],
+                "in_stock": true,
+                "total_inventory": 40,
+                "variants": [
+                  {
+                    "id": "var_bsss_m",
+                    "title": "Medium / Sage",
+                    "sku": "BSSS-M",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "M",
+                      "color": "Green"
+                    }
+                  },
+                  {
+                    "id": "var_bsss_l",
+                    "title": "Large / Sage",
+                    "sku": "BSSS-L",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "L",
+                      "color": "Green"
+                    }
+                  }
+                ],
+                "created_at": "2026-09-30T18:31:27.858Z",
+                "updated_at": "2026-09-30T18:31:27.858Z"
+              },
+              {
+                "id": "prod_shirt_bamboo_mauve_ss",
+                "workspace_id": "ws_acme_corp",
+                "title": "Mauve Bamboo Shirt",
+                "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+                "category": "Shirts",
+                "tags": [
+                  "shirt",
+                  "bamboo",
+                  "men",
+                  "mauve",
+                  "summer",
+                  "apparel"
+                ],
+                "price": 1699,
+                "currency": "INR",
+                "images": [
+                  "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+                ],
+                "in_stock": true,
+                "total_inventory": 40,
+                "variants": [
+                  {
+                    "id": "var_bmss_m",
+                    "title": "Medium / Mauve",
+                    "sku": "BMSS-M",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "M",
+                      "color": "Mauve"
+                    }
+                  },
+                  {
+                    "id": "var_bmss_l",
+                    "title": "Large / Mauve",
+                    "sku": "BMSS-L",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "L",
+                      "color": "Mauve"
+                    }
+                  }
+                ],
+                "created_at": "2026-09-30T18:31:27.858Z",
+                "updated_at": "2026-09-30T18:31:27.858Z"
+              },
+              {
+                "id": "prod_shirt_bamboo_khaki_ss",
+                "workspace_id": "ws_acme_corp",
+                "title": "Khaki Bamboo Shirt",
+                "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+                "category": "Shirts",
+                "tags": [
+                  "shirt",
+                  "bamboo",
+                  "men",
+                  "khaki",
+                  "summer",
+                  "apparel"
+                ],
+                "price": 1699,
+                "currency": "INR",
+                "images": [
+                  "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+                ],
+                "in_stock": true,
+                "total_inventory": 40,
+                "variants": [
+                  {
+                    "id": "var_bkss_m",
+                    "title": "Medium / Khaki",
+                    "sku": "BKSS-M",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "M",
+                      "color": "Khaki"
+                    }
+                  },
+                  {
+                    "id": "var_bkss_l",
+                    "title": "Large / Khaki",
+                    "sku": "BKSS-L",
+                    "price": 1699,
+                    "inventory_quantity": 20,
+                    "attributes": {
+                      "size": "L",
+                      "color": "Khaki"
+                    }
+                  }
+                ],
+                "created_at": "2026-09-30T18:31:27.858Z",
+                "updated_at": "2026-09-30T18:31:27.858Z"
+              }
+            ],
+            "comparison_points": [
+              {
+                "attribute": "Price",
+                "values": {
+                  "Sage Green Bamboo Shirt": "INR1699",
+                  "Mauve Bamboo Shirt": "INR1699",
+                  "Khaki Bamboo Shirt": "INR1699"
+                }
+              },
+              {
+                "attribute": "Category",
+                "values": {
+                  "Sage Green Bamboo Shirt": "Shirts",
+                  "Mauve Bamboo Shirt": "Shirts",
+                  "Khaki Bamboo Shirt": "Shirts"
+                }
+              },
+              {
+                "attribute": "Availability",
+                "values": {
+                  "Sage Green Bamboo Shirt": "In Stock",
+                  "Mauve Bamboo Shirt": "In Stock",
+                  "Khaki Bamboo Shirt": "In Stock"
+                }
+              },
+              {
+                "attribute": "Key Details",
+                "values": {
+                  "Sage Green Bamboo Shirt": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar....",
+                  "Mauve Bamboo Shirt": "Short sleeve organic bamboo casual shirt for resort wear and warm climates....",
+                  "Khaki Bamboo Shirt": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort...."
+                }
+              }
+            ],
+            "summary": "Compared 3 products. \"Sage Green Bamboo Shirt\" is the most affordable at INR1699."
+          },
+          "suggested_actions": [
+            "Add the first one to cart",
+            "Add the second one to cart",
+            "Show cheaper options"
+          ]
+        },
+        {
+          "id": "msg_user_1790793156242",
+          "role": "user",
+          "content": "add the first one to cart",
+          "timestamp": "2026-09-30T18:32:36.242Z"
+        },
+        {
+          "id": "msg_asst_1790793156243",
+          "role": "assistant",
+          "content": "I've added **Sage Green Bamboo Shirt** to your cart for INR1699. Would you like to view more items or proceed to checkout?",
+          "timestamp": "2026-09-30T18:32:36.243Z",
+          "products": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "workspace_id": "ws_acme_corp",
+              "title": "Sage Green Bamboo Shirt",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "category": "Shirts",
+              "tags": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "price": 1699,
+              "currency": "INR",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "total_inventory": 40,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "sku": "BSSS-M",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "sku": "BSSS-L",
+                  "price": 1699,
+                  "inventory_quantity": 20,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "created_at": "2026-09-30T18:31:27.858Z",
+              "updated_at": "2026-09-30T18:31:27.858Z"
+            }
+          ],
+          "suggested_actions": [
+            "Show similar products",
+            "View more options",
+            "Checkout now"
+          ]
+        }
+      ],
+      "context": {
+        "last_search_plan": {
+          "intent": "SEARCH",
+          "scope": "all_matching",
+          "semantic_query": "i am looking for shirts",
+          "extracted_keywords": [
+            "am",
+            "shirts"
+          ],
+          "category": "Shirts",
+          "page": 1,
+          "page_size": 6
+        },
+        "last_products": [
+          {
+            "id": "prod_shirt_bamboo_sage_ss",
+            "workspace_id": "ws_acme_corp",
+            "title": "Sage Green Bamboo Shirt",
+            "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "green",
+              "sage",
+              "summer",
+              "apparel"
+            ],
+            "price": 1699,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 40,
+            "variants": [
+              {
+                "id": "var_bsss_m",
+                "title": "Medium / Sage",
+                "sku": "BSSS-M",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "M",
+                  "color": "Green"
+                }
+              },
+              {
+                "id": "var_bsss_l",
+                "title": "Large / Sage",
+                "sku": "BSSS-L",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Green"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:31:27.858Z",
+            "updated_at": "2026-09-30T18:31:27.858Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_mauve_ss",
+            "workspace_id": "ws_acme_corp",
+            "title": "Mauve Bamboo Shirt",
+            "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "mauve",
+              "summer",
+              "apparel"
+            ],
+            "price": 1699,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 40,
+            "variants": [
+              {
+                "id": "var_bmss_m",
+                "title": "Medium / Mauve",
+                "sku": "BMSS-M",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "M",
+                  "color": "Mauve"
+                }
+              },
+              {
+                "id": "var_bmss_l",
+                "title": "Large / Mauve",
+                "sku": "BMSS-L",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Mauve"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:31:27.858Z",
+            "updated_at": "2026-09-30T18:31:27.858Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_khaki_ss",
+            "workspace_id": "ws_acme_corp",
+            "title": "Khaki Bamboo Shirt",
+            "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "khaki",
+              "summer",
+              "apparel"
+            ],
+            "price": 1699,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 40,
+            "variants": [
+              {
+                "id": "var_bkss_m",
+                "title": "Medium / Khaki",
+                "sku": "BKSS-M",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "M",
+                  "color": "Khaki"
+                }
+              },
+              {
+                "id": "var_bkss_l",
+                "title": "Large / Khaki",
+                "sku": "BKSS-L",
+                "price": 1699,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Khaki"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:31:27.858Z",
+            "updated_at": "2026-09-30T18:31:27.858Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_mauve_fs",
+            "workspace_id": "ws_acme_corp",
+            "title": "Mauve Bamboo Full Sleeve Shirt",
+            "description": "Eco-luxe organic bamboo fiber full-sleeve shirt with ultra-soft drape and natural thermo-regulation.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "mauve",
+              "premium",
+              "luxe",
+              "apparel"
+            ],
+            "price": 2299,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 35,
+            "variants": [
+              {
+                "id": "var_bmfs_m",
+                "title": "Medium / Mauve",
+                "sku": "BMFS-M",
+                "price": 2299,
+                "inventory_quantity": 15,
+                "attributes": {
+                  "size": "M",
+                  "color": "Mauve"
+                }
+              },
+              {
+                "id": "var_bmfs_l",
+                "title": "Large / Mauve",
+                "sku": "BMFS-L",
+                "price": 2299,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Mauve"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:31:27.858Z",
+            "updated_at": "2026-09-30T18:31:27.858Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_khaki_fs",
+            "workspace_id": "ws_acme_corp",
+            "title": "Khaki Bamboo Full Sleeve Shirt",
+            "description": "Sophisticated khaki bamboo fiber full-sleeve shirt offering silky touch and effortless breathability.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "khaki",
+              "premium",
+              "luxe",
+              "apparel"
+            ],
+            "price": 2299,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 35,
+            "variants": [
+              {
+                "id": "var_bkfs_m",
+                "title": "Medium / Khaki",
+                "sku": "BKFS-M",
+                "price": 2299,
+                "inventory_quantity": 15,
+                "attributes": {
+                  "size": "M",
+                  "color": "Khaki"
+                }
+              },
+              {
+                "id": "var_bkfs_l",
+                "title": "Large / Khaki",
+                "sku": "BKFS-L",
+                "price": 2299,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Khaki"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:31:27.858Z",
+            "updated_at": "2026-09-30T18:31:27.858Z"
+          },
+          {
+            "id": "prod_shirt_bamboo_beige_fs",
+            "workspace_id": "ws_acme_corp",
+            "title": "Dark Beige Bamboo Full Sleeve Shirt",
+            "description": "Tailored dark beige bamboo shirt crafted with natural antimicrobial properties and elegant matte sheen.",
+            "category": "Shirts",
+            "tags": [
+              "shirt",
+              "bamboo",
+              "men",
+              "beige",
+              "premium",
+              "luxe",
+              "apparel"
+            ],
+            "price": 2299,
+            "currency": "INR",
+            "images": [
+              "https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=600&auto=format&fit=crop&q=80"
+            ],
+            "in_stock": true,
+            "total_inventory": 35,
+            "variants": [
+              {
+                "id": "var_bbfs_m",
+                "title": "Medium / Beige",
+                "sku": "BBFS-M",
+                "price": 2299,
+                "inventory_quantity": 15,
+                "attributes": {
+                  "size": "M",
+                  "color": "Beige"
+                }
+              },
+              {
+                "id": "var_bbfs_l",
+                "title": "Large / Beige",
+                "sku": "BBFS-L",
+                "price": 2299,
+                "inventory_quantity": 20,
+                "attributes": {
+                  "size": "L",
+                  "color": "Beige"
+                }
+              }
+            ],
+            "created_at": "2026-09-30T18:31:27.858Z",
+            "updated_at": "2026-09-30T18:31:27.858Z"
+          }
+        ]
+      },
+      "created_at": "2026-09-30T18:32:36.239Z",
+      "updated_at": "2026-09-30T18:32:36.244Z"
+    }
+  ]
+}
