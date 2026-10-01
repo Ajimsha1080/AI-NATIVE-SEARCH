@@ -66,7 +66,11 @@ export default function KnowledgeWorkspacePage() {
 
   async function loadKnowledge() {
     try {
-      const res = await fetch('/api/knowledge', { cache: 'no-store' });
+      const headers: Record<string, string> = {};
+      const token = typeof window !== 'undefined' ? localStorage.getItem('aaas_token') : null;
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/knowledge', { cache: 'no-store', headers });
       if (res.status === 401) {
         window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
         return;
@@ -147,13 +151,6 @@ export default function KnowledgeWorkspacePage() {
         });
         const data = await res.json();
         if (!res.ok) {
-          if (res.status === 401) {
-            setModalError('Session unauthorized. Please sign in to your store workspace to crawl and index websites.');
-            setTimeout(() => {
-              window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
-            }, 1200);
-            return;
-          }
           throw new Error(data.error?.message || data.error || 'Failed to crawl website URL');
         }
         if (data.document) {

@@ -157,9 +157,11 @@ export async function POST(req: Request) {
       message: newUser.email_verified ? 'Account created.' : 'Verification email sent. Please verify your email.'
     });
 
+    const isHttps = req.headers.get('x-forwarded-proto') === 'https' || req.url.startsWith('https:');
+
     response.cookies.set(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       maxAge: 7 * 24 * 3600,
       path: '/'
