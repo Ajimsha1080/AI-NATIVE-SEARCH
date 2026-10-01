@@ -65,11 +65,79 @@
       "enable_cart_actions": true,
       "system_instructions": "You are an AI Mode shopping assistant specialized in product discovery, recommendations, comparisons, and verified merchant catalog advice.",
       "created_at": "2026-10-01T19:48:55.058Z",
-      "updated_at": "2026-10-01T19:51:39.860Z"
+      "updated_at": "2026-10-01T20:19:02.203Z"
+    },
+    {
+      "id": "aimode_cfg_ws_acme_corp",
+      "workspace_id": "ws_acme_corp",
+      "enabled": true,
+      "model_provider": "sarvam",
+      "model_name": "sarvam-105b-conversations",
+      "temperature": 0.3,
+      "retrieval_threshold": 0.25,
+      "max_search_results": 6,
+      "enable_recommendations": true,
+      "enable_comparisons": true,
+      "enable_cart_actions": true,
+      "system_instructions": "You are an AI Mode shopping assistant specialized in product discovery, recommendations, comparisons, and verified merchant catalog advice.",
+      "created_at": "2026-10-01T19:54:52.025Z",
+      "updated_at": "2026-10-01T19:54:52.025Z"
     }
   ],
-  "knowledge_sources": [],
-  "deployments": [],
+  "knowledge_sources": [
+    {
+      "id": "aim_ks_web_mupyd7ujhj80vazn",
+      "workspace_id": "ws_acme_corp",
+      "name": "https://www.mydesignation.com/",
+      "type": "WEBSITE",
+      "source_url": "https://www.mydesignation.com/",
+      "status": "INDEXED",
+      "document_count": 13,
+      "product_count": 5,
+      "created_at": "2026-10-01T19:54:18.235Z",
+      "updated_at": "2026-10-01T19:54:19.087Z",
+      "last_synced_at": "2026-10-01T19:54:19.087Z",
+      "raw_content": "MyDesignation: Fashion Apparels for Men Ordering from outside India? We currently take international orders only via WhatsApp. Feel free to reach out at +91 83300 76677 Whatsapp Now Skip to content Free Home Delivery for Paid Orders 🚚 Free Home Delivery for Paid Orders 🚚 Free Return & Exchange 📦 (TnC) Free Return & Exchange 📦 (TnC) Pay later & EMI available💡 Pay later & EMI available 💡 Festive Essentials NEW Delicious Collection 🍕 Shop All Shirts Everyday Essentials Bottomwear T-shirts Oversized Tees Regular Tees Polo Tees Hoodies and Jackets Accessories Bulk or International Orders Bulk/Corporate Orders International Orders Login/Signup Facebook Instagram LinkedIn YouTube Home Catalog Contact Search our site Recent Searches Popular Searches Shirts Bottomwear Hoodies Trending now Fastest Selling VIEW ALL Relaxed Fit Shirt &#9733; Neon Drift ₹ 1,299 Add to cart Relaxed Fit Shirt &#9733; 5.0 Oriental Heritage ₹ 1,499 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Kirtimukha Heritage Embroidered ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Roaring Tiger Shirt ₹ 1,399 Add to cart 18% OFF Regular Fit Shirt &#9733; Plaid: Imperial Green ₹ 1,399 ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 4.9 Starry Night ₹ 1,125 Add to cart Relaxed Fit Box Combo &#9733; 5.0 Desi Flavours ₹ 1,399 Add to cart Oversized Fit Oversized T-shirt &#9733; Noble Reign Embroidered ₹ 1,499 Add to cart 18% OFF Oversized Fit Box Combo &#9733; 5.0 Pizza ₹ 1,399 ₹ 1,699 Add to cart Oversized Fit Box Combo &#9733; 5.0 Sweet Escape ₹ 1,199 Add to cart 18% OFF Straight Fit Jeans &#9733; Indigo Carpenter Denim ₹ 1,799 ₹ 2,199 Add to cart 33% OFF Relaxed Fit Shirt &#9733; 5.0 Ethnic Rave Embroidered ₹ 1,199 ₹ 1,799 Add to cart Back Login &nbsp; Cart Cart Trending now VIEW ALL Relaxed Fit Shirt &#9733; Mughal Heritage ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Fuji Check ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Korean Shrine Mural ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Cross Stitch ₹ 1,499 Add to cart Relaxed Fit Shirt &#9733; Swinging Embroidered ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Rising Empire ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Cosmic Odyssey ₹ 1,399 Add to cart Regular Fit Shirt &#9733; Bali Guardian Embroidered ₹ 1,599 Add to cart Oversized Fit Oversized T-shirt &#9733; Phoenix Rise ₹ 1,199 Add to cart Oversized Fit Oversized T-shirt &#9733; Undefeated ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Opera Legacy ₹ 1,399 Add to cart Relaxed fit Joggers &#9733; Samurai ₹ 1,599 Add to cart Back Curated for You VIEW ALL Relaxed Fit Shirt &#9733; Neon Drift ₹ 1,299 Add to cart Relaxed Fit Shirt &#9733; 5.0 Oriental Heritage ₹ 1,499 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Kirtimukha Heritage Embroidered ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Roaring Tiger Shirt ₹ 1,399 Add to cart 18% OFF Regular Fit Shirt &#9733; Plaid: Imperial Green ₹ 1,399 ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 4.9 Starry Night ₹ 1,125 Add to cart Relaxed Fit Box Combo &#9733; 5.0 Desi Flavours ₹ 1,399 Add to cart Oversized Fit Oversized T-shirt &#9733; Noble Reign Embroidered ₹ 1,499 Add to cart 18% OFF Oversized Fit Box Combo &#9733; 5.0 Pizza ₹ 1,399 ₹ 1,699 Add to cart Oversized Fit Box Combo &#9733; 5.0 Sweet Escape ₹ 1,199 Add to cart 18% OFF Straight Fit Jeans &#9733; Indigo Carpenter Denim ₹ 1,799 ₹ 2,199 Add to cart 33% OFF Relaxed Fit Shirt &#9733; 5.0 Ethnic Rave Embroidered ₹ 1,199 ₹ 1,799 Add to cart Back &nbsp; TALK OF THE TOWN World’s first ASMR T-shirt. Don’t just wear it. Cut it.🍕✂️ Yes, you read that right! Meet the Pizza Oversized T-shirt designed with distressable mesh sleeves that you can cut, tear and customise however you want. And underneath? A pizza-inspired graphic waiting to be revealed. 🍕 The best part? Watching and hearing it transform , it might just be the most satisfying thing you do with a T-shirt. Because your T-shirt doesn’t have to look like everyone else’s. Cut it. Customise it. Make it yours. 👉 CHECK IT OUT NOW DROP BY FOR A HIGH-FIVE Find a store near you Get Directions Get Directions Get Directions Get Directions Get Directions Get Directions Get Directions Coming Soon Coming Soon THEY’RE TALKING ABOUT MYDESIGNATION The Tees look so cool and beautiful colour combinations. Really loved them! Basil Joseph Trendy indeed! Love wearing them Joseph Annamkutty Jose Can't wait to wear and flaunt the T-shirts, they are so cool Parvathy Thiruvothu The Tees are really awesome! Leo Leshoy Really loved the Tees and perfect sizing Kalidas Jayaram I love it when my cute looking comfy tees talk funny lines! Ahaana Krishna MYDESIGNATION stands out because their products are not just fun, they're aesthetic and oh so comfortable as well. More power to you guys! Vishak Nair Premium stuff. Brilliant and friendly service too! Vishnu Govindan Loved wearing their badass Tees and flaunting the Malalayali in me! Priya Varrier Brilliant co",
+      "metadata": {
+        "policy_count": 13,
+        "extracted_products_count": 5
+      }
+    }
+  ],
+  "deployments": [
+    {
+      "id": "aim_dep_ws_acme_corp_01",
+      "workspace_id": "ws_acme_corp",
+      "name": "Storefront AI Mode Widget",
+      "status": "LIVE",
+      "allowed_domains": [
+        "*"
+      ],
+      "theme": {
+        "primary_color": "#09090b",
+        "background_color": "#ffffff",
+        "text_color": "#09090b",
+        "border_radius": "lg",
+        "font_family": "Inter, system-ui, sans-serif"
+      },
+      "branding": {
+        "title": "AI Shopping Mode",
+        "subtitle": "Instant recommendations & product search",
+        "welcome_message": "Hi there! 👋 I am in AI Mode. Ask me to find products, compare styles, or recommend items for any occasion.",
+        "suggested_prompts": [
+          "Find formal shirts under ₹2000",
+          "Recommend a summer outfit",
+          "Compare top rated items"
+        ],
+        "position": "bottom-right"
+      },
+      "embed_code": "<script src=\"/api/ai-mode/widget/aim_dep_ws_acme_corp_01/script.js\" async defer></script>",
+      "total_conversations": 0,
+      "total_product_clicks": 0,
+      "created_at": "2026-10-01T19:53:27.095Z",
+      "updated_at": "2026-10-01T19:53:27.095Z"
+    }
+  ],
   "conversations": [
     {
       "id": "conv_aim_mupy6ajiinhwy69d",
@@ -4289,6 +4357,1108 @@
       ],
       "created_at": "2026-10-01T19:51:39.870Z",
       "updated_at": "2026-10-01T19:51:39.894Z",
+      "last_search_state": {
+        "original_query": "Recommend a stylish shirt for summer under 2500",
+        "intent": "RECOMMENDATION",
+        "semantic_query": "Recommend a stylish shirt for summer under 2500",
+        "extracted_filters": {
+          "max_price": 2500
+        },
+        "sort": "relevance",
+        "pagination": {
+          "page": 1,
+          "page_size": 6
+        }
+      }
+    },
+    {
+      "id": "conv_aim_mupz5sqjexeeijkx",
+      "workspace_id": "ws_acme_corp",
+      "messages": [
+        {
+          "id": "msg_user_mupz5sqj4c5jjfin",
+          "role": "user",
+          "content": "Which one is better?",
+          "created_at": "2026-10-01T20:16:31.675Z"
+        },
+        {
+          "id": "msg_ast_mupz5sqoghblodya",
+          "role": "assistant",
+          "content": "Found 14 matching products:",
+          "products": [
+            {
+              "id": "prod_shirt_ylw_cot",
+              "title": "Yellow Cotton Shirt",
+              "handle": "prod_shirt_ylw_cot",
+              "description": "Vibrant mustard yellow tailored cotton shirt with crisp collar and soft texture.",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "cotton",
+                "men",
+                "yellow",
+                "casual",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_yc_m",
+                  "title": "Medium / Yellow",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Yellow"
+                  }
+                },
+                {
+                  "id": "var_yc_l",
+                  "title": "Large / Yellow",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Yellow"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_ylw_cot",
+              "score": 0.1904534033733291
+            },
+            {
+              "id": "prod_shirt_plaid_nf",
+              "title": "Plaid: Navy Frost",
+              "handle": "prod_shirt_plaid_nf",
+              "description": "Crisp navy and cool blue check shirt designed for all-season versatility.",
+              "price": 1199,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "plaid",
+                "men",
+                "navy",
+                "blue",
+                "casual",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_pnf_m",
+                  "title": "Medium / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_pnf_l",
+                  "title": "Large / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_plaid_nf",
+              "score": 0.14866642633922877
+            },
+            {
+              "id": "prod_bt_08",
+              "title": "Sunscreen WIDE VISOR PRO",
+              "handle": "prod_bt_08",
+              "description": "Wide brim maximum-coverage UV sun visor with adjustable anti-glare band for outdoor sports, cycling, and travel.",
+              "price": 999,
+              "sale_price": 1499,
+              "currency": "INR",
+              "category": "Accessories",
+              "subcategories": [
+                "visor",
+                "sunscreen",
+                "accessories",
+                "uvwear",
+                "hat",
+                "cap",
+                "caps",
+                "headwear"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0446/5629/6087/files/sunscreenwidevisorpro_25.webp?v=1777284066"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bt08_uni",
+                  "title": "Universal / Graphite Black",
+                  "price": 999,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "Universal",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Accessories"
+              },
+              "source_url": "/products/prod_bt_08",
+              "score": 0.14423258684646914
+            },
+            {
+              "id": "prod_bt_05",
+              "title": "Anti-AC Thermal Jacket 2 Pro",
+              "handle": "prod_bt_05",
+              "description": "Dual-layer thermal fleece insulation engineered for air-conditioned corporate spaces and chill protection without bulk.",
+              "price": 1799,
+              "sale_price": 4999,
+              "currency": "INR",
+              "category": "Hoodies",
+              "subcategories": [
+                "thermal",
+                "anti-ac",
+                "jacket",
+                "hoodie",
+                "outerwear"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0446/5629/6087/files/ANTI_AC_PRO_1-100.jpg?v=1762598400"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bt05_m",
+                  "title": "Medium / Stealth Black",
+                  "price": 1799,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_bt05_l",
+                  "title": "Large / Stealth Black",
+                  "price": 1799,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Hoodies"
+              },
+              "source_url": "/products/prod_bt_05",
+              "score": 0.14375949744936836
+            },
+            {
+              "id": "prod_bt_03",
+              "title": "Sunscreen Jacket Ice Pro",
+              "handle": "prod_bt_03",
+              "description": "Next-gen cooling techwear jacket with Arctic Ice cool-touch heat dispersal and certified UPF 50+ rating.",
+              "price": 1999,
+              "sale_price": 3999,
+              "currency": "INR",
+              "category": "Outerwear",
+              "subcategories": [
+                "jacket",
+                "ice",
+                "cooling",
+                "upf50",
+                "outerwear",
+                "ice pro"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0446/5629/6087/files/BTF.webp?v=1779275127"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bt03_m",
+                  "title": "Medium / Arctic Ice Grey",
+                  "price": 1999,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Ice Grey"
+                  }
+                },
+                {
+                  "id": "var_bt03_l",
+                  "title": "Large / Arctic Ice Grey",
+                  "price": 1999,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Ice Grey"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Outerwear"
+              },
+              "source_url": "/products/prod_bt_03",
+              "score": 0.1
+            },
+            {
+              "id": "prod_bt_06",
+              "title": "No Sweat Tech Tee",
+              "handle": "prod_bt_06",
+              "description": "Quick-dry moisture-wicking engineered active tee designed to stay cool, fresh, and odor-free all day.",
+              "price": 799,
+              "sale_price": 1499,
+              "currency": "INR",
+              "category": "T-Shirts",
+              "subcategories": [
+                "tshirt",
+                "nosweat",
+                "quick-dry",
+                "activewear",
+                "tee"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0446/5629/6087/files/NoSweatTee_1.webp?v=1777871708"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bt06_m",
+                  "title": "Medium / Olive Green",
+                  "price": 799,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Olive"
+                  }
+                },
+                {
+                  "id": "var_bt06_l",
+                  "title": "Large / Olive Green",
+                  "price": 799,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Olive"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "T-Shirts"
+              },
+              "source_url": "/products/prod_bt_06",
+              "score": 0.1
+            }
+          ],
+          "created_at": "2026-10-01T20:16:31.680Z"
+        }
+      ],
+      "created_at": "2026-10-01T20:16:31.675Z",
+      "updated_at": "2026-10-01T20:16:31.680Z",
+      "last_search_state": {
+        "original_query": "Which one is better?",
+        "intent": "DISCOVERY",
+        "semantic_query": "Which one is better?",
+        "extracted_filters": {},
+        "sort": "relevance",
+        "pagination": {
+          "page": 1,
+          "page_size": 6
+        }
+      }
+    },
+    {
+      "id": "conv_aim_mupz90w9xmv79bxc",
+      "workspace_id": "ws_default",
+      "messages": [
+        {
+          "id": "msg_user_mupz90w910sm2gnx",
+          "role": "user",
+          "content": "Recommend a stylish shirt for summer under 2500",
+          "created_at": "2026-10-01T20:19:02.217Z"
+        },
+        {
+          "id": "msg_ast_mupz90wak52fbyo6",
+          "role": "assistant",
+          "content": "Based on your preferences, here are handpicked recommendations from our catalog:",
+          "products": [
+            {
+              "id": "prod_shirt_plaid_nf",
+              "title": "Plaid: Navy Frost",
+              "handle": "prod_shirt_plaid_nf",
+              "description": "Crisp navy and cool blue check shirt designed for all-season versatility.",
+              "price": 1199,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "plaid",
+                "men",
+                "navy",
+                "blue",
+                "casual",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_pnf_m",
+                  "title": "Medium / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_pnf_l",
+                  "title": "Large / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_plaid_nf",
+              "score": 0.40859259723849783
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "title": "Mauve Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_mauve_ss",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_mauve_ss",
+              "score": 0.38931048318934025
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_ss",
+              "title": "Khaki Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_khaki_ss",
+              "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bkss_m",
+                  "title": "Medium / Khaki",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkss_l",
+                  "title": "Large / Khaki",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_khaki_ss",
+              "score": 0.38931048318934025
+            },
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "title": "Sage Green Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_sage_ss",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_sage_ss",
+              "score": 0.3761471825689051
+            },
+            {
+              "id": "prod_shirt_grn_cot",
+              "title": "Green Cotton Shirt",
+              "handle": "prod_shirt_grn_cot",
+              "description": "Breathable lightweight green cotton shirt suited for daily office and casual wear.",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "cotton",
+                "men",
+                "green",
+                "casual",
+                "office",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_gc_m",
+                  "title": "Medium / Green",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_gc_l",
+                  "title": "Large / Green",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_grn_cot",
+              "score": 0.34834256356736243
+            },
+            {
+              "id": "prod_shirt_cord_nvy",
+              "title": "Corduroy Shirt: Navy",
+              "handle": "prod_shirt_cord_nvy",
+              "description": "Luxe fine-wale corduroy button-down shirt designed for casual styling and evening dinner occasions.",
+              "price": 1499,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "corduroy",
+                "men",
+                "navy",
+                "casual",
+                "dinner",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_sc_nvy_m",
+                  "title": "Medium / Navy",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_sc_nvy_l",
+                  "title": "Large / Navy",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_cord_nvy",
+              "score": 0.33657328637619877
+            }
+          ],
+          "recommendations": [
+            {
+              "id": "prod_shirt_plaid_nf",
+              "title": "Plaid: Navy Frost",
+              "handle": "prod_shirt_plaid_nf",
+              "description": "Crisp navy and cool blue check shirt designed for all-season versatility.",
+              "price": 1199,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "plaid",
+                "men",
+                "navy",
+                "blue",
+                "casual",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_pnf_m",
+                  "title": "Medium / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_pnf_l",
+                  "title": "Large / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_plaid_nf",
+              "score": 0.40859259723849783
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "title": "Mauve Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_mauve_ss",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_mauve_ss",
+              "score": 0.38931048318934025
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_ss",
+              "title": "Khaki Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_khaki_ss",
+              "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bkss_m",
+                  "title": "Medium / Khaki",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkss_l",
+                  "title": "Large / Khaki",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_khaki_ss",
+              "score": 0.38931048318934025
+            }
+          ],
+          "created_at": "2026-10-01T20:19:02.218Z"
+        },
+        {
+          "id": "msg_user_mupz90wdrw2k51tf",
+          "role": "user",
+          "content": "Compare the first and second one",
+          "created_at": "2026-10-01T20:19:02.221Z"
+        },
+        {
+          "id": "msg_ast_mupz90yh2gnvvdce",
+          "role": "assistant",
+          "content": "Here is a side-by-side comparison between **Plaid: Navy Frost** and **Mauve Bamboo Shirt**:\n\n• **Plaid: Navy Frost** (₹1,199): Best value pick with high versatility.\n• **Mauve Bamboo Shirt** (₹1,699): Premium build with distinct styling.\n\n💡 **AI Verdict**: If budget is your priority, **Plaid: Navy Frost** saves you ₹500. However, **Mauve Bamboo Shirt** offers premium detailing.",
+          "comparison": {
+            "item_a": {
+              "id": "prod_shirt_plaid_nf",
+              "title": "Plaid: Navy Frost",
+              "handle": "prod_shirt_plaid_nf",
+              "description": "Crisp navy and cool blue check shirt designed for all-season versatility.",
+              "price": 1199,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "plaid",
+                "men",
+                "navy",
+                "blue",
+                "casual",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_pnf_m",
+                  "title": "Medium / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_pnf_l",
+                  "title": "Large / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_plaid_nf",
+              "score": 0.40859259723849783
+            },
+            "item_b": {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "title": "Mauve Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_mauve_ss",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_mauve_ss",
+              "score": 0.38931048318934025
+            },
+            "pros_a": [
+              "Price: ₹1,199",
+              "Category: Shirts",
+              "In Stock (Ready to dispatch)",
+              "Crisp navy and cool blue check shirt designed for all-season versatility...."
+            ],
+            "pros_b": [
+              "Price: ₹1,699",
+              "Category: Shirts",
+              "In Stock (Ready to dispatch)",
+              "Short sleeve organic bamboo casual shirt for resort wear and warm climates...."
+            ],
+            "summary": "If budget is your priority, **Plaid: Navy Frost** saves you ₹500. However, **Mauve Bamboo Shirt** offers premium detailing."
+          },
+          "products": [
+            {
+              "id": "prod_shirt_plaid_nf",
+              "title": "Plaid: Navy Frost",
+              "handle": "prod_shirt_plaid_nf",
+              "description": "Crisp navy and cool blue check shirt designed for all-season versatility.",
+              "price": 1199,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "plaid",
+                "men",
+                "navy",
+                "blue",
+                "casual",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_pnf_m",
+                  "title": "Medium / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_pnf_l",
+                  "title": "Large / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_plaid_nf",
+              "score": 0.40859259723849783
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "title": "Mauve Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_mauve_ss",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_mauve_ss",
+              "score": 0.38931048318934025
+            }
+          ],
+          "created_at": "2026-10-01T20:19:02.297Z"
+        },
+        {
+          "id": "msg_user_mupz90yjhctxvafs",
+          "role": "user",
+          "content": "Add the first one to my cart",
+          "created_at": "2026-10-01T20:19:02.299Z"
+        },
+        {
+          "id": "msg_ast_mupz90ykpaevy3co",
+          "role": "assistant",
+          "content": "Added **Plaid: Navy Frost** (₹1,199) to your shopping bag! 🛍️ Would you like to view other matching recommendations?",
+          "products": [
+            {
+              "id": "prod_shirt_plaid_nf",
+              "title": "Plaid: Navy Frost",
+              "handle": "prod_shirt_plaid_nf",
+              "description": "Crisp navy and cool blue check shirt designed for all-season versatility.",
+              "price": 1199,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "plaid",
+                "men",
+                "navy",
+                "blue",
+                "casual",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_pnf_m",
+                  "title": "Medium / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_pnf_l",
+                  "title": "Large / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_plaid_nf",
+              "score": 0.40859259723849783
+            }
+          ],
+          "cart_action_performed": {
+            "action": "ADD",
+            "product_title": "Plaid: Navy Frost",
+            "quantity": 1
+          },
+          "created_at": "2026-10-01T20:19:02.300Z"
+        }
+      ],
+      "created_at": "2026-10-01T20:19:02.217Z",
+      "updated_at": "2026-10-01T20:19:02.300Z",
       "last_search_state": {
         "original_query": "Recommend a stylish shirt for summer under 2500",
         "intent": "RECOMMENDATION",
