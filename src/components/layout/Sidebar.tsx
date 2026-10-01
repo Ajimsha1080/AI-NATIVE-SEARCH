@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutGrid, Bot, Package, BookOpen, Layers, 
   Wrench, MessageSquare, Search, BarChart3, 
-  Globe, ShieldCheck, Users, CreditCard, Settings, UserPlus
+  Globe, ShieldCheck, Users, CreditCard, Settings, UserPlus, Sparkles
 } from 'lucide-react';
 import { fetchWithCache } from '@/lib/client-cache';
 
@@ -44,6 +44,12 @@ export default function Sidebar() {
       href: '/agents/agent_shopmate_01', 
       icon: Bot,
       isActive: (path: string) => path.startsWith('/agents') && !path.includes('/playground')
+    },
+    { 
+      name: 'AI Mode', 
+      href: '/ai-mode', 
+      icon: Sparkles,
+      isActive: (path: string) => path.startsWith('/ai-mode')
     },
     { 
       name: 'Knowledge', 
