@@ -28,13 +28,15 @@ export default function SignupPage() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const errorMsg = typeof data.error === 'string' ? data.error : data.error?.message || data.message || 'Failed to create account';
+        const rawErr = data?.error || data?.message || 'Failed to create account';
+        const errorMsg = typeof rawErr === 'object' ? (rawErr.message || JSON.stringify(rawErr)) : String(rawErr);
         throw new Error(errorMsg);
       }
 
       window.location.href = '/dashboard';
     } catch (err: any) {
-      setError(err.message || 'Signup failed');
+      const msg = typeof err?.message === 'string' ? err.message : 'Signup failed. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -58,7 +60,7 @@ export default function SignupPage() {
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-              <span>{error}</span>
+              <span>{typeof error === 'string' ? error : JSON.stringify(error)}</span>
             </div>
           )}
 
