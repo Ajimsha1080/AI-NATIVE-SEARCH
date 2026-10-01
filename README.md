@@ -7,7 +7,8 @@
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.x-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![Sarvam AI](https://img.shields.io/badge/Sarvam_AI-105B_Conversations-orange?style=flat)](https://www.sarvam.ai/)
 [![Acceptance Tests](https://img.shields.io/badge/Platform_Acceptance-33%2F33_Passing-brightgreen?style=flat)](scripts/test-acceptance.ts)
-[![Agentic Commerce Tests](https://img.shields.io/badge/Agentic_Commerce-24%2F24_Passing-brightgreen?style=flat)](scripts/test-agentic-commerce.ts)
+[![Agentic Commerce Tests](https://img.shields.io/badge/Agentic_Commerce-61%2F61_Passing-brightgreen?style=flat)](scripts/test-agentic-commerce.ts)
+[![Integration Tests](https://img.shields.io/badge/Platform_Integration-6%2F6_Passing-brightgreen?style=flat)](scripts/test-integration.ts)
 
 A production-grade, hardened, multi-tenant enterprise **E-Commerce Agent-as-a-Service (AaaS)** platform. Features a unified Next.js 15 full-stack frontend with visual shopping chat widgets and an asynchronous Python 3.12 FastAPI intelligence engine powered by a 12-Stage Hybrid RAG pipeline, authoritative structured catalog search, dynamic intent classification, conversational state memory, and multi-LLM orchestration (Sarvam AI 105B, OpenAI, Anthropic, Ollama).
 
@@ -174,22 +175,25 @@ npm run dev
 
 ## 🧪 Comprehensive Verification & Test Suite
 
-The repository includes dual automated test suites:
+The repository includes comprehensive automated test suites:
 
 ```bash
-# 1. Run Platform Security & Multi-Tenancy Acceptance Suite (33/33 tests)
-npm run test:acceptance
-
-# 2. Run Agentic Commerce Evaluation Suite (24/24 tests)
+# 1. Run Agentic Commerce Evaluation Suite (61/61 tests across 18+ scenarios)
 npm run test:agentic
 
-# 3. TypeScript Typecheck
+# 2. Run Platform Security & Multi-Tenancy Acceptance Suite (33/33 tests)
+npm run test:acceptance
+
+# 3. Run Platform Integration Suite (6/6 tests)
+npm run test:integration
+
+# 4. TypeScript Typecheck
 npx tsc --noEmit
 
-# 4. ESLint Check
+# 5. ESLint Check
 npm run lint
 
-# 5. Production Build Test
+# 6. Production Build Test
 npm run build
 ```
 
