@@ -113,29 +113,59 @@ export default function AIModeLivePreviewPage() {
 
               {/* Comparison Card if available */}
               {msg.comparison && (
-                <div className="w-full max-w-xl bg-zinc-900 text-white rounded-2xl p-4 shadow-md border border-zinc-800 space-y-2 text-xs">
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase">Side-By-Side AI Comparison</span>
+                <div className="w-full max-w-xl bg-zinc-900 text-white rounded-2xl p-4 shadow-md border border-zinc-800 space-y-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">Side-By-Side AI Comparison</span>
+                    <span className="text-[10px] text-zinc-400">Verified Catalog Match</span>
+                  </div>
                   <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div className="bg-zinc-800/80 p-3 rounded-xl space-y-1">
-                      <strong className="block text-zinc-100 text-xs">{msg.comparison.item_a.title}</strong>
-                      <span className="text-emerald-400 font-mono text-[11px]">₹{msg.comparison.item_a.price}</span>
-                      <ul className="text-[10px] text-zinc-300 list-disc list-inside pt-1">
-                        {msg.comparison.pros_a.map((p, i) => <li key={i}>{p}</li>)}
-                      </ul>
+                    <div className="bg-zinc-800/80 p-3 rounded-xl space-y-2 flex flex-col justify-between">
+                      <div className="space-y-1.5">
+                        {msg.comparison.item_a.images?.[0] && (
+                          <div className="h-24 rounded-lg bg-zinc-700 overflow-hidden">
+                            <img src={msg.comparison.item_a.images[0]} alt={msg.comparison.item_a.title} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <strong className="block text-zinc-100 text-xs font-bold">{msg.comparison.item_a.title}</strong>
+                        <span className="text-emerald-400 font-mono text-[11px] font-bold">₹{msg.comparison.item_a.price.toLocaleString('en-IN')}</span>
+                        <ul className="text-[10px] text-zinc-300 list-disc list-inside pt-1 space-y-0.5">
+                          {msg.comparison.pros_a.map((p, i) => <li key={i}>{p}</li>)}
+                        </ul>
+                      </div>
+                      <button
+                        onClick={() => handleSend(`Add ${msg.comparison!.item_a.title} to cart`)}
+                        className="w-full py-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white text-[10px] font-semibold transition"
+                      >
+                        + Add {msg.comparison.item_a.title.split(' ')[0]} to Cart
+                      </button>
                     </div>
-                    <div className="bg-zinc-800/80 p-3 rounded-xl space-y-1">
-                      <strong className="block text-zinc-100 text-xs">{msg.comparison.item_b.title}</strong>
-                      <span className="text-emerald-400 font-mono text-[11px]">₹{msg.comparison.item_b.price}</span>
-                      <ul className="text-[10px] text-zinc-300 list-disc list-inside pt-1">
-                        {msg.comparison.pros_b.map((p, i) => <li key={i}>{p}</li>)}
-                      </ul>
+
+                    <div className="bg-zinc-800/80 p-3 rounded-xl space-y-2 flex flex-col justify-between">
+                      <div className="space-y-1.5">
+                        {msg.comparison.item_b.images?.[0] && (
+                          <div className="h-24 rounded-lg bg-zinc-700 overflow-hidden">
+                            <img src={msg.comparison.item_b.images[0]} alt={msg.comparison.item_b.title} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <strong className="block text-zinc-100 text-xs font-bold">{msg.comparison.item_b.title}</strong>
+                        <span className="text-emerald-400 font-mono text-[11px] font-bold">₹{msg.comparison.item_b.price.toLocaleString('en-IN')}</span>
+                        <ul className="text-[10px] text-zinc-300 list-disc list-inside pt-1 space-y-0.5">
+                          {msg.comparison.pros_b.map((p, i) => <li key={i}>{p}</li>)}
+                        </ul>
+                      </div>
+                      <button
+                        onClick={() => handleSend(`Add ${msg.comparison!.item_b.title} to cart`)}
+                        className="w-full py-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white text-[10px] font-semibold transition"
+                      >
+                        + Add {msg.comparison.item_b.title.split(' ')[0]} to Cart
+                      </button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Attached Products Grid */}
-              {msg.products && msg.products.length > 0 && (
+              {/* Attached Products Grid (Only when not in comparison view) */}
+              {!msg.comparison && msg.products && msg.products.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-2xl pt-1">
                   {msg.products.map(p => (
                     <div key={p.id} className="bg-white rounded-xl border border-zinc-200 p-3 shadow-2xs space-y-2 flex flex-col justify-between">
