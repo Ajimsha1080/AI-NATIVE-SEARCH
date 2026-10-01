@@ -11,7 +11,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:ai-mode": "npx tsx scripts/test-ai-mode.ts",
     "test:integration": "npx tsx scripts/test-integration.ts",
     "test:acceptance": "npx tsx scripts/test-acceptance.ts",
     "test:agentic": "npx tsx scripts/test-agentic-commerce.ts",
