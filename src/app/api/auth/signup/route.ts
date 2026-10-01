@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { name, email, password, workspace_name, captcha_token } = body;
+    const { name, email, password, workspace_name, workspaceName, captcha_token } = body;
     if (!email || !password || !name) {
       return NextResponse.json({ error: { message: 'Name, email, and password are required' } }, { status: 400 });
     }
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
     db.users.push(newUser);
 
     const wsId = generateId('ws');
-    const wsName = workspace_name ? workspace_name.trim() : `${name.trim()}'s Workspace`;
+    const wsName = (workspace_name || workspaceName || `${name.trim()}'s Workspace`).trim();
     const newWorkspace = {
       id: wsId,
       name: wsName,

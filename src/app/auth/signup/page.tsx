@@ -23,15 +23,16 @@ export default function SignupPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, workspaceName }),
+        body: JSON.stringify({ name, email, password, workspace_name: workspaceName, workspaceName }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to create account');
+        const errorMsg = typeof data.error === 'string' ? data.error : data.error?.message || data.message || 'Failed to create account';
+        throw new Error(errorMsg);
       }
 
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.message || 'Signup failed');
     } finally {
