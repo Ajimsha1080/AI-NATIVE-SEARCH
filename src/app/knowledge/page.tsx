@@ -499,7 +499,7 @@ export default function KnowledgeWorkspacePage() {
                   className="px-3.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-2 shadow-xs cursor-pointer active:scale-[0.98]"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Test Concierge</span>
+                  <span>Test Chat</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 </button>
               </div>
