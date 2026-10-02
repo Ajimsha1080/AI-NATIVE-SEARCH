@@ -340,12 +340,6 @@ export default function AIModeSearchPlayground() {
                             </div>
                           )}
 
-                          {product.score !== undefined && (
-                            <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-zinc-900/85 text-emerald-400 backdrop-blur-xs border border-zinc-800">
-                              {(product.score * 100).toFixed(0)}% Match
-                            </span>
-                          )}
-
                           <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase bg-white/90 text-zinc-800 backdrop-blur-xs shadow-xs border border-zinc-200/60">
                             {product.category || 'Apparel'}
                           </span>
