@@ -8,12 +8,13 @@ import {
   Globe, 
   Sliders, 
   ExternalLink, 
-  Play, 
   ShieldCheck, 
   Sparkles,
-  Layers,
   Palette,
-  Layout
+  Terminal,
+  Layers,
+  Smartphone,
+  CheckCircle2
 } from 'lucide-react';
 import { AIModeDeployment } from '@/ai-mode/types';
 
@@ -21,7 +22,7 @@ export default function AIModeDeploymentPage() {
   const [deployments, setDeployments] = useState<AIModeDeployment[]>([]);
   const [selectedDep, setSelectedDep] = useState<AIModeDeployment | null>(null);
   const [copied, setCopied] = useState(false);
-  const [embedType, setEmbedType] = useState<'script' | 'iframe'>('script');
+  const [embedType, setEmbedType] = useState<'script' | 'react' | 'api' | 'iframe'>('script');
   const [originInput, setOriginInput] = useState('*');
   const [saving, setSaving] = useState(false);
 
@@ -75,27 +76,106 @@ export default function AIModeDeploymentPage() {
 
   if (!selectedDep) {
     return (
-      <div className="p-8 text-center text-zinc-500 text-xs">Loading AI Mode deployment configuration...</div>
+      <div className="p-8 text-center text-zinc-500 text-xs font-mono">Loading deployment configuration...</div>
     );
   }
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const scriptEmbedCode = `<script src="${origin}/api/ai-mode/widget/${selectedDep.id}/script.js" async defer></script>`;
-  const iframeEmbedCode = `<iframe 
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+
+  // 1. Universal HTML / Shopify Liquid Script Tag
+  const scriptEmbedCode = `<!-- AI Mode Universal Floating Shopping Widget -->
+<script 
+  src="${origin}/api/ai-mode/widget/${selectedDep.id}/script.js" 
+  async 
+  defer
+></script>`;
+
+  // 2. React / Next.js Component
+  const reactEmbedCode = `// Next.js / React (App Router or Pages Router)
+import Script from 'next/script';
+
+export default function StoreLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      {children}
+      {/* AI Mode Shopping Assistant */}
+      <Script 
+        src="${origin}/api/ai-mode/widget/${selectedDep.id}/script.js" 
+        strategy="lazyOnload" 
+      />
+    </>
+  );
+}`;
+
+  // 3. REST API / cURL for Headless, Node.js & Mobile Apps
+  const apiEmbedCode = `# Headless REST API Endpoint (Mobile Apps, Backend & Custom Frontends)
+curl -X POST ${origin}/api/ai-mode/chat \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "message": "Show me red cotton shirts under 2000",
+    "deployment_id": "${selectedDep.id}"
+  }'`;
+
+  // 4. Responsive Iframe Tag
+  const iframeEmbedCode = `<!-- Embedded Responsive Shopping Assistant Frame -->
+<iframe 
   src="${origin}/ai-mode/embed/${selectedDep.id}"
-  style="width: 380px; height: 600px; border: none; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);"
+  style="width: 100%; max-width: 420px; height: 600px; border: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);"
   allow="clipboard-write"
 ></iframe>`;
 
-  const activeCode = embedType === 'script' ? scriptEmbedCode : iframeEmbedCode;
+  const codeMap = {
+    script: {
+      title: 'HTML / Shopify theme.liquid / WordPress',
+      code: scriptEmbedCode,
+      desc: "Paste this 1-line script tag into your website's <head> or right before the closing </body> tag.",
+      instructions: [
+        { label: 'Shopify', desc: 'Online Store > Themes > Edit Code > theme.liquid > paste right before </body>' },
+        { label: 'WordPress / WooCommerce', desc: 'Add to your header/footer script manager plugin or functions.php' },
+        { label: 'Webflow / Squarespace / Wix', desc: 'Add to Site Settings > Custom Code (Footer Code)' }
+      ]
+    },
+    react: {
+      title: 'React.js / Next.js / Remix / Vite',
+      code: reactEmbedCode,
+      desc: 'Integrate directly into your React application using Next.js Script or standard React hook.',
+      instructions: [
+        { label: 'Next.js App Router', desc: 'Add <Script> component into your app/layout.tsx file' },
+        { label: 'React / Vite SPA', desc: 'Insert into index.html or call in App.tsx useEffect hook' },
+        { label: 'Remix / SvelteKit', desc: 'Include script tag inside root document layout' }
+      ]
+    },
+    api: {
+      title: 'Headless REST API / Mobile SDK / cURL',
+      code: apiEmbedCode,
+      desc: 'Connect your custom frontend, Flutter / React Native mobile app, or backend microservices directly to the AI Engine.',
+      instructions: [
+        { label: 'Flutter / React Native', desc: 'POST JSON payload to /api/ai-mode/chat from your mobile app HTTP client' },
+        { label: 'Node.js / Python Backend', desc: 'Call API route with message & conversation_id for multi-turn sessions' },
+        { label: 'Custom Checkout Bots', desc: 'Trigger cart additions and inventory checks via programmatic REST calls' }
+      ]
+    },
+    iframe: {
+      title: 'Inline Iframe / Landing Page Embed',
+      code: iframeEmbedCode,
+      desc: 'Embed the shopping assistant directly inside a dedicated container on your landing page, help center, or sidebar.',
+      instructions: [
+        { label: 'Landing Pages', desc: 'Embed directly inside any <div> or card container on your site' },
+        { label: 'Help Centers / Portals', desc: 'Provide customers an interactive assistant inside knowledge bases' },
+        { label: 'Modal / Popup Windows', desc: 'Open iframe inside your store custom popup dialogs' }
+      ]
+    }
+  };
+
+  const currentOption = codeMap[embedType];
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-zinc-900 tracking-tight">AI Mode Storefront Deployment</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">Deploy an isolated AI Mode shopping widget directly to your merchant website or Shopify store.</p>
+          <h2 className="text-lg font-bold text-zinc-900 tracking-tight">Multi-Channel Storefront Deployment</h2>
+          <p className="text-xs text-zinc-500 mt-0.5">Deploy your AI Shopping Assistant across Shopify, React/Next.js apps, Mobile SDKs, and custom channels.</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -114,80 +194,97 @@ export default function AIModeDeploymentPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Embed Code & Security */}
+        {/* Left Column: Embed Channels & Security */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Embed Code Card */}
+          {/* Main Embed Channel Card */}
           <div className="bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-2xs space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
               <div className="flex items-center gap-2">
                 <Code2 className="w-4 h-4 text-indigo-600" />
-                <h3 className="text-xs font-bold text-zinc-900">HTML Embed Code</h3>
+                <h3 className="text-xs font-bold text-zinc-900">Choose Deployment Channel</h3>
               </div>
               <span className="text-[11px] text-zinc-400 font-mono">Deployment ID: {selectedDep.id}</span>
             </div>
 
-            {/* Type selector tabs */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center p-1 bg-zinc-100 rounded-xl gap-1">
-                <button
-                  type="button"
-                  onClick={() => setEmbedType('script')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    embedType === 'script' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900'
-                  }`}
-                >
-                  &lt;script&gt; Tag (Recommended)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEmbedType('iframe')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    embedType === 'iframe' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900'
-                  }`}
-                >
-                  &lt;iframe&gt; Embed
-                </button>
-              </div>
-
-              <span className="text-[11px] text-zinc-500">
-                {embedType === 'script' ? 'Floating store widget' : 'Inline embedded frame'}
-              </span>
+            {/* 4 Deployment Channel Tabs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-zinc-100 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setEmbedType('script')}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold transition text-center flex flex-col items-center gap-1 ${
+                  embedType === 'script' ? 'bg-white text-zinc-900 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <span>HTML / Shopify</span>
+                <span className="text-[10px] text-emerald-600 font-normal">Recommended</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmbedType('react')}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold transition text-center flex flex-col items-center gap-1 ${
+                  embedType === 'react' ? 'bg-white text-zinc-900 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <span>React / Next.js</span>
+                <span className="text-[10px] text-indigo-600 font-normal">Component</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmbedType('api')}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold transition text-center flex flex-col items-center gap-1 ${
+                  embedType === 'api' ? 'bg-white text-zinc-900 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <span>REST API / SDK</span>
+                <span className="text-[10px] text-amber-600 font-normal">Mobile &amp; cURL</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmbedType('iframe')}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold transition text-center flex flex-col items-center gap-1 ${
+                  embedType === 'iframe' ? 'bg-white text-zinc-900 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <span>Iframe Embed</span>
+                <span className="text-[10px] text-violet-600 font-normal">Inline Frame</span>
+              </button>
             </div>
 
-            <p className="text-xs text-zinc-500">
-              {embedType === 'script'
-                ? "Paste this asynchronous script tag into your website's <head> or right before the closing </body> tag."
-                : "Paste this iframe tag into any page, blog post, or modal container where you want the shopping assistant displayed."}
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              {currentOption.desc}
             </p>
 
-            {/* Code container with top header (no overlap) */}
+            {/* Code Box with Header and Copy Button */}
             <div className="bg-zinc-950 rounded-xl border border-zinc-800 overflow-hidden">
-              {/* Header bar with clean Copy button */}
-              <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800 text-[11px] font-mono text-zinc-400">
-                <span>{embedType === 'script' ? 'HTML / Shopify theme.liquid' : 'HTML / Component'}</span>
+              <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-900 border-b border-zinc-800 text-[11px] font-mono text-zinc-400">
+                <span className="text-zinc-300 font-semibold">{currentOption.title}</span>
                 <button
-                  onClick={() => handleCopyEmbed(activeCode)}
-                  className="px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 border border-zinc-700"
+                  onClick={() => handleCopyEmbed(currentOption.code)}
+                  className="px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 border border-zinc-700 cursor-pointer"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? 'Copied to Clipboard!' : 'Copy Code'}</span>
                 </button>
               </div>
 
-              {/* Code text block */}
               <div className="p-4 text-emerald-400 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all leading-relaxed select-all">
-                {activeCode}
+                {currentOption.code}
               </div>
             </div>
 
-            {/* Quick guide */}
-            <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200/60 text-[11px] text-zinc-600 space-y-1">
-              <strong className="block text-zinc-800 font-semibold">How to install:</strong>
-              <ul className="list-disc list-inside space-y-0.5 text-zinc-600">
-                <li><strong>Shopify:</strong> Go to Online Store &gt; Themes &gt; Edit Code &gt; open <code className="font-mono bg-zinc-200/60 px-1 py-0.2 rounded">theme.liquid</code> &gt; paste right before <code className="font-mono bg-zinc-200/60 px-1 py-0.2 rounded">&lt;/body&gt;</code>.</li>
-                <li><strong>WordPress / WooCommerce:</strong> Add to your header/footer script manager plugin.</li>
-                <li><strong>Custom HTML / React / Next.js:</strong> Add to your root HTML document.</li>
-              </ul>
+            {/* Step-by-Step Installation Guide */}
+            <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200/60 space-y-2">
+              <strong className="block text-xs text-zinc-900 font-bold">Integration Guide:</strong>
+              <div className="space-y-1.5">
+                {currentOption.instructions.map((inst, i) => (
+                  <div key={i} className="flex items-start gap-2 text-[11px] text-zinc-600">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="text-zinc-800 font-semibold">{inst.label}:</strong> {inst.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -199,7 +296,7 @@ export default function AIModeDeploymentPage() {
             </div>
 
             <p className="text-xs text-zinc-500">
-              Protect your deployment by restricting widget execution to verified domains (e.g. <code className="font-mono text-[11px]">https://yourstore.com, https://store.myshopify.com</code>). Enter <code className="font-mono text-[11px]">*</code> to allow all domains.
+              Protect your deployment by restricting widget execution to verified merchant domains (e.g. <code className="font-mono text-[11px]">https://yourstore.com, https://store.myshopify.com</code>). Enter <code className="font-mono text-[11px]">*</code> to allow all domains.
             </p>
 
             <div className="flex items-center gap-2">
