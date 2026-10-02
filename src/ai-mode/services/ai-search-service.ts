@@ -2,9 +2,16 @@ import { AIModeProduct, AIModeSearchPlan, AIModeSearchResult } from '../types';
 import { AIModeCatalogAdapter } from '../adapters/catalog-adapter';
 import { AIModeEmbeddingsAdapter } from '../adapters/embeddings-adapter';
 
+const STOP_WORDS = new Set([
+  'product', 'products', 'item', 'items', 'show', 'me', 'find', 'get', 'give',
+  'all', 'the', 'a', 'an', 'in', 'for', 'of', 'to', 'with', 'and', 'or', 'some',
+  'please', 'looking', 'look', 'want', 'need', 'buy', 'shop', 'display', 'list',
+  'available', 'good', 'best', 'top', 'any', 'have', 'you', 'can', 'is', 'are'
+]);
+
 export class AIModeSearchService {
   /**
-   * General-purpose dynamic query understanding without hardcoded keywords.
+   * General-purpose dynamic query understanding with gender, category, and constraint extraction.
    */
   public static parseQuery(rawQuery: string, previousState?: AIModeSearchPlan): AIModeSearchPlan {
     const queryLower = rawQuery.toLowerCase().trim();
@@ -21,7 +28,39 @@ export class AIModeSearchService {
       intent = 'REFINEMENT';
     }
 
-    // 2. Extract Price Constraints dynamically
+    // 2. Extract Gender & Demographic intent
+    let gender: string | undefined;
+    if (/\b(women|woman|womens|women's|female|ladies|lady|girls|girl)\b/i.test(queryLower)) {
+      gender = 'women';
+    } else if (/\b(men|mens|men's|male|man|guys|guy|boys|boy)\b/i.test(queryLower)) {
+      gender = 'men';
+    } else if (/\b(kids|kid|children|child|baby|toddler)\b/i.test(queryLower)) {
+      gender = 'kids';
+    } else if (/\b(unisex|couples?|couple\s+combo)\b/i.test(queryLower)) {
+      gender = 'unisex';
+    }
+
+    // 3. Extract Category
+    let category: string | undefined;
+    if (/\b(saree|sarees)\b/i.test(queryLower)) category = 'Saree';
+    else if (/\b(bow|bows|hair\s*clip|hair\s*accessories|scrunchie|scrunchies|accessory|accessories)\b/i.test(queryLower)) category = 'Bow';
+    else if (/\b(couple\s*combo|box\s*combo|combos?)\b/i.test(queryLower)) category = 'Combo';
+    else if (/\b(dresses?|kurtis?|skirts?|frock)\b/i.test(queryLower)) category = 'Dress';
+    else if (/\b(t-?shirts?|tees?|oversized\s*tee)\b/i.test(queryLower)) category = 'T-Shirt';
+    else if (/\b(shirts?|half\s*sleeve|full\s*sleeve|printed\s*shirt)\b/i.test(queryLower)) category = 'Shirt';
+    else if (/\b(hoodies?|sweatshirts?)\b/i.test(queryLower)) category = 'Hoodie';
+    else if (/\b(jackets?|bomber|outerwear)\b/i.test(queryLower)) category = 'Jacket';
+    else if (/\b(pants?|joggers?|trousers?|cargos?|shorts?)\b/i.test(queryLower)) category = 'Pants';
+    else if (/\b(shoes?|footwear|sneakers?)\b/i.test(queryLower)) category = 'Shoes';
+
+    // 4. Extract Color
+    let color: string | undefined;
+    const colorMatch = queryLower.match(/\b(black|white|red|green|yellow|blue|brown|grey|gray|pink|purple|emerald|maroon|beige|navy|orange|gold|silver|olive|cream)\b/i);
+    if (colorMatch) {
+      color = colorMatch[1];
+    }
+
+    // 5. Extract Price Constraints dynamically
     let min_price: number | undefined;
     let max_price: number | undefined;
 
@@ -41,7 +80,7 @@ export class AIModeSearchService {
       max_price = parseFloat(rangeMatch[2]);
     }
 
-    // 3. Sorting
+    // 6. Sorting
     let sort: AIModeSearchPlan['sort'] = 'relevance';
     if (/\b(cheap|cheaper|lowest\s+price|low\s+to\s+high|price\s+low)\b/i.test(queryLower)) {
       sort = 'price_asc';
@@ -51,9 +90,12 @@ export class AIModeSearchService {
       sort = 'newest';
     }
 
-    // 4. Inherit previous filters if refinement
+    // 7. Inherit previous filters if refinement
     const extracted_filters: AIModeSearchPlan['extracted_filters'] = {
       ...(previousState?.extracted_filters || {}),
+      ...(gender ? { gender } : {}),
+      ...(category ? { category } : {}),
+      ...(color ? { color } : {}),
       ...(min_price !== undefined ? { min_price } : {}),
       ...(max_price !== undefined ? { max_price } : {}),
     };
@@ -66,13 +108,13 @@ export class AIModeSearchService {
       sort,
       pagination: {
         page: 1,
-        page_size: 6
+        page_size: 12
       }
     };
   }
 
   /**
-   * Execute Hybrid Dense + Lexical retrieval with candidate validation & reranking.
+   * Execute Hybrid Dense + Lexical retrieval with demographic gating and relevance scoring.
    */
   public static async search(plan: AIModeSearchPlan, workspaceId?: string): Promise<AIModeSearchResult> {
     const startTime = Date.now();
@@ -91,10 +133,18 @@ export class AIModeSearchService {
       };
     }
 
-    const queryVector = AIModeEmbeddingsAdapter.generateVector(plan.semantic_query);
-    const queryTokens = plan.semantic_query.toLowerCase().split(/\s+/).filter(t => t.length > 1);
+    const queryLower = plan.semantic_query.toLowerCase().trim();
+    const targetGender = plan.extracted_filters.gender;
+    const targetCategory = plan.extracted_filters.category?.toLowerCase();
+    const targetColor = plan.extracted_filters.color?.toLowerCase();
 
-    // Score each candidate
+    // Extract meaningful tokens (non-stopwords)
+    const rawTokens = queryLower.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
+    const meaningfulTokens = rawTokens.filter(t => t.length > 1 && !STOP_WORDS.has(t));
+
+    const queryVector = AIModeEmbeddingsAdapter.generateVector(plan.semantic_query);
+
+    // Score candidates
     const scoredCandidates: Array<{ product: AIModeProduct; score: number }> = [];
 
     for (const product of allProducts) {
@@ -109,27 +159,111 @@ export class AIModeSearchService {
         continue;
       }
 
-      // 2. Lexical BM25 token matching
-      const searchableText = `${product.title} ${product.description} ${product.category} ${(product.subcategories || []).join(' ')} ${product.brand || ''}`.toLowerCase();
-      let lexicalHits = 0;
-      for (const token of queryTokens) {
-        if (searchableText.includes(token)) {
-          lexicalHits++;
+      // Build product searchable text
+      const titleLower = (product.title || '').toLowerCase();
+      const descLower = (product.description || '').toLowerCase();
+      const catLower = (product.category || '').toLowerCase();
+      const tagsLower = (product.subcategories || []).map(t => t.toLowerCase());
+      const allProductText = `${titleLower} ${descLower} ${catLower} ${tagsLower.join(' ')}`;
+
+      // 2. Gender & Demographic Compatibility Check
+      const isExplicitlyWomen = /\b(women|woman|womens|women's|female|ladies|lady|girl|girls|saree|sarees|bow|bows|hair|scrunchie|scrunchies|dress|dresses|kurti|kurtis|skirt|skirts)\b/i.test(allProductText) || catLower.includes('saree') || catLower.includes('bow');
+      const isExplicitlyMen = (/\b(men|mens|men's|male|man|guys|boy|boys)\b/i.test(allProductText) || tagsLower.includes('men') || descLower.includes('for men') || descLower.includes("men's")) && !isExplicitlyWomen;
+      const isUnisexOrCombo = /\b(unisex|couple|combo|oversized|streetwear|tee|t-shirt|hoodie|jacket)\b/i.test(allProductText) || catLower.includes('combo') || catLower.includes('couple');
+
+      let demographicScoreBonus = 0;
+
+      if (targetGender === 'women') {
+        if (isExplicitlyWomen) {
+          demographicScoreBonus += 0.50;
+        } else if (isUnisexOrCombo && !isExplicitlyMen) {
+          demographicScoreBonus += 0.20;
+        } else if (isExplicitlyMen && !isExplicitlyWomen && !isUnisexOrCombo) {
+          // Strictly exclude men-only items when user searches women
+          continue;
+        }
+      } else if (targetGender === 'men') {
+        if (isExplicitlyWomen && !isUnisexOrCombo) {
+          // Strictly exclude women-only items when user searches men
+          continue;
+        } else if (isExplicitlyMen) {
+          demographicScoreBonus += 0.40;
+        } else if (isUnisexOrCombo) {
+          demographicScoreBonus += 0.20;
+        }
+      } else if (targetGender === 'kids') {
+        const isKids = /\b(kids?|children|child|baby|toddler|boy|girl)\b/i.test(allProductText);
+        if (!isKids) continue;
+        demographicScoreBonus += 0.50;
+      }
+
+      // 3. Category Match Check
+      let categoryBonus = 0;
+      if (targetCategory) {
+        if (catLower.includes(targetCategory) || tagsLower.some(t => t.includes(targetCategory)) || titleLower.includes(targetCategory)) {
+          categoryBonus += 0.40;
         }
       }
-      const lexicalScore = queryTokens.length > 0 ? lexicalHits / queryTokens.length : 0;
 
-      // 3. Dense semantic vector score
-      const productVector = AIModeEmbeddingsAdapter.generateVector(searchableText);
+      // 4. Color Match Check
+      let colorBonus = 0;
+      if (targetColor) {
+        if (titleLower.includes(targetColor) || descLower.includes(targetColor) || tagsLower.includes(targetColor)) {
+          colorBonus += 0.30;
+        }
+      }
+
+      // 5. Lexical Token Relevance (Weighted across title, category, tags, description)
+      let lexicalHits = 0;
+      let titleHits = 0;
+      let tagHits = 0;
+
+      const tokensToCheck = meaningfulTokens.length > 0 ? meaningfulTokens : (targetGender ? [targetGender] : []);
+
+      for (const token of tokensToCheck) {
+        const tokenRegex = new RegExp(`\\b${token}`, 'i');
+        if (tokenRegex.test(titleLower)) {
+          titleHits++;
+          lexicalHits++;
+        } else if (tagsLower.some(t => tokenRegex.test(t)) || tokenRegex.test(catLower)) {
+          tagHits++;
+          lexicalHits++;
+        } else if (tokenRegex.test(descLower)) {
+          lexicalHits += 0.5;
+        }
+      }
+
+      const lexicalScore = tokensToCheck.length > 0 ? (titleHits * 0.5 + tagHits * 0.3 + (lexicalHits - titleHits - tagHits) * 0.2) / tokensToCheck.length : 0;
+
+      // Exact phrase match bonus
+      let exactBonus = 0;
+      if (meaningfulTokens.length > 1 && allProductText.includes(meaningfulTokens.join(' '))) {
+        exactBonus = 0.25;
+      }
+
+      // 6. Dense Semantic Vector Score
+      const productVector = AIModeEmbeddingsAdapter.generateVector(allProductText);
       const semanticScore = AIModeEmbeddingsAdapter.calculateSimilarity(queryVector, productVector);
 
-      // 4. Combined Hybrid Score
-      const totalScore = (lexicalScore * 0.4) + (semanticScore * 0.6);
+      // 7. Combined Weighted Score
+      // If user had explicit keywords, require at least lexical or demographic/category hit
+      if (tokensToCheck.length > 0 && lexicalHits === 0 && demographicScoreBonus === 0 && categoryBonus === 0 && colorBonus === 0) {
+        continue;
+      }
 
-      // Threshold filter
-      if (totalScore >= 0.15 || lexicalHits > 0 || queryTokens.length === 0) {
+      const totalScore = Math.min(
+        0.99,
+        (lexicalScore * 0.35) + 
+        (semanticScore * 0.25) + 
+        demographicScoreBonus + 
+        categoryBonus + 
+        colorBonus + 
+        exactBonus
+      );
+
+      if (totalScore >= 0.20 || tokensToCheck.length === 0) {
         scoredCandidates.push({
-          product: { ...product, score: totalScore },
+          product: { ...product, score: parseFloat(totalScore.toFixed(2)) },
           score: totalScore
         });
       }
