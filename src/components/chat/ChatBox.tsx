@@ -4,11 +4,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, Bot, User, ShoppingBag, Truck, CheckCircle2, RotateCcw, 
   Check, ArrowRight, ExternalLink, RefreshCw, Image as ImageIcon,
-  X, ZoomIn, ZoomOut, Maximize2, Download, Eye, Sparkles, MessageSquare
+  X, ZoomIn, ZoomOut, Maximize2, Download, Eye, Sparkles, MessageSquare, Zap
 } from 'lucide-react';
 import { getThemePreset, ThemePreset } from '@/lib/theme-presets';
 import { getProductFallbackImage } from '@/lib/utils';
 import MarkdownContent from './MarkdownContent';
+import CheckoutModal from './CheckoutModal';
 
 interface ChatBoxProps {
   agentId: string;
@@ -60,6 +61,12 @@ export default function ChatBox({
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [previewModal, setPreviewModal] = useState<ImageModalState | null>(null);
   const [zoomScale, setZoomScale] = useState(1);
+  const [checkoutModal, setCheckoutModal] = useState<{
+    isOpen: boolean;
+    product: any;
+    variant?: any;
+    quantity?: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -177,15 +184,21 @@ export default function ChatBox({
         onTraceUpdate(data.trace);
       }
 
+      const payload = data.interactive_payload || data.metadata;
       const botMessage = {
         id: 'msg_a_' + Date.now(),
         role: 'assistant',
         content: data.response || data.response_text || "I'm ready to assist! Let me search our active catalog.",
-        metadata: data.interactive_payload || data.metadata || (data.matchedProducts ? { products: data.matchedProducts } : undefined),
+        metadata: payload || (data.matchedProducts ? { products: data.matchedProducts } : undefined),
         createdAt: new Date().toISOString()
       };
 
       setMessages(prev => [...prev, botMessage]);
+
+      // Automatically trigger checkout session if AI detected conversational purchase intent
+      if (payload?.type === 'CHECKOUT_SESSION' && payload?.data?.product) {
+        handleBuyNow(payload.data.product, payload.data.variant, payload.data.quantity || 1);
+      }
     } catch (err: any) {
       setMessages(prev => [
         ...prev,
@@ -201,6 +214,28 @@ export default function ChatBox({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBuyNow = (product: any, variant?: any, quantity: number = 1) => {
+    setCheckoutModal({
+      isOpen: true,
+      product,
+      variant,
+      quantity
+    });
+  };
+
+  const handleOrderSuccess = (order: any) => {
+    const orderNum = order?.order_number || '#ORD-CONFIRMED';
+    const orderItem = order?.items?.[0]?.title || 'Selected item';
+    const assistantMsg = {
+      id: 'msg_ord_' + Date.now(),
+      role: 'assistant',
+      content: `🎉 **Order Confirmed!** (${orderNum})\n\nThank you for your purchase of **${orderItem}**. A confirmation receipt and tracking updates have been dispatched.`,
+      metadata: { order },
+      createdAt: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, assistantMsg]);
   };
 
   const handleAddToCart = (itemTitle: string) => {
@@ -429,7 +464,7 @@ export default function ChatBox({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 pt-1.5 border-t border-zinc-100">
+                          <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-zinc-100">
                             <button 
                               onClick={() => {
                                 setPreviewModal({
@@ -440,18 +475,26 @@ export default function ChatBox({
                                 });
                                 setZoomScale(1);
                               }}
-                              className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                              className="px-2 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition flex items-center justify-center gap-1 shrink-0 cursor-pointer shadow-2xs"
                               title="View full image details"
                             >
-                              <Eye className="w-3.5 h-3.5" /> View Photo
+                              <Eye className="w-3.5 h-3.5" /> <span className="truncate">View Photo</span>
+                            </button>
+                            <button 
+                              onClick={() => handleBuyNow(p)}
+                              style={{ backgroundColor: activePrimaryColor }}
+                              className="px-2 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold text-white transition flex items-center justify-center gap-1 shadow-xs hover:opacity-90 cursor-pointer active:scale-95"
+                              title="Instant Checkout"
+                            >
+                              <Zap className="w-3.5 h-3.5 fill-current" /> <span className="truncate">Buy Now</span>
                             </button>
                             <button 
                               onClick={() => handleAddToCart(p.title)}
-                              style={{ backgroundColor: activePrimaryColor }}
-                              className="flex-1 py-1.5 px-3 rounded-xl text-[11px] font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-xs hover:opacity-90 cursor-pointer active:scale-95"
+                              className="px-2 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold text-zinc-800 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 transition flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95"
+                              title="Add item to cart"
                             >
                               <ShoppingBag className="w-3.5 h-3.5" /> 
-                              {addedItem === p.title ? 'Added to Cart ✓' : 'Add to Cart'}
+                              <span className="truncate">{addedItem === p.title ? 'Added ✓' : 'Add to Cart'}</span>
                             </button>
                           </div>
                         </div>
@@ -713,19 +756,45 @@ export default function ChatBox({
             {previewModal.title && (
               <div className="px-5 py-3.5 border-t border-zinc-100 bg-white flex items-center justify-between gap-4">
                 <p className="text-xs text-zinc-500 line-clamp-1">{previewModal.description || 'High-resolution catalog asset verified by ShopMate Commerce Engine.'}</p>
-                <button
-                  onClick={() => {
-                    handleAddToCart(previewModal.title!);
-                    setPreviewModal(null);
-                  }}
-                  className="px-4 py-2 rounded-xl bg-[#18181b] text-white hover:bg-[#27272a] text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs cursor-pointer"
-                >
-                  <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const itemTitle = previewModal.title!;
+                      setPreviewModal(null);
+                      handleBuyNow({ title: itemTitle, price: previewModal.price || 999, imageUrl: previewModal.url, description: previewModal.description });
+                    }}
+                    style={{ backgroundColor: activePrimaryColor }}
+                    className="px-4 py-2 rounded-xl text-white text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs hover:opacity-90 cursor-pointer"
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-current" /> Buy Now
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleAddToCart(previewModal.title!);
+                      setPreviewModal(null);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#18181b] text-white hover:bg-[#27272a] text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs cursor-pointer"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
+      )}
+
+      {/* Instant Checkout Sheet Modal */}
+      {checkoutModal && (
+        <CheckoutModal
+          isOpen={checkoutModal.isOpen}
+          onClose={() => setCheckoutModal(null)}
+          product={checkoutModal.product}
+          initialVariant={checkoutModal.variant}
+          initialQuantity={checkoutModal.quantity}
+          primaryColor={activePrimaryColor}
+          onOrderSuccess={handleOrderSuccess}
+        />
       )}
     </div>
   );

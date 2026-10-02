@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useRef, use } from 'react';
 import { 
   Send, Bot, User, ShoppingBag, Truck, CheckCircle2, RotateCcw, 
-  AlertCircle, Sparkles, Image as ImageIcon, X, ZoomIn, ZoomOut, Eye, ExternalLink 
+  AlertCircle, Sparkles, Image as ImageIcon, X, ZoomIn, ZoomOut, Eye, ExternalLink, Zap
 } from 'lucide-react';
 import PortalSwitcher from '@/components/layout/PortalSwitcher';
 import { sanitizeImageUrl, getProductFallbackImage } from '@/lib/utils';
 import MarkdownContent from '@/components/chat/MarkdownContent';
+import CheckoutModal from '@/components/chat/CheckoutModal';
 import { getThemePreset } from '@/lib/theme-presets';
 
 interface Message {
@@ -51,6 +52,12 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [previewModal, setPreviewModal] = useState<ImageModalState | null>(null);
   const [zoomScale, setZoomScale] = useState(1);
+  const [checkoutModal, setCheckoutModal] = useState<{
+    isOpen: boolean;
+    product: any;
+    variant?: any;
+    quantity?: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -174,6 +181,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
 
       const order = data.interactive_payload?.type === 'ORDER' ? data.interactive_payload.data : data.metadata?.order;
 
+      const payload = data.interactive_payload || data.metadata;
       const botMsg: Message = {
         id: data.message_id || data.message?.id || 'msg_' + Math.random().toString(36).substring(2, 9),
         role: 'assistant',
@@ -187,6 +195,11 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
       };
 
       setMessages((prev) => [...prev, botMsg]);
+
+      // Automatically trigger checkout session if AI detected conversational purchase intent
+      if (payload?.type === 'CHECKOUT_SESSION' && payload?.data?.product) {
+        handleBuyNow(payload.data.product, payload.data.variant, payload.data.quantity || 1);
+      }
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
@@ -200,6 +213,28 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
     } finally {
       setSending(false);
     }
+  };
+
+  const handleBuyNow = (product: any, variant?: any, quantity: number = 1) => {
+    setCheckoutModal({
+      isOpen: true,
+      product,
+      variant,
+      quantity
+    });
+  };
+
+  const handleOrderSuccess = (order: any) => {
+    const orderNum = order?.order_number || '#ORD-CONFIRMED';
+    const orderItem = order?.items?.[0]?.title || 'Selected item';
+    const assistantMsg: Message = {
+      id: 'msg_ord_' + Date.now(),
+      role: 'assistant',
+      content: `🎉 **Order Confirmed!** (${orderNum})\n\nThank you for your purchase of **${orderItem}**. A confirmation receipt and tracking updates have been dispatched.`,
+      metadata: { order },
+      created_at: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, assistantMsg]);
   };
 
   const handleAddToCart = (itemTitle: string) => {
@@ -422,7 +457,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                           </div>
                         </div>
 
-                        <div className={`flex items-center gap-1.5 pt-2 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                        <div className={`grid grid-cols-3 gap-1.5 pt-2 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
                           <button 
                             onClick={() => {
                               setPreviewModal({
@@ -433,18 +468,29 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                               });
                               setZoomScale(1);
                             }}
-                            className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition flex items-center gap-1 shrink-0 ${
+                            className={`px-2 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold transition flex items-center justify-center gap-1 shrink-0 ${
                               isDark ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                             }`}
+                            title="View full image"
                           >
-                            <Eye className="w-3 h-3" /> View
+                            <Eye className="w-3.5 h-3.5" /> <span className="truncate">View Photo</span>
+                          </button>
+                          <button 
+                            onClick={() => handleBuyNow(p)}
+                            style={{ backgroundColor: primaryColor }}
+                            className="px-2 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold text-white transition flex items-center justify-center gap-1 shadow-xs cursor-pointer hover:opacity-90 active:scale-95"
+                            title="Instant Checkout"
+                          >
+                            <Zap className="w-3.5 h-3.5 fill-current" /> <span className="truncate">Buy Now</span>
                           </button>
                           <button 
                             onClick={() => handleAddToCart(p.title)}
-                            className="flex-1 py-1.5 px-2.5 rounded-xl text-xs font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer hover:opacity-90"
-                            style={{ backgroundColor: primaryColor }}
+                            className={`px-2 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold transition flex items-center justify-center gap-1 shadow-xs cursor-pointer active:scale-95 ${
+                              isDark ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700 border border-zinc-700' : 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200 border border-zinc-200'
+                            }`}
+                            title="Add item to cart"
                           >
-                            <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart
+                            <ShoppingBag className="w-3.5 h-3.5" /> <span className="truncate">Add to Cart</span>
                           </button>
                         </div>
                       </div>
@@ -693,19 +739,46 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
             {previewModal.title && (
               <div className="px-5 py-3.5 border-t border-zinc-200 bg-white flex items-center justify-between gap-4">
                 <p className="text-xs text-zinc-500 line-clamp-1">{previewModal.description || 'Verified product image asset.'}</p>
-                <button
-                  onClick={() => {
-                    handleSend(`Add ${previewModal.title} to my cart`);
-                    setPreviewModal(null);
-                  }}
-                  className="px-4 py-2 rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs cursor-pointer"
-                >
-                  <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const itemTitle = previewModal.title!;
+                      setPreviewModal(null);
+                      handleBuyNow({ title: itemTitle, price: previewModal.price || 999, imageUrl: previewModal.url, description: previewModal.description });
+                    }}
+                    style={{ backgroundColor: primaryColor }}
+                    className="px-4 py-2 rounded-xl text-white text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs hover:opacity-90 cursor-pointer"
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-current" /> Buy Now
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleAddToCart(previewModal.title!);
+                      setPreviewModal(null);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs cursor-pointer"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
+      )}
+
+      {/* Instant Checkout Sheet Modal */}
+      {checkoutModal && (
+        <CheckoutModal
+          isOpen={checkoutModal.isOpen}
+          onClose={() => setCheckoutModal(null)}
+          product={checkoutModal.product}
+          initialVariant={checkoutModal.variant}
+          initialQuantity={checkoutModal.quantity}
+          primaryColor={primaryColor}
+          workspaceId={deployment?.workspace_id}
+          onOrderSuccess={handleOrderSuccess}
+        />
       )}
     </div>
   );

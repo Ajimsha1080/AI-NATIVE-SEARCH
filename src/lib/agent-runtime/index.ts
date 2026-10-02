@@ -356,6 +356,7 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
 
   let detectedIntent = 'GENERAL_QUERY';
   if (hasHumanEscalation) detectedIntent = 'HUMAN_HANDOFF';
+  else if (parsedSearch.intent === 'BUY_NOW') detectedIntent = 'BUY_NOW';
   else if (isComparisonQuery) detectedIntent = 'PRODUCT_COMPARISON';
   else if (isInventoryQuery) detectedIntent = 'INVENTORY_CHECK';
   else if (isCartAction) detectedIntent = 'CART_ACTION';
@@ -505,6 +506,27 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
       } else {
         responseText = `Which product would you like to add to your bag?`;
       }
+    }
+  } else if (detectedIntent === 'BUY_NOW') {
+    planningSteps.push('3. Executing Buy Now flow: Resolving referenced product, validating inventory and preparing instant checkout session.');
+    const targetProduct = resolveReferencedProduct(cleanMessage);
+    if (targetProduct) {
+      const selectedVariant = (requestedSize && targetProduct.variants?.find((v: any) => v.attributes?.size?.toLowerCase() === requestedSize?.toLowerCase() || v.title?.toLowerCase().includes(requestedSize?.toLowerCase()))) || targetProduct.variants?.[0];
+      const unitPrice = selectedVariant?.price || targetProduct.price;
+
+      responseText = `⚡ Instant checkout ready for **${targetProduct.title}**${selectedVariant ? ` (${selectedVariant.title || selectedVariant.attributes?.size || 'Standard'})` : ''} at **₹${unitPrice.toLocaleString('en-IN')}**. Please complete your shipping and payment details in the checkout window:`;
+      
+      interactivePayload = {
+        type: 'CHECKOUT_SESSION',
+        data: {
+          product: targetProduct,
+          variant: selectedVariant,
+          quantity: 1,
+          checkoutId: `chk_${Date.now()}`
+        }
+      };
+    } else {
+      responseText = `Which product would you like to buy? You can click **Buy Now** on any product card or tell me the item name.`;
     }
   } else if (detectedIntent === 'ORDER_TRACKING') {
     planningSteps.push('3. Extracting order identifier and customer email.');

@@ -46,7 +46,7 @@ export interface ProductSearchResult {
 }
 
 export interface ParsedSearchQuery {
-  intent: 'PRODUCT_SEARCH' | 'PRODUCT_COMPARISON' | 'INVENTORY_CHECK' | 'CART_ACTION' | 'ORDER_TRACKING' | 'RETURN_OR_POLICY_INQUIRY' | 'HUMAN_HANDOFF' | 'GENERAL_CONVERSATION';
+  intent: 'PRODUCT_SEARCH' | 'PRODUCT_COMPARISON' | 'INVENTORY_CHECK' | 'CART_ACTION' | 'BUY_NOW' | 'ORDER_TRACKING' | 'RETURN_OR_POLICY_INQUIRY' | 'HUMAN_HANDOFF' | 'GENERAL_CONVERSATION';
   scope: 'all_matching' | 'recommendations' | 'specific_product' | 'similar' | 'refinement' | 'pagination';
   originalQuery?: string;
   explicitCategory?: string;
@@ -198,9 +198,10 @@ export class LocalCommerceProvider {
 
     // 1. High-Level Intent & Scope Detection
     const hasHumanEscalation = /talk to (?:a |an )?(?:human|agent|representative|person|operator)|speak (?:with|to) (?:a )?(?:human|person|representative)|connect me to support/i.test(cleanQ);
+    const isBuyNow = /\b(?:buy (?:this|that|it|the (?:first|second|third|fourth|\w+) one|one|\w+)|buy now|purchase (?:this|that|it|now)|i want (?:this|that|it|the (?:first|second|third|fourth|\w+) one)|i want to buy|order (?:this|that|it)|checkout now)\b/i.test(cleanQ);
     const isComparison = /which (?:one |item |product )?is (?:cheaper|most expensive|better|the best)|compare (?:these|the first and second|the products|them)|difference between/i.test(cleanQ);
     const isInventory = /(?:is (?:this|that|the \w+ one) (?:in stock|available)|do you have (?:this|that|it) in (?:size )?(\w+)|is size (\w+) (?:available|in stock)|stock level|inventory count)/i.test(cleanQ);
-    const isCart = /(?:add (?:this|that|it|the (?:first|second|third|\w+) one) to (?:my )?cart|add to (?:my )?cart|add (?:that|this|it)|buy this|checkout|remove (?:this|that|the (?:first|second|\w+) one)|show (?:my )?cart|view (?:my )?cart|what(?:'s| is) in my (?:cart|bag))/i.test(cleanQ);
+    const isCart = /(?:add (?:this|that|it|the (?:first|second|third|\w+) one) to (?:my )?cart|add to (?:my )?cart|add (?:that|this|it)|remove (?:this|that|the (?:first|second|\w+) one)|show (?:my )?cart|view (?:my )?cart|what(?:'s| is) in my (?:cart|bag))/i.test(cleanQ);
     const isOrder = /(?:where is my order|track(?:ing)? (?:my )?order|order status|status of order|#\d{4,6})/i.test(cleanQ);
     const isPolicy = /(?:return|refund|exchange|warranty|policy|shipping policy|how many days|shipping time|when will it arrive|shipping cost|payment method|cod|cash on delivery|who are you|about|contact|phone|email|address|location|headquarters|support)/i.test(cleanQ);
 
@@ -211,6 +212,7 @@ export class LocalCommerceProvider {
 
     let intent: ParsedSearchQuery['intent'] = 'PRODUCT_SEARCH';
     if (hasHumanEscalation) intent = 'HUMAN_HANDOFF';
+    else if (isBuyNow) intent = 'BUY_NOW';
     else if (isComparison) intent = 'PRODUCT_COMPARISON';
     else if (isInventory) intent = 'INVENTORY_CHECK';
     else if (isCart) intent = 'CART_ACTION';
