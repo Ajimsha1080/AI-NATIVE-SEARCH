@@ -114,7 +114,7 @@ export class AIModeSearchService {
       sort,
       pagination: {
         page: 1,
-        page_size: 12
+        page_size: 48
       }
     };
   }

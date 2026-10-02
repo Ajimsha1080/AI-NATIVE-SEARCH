@@ -27,7 +27,7 @@ export default function AIModeSearchPlayground() {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [result, setResult] = useState<AIModeSearchResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
+  const [pageSize, setPageSize] = useState(48);
 
   // Chat State
   const [messages, setMessages] = useState<AIModeMessage[]>([
