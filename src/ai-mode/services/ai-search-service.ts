@@ -9,6 +9,12 @@ const STOP_WORDS = new Set([
   'available', 'good', 'best', 'top', 'any', 'have', 'you', 'can', 'is', 'are'
 ]);
 
+const EXPLORATORY_WORDS = new Set([
+  'new', 'latest', 'recent', 'arrival', 'arrivals', 'trending', 'popular', 
+  'featured', 'bestseller', 'bestsellers', 'hot', 'everything', 'browse', 
+  'collection', 'catalog', 'stuff', 'clothes', 'clothing', 'apparel'
+]);
+
 export class AIModeSearchService {
   /**
    * General-purpose dynamic query understanding with gender, category, and constraint extraction.
@@ -86,7 +92,7 @@ export class AIModeSearchService {
       sort = 'price_asc';
     } else if (/\b(expensive|highest\s+price|high\s+to\s+low|price\s+high)\b/i.test(queryLower)) {
       sort = 'price_desc';
-    } else if (/\b(latest|new|newest|recent)\b/i.test(queryLower)) {
+    } else if (/\b(latest|new|newest|recent|arrivals?)\b/i.test(queryLower)) {
       sort = 'newest';
     }
 
@@ -114,7 +120,7 @@ export class AIModeSearchService {
   }
 
   /**
-   * Execute Hybrid Dense + Lexical retrieval with demographic gating and relevance scoring.
+   * Execute Hybrid Dense + Lexical retrieval with demographic gating, exploratory support, and ranking.
    */
   public static async search(plan: AIModeSearchPlan, workspaceId?: string): Promise<AIModeSearchResult> {
     const startTime = Date.now();
@@ -141,6 +147,12 @@ export class AIModeSearchService {
     // Extract meaningful tokens (non-stopwords)
     const rawTokens = queryLower.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
     const meaningfulTokens = rawTokens.filter(t => t.length > 1 && !STOP_WORDS.has(t));
+
+    // Check if query is an exploratory / broad catalog query (e.g. "new products", "all items", "latest collection")
+    const specificKeywordTokens = meaningfulTokens.filter(t => !EXPLORATORY_WORDS.has(t));
+    const isExploratoryQuery = meaningfulTokens.length === 0 || specificKeywordTokens.length === 0;
+    const isNewArrivalsQuery = /\b(new|latest|recent|arrivals?)\b/i.test(queryLower);
+    const isTrendingQuery = /\b(trending|popular|bestseller|best\s*sellers|top\s*sellers)\b/i.test(queryLower);
 
     const queryVector = AIModeEmbeddingsAdapter.generateVector(plan.semantic_query);
 
@@ -179,13 +191,11 @@ export class AIModeSearchService {
         } else if (isUnisexOrCombo && !isExplicitlyMen) {
           demographicScoreBonus += 0.20;
         } else if (isExplicitlyMen && !isExplicitlyWomen && !isUnisexOrCombo) {
-          // Strictly exclude men-only items when user searches women
-          continue;
+          continue; // Exclude men-only items for women queries
         }
       } else if (targetGender === 'men') {
         if (isExplicitlyWomen && !isUnisexOrCombo) {
-          // Strictly exclude women-only items when user searches men
-          continue;
+          continue; // Exclude women-only items for men queries
         } else if (isExplicitlyMen) {
           demographicScoreBonus += 0.40;
         } else if (isUnisexOrCombo) {
@@ -202,6 +212,9 @@ export class AIModeSearchService {
       if (targetCategory) {
         if (catLower.includes(targetCategory) || tagsLower.some(t => t.includes(targetCategory)) || titleLower.includes(targetCategory)) {
           categoryBonus += 0.40;
+        } else if (!isExploratoryQuery) {
+          // If a specific category was requested and this item doesn't match, penalize
+          categoryBonus -= 0.30;
         }
       }
 
@@ -210,15 +223,37 @@ export class AIModeSearchService {
       if (targetColor) {
         if (titleLower.includes(targetColor) || descLower.includes(targetColor) || tagsLower.includes(targetColor)) {
           colorBonus += 0.30;
+        } else if (!isExploratoryQuery) {
+          colorBonus -= 0.20;
         }
       }
 
-      // 5. Lexical Token Relevance (Weighted across title, category, tags, description)
+      // 5. Exploratory Modifiers (New Arrivals / Best Sellers)
+      let exploratoryBonus = 0;
+      if (isNewArrivalsQuery) {
+        const hasNewTag = tagsLower.some(t => t.includes('new') || t.includes('arrival') || t.includes('2026') || t.includes('aug') || t.includes('june'));
+        if (hasNewTag || titleLower.includes('new')) {
+          exploratoryBonus += 0.35;
+        } else {
+          exploratoryBonus += 0.15;
+        }
+      } else if (isTrendingQuery) {
+        const hasTrendingTag = tagsLower.some(t => t.includes('bestseller') || t.includes('top seller') || t.includes('popular') || t.includes('staple'));
+        if (hasTrendingTag) {
+          exploratoryBonus += 0.35;
+        } else {
+          exploratoryBonus += 0.15;
+        }
+      }
+
+      // 6. Lexical Token Relevance (Weighted across title, category, tags, description)
       let lexicalHits = 0;
       let titleHits = 0;
       let tagHits = 0;
 
-      const tokensToCheck = meaningfulTokens.length > 0 ? meaningfulTokens : (targetGender ? [targetGender] : []);
+      const tokensToCheck = specificKeywordTokens.length > 0 
+        ? specificKeywordTokens 
+        : (meaningfulTokens.length > 0 ? meaningfulTokens : (targetGender ? [targetGender] : []));
 
       for (const token of tokensToCheck) {
         const tokenRegex = new RegExp(`\\b${token}`, 'i');
@@ -237,31 +272,36 @@ export class AIModeSearchService {
 
       // Exact phrase match bonus
       let exactBonus = 0;
-      if (meaningfulTokens.length > 1 && allProductText.includes(meaningfulTokens.join(' '))) {
+      if (specificKeywordTokens.length > 1 && allProductText.includes(specificKeywordTokens.join(' '))) {
         exactBonus = 0.25;
       }
 
-      // 6. Dense Semantic Vector Score
+      // 7. Dense Semantic Vector Score
       const productVector = AIModeEmbeddingsAdapter.generateVector(allProductText);
       const semanticScore = AIModeEmbeddingsAdapter.calculateSimilarity(queryVector, productVector);
 
-      // 7. Combined Weighted Score
-      // If user had explicit keywords, require at least lexical or demographic/category hit
-      if (tokensToCheck.length > 0 && lexicalHits === 0 && demographicScoreBonus === 0 && categoryBonus === 0 && colorBonus === 0) {
+      // 8. Combined Weighted Score
+      // If user had specific keywords (e.g. "red cotton shirt"), require at least lexical or category hit
+      if (specificKeywordTokens.length > 0 && lexicalHits === 0 && demographicScoreBonus === 0 && categoryBonus <= 0 && colorBonus <= 0) {
         continue;
       }
 
+      // Base score for exploratory queries is 0.50 so all valid catalog items display
+      const baseScore = isExploratoryQuery ? 0.50 : 0.0;
+
       const totalScore = Math.min(
         0.99,
+        baseScore +
         (lexicalScore * 0.35) + 
-        (semanticScore * 0.25) + 
+        (semanticScore * 0.20) + 
         demographicScoreBonus + 
         categoryBonus + 
         colorBonus + 
+        exploratoryBonus +
         exactBonus
       );
 
-      if (totalScore >= 0.20 || tokensToCheck.length === 0) {
+      if (totalScore >= 0.20 || isExploratoryQuery) {
         scoredCandidates.push({
           product: { ...product, score: parseFloat(totalScore.toFixed(2)) },
           score: totalScore
