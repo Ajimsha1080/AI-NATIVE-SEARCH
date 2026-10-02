@@ -202,6 +202,24 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
     }
   };
 
+  const handleAddToCart = (itemTitle: string) => {
+    const userMsg = {
+      id: 'msg_u_' + Date.now(),
+      role: 'user' as const,
+      content: `Add ${itemTitle} to my cart`,
+      created_at: new Date().toISOString()
+    };
+
+    const assistantMsg = {
+      id: 'msg_a_' + (Date.now() + 1),
+      role: 'assistant' as const,
+      content: `🛍️ **${itemTitle}** has been added to your cart! You can continue browsing or proceed to checkout.`,
+      created_at: new Date().toISOString()
+    };
+
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+  };
+
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -422,7 +440,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                             <Eye className="w-3 h-3" /> View
                           </button>
                           <button 
-                            onClick={() => handleSend(`Add ${p.title} to my cart`)}
+                            onClick={() => handleAddToCart(p.title)}
                             className="flex-1 py-1.5 px-2.5 rounded-xl text-xs font-semibold text-white transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer hover:opacity-90"
                             style={{ backgroundColor: primaryColor }}
                           >

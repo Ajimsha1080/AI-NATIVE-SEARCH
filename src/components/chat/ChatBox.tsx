@@ -205,7 +205,22 @@ export default function ChatBox({
 
   const handleAddToCart = (itemTitle: string) => {
     setAddedItem(itemTitle);
-    handleSend(`Add ${itemTitle} to my cart`);
+
+    const userMsg = {
+      id: 'msg_u_' + Date.now(),
+      role: 'user',
+      content: `Add ${itemTitle} to my cart`,
+      createdAt: new Date().toISOString()
+    };
+
+    const assistantMsg = {
+      id: 'msg_a_' + (Date.now() + 1),
+      role: 'assistant',
+      content: `🛍️ **${itemTitle}** has been added to your cart! You can continue browsing or let me know if you need sizing or styling advice.`,
+      createdAt: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, userMsg, assistantMsg]);
     setTimeout(() => setAddedItem(null), 3000);
   };
 

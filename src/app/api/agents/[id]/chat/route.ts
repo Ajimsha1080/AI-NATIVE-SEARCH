@@ -6,11 +6,19 @@ import { runAgentCycle } from '@/lib/agent-runtime';
 const PYTHON_BACKEND_URL = process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:8000';
 
 function resolveProductCards(responseText: string, userMessage: string, workspaceId: string, currentPayload?: any) {
+  const userLower = (userMessage || '').toLowerCase();
+  const respLower = (responseText || '').toLowerCase();
+
+  // If action is adding/removing from cart or confirming cart action, do not attach product cards
+  if (/\b(?:add .+ to (?:my )?cart|add to cart|added .+ to your (?:cart|bag)|added to cart|remove from cart)\b/i.test(userLower) ||
+      /\b(?:added .+ to your (?:cart|bag)|has been added to your cart)\b/i.test(respLower)) {
+    return null;
+  }
+
   if (currentPayload?.type === 'PRODUCTS' && Array.isArray(currentPayload.data)) {
     return currentPayload;
   }
 
-  const respLower = (responseText || '').toLowerCase();
   const catalog = db.commerce_products.filter(p => p.workspace_id === workspaceId);
   const matched: any[] = [];
 
