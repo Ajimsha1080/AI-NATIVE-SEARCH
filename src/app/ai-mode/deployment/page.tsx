@@ -724,53 +724,39 @@ curl -X POST ${origin}/api/ai-mode/search \\
 
           {/* Storefront Search Preview Container */}
           <div className="bg-white rounded-3xl border border-zinc-200/90 shadow-lg overflow-hidden flex flex-col h-[650px]">
-            {/* Top Brand Banner */}
-            <div 
-              className="p-4 text-white flex items-center justify-between shadow-xs transition-colors duration-300"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-white line-clamp-1">{widgetTitle}</h4>
-                  <p className="text-[10px] text-white/80 line-clamp-1">{widgetSubtitle}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => executePreviewSearch('women products')}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition"
-                title="Reset search"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* AI Search Bar Box (Matching Reference Image 1) */}
+            {/* AI Search Bar Box */}
             <div className="p-4 bg-white border-b border-zinc-100 space-y-3">
               <form 
                 onSubmit={e => { e.preventDefault(); executePreviewSearch(previewQuery); }}
                 className="flex items-center gap-2"
               >
                 <div className="relative flex-1">
-                  <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-3" />
+                  <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
                   <input
                     type="text"
                     placeholder={welcomeMessage || "Search products with AI..."}
                     value={previewQuery}
                     onChange={e => setPreviewQuery(e.target.value)}
-                    className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition font-medium"
+                    className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition font-medium"
                   />
+                  {previewQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewQuery('')}
+                      className="absolute right-3 top-3 text-zinc-400 hover:text-zinc-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
                 <button
                   type="submit"
                   disabled={previewLoading || !previewQuery.trim()}
-                  className="px-3.5 py-2 rounded-xl text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
+                  className="px-4 py-2.5 rounded-xl text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  {previewLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3 text-white" />}
-                  <span>Execute AI Search</span>
+                  {previewLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5 text-white" />}
+                  <span>Search</span>
                 </button>
               </form>
 
