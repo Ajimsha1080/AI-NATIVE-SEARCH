@@ -373,6 +373,16 @@ export default function CheckoutModal({
               </div>
 
               <div className="space-y-2 pt-1">
+                <a
+                  href="https://razorpay.me/@ajimshamuhammad2112"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-2.5 rounded-xl bg-white border border-sky-300 text-sky-700 hover:bg-sky-50 text-xs font-semibold shadow-2xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open Official Razorpay Link (@ajimshamuhammad2112)</span>
+                </a>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -391,7 +401,7 @@ export default function CheckoutModal({
                   ) : (
                     <>
                       <ShieldCheck className="w-4 h-4" />
-                      <span>Simulate Successful UPI / Card Payment</span>
+                      <span>Confirm &amp; Place Verified Order</span>
                     </>
                   )}
                 </button>

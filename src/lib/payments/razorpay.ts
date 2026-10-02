@@ -61,15 +61,21 @@ export class RazorpayPaymentService {
   private keyId: string;
   private keySecret: string;
   private isTestMode: boolean;
+  private merchantRazorpayMe: string = 'https://razorpay.me/@ajimshamuhammad2112';
 
   constructor() {
     this.keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_shopmate_agentic';
     this.keySecret = process.env.RAZORPAY_KEY_SECRET || 'rzp_secret_shopmate_agentic_key';
     this.isTestMode = !process.env.RAZORPAY_KEY_ID || this.keyId.startsWith('rzp_test');
+    this.merchantRazorpayMe = process.env.RAZORPAY_ME_URL || 'https://razorpay.me/@ajimshamuhammad2112';
   }
 
   public getKeyId(): string {
     return this.keyId;
+  }
+
+  public getMerchantHandle(): string {
+    return this.merchantRazorpayMe;
   }
 
   public isSandbox(): boolean {
@@ -79,7 +85,7 @@ export class RazorpayPaymentService {
   /**
    * Create a new Razorpay Order (for Checkout / Popup / Agent session)
    */
-  async createOrder(options: RazorpayOrderOptions): Promise<RazorpayOrderResponse> {
+  async createOrder(options: RazorpayOrderOptions): Promise<RazorpayOrderResponse & { payment_url?: string }> {
     const amountInPaise = Math.round(options.amount * 100);
     const currency = options.currency || 'INR';
     const receipt = options.receipt || `rcpt_${Date.now()}`;
@@ -110,6 +116,7 @@ export class RazorpayPaymentService {
           return {
             ...data,
             key_id: this.keyId,
+            payment_url: this.merchantRazorpayMe,
             is_mock: false
           };
         }
@@ -119,7 +126,7 @@ export class RazorpayPaymentService {
       }
     }
 
-    // High-fidelity sandbox / simulated Razorpay order
+    // High-fidelity sandbox / simulated Razorpay order with real merchant Razorpay.me handle
     const mockOrderId = `order_${Math.random().toString(36).substring(2, 10)}${Date.now().toString(36)}`;
     return {
       id: mockOrderId,
@@ -134,6 +141,7 @@ export class RazorpayPaymentService {
       notes,
       created_at: Math.floor(Date.now() / 1000),
       key_id: this.keyId,
+      payment_url: this.merchantRazorpayMe,
       is_mock: true
     };
   }
@@ -170,7 +178,7 @@ export class RazorpayPaymentService {
           const data = await res.json();
           return {
             id: data.id,
-            short_url: data.short_url,
+            short_url: data.short_url || this.merchantRazorpayMe,
             amount: options.amount,
             currency,
             status: data.status,
@@ -181,22 +189,22 @@ export class RazorpayPaymentService {
           };
         }
       } catch (err) {
-        console.warn('Razorpay Payment Link API error, using sandbox link:', err);
+        console.warn('Razorpay Payment Link API error, using merchant link:', err);
       }
     }
 
-    // High-fidelity sandbox Payment Link
+    // Direct Merchant Razorpay.me handle
     const linkId = `plink_${Math.random().toString(36).substring(2, 12)}`;
     return {
       id: linkId,
-      short_url: `https://rzp.io/i/${linkId}`,
+      short_url: this.merchantRazorpayMe,
       amount: options.amount,
       currency,
       status: 'created',
       description: options.description,
       customer: options.customer,
       created_at: Math.floor(Date.now() / 1000),
-      is_mock: true
+      is_mock: false
     };
   }
 

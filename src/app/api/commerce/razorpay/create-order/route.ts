@@ -47,6 +47,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       order,
+      payment_url: razorpayService.getMerchantHandle(),
       key_id: razorpayService.getKeyId(),
       is_sandbox: razorpayService.isSandbox()
     });
