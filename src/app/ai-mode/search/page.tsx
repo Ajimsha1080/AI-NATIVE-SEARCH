@@ -20,16 +20,6 @@ export default function AIModeSearchPlayground() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(48);
 
-  const quickFilters = [
-    { label: '👩 Women Products', query: 'women products' },
-    { label: '🥻 Sarees & Drapes', query: 'sarees for women' },
-    { label: '🎀 Bows & Accessories', query: 'satin hair bows and accessories' },
-    { label: '🎁 Couple & Saree Combos', query: 'couple combos' },
-    { label: '👨 Men Casuals', query: 'casual shirts for men' },
-    { label: '👕 Cotton Shirts Under ₹2000', query: 'show me formal cotton shirts under 2000' },
-    { label: '👖 Pants & Joggers', query: 'linen pants and joggers' },
-  ];
-
   useEffect(() => {
     handleSearch('women products', 1, pageSize);
   }, []);
@@ -91,7 +81,7 @@ export default function AIModeSearchPlayground() {
       </div>
 
       {/* Search Input Bar */}
-      <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-2xs space-y-4">
+      <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-2xs">
         <form onSubmit={e => { e.preventDefault(); handleSearch(query, 1, pageSize); }} className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
@@ -112,27 +102,6 @@ export default function AIModeSearchPlayground() {
             <span>Execute AI Search</span>
           </button>
         </form>
-
-        {/* Quick Filter Buttons */}
-        <div className="space-y-1.5 pt-1">
-          <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">Quick Category &amp; Demographic Searches:</span>
-          <div className="flex items-center gap-2 overflow-x-auto text-[11px] pb-1">
-            {quickFilters.map(qf => (
-              <button
-                key={qf.query}
-                type="button"
-                onClick={() => { setQuery(qf.query); handleSearch(qf.query, 1, pageSize); }}
-                className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition flex items-center gap-1.5 border ${
-                  query === qf.query 
-                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs' 
-                    : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-200/80'
-                }`}
-              >
-                <span>{qf.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Results Section */}
