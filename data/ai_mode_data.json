@@ -65,7 +65,7 @@
       "enable_cart_actions": true,
       "system_instructions": "You are an AI Mode shopping assistant specialized in product discovery, recommendations, comparisons, and verified merchant catalog advice.",
       "created_at": "2026-10-01T19:48:55.058Z",
-      "updated_at": "2026-10-01T20:29:13.465Z"
+      "updated_at": "2026-10-02T06:44:18.376Z"
     },
     {
       "id": "aimode_cfg_ws_acme_corp",
@@ -86,21 +86,22 @@
   ],
   "knowledge_sources": [
     {
-      "id": "aim_ks_web_mupyd7ujhj80vazn",
+      "id": "aim_ks_web_muq1rnf8bmybad6f",
       "workspace_id": "ws_acme_corp",
-      "name": "https://www.mydesignation.com/",
+      "name": "www.mydesignation.com",
       "type": "WEBSITE",
       "source_url": "https://www.mydesignation.com/",
       "status": "INDEXED",
-      "document_count": 13,
-      "product_count": 5,
-      "created_at": "2026-10-01T19:54:18.235Z",
-      "updated_at": "2026-10-01T19:54:19.087Z",
-      "last_synced_at": "2026-10-01T19:54:19.087Z",
-      "raw_content": "MyDesignation: Fashion Apparels for Men Ordering from outside India? We currently take international orders only via WhatsApp. Feel free to reach out at +91 83300 76677 Whatsapp Now Skip to content Free Home Delivery for Paid Orders 🚚 Free Home Delivery for Paid Orders 🚚 Free Return & Exchange 📦 (TnC) Free Return & Exchange 📦 (TnC) Pay later & EMI available💡 Pay later & EMI available 💡 Festive Essentials NEW Delicious Collection 🍕 Shop All Shirts Everyday Essentials Bottomwear T-shirts Oversized Tees Regular Tees Polo Tees Hoodies and Jackets Accessories Bulk or International Orders Bulk/Corporate Orders International Orders Login/Signup Facebook Instagram LinkedIn YouTube Home Catalog Contact Search our site Recent Searches Popular Searches Shirts Bottomwear Hoodies Trending now Fastest Selling VIEW ALL Relaxed Fit Shirt &#9733; Neon Drift ₹ 1,299 Add to cart Relaxed Fit Shirt &#9733; 5.0 Oriental Heritage ₹ 1,499 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Kirtimukha Heritage Embroidered ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Roaring Tiger Shirt ₹ 1,399 Add to cart 18% OFF Regular Fit Shirt &#9733; Plaid: Imperial Green ₹ 1,399 ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 4.9 Starry Night ₹ 1,125 Add to cart Relaxed Fit Box Combo &#9733; 5.0 Desi Flavours ₹ 1,399 Add to cart Oversized Fit Oversized T-shirt &#9733; Noble Reign Embroidered ₹ 1,499 Add to cart 18% OFF Oversized Fit Box Combo &#9733; 5.0 Pizza ₹ 1,399 ₹ 1,699 Add to cart Oversized Fit Box Combo &#9733; 5.0 Sweet Escape ₹ 1,199 Add to cart 18% OFF Straight Fit Jeans &#9733; Indigo Carpenter Denim ₹ 1,799 ₹ 2,199 Add to cart 33% OFF Relaxed Fit Shirt &#9733; 5.0 Ethnic Rave Embroidered ₹ 1,199 ₹ 1,799 Add to cart Back Login &nbsp; Cart Cart Trending now VIEW ALL Relaxed Fit Shirt &#9733; Mughal Heritage ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Fuji Check ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Korean Shrine Mural ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Cross Stitch ₹ 1,499 Add to cart Relaxed Fit Shirt &#9733; Swinging Embroidered ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Rising Empire ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Cosmic Odyssey ₹ 1,399 Add to cart Regular Fit Shirt &#9733; Bali Guardian Embroidered ₹ 1,599 Add to cart Oversized Fit Oversized T-shirt &#9733; Phoenix Rise ₹ 1,199 Add to cart Oversized Fit Oversized T-shirt &#9733; Undefeated ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Opera Legacy ₹ 1,399 Add to cart Relaxed fit Joggers &#9733; Samurai ₹ 1,599 Add to cart Back Curated for You VIEW ALL Relaxed Fit Shirt &#9733; Neon Drift ₹ 1,299 Add to cart Relaxed Fit Shirt &#9733; 5.0 Oriental Heritage ₹ 1,499 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Kirtimukha Heritage Embroidered ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Roaring Tiger Shirt ₹ 1,399 Add to cart 18% OFF Regular Fit Shirt &#9733; Plaid: Imperial Green ₹ 1,399 ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 4.9 Starry Night ₹ 1,125 Add to cart Relaxed Fit Box Combo &#9733; 5.0 Desi Flavours ₹ 1,399 Add to cart Oversized Fit Oversized T-shirt &#9733; Noble Reign Embroidered ₹ 1,499 Add to cart 18% OFF Oversized Fit Box Combo &#9733; 5.0 Pizza ₹ 1,399 ₹ 1,699 Add to cart Oversized Fit Box Combo &#9733; 5.0 Sweet Escape ₹ 1,199 Add to cart 18% OFF Straight Fit Jeans &#9733; Indigo Carpenter Denim ₹ 1,799 ₹ 2,199 Add to cart 33% OFF Relaxed Fit Shirt &#9733; 5.0 Ethnic Rave Embroidered ₹ 1,199 ₹ 1,799 Add to cart Back &nbsp; TALK OF THE TOWN World’s first ASMR T-shirt. Don’t just wear it. Cut it.🍕✂️ Yes, you read that right! Meet the Pizza Oversized T-shirt designed with distressable mesh sleeves that you can cut, tear and customise however you want. And underneath? A pizza-inspired graphic waiting to be revealed. 🍕 The best part? Watching and hearing it transform , it might just be the most satisfying thing you do with a T-shirt. Because your T-shirt doesn’t have to look like everyone else’s. Cut it. Customise it. Make it yours. 👉 CHECK IT OUT NOW DROP BY FOR A HIGH-FIVE Find a store near you Get Directions Get Directions Get Directions Get Directions Get Directions Get Directions Get Directions Coming Soon Coming Soon THEY’RE TALKING ABOUT MYDESIGNATION The Tees look so cool and beautiful colour combinations. Really loved them! Basil Joseph Trendy indeed! Love wearing them Joseph Annamkutty Jose Can't wait to wear and flaunt the T-shirts, they are so cool Parvathy Thiruvothu The Tees are really awesome! Leo Leshoy Really loved the Tees and perfect sizing Kalidas Jayaram I love it when my cute looking comfy tees talk funny lines! Ahaana Krishna MYDESIGNATION stands out because their products are not just fun, they're aesthetic and oh so comfortable as well. More power to you guys! Vishak Nair Premium stuff. Brilliant and friendly service too! Vishnu Govindan Loved wearing their badass Tees and flaunting the Malalayali in me! Priya Varrier Brilliant co",
+      "document_count": 50,
+      "product_count": 404,
+      "created_at": "2026-10-01T21:29:30.452Z",
+      "updated_at": "2026-10-02T06:42:11.897Z",
+      "last_synced_at": "2026-10-02T06:42:11.897Z",
+      "raw_content": "MyDesignation: Fashion Apparels for Men Ordering from outside India? We currently take international orders only via WhatsApp. Feel free to reach out at +91 83300 76677 Whatsapp Now Skip to content Free Home Delivery for Paid Orders 🚚 Free Home Delivery for Paid Orders 🚚 Free Return & Exchange 📦 (TnC) Free Return & Exchange 📦 (TnC) Pay later & EMI available💡 Pay later & EMI available 💡 Festive Essentials NEW Delicious Collection 🍕 Shop All Shirts Everyday Essentials Bottomwear T-shirts Oversized Tees Regular Tees Polo Tees Hoodies and Jackets Accessories Bulk or International Orders Bulk/Corporate Orders International Orders Login/Signup Facebook Instagram LinkedIn YouTube Home Catalog Contact Search our site Recent Searches Popular Searches Shirts Bottomwear Hoodies Trending now Fastest Selling VIEW ALL Relaxed Fit Shirt &#9733; Neon Drift ₹ 1,299 Add to cart Relaxed Fit Shirt &#9733; 5.0 Oriental Heritage ₹ 1,499 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Kirtimukha Heritage Embroidered ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Roaring Tiger Shirt ₹ 1,399 Add to cart 18% OFF Regular Fit Shirt &#9733; Plaid: Imperial Green ₹ 1,399 ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 4.9 Starry Night ₹ 1,125 Add to cart Relaxed Fit Box Combo &#9733; 5.0 Desi Flavours ₹ 1,399 Add to cart Oversized Fit Oversized T-shirt &#9733; Noble Reign Embroidered ₹ 1,499 Add to cart 18% OFF Oversized Fit Box Combo &#9733; 5.0 Pizza ₹ 1,399 ₹ 1,699 Add to cart Oversized Fit Box Combo &#9733; 5.0 Sweet Escape ₹ 1,199 Add to cart 18% OFF Straight Fit Jeans &#9733; Indigo Carpenter Denim ₹ 1,799 ₹ 2,199 Add to cart 33% OFF Relaxed Fit Shirt &#9733; 5.0 Ethnic Rave Embroidered ₹ 1,199 ₹ 1,799 Add to cart Back Login Cart Cart Trending now VIEW ALL Relaxed Fit Shirt &#9733; Mughal Heritage ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Fuji Check ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Korean Shrine Mural ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Cross Stitch ₹ 1,499 Add to cart Relaxed Fit Shirt &#9733; Swinging Embroidered ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Rising Empire ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Cosmic Odyssey ₹ 1,399 Add to cart Regular Fit Shirt &#9733; Bali Guardian Embroidered ₹ 1,599 Add to cart Oversized Fit Oversized T-shirt &#9733; Phoenix Rise ₹ 1,199 Add to cart Oversized Fit Oversized T-shirt &#9733; Undefeated ₹ 1,399 Add to cart Relaxed Fit Shirt &#9733; Opera Legacy ₹ 1,399 Add to cart Relaxed fit Joggers &#9733; Samurai ₹ 1,599 Add to cart Back Curated for You VIEW ALL Relaxed Fit Shirt &#9733; Neon Drift ₹ 1,299 Add to cart Relaxed Fit Shirt &#9733; 5.0 Oriental Heritage ₹ 1,499 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Kirtimukha Heritage Embroidered ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 5.0 Roaring Tiger Shirt ₹ 1,399 Add to cart 18% OFF Regular Fit Shirt &#9733; Plaid: Imperial Green ₹ 1,399 ₹ 1,699 Add to cart Top Seller Relaxed Fit Shirt &#9733; 4.9 Starry Night ₹ 1,125 Add to cart Relaxed Fit Box Combo &#9733; 5.0 Desi Flavours ₹ 1,399 Add to cart Oversized Fit Oversized T-shirt &#9733; Noble Reign Embroidered ₹ 1,499 Add to cart 18% OFF Oversized Fit Box Combo &#9733; 5.0 Pizza ₹ 1,399 ₹ 1,699 Add to cart Oversized Fit Box Combo &#9733; 5.0 Sweet Escape ₹ 1,199 Add to cart 18% OFF Straight Fit Jeans &#9733; Indigo Carpenter Denim ₹ 1,799 ₹ 2,199 Add to cart 33% OFF Relaxed Fit Shirt &#9733; 5.0 Ethnic Rave Embroidered ₹ 1,199 ₹ 1,799 Add to cart Back TALK OF THE TOWN World’s first ASMR T-shirt. Don’t just wear it. Cut it.🍕✂️ Yes, you read that right! Meet the Pizza Oversized T-shirt designed with distressable mesh sleeves that you can cut, tear and customise however you want. And underneath? A pizza-inspired graphic waiting to be revealed. 🍕 The best part? Watching and hearing it transform , it might just be the most satisfying thing you do with a T-shirt. Because your T-shirt doesn’t have to look like everyone else’s. Cut it. Customise it. Make it yours. 👉 CHECK IT OUT NOW DROP BY FOR A HIGH-FIVE Find a store near you Get Directions Get Directions Get Directions Get Directions Get Directions Get Directions Get Directions Coming Soon Coming Soon THEY’RE TALKING ABOUT MYDESIGNATION The Tees look so cool and beautiful colour combinations. Really loved them! Basil Joseph Trendy indeed! Love wearing them Joseph Annamkutty Jose Can't wait to wear and flaunt the T-shirts, they are so cool Parvathy Thiruvothu The Tees are really awesome! Leo Leshoy Really loved the Tees and perfect sizing Kalidas Jayaram I love it when my cute looking comfy tees talk funny lines! Ahaana Krishna MYDESIGNATION stands out because their products are not just fun, they're aesthetic and oh so comfortable as well. More power to you guys! Vishak Nair Premium stuff. Brilliant and friendly service too! Vishnu Govindan Loved wearing their badass Tees and flaunting the Malalayali in me! Priya Varrier Brilliant color combinations and trendy designs Aju Varghese Super comfy T-shirts. I Loved the unique Malayali designs especially! RJ Mathukutty Love the T-shirts, they're really comfy and made well! Anna Ben Kurup T-shirt looks great. All the best! 🤗 Dulquer Salmaan LATEST STORIES From the Journal View All Delicious Collection Looks Delicious. Don’t Consume. Discover MyDesignation’s Delicious Collection, where chai, pizza, sushi, desserts and desi flavours turn into express... September 19, 2026 • 5 min read Read More Festive Wear Onam Outfit Ideas: Celebrating the Festival We Wait for All Year Celebrate Onam with outfit ideas inspired by Kerala's traditions. Explore Onam shirts, sarees, and kids' festive wear... August 08, 2026 • 5 min read Read More Artisan Made Pride of India: A Tribute to Indian Craftsmanship Why look elsewhere for inspiration when India holds thousands of years of art and incredible stories? Discover our \"P... May 05, 2026 • 5 min read Read More CUSTOMER SERVICE Contact us FAQ’s COMPANY About us Privacy Policy Shipping Policy Terms and Conditions Investor Relations Follow Us Email Us Apply for our free membership to receive exclusive deals, news, and events. Facebook Instagram LinkedIn YouTube Follow us on social media! &copy; 2026, MyDesignation . Choosing a selection results in a full page refresh. Size Chart Size Chart How To Measure cm in Size chart unavailable for this product. Note The fabric has a moderate stretch for added comfort If the size is not right, we offer easy exchanges Sizes may vary ±0.5 inches Shoulder Chest Length Sleeve Chest: Wrap the measuring tape all the way around your body, going over the widest part of your chest. Shoulder: Measure straight across your upper back, from the outer tip of one shoulder to the outer tip of the other. Length: Start measuring at the highest point of your shoulder (next to your neck) and go straight down to where you want the garment's bottom edge to finish. Sleeve: Measure from the top of your shoulder down the outside of your arm to where the sleeve should stop (e.g., your wrist or elbow). Select your fit &#9733; 0.0 Sizes Size Chart − + Add To Cart 1 item added to your cart Mydesignation: Terms & Conditions (Clear & Transparent) &ndash; MyDesignation Ordering from outside India? We currently take international orders only via WhatsApp. Feel free to reach out at +91 83300 76677 Whatsapp Now Skip to content Free Home Delivery for Paid Orders 🚚 Free Home Delivery for Paid Orders 🚚 Free Return & Exchange 📦 (TnC) Free Return & Exchange 📦 (TnC) Pay later & EMI available💡 Pay later & EMI available 💡 Festive Essentials NEW Delicious Collection 🍕 Shop All Shirts Everyday Essentials Bottomwear T-shirts Oversized Tees Regular Tees Polo Tees Hoodies and Jackets Accessories Bulk or International Orders Bulk/Corporate Orders International Orders Login/Signup Facebook Instagram LinkedIn YouTube Home Catalog Contact Search our site Recent Searches Popular Searches Shirts Bottomwear Hoodies Trending ",
       "metadata": {
-        "policy_count": 13,
-        "extracted_products_count": 5
+        "policy_count": 50,
+        "extracted_products_count": 404,
+        "pages_crawled_count": 6
       }
     }
   ],
@@ -6238,6 +6239,2948 @@
       ],
       "created_at": "2026-10-01T20:29:13.476Z",
       "updated_at": "2026-10-01T20:29:13.550Z",
+      "last_search_state": {
+        "original_query": "Recommend a stylish shirt for summer under 2500",
+        "intent": "RECOMMENDATION",
+        "semantic_query": "Recommend a stylish shirt for summer under 2500",
+        "extracted_filters": {
+          "max_price": 2500
+        },
+        "sort": "relevance",
+        "pagination": {
+          "page": 1,
+          "page_size": 6
+        }
+      }
+    },
+    {
+      "id": "conv_aim_mupzoxwvx91l8l6a",
+      "workspace_id": "ws_acme_corp",
+      "messages": [
+        {
+          "id": "msg_user_mupzoxwvf7djxw4x",
+          "role": "user",
+          "content": "new product",
+          "created_at": "2026-10-01T20:31:24.847Z"
+        },
+        {
+          "id": "msg_ast_mupzoxx0yo4dijr2",
+          "role": "assistant",
+          "content": "I couldn't find any products matching \"new product\". Try adjusting your budget or exploring our featured categories.",
+          "products": [],
+          "created_at": "2026-10-01T20:31:24.852Z"
+        }
+      ],
+      "created_at": "2026-10-01T20:31:24.847Z",
+      "updated_at": "2026-10-01T20:31:24.852Z",
+      "last_search_state": {
+        "original_query": "new product",
+        "intent": "DISCOVERY",
+        "semantic_query": "new product",
+        "extracted_filters": {},
+        "sort": "newest",
+        "pagination": {
+          "page": 1,
+          "page_size": 6
+        }
+      }
+    },
+    {
+      "id": "conv_aim_muqlivaktk4yx97k",
+      "workspace_id": "ws_default",
+      "messages": [
+        {
+          "id": "msg_user_muqlivals6y5rxyq",
+          "role": "user",
+          "content": "Recommend a stylish shirt for summer under 2500",
+          "created_at": "2026-10-02T06:42:33.069Z"
+        },
+        {
+          "id": "msg_ast_muqlivawqm48mzg2",
+          "role": "assistant",
+          "content": "Based on your preferences, here are handpicked recommendations from our catalog:",
+          "products": [
+            {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            },
+            {
+              "id": "prod_live_muq1meex3yjinhz6",
+              "title": "Jaipur Print Shirt | Men",
+              "handle": "prod_live_muq1meex3yjinhz6",
+              "description": "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt from MyDesignation. Designed with a relaxed fit for all-day comfort, this shirt features a bold Jaipur-inspired print that stands out effortlessly. Lightweight and stylish, it’s perfect for vacations, casual outings, or weekend ",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "February26",
+                "Half_Sleeve_Shirt",
+                "holifeb26",
+                "Men",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "showstopper",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-5945267.jpg?v=1774001230",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_2.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-men-shirt-mydesignation-5836770.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_3.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-1604057.jpg?v=1774001230"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0kpgm9ku",
+                  "title": "S",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrnwquyu8u",
+                  "title": "M",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrt2yp1vuy",
+                  "title": "L",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medraac5fols",
+                  "title": "XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrx2ktcm39",
+                  "title": "2XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/jaipur-print-men-shirt",
+              "score": 0.4553501123769649
+            },
+            {
+              "id": "prod_live_muq1meew8odgixjr",
+              "title": "Palm Tree Embroidered Shirt",
+              "handle": "prod_live_muq1meew8odgixjr",
+              "description": "The Palm Tree Embroidered Shirt features bold palm tree embroidery with hand-applied beadwork for added texture and detail. Crafted from breathable premium cotton in a relaxed fit, it delivers lightweight comfort and a stylish resort-inspired look perfect for summer outings and vacations.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "Half_Sleeve_Shirt",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-3129776.jpg?v=1775726283",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-shirt-mydesignation-9846388.jpg?v=1775726283",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-shirt-mydesignation-3985882.jpg?v=1773983893",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-4991842.jpg?v=1773754832",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-2510980.jpg?v=1773754832",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-5836852.jpg?v=1773754832"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr3qpbvkta",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrhxndkqh2",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr1pjdfms6",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrdv4o7eic",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrtb0iajyk",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrj7266rvb",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/palm-tree-embroidered-shirt",
+              "score": 0.45080498837291494
+            },
+            {
+              "id": "prod_live_muq1meef14nzjisf",
+              "title": "Dark Beige Bamboo Shirt",
+              "handle": "prod_live_muq1meef14nzjisf",
+              "description": "Dark Beige Bamboo Shirt (Half Sleeve): Earthy Elegance &amp; Pure Comfort Upgrade your summer wardrobe with the Dark Beige Bamboo Shirt (Half Sleeve) . Made from a sustainable blend of 60% Bamboo and 40% Modal, this shirt offers natural moisture-wicking properties and an exceptionally soft feel agai",
+              "price": 1699,
+              "sale_price": 0,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Aug2026",
+                "bamboo shirts",
+                "Exchangeable",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "kiwi_s_half",
+                "Men",
+                "myd",
+                "New Arrivals 2026",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "staple"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-9911786.jpg?v=1787280491",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-3970209.jpg?v=1787280492",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-9628890.jpg?v=1787280491",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-2032919.jpg?v=1787280491",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-5636904.jpg?v=1787280492"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_muq1mdl8ra6ngep8",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl8w9sclm3z",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl8pe9nbrui",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl8st60z9yl",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl85g8tbwcl",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl8dw9fcqk0",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/dark-beige-bamboo-shirt-half-sleev",
+              "score": 0.42453732159115865
+            },
+            {
+              "id": "prod_live_muq1meewvgcnphjr",
+              "title": "Blue Blossom Shirt",
+              "handle": "prod_live_muq1meewvgcnphjr",
+              "description": "The Blue Blossom Cotton Linen Shirt features a relaxed fit and breathable cotton-linen fabric for all-day comfort. Designed with a beige base and navy floral border print, it delivers a calm resort vibe. Perfect for summer outings, vacations, or casual styling with linen pants or denim.",
+              "price": 1499,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-2518114.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-1293660.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-2082600.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-3845647.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-4948903.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-7486167.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-1102980.jpg?v=1774866050"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0jbviy2t",
+                  "title": "S",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr89v2j7j9",
+                  "title": "M",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrli30mka9",
+                  "title": "L",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrbryqb5sh",
+                  "title": "XL",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr5fhmc6di",
+                  "title": "2XL",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/blue-blossom-cotton-linen-shirt",
+              "score": 0.42059043177854794
+            },
+            {
+              "id": "prod_live_muq1meewta81o9ku",
+              "title": "Brown Linen Pant",
+              "handle": "prod_live_muq1meewta81o9ku",
+              "description": "Stay comfortable and stylish with the Brown Linen Pant for Men. Designed in a relaxed fit, these pants feature a breathable cotton-linen blend that feels light and airy throughout the day. The rich brown color pairs easily with shirts or T-shirts, making it perfect for casual outings, summer wear, a",
+              "price": 1599,
+              "currency": "INR",
+              "category": "Pants",
+              "subcategories": [
+                "essentials",
+                "Exchangeable",
+                "linenlaunch",
+                "march2026",
+                "Men",
+                "New Arrivals",
+                "non_onam",
+                "Pants and shorts",
+                "returnable",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-pants-mydesignation-3575889.jpg?v=1773752891",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-men-pants-mydesignation-8325139.jpg?v=1773666655",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-men-pants-mydesignation-6501936.jpg?v=1773666655",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-pants-mydesignation-9317689.jpg?v=1773752891",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-pants-mydesignation-3356267.jpg?v=1773752892",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-pants-mydesignation-7936218.jpg?v=1773752892"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medrjcy9q7fg",
+                  "title": "30",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "30",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrin0k9fbl",
+                  "title": "32",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "32",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrebj7uort",
+                  "title": "34",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "34",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrro60jzet",
+                  "title": "36",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "36",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr9eyk8uau",
+                  "title": "38",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "38",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Pants"
+              },
+              "source_url": "https://www.mydesignation.com/products/brown-linen-pant",
+              "score": 0.40968161571592376
+            }
+          ],
+          "recommendations": [
+            {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            },
+            {
+              "id": "prod_live_muq1meex3yjinhz6",
+              "title": "Jaipur Print Shirt | Men",
+              "handle": "prod_live_muq1meex3yjinhz6",
+              "description": "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt from MyDesignation. Designed with a relaxed fit for all-day comfort, this shirt features a bold Jaipur-inspired print that stands out effortlessly. Lightweight and stylish, it’s perfect for vacations, casual outings, or weekend ",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "February26",
+                "Half_Sleeve_Shirt",
+                "holifeb26",
+                "Men",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "showstopper",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-5945267.jpg?v=1774001230",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_2.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-men-shirt-mydesignation-5836770.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_3.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-1604057.jpg?v=1774001230"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0kpgm9ku",
+                  "title": "S",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrnwquyu8u",
+                  "title": "M",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrt2yp1vuy",
+                  "title": "L",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medraac5fols",
+                  "title": "XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrx2ktcm39",
+                  "title": "2XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/jaipur-print-men-shirt",
+              "score": 0.4553501123769649
+            },
+            {
+              "id": "prod_live_muq1meew8odgixjr",
+              "title": "Palm Tree Embroidered Shirt",
+              "handle": "prod_live_muq1meew8odgixjr",
+              "description": "The Palm Tree Embroidered Shirt features bold palm tree embroidery with hand-applied beadwork for added texture and detail. Crafted from breathable premium cotton in a relaxed fit, it delivers lightweight comfort and a stylish resort-inspired look perfect for summer outings and vacations.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "Half_Sleeve_Shirt",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-3129776.jpg?v=1775726283",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-shirt-mydesignation-9846388.jpg?v=1775726283",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-shirt-mydesignation-3985882.jpg?v=1773983893",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-4991842.jpg?v=1773754832",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-2510980.jpg?v=1773754832",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-5836852.jpg?v=1773754832"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr3qpbvkta",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrhxndkqh2",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr1pjdfms6",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrdv4o7eic",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrtb0iajyk",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrj7266rvb",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/palm-tree-embroidered-shirt",
+              "score": 0.45080498837291494
+            }
+          ],
+          "created_at": "2026-10-02T06:42:33.080Z"
+        },
+        {
+          "id": "msg_user_muqlivb2cy42yoi6",
+          "role": "user",
+          "content": "Compare the first and second one",
+          "created_at": "2026-10-02T06:42:33.086Z"
+        },
+        {
+          "id": "msg_ast_muqliveckf35sbbi",
+          "role": "assistant",
+          "content": "Here is a side-by-side comparison between **Summer Embroidered Shirt** and **Jaipur Print Shirt | Men**:\n\n• **Jaipur Print Shirt | Men** (₹1,299): Best value pick with high versatility.\n• **Summer Embroidered Shirt** (₹1,699): Premium build with distinct styling.\n\n💡 **AI Verdict**: If budget is your priority, **Jaipur Print Shirt | Men** saves you ₹400. However, **Summer Embroidered Shirt** offers premium detailing.",
+          "comparison": {
+            "item_a": {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            },
+            "item_b": {
+              "id": "prod_live_muq1meex3yjinhz6",
+              "title": "Jaipur Print Shirt | Men",
+              "handle": "prod_live_muq1meex3yjinhz6",
+              "description": "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt from MyDesignation. Designed with a relaxed fit for all-day comfort, this shirt features a bold Jaipur-inspired print that stands out effortlessly. Lightweight and stylish, it’s perfect for vacations, casual outings, or weekend ",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "February26",
+                "Half_Sleeve_Shirt",
+                "holifeb26",
+                "Men",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "showstopper",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-5945267.jpg?v=1774001230",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_2.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-men-shirt-mydesignation-5836770.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_3.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-1604057.jpg?v=1774001230"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0kpgm9ku",
+                  "title": "S",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrnwquyu8u",
+                  "title": "M",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrt2yp1vuy",
+                  "title": "L",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medraac5fols",
+                  "title": "XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrx2ktcm39",
+                  "title": "2XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/jaipur-print-men-shirt",
+              "score": 0.4553501123769649
+            },
+            "pros_a": [
+              "Price: ₹1,699",
+              "Category: Shirt",
+              "Limited Availability",
+              "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen ..."
+            ],
+            "pros_b": [
+              "Price: ₹1,299",
+              "Category: Shirt",
+              "Limited Availability",
+              "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt fro..."
+            ],
+            "summary": "If budget is your priority, **Jaipur Print Shirt | Men** saves you ₹400. However, **Summer Embroidered Shirt** offers premium detailing."
+          },
+          "products": [
+            {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            },
+            {
+              "id": "prod_live_muq1meex3yjinhz6",
+              "title": "Jaipur Print Shirt | Men",
+              "handle": "prod_live_muq1meex3yjinhz6",
+              "description": "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt from MyDesignation. Designed with a relaxed fit for all-day comfort, this shirt features a bold Jaipur-inspired print that stands out effortlessly. Lightweight and stylish, it’s perfect for vacations, casual outings, or weekend ",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "February26",
+                "Half_Sleeve_Shirt",
+                "holifeb26",
+                "Men",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "showstopper",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-5945267.jpg?v=1774001230",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_2.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-men-shirt-mydesignation-5836770.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_3.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-1604057.jpg?v=1774001230"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0kpgm9ku",
+                  "title": "S",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrnwquyu8u",
+                  "title": "M",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrt2yp1vuy",
+                  "title": "L",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medraac5fols",
+                  "title": "XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrx2ktcm39",
+                  "title": "2XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/jaipur-print-men-shirt",
+              "score": 0.4553501123769649
+            }
+          ],
+          "created_at": "2026-10-02T06:42:33.204Z"
+        },
+        {
+          "id": "msg_user_muqlivei1oi774mn",
+          "role": "user",
+          "content": "Add the first one to my cart",
+          "created_at": "2026-10-02T06:42:33.210Z"
+        },
+        {
+          "id": "msg_ast_muqlivek6xhat1nb",
+          "role": "assistant",
+          "content": "Added **Summer Embroidered Shirt** (₹1,699) to your shopping bag! 🛍️ Would you like to view other matching recommendations?",
+          "products": [
+            {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            }
+          ],
+          "cart_action_performed": {
+            "action": "ADD",
+            "product_title": "Summer Embroidered Shirt",
+            "quantity": 1
+          },
+          "created_at": "2026-10-02T06:42:33.212Z"
+        }
+      ],
+      "created_at": "2026-10-02T06:42:33.069Z",
+      "updated_at": "2026-10-02T06:42:33.212Z",
+      "last_search_state": {
+        "original_query": "Recommend a stylish shirt for summer under 2500",
+        "intent": "RECOMMENDATION",
+        "semantic_query": "Recommend a stylish shirt for summer under 2500",
+        "extracted_filters": {
+          "max_price": 2500
+        },
+        "sort": "relevance",
+        "pagination": {
+          "page": 1,
+          "page_size": 6
+        }
+      }
+    },
+    {
+      "id": "conv_aim_muqll4lklltogb1p",
+      "workspace_id": "ws_default",
+      "messages": [
+        {
+          "id": "msg_user_muqll4lkvb0yfu28",
+          "role": "user",
+          "content": "Recommend a stylish shirt for summer under 2500",
+          "created_at": "2026-10-02T06:44:18.440Z"
+        },
+        {
+          "id": "msg_ast_muqll4lsopobg1hu",
+          "role": "assistant",
+          "content": "Based on your preferences, here are handpicked recommendations from our catalog:",
+          "products": [
+            {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            },
+            {
+              "id": "prod_live_muq1meex3yjinhz6",
+              "title": "Jaipur Print Shirt | Men",
+              "handle": "prod_live_muq1meex3yjinhz6",
+              "description": "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt from MyDesignation. Designed with a relaxed fit for all-day comfort, this shirt features a bold Jaipur-inspired print that stands out effortlessly. Lightweight and stylish, it’s perfect for vacations, casual outings, or weekend ",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "February26",
+                "Half_Sleeve_Shirt",
+                "holifeb26",
+                "Men",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "showstopper",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-5945267.jpg?v=1774001230",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_2.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-men-shirt-mydesignation-5836770.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_3.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-1604057.jpg?v=1774001230"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0kpgm9ku",
+                  "title": "S",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrnwquyu8u",
+                  "title": "M",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrt2yp1vuy",
+                  "title": "L",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medraac5fols",
+                  "title": "XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrx2ktcm39",
+                  "title": "2XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/jaipur-print-men-shirt",
+              "score": 0.4553501123769649
+            },
+            {
+              "id": "prod_live_muq1meew8odgixjr",
+              "title": "Palm Tree Embroidered Shirt",
+              "handle": "prod_live_muq1meew8odgixjr",
+              "description": "The Palm Tree Embroidered Shirt features bold palm tree embroidery with hand-applied beadwork for added texture and detail. Crafted from breathable premium cotton in a relaxed fit, it delivers lightweight comfort and a stylish resort-inspired look perfect for summer outings and vacations.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "Half_Sleeve_Shirt",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-3129776.jpg?v=1775726283",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-shirt-mydesignation-9846388.jpg?v=1775726283",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-shirt-mydesignation-3985882.jpg?v=1773983893",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-4991842.jpg?v=1773754832",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-2510980.jpg?v=1773754832",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-5836852.jpg?v=1773754832"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr3qpbvkta",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrhxndkqh2",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr1pjdfms6",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrdv4o7eic",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrtb0iajyk",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrj7266rvb",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/palm-tree-embroidered-shirt",
+              "score": 0.45080498837291494
+            },
+            {
+              "id": "prod_live_muq1meef14nzjisf",
+              "title": "Dark Beige Bamboo Shirt",
+              "handle": "prod_live_muq1meef14nzjisf",
+              "description": "Dark Beige Bamboo Shirt (Half Sleeve): Earthy Elegance &amp; Pure Comfort Upgrade your summer wardrobe with the Dark Beige Bamboo Shirt (Half Sleeve) . Made from a sustainable blend of 60% Bamboo and 40% Modal, this shirt offers natural moisture-wicking properties and an exceptionally soft feel agai",
+              "price": 1699,
+              "sale_price": 0,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Aug2026",
+                "bamboo shirts",
+                "Exchangeable",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "kiwi_s_half",
+                "Men",
+                "myd",
+                "New Arrivals 2026",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "staple"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-9911786.jpg?v=1787280491",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-3970209.jpg?v=1787280492",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-9628890.jpg?v=1787280491",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-2032919.jpg?v=1787280491",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/dark-beige-bamboo-shirt-shirt-mydesignation-5636904.jpg?v=1787280492"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_muq1mdl8ra6ngep8",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl8w9sclm3z",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl8pe9nbrui",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl8st60z9yl",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl85g8tbwcl",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdl8dw9fcqk0",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/dark-beige-bamboo-shirt-half-sleev",
+              "score": 0.42453732159115865
+            },
+            {
+              "id": "prod_live_muq1meewvgcnphjr",
+              "title": "Blue Blossom Shirt",
+              "handle": "prod_live_muq1meewvgcnphjr",
+              "description": "The Blue Blossom Cotton Linen Shirt features a relaxed fit and breathable cotton-linen fabric for all-day comfort. Designed with a beige base and navy floral border print, it delivers a calm resort vibe. Perfect for summer outings, vacations, or casual styling with linen pants or denim.",
+              "price": 1499,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-2518114.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-1293660.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-2082600.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-3845647.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-4948903.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/blue-blossom-shirt-men-shirt-mydesignation-7486167.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-1102980.jpg?v=1774866050"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0jbviy2t",
+                  "title": "S",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr89v2j7j9",
+                  "title": "M",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrli30mka9",
+                  "title": "L",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrbryqb5sh",
+                  "title": "XL",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr5fhmc6di",
+                  "title": "2XL",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/blue-blossom-cotton-linen-shirt",
+              "score": 0.42059043177854794
+            },
+            {
+              "id": "prod_live_muq1meewta81o9ku",
+              "title": "Brown Linen Pant",
+              "handle": "prod_live_muq1meewta81o9ku",
+              "description": "Stay comfortable and stylish with the Brown Linen Pant for Men. Designed in a relaxed fit, these pants feature a breathable cotton-linen blend that feels light and airy throughout the day. The rich brown color pairs easily with shirts or T-shirts, making it perfect for casual outings, summer wear, a",
+              "price": 1599,
+              "currency": "INR",
+              "category": "Pants",
+              "subcategories": [
+                "essentials",
+                "Exchangeable",
+                "linenlaunch",
+                "march2026",
+                "Men",
+                "New Arrivals",
+                "non_onam",
+                "Pants and shorts",
+                "returnable",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-pants-mydesignation-3575889.jpg?v=1773752891",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-men-pants-mydesignation-8325139.jpg?v=1773666655",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-men-pants-mydesignation-6501936.jpg?v=1773666655",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-pants-mydesignation-9317689.jpg?v=1773752891",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-pants-mydesignation-3356267.jpg?v=1773752892",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/brown-linen-pant-pants-mydesignation-7936218.jpg?v=1773752892"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medrjcy9q7fg",
+                  "title": "30",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "30",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrin0k9fbl",
+                  "title": "32",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "32",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrebj7uort",
+                  "title": "34",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "34",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrro60jzet",
+                  "title": "36",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "36",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr9eyk8uau",
+                  "title": "38",
+                  "price": 1599,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "38",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Pants"
+              },
+              "source_url": "https://www.mydesignation.com/products/brown-linen-pant",
+              "score": 0.40968161571592376
+            }
+          ],
+          "recommendations": [
+            {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            },
+            {
+              "id": "prod_live_muq1meex3yjinhz6",
+              "title": "Jaipur Print Shirt | Men",
+              "handle": "prod_live_muq1meex3yjinhz6",
+              "description": "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt from MyDesignation. Designed with a relaxed fit for all-day comfort, this shirt features a bold Jaipur-inspired print that stands out effortlessly. Lightweight and stylish, it’s perfect for vacations, casual outings, or weekend ",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "February26",
+                "Half_Sleeve_Shirt",
+                "holifeb26",
+                "Men",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "showstopper",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-5945267.jpg?v=1774001230",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_2.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-men-shirt-mydesignation-5836770.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_3.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-1604057.jpg?v=1774001230"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0kpgm9ku",
+                  "title": "S",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrnwquyu8u",
+                  "title": "M",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrt2yp1vuy",
+                  "title": "L",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medraac5fols",
+                  "title": "XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrx2ktcm39",
+                  "title": "2XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/jaipur-print-men-shirt",
+              "score": 0.4553501123769649
+            },
+            {
+              "id": "prod_live_muq1meew8odgixjr",
+              "title": "Palm Tree Embroidered Shirt",
+              "handle": "prod_live_muq1meew8odgixjr",
+              "description": "The Palm Tree Embroidered Shirt features bold palm tree embroidery with hand-applied beadwork for added texture and detail. Crafted from breathable premium cotton in a relaxed fit, it delivers lightweight comfort and a stylish resort-inspired look perfect for summer outings and vacations.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "Half_Sleeve_Shirt",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-3129776.jpg?v=1775726283",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-shirt-mydesignation-9846388.jpg?v=1775726283",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-shirt-mydesignation-3985882.jpg?v=1773983893",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-4991842.jpg?v=1773754832",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-2510980.jpg?v=1773754832",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/palm-tree-embroidered-shirt-men-shirt-mydesignation-5836852.jpg?v=1773754832"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr3qpbvkta",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrhxndkqh2",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medr1pjdfms6",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrdv4o7eic",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrtb0iajyk",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrj7266rvb",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/palm-tree-embroidered-shirt",
+              "score": 0.45080498837291494
+            }
+          ],
+          "created_at": "2026-10-02T06:44:18.448Z"
+        },
+        {
+          "id": "msg_user_muqll4lyeq1izxh9",
+          "role": "user",
+          "content": "Compare the first and second one",
+          "created_at": "2026-10-02T06:44:18.454Z"
+        },
+        {
+          "id": "msg_ast_muqll4otrf544z6q",
+          "role": "assistant",
+          "content": "Here is a side-by-side comparison between **Summer Embroidered Shirt** and **Jaipur Print Shirt | Men**:\n\n• **Jaipur Print Shirt | Men** (₹1,299): Best value pick with high versatility.\n• **Summer Embroidered Shirt** (₹1,699): Premium build with distinct styling.\n\n💡 **AI Verdict**: If budget is your priority, **Jaipur Print Shirt | Men** saves you ₹400. However, **Summer Embroidered Shirt** offers premium detailing.",
+          "comparison": {
+            "item_a": {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            },
+            "item_b": {
+              "id": "prod_live_muq1meex3yjinhz6",
+              "title": "Jaipur Print Shirt | Men",
+              "handle": "prod_live_muq1meex3yjinhz6",
+              "description": "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt from MyDesignation. Designed with a relaxed fit for all-day comfort, this shirt features a bold Jaipur-inspired print that stands out effortlessly. Lightweight and stylish, it’s perfect for vacations, casual outings, or weekend ",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "February26",
+                "Half_Sleeve_Shirt",
+                "holifeb26",
+                "Men",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "showstopper",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-5945267.jpg?v=1774001230",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_2.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-men-shirt-mydesignation-5836770.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_3.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-1604057.jpg?v=1774001230"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0kpgm9ku",
+                  "title": "S",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrnwquyu8u",
+                  "title": "M",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrt2yp1vuy",
+                  "title": "L",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medraac5fols",
+                  "title": "XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrx2ktcm39",
+                  "title": "2XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/jaipur-print-men-shirt",
+              "score": 0.4553501123769649
+            },
+            "pros_a": [
+              "Price: ₹1,699",
+              "Category: Shirt",
+              "Limited Availability",
+              "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen ..."
+            ],
+            "pros_b": [
+              "Price: ₹1,299",
+              "Category: Shirt",
+              "Limited Availability",
+              "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt fro..."
+            ],
+            "summary": "If budget is your priority, **Jaipur Print Shirt | Men** saves you ₹400. However, **Summer Embroidered Shirt** offers premium detailing."
+          },
+          "products": [
+            {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            },
+            {
+              "id": "prod_live_muq1meex3yjinhz6",
+              "title": "Jaipur Print Shirt | Men",
+              "handle": "prod_live_muq1meex3yjinhz6",
+              "description": "Add a vibrant summer touch to your wardrobe with the Jaipur Print Shirt from MyDesignation. Designed with a relaxed fit for all-day comfort, this shirt features a bold Jaipur-inspired print that stands out effortlessly. Lightweight and stylish, it’s perfect for vacations, casual outings, or weekend ",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "Exchangeable",
+                "February26",
+                "Half_Sleeve_Shirt",
+                "holifeb26",
+                "Men",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "Outlet",
+                "Printed Shirts",
+                "showstopper",
+                "summer2026"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-5945267.jpg?v=1774001230",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_2.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-men-shirt-mydesignation-5836770.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/HOLI_STUDIO_3.jpg?v=1773921770",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/jaipur-print-shirt-men-shirt-mydesignation-1604057.jpg?v=1774001230"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1medr0kpgm9ku",
+                  "title": "S",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrnwquyu8u",
+                  "title": "M",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrt2yp1vuy",
+                  "title": "L",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medraac5fols",
+                  "title": "XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1medrx2ktcm39",
+                  "title": "2XL",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/jaipur-print-men-shirt",
+              "score": 0.4553501123769649
+            }
+          ],
+          "created_at": "2026-10-02T06:44:18.557Z"
+        },
+        {
+          "id": "msg_user_muqll4oz4ugq4jo2",
+          "role": "user",
+          "content": "Add the first one to my cart",
+          "created_at": "2026-10-02T06:44:18.563Z"
+        },
+        {
+          "id": "msg_ast_muqll4p19yx6kqnn",
+          "role": "assistant",
+          "content": "Added **Summer Embroidered Shirt** (₹1,699) to your shopping bag! 🛍️ Would you like to view other matching recommendations?",
+          "products": [
+            {
+              "id": "prod_live_muq1meer0evrotzz",
+              "title": "Summer Embroidered Shirt",
+              "handle": "prod_live_muq1meer0evrotzz",
+              "description": "The Summer Embroidered Cotton Linen Shirt combines breathable cotton-linen fabric with detailed embroidery for a relaxed summer look. Designed in a comfortable relaxed fit, it keeps you cool while adding a stylish statement. The lightweight fabric allows better airflow, making it ideal for warm days",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirt",
+              "subcategories": [
+                "dilutioncatalogue",
+                "Exchangeable",
+                "fathersdaycollection",
+                "h-holiday-similar-finds",
+                "Half_Sleeve_Shirt",
+                "holidaycollection",
+                "march2026",
+                "Men",
+                "Men Shirt",
+                "myd",
+                "New Arrivals",
+                "non_onam",
+                "onam hangover 26",
+                "Outlet",
+                "Printed Shirts",
+                "returnable",
+                "summer2026",
+                "Top Sellers"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7438565.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-1806381.jpg?v=1785043270",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-5129865.jpg?v=1772344111",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-7443076.jpg?v=1785043271",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-men-shirt-mydesignation-4902225.jpg?v=1772344112",
+                "https://cdn.shopify.com/s/files/1/0798/9710/0596/files/summer-embroidered-shirt-shirt-mydesignation-8630120.jpg?v=1785043271"
+              ],
+              "in_stock": false,
+              "variants": [
+                {
+                  "id": "var_muq1mdlfgiaw0raf",
+                  "title": "S",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "S",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf583fxiot",
+                  "title": "M",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf4gzv70q5",
+                  "title": "L",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlf126q2edu",
+                  "title": "XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfwjr76ran",
+                  "title": "2XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "2XL",
+                    "color": "Black"
+                  }
+                },
+                {
+                  "id": "var_muq1mdlfjwrm7qep",
+                  "title": "3XL",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "3XL",
+                    "color": "Black"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirt"
+              },
+              "source_url": "https://www.mydesignation.com/products/summer-embroidered-cotton-linen-shirt",
+              "score": 0.5163269402499153
+            }
+          ],
+          "cart_action_performed": {
+            "action": "ADD",
+            "product_title": "Summer Embroidered Shirt",
+            "quantity": 1
+          },
+          "created_at": "2026-10-02T06:44:18.565Z"
+        }
+      ],
+      "created_at": "2026-10-02T06:44:18.440Z",
+      "updated_at": "2026-10-02T06:44:18.565Z",
       "last_search_state": {
         "original_query": "Recommend a stylish shirt for summer under 2500",
         "intent": "RECOMMENDATION",

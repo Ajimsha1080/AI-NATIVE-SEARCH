@@ -100,8 +100,13 @@ export class AIModeStorage {
   }
 
   // --- Knowledge Sources ---
-  public getKnowledgeSources(workspaceId: string): AIModeKnowledgeSource[] {
+  public getKnowledgeSources(workspaceId?: string): AIModeKnowledgeSource[] {
+    if (!workspaceId) return this.data.knowledge_sources;
     return this.data.knowledge_sources.filter(k => k.workspace_id === workspaceId);
+  }
+
+  public getKnowledgeSourceById(id: string): AIModeKnowledgeSource | null {
+    return this.data.knowledge_sources.find(k => k.id === id) || null;
   }
 
   public addKnowledgeSource(source: AIModeKnowledgeSource): void {

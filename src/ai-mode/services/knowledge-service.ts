@@ -1,6 +1,7 @@
 import { AIModeKnowledgeSource } from '../types';
 import { aiModeStorage } from './storage';
 import { AIModeCrawlerAdapter } from '../adapters/crawler-adapter';
+import { db } from '@/lib/db';
 import { generateId } from '@/lib/utils';
 
 export class AIModeKnowledgeService {
@@ -29,19 +30,58 @@ export class AIModeKnowledgeService {
 
     aiModeStorage.addKnowledgeSource(newSource);
 
-    // Run crawl
+    // Run deep multi-page crawl
     const crawlResult = await AIModeCrawlerAdapter.crawlWebsite(params.url);
     if (crawlResult.status === 'SUCCESS') {
+      // Sync crawled products into catalog database
+      if (crawlResult.extractedProducts && crawlResult.extractedProducts.length > 0) {
+        for (const cp of crawlResult.extractedProducts) {
+          const existing = db.commerce_products.find(
+            p => p.title.toLowerCase().trim() === cp.title.toLowerCase().trim() || (p.source_url && p.source_url === cp.url)
+          );
+          if (!existing) {
+            db.commerce_products.push({
+              id: cp.id || `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+              workspace_id: params.workspaceId,
+              title: cp.title,
+              description: cp.description || '',
+              category: cp.category || 'General',
+              tags: cp.tags || [],
+              price: cp.price,
+              compare_at_price: cp.sale_price,
+              currency: 'INR',
+              images: cp.images || [],
+              in_stock: cp.in_stock ?? true,
+              total_inventory: 50,
+              variants: (cp.variants || []).map((v, i) => ({
+                id: v.id || `var_${i}`,
+                title: v.title || 'Standard',
+                sku: `SKU-${v.id}`,
+                price: v.price || cp.price,
+                inventory_quantity: 20,
+                attributes: v.attributes || {}
+              })),
+              source_url: cp.url,
+              searchable_text: `${cp.title} ${cp.description} ${cp.category} ${(cp.tags || []).join(' ')}`,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          }
+        }
+        db.scheduleSave();
+      }
+
       aiModeStorage.updateKnowledgeSource(sourceId, {
         status: 'INDEXED',
         name: params.name || crawlResult.title || params.url,
         document_count: crawlResult.policyChunks.length,
         product_count: crawlResult.extractedProducts.length,
         last_synced_at: new Date().toISOString(),
-        raw_content: crawlResult.textContent.substring(0, 5000),
+        raw_content: crawlResult.textContent.substring(0, 8000),
         metadata: {
           policy_count: crawlResult.policyChunks.length,
-          extracted_products_count: crawlResult.extractedProducts.length
+          extracted_products_count: crawlResult.extractedProducts.length,
+          pages_crawled_count: crawlResult.pagesCrawledCount
         }
       });
     } else {
@@ -88,12 +128,56 @@ export class AIModeKnowledgeService {
       aiModeStorage.updateKnowledgeSource(id, { status: 'INDEXING' });
       const crawl = await AIModeCrawlerAdapter.crawlWebsite(source.source_url);
       if (crawl.status === 'SUCCESS') {
+        // Sync crawled products into catalog database
+        if (crawl.extractedProducts && crawl.extractedProducts.length > 0) {
+          for (const cp of crawl.extractedProducts) {
+            const existing = db.commerce_products.find(
+              p => p.title.toLowerCase().trim() === cp.title.toLowerCase().trim() || (p.source_url && p.source_url === cp.url)
+            );
+            if (!existing) {
+              db.commerce_products.push({
+                id: cp.id || `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                workspace_id: source.workspace_id,
+                title: cp.title,
+                description: cp.description || '',
+                category: cp.category || 'General',
+                tags: cp.tags || [],
+                price: cp.price,
+                compare_at_price: cp.sale_price,
+                currency: 'INR',
+                images: cp.images || [],
+                in_stock: cp.in_stock ?? true,
+                total_inventory: 50,
+                variants: (cp.variants || []).map((v, i) => ({
+                  id: v.id || `var_${i}`,
+                  title: v.title || 'Standard',
+                  sku: `SKU-${v.id}`,
+                  price: v.price || cp.price,
+                  inventory_quantity: 20,
+                  attributes: v.attributes || {}
+                })),
+                source_url: cp.url,
+                searchable_text: `${cp.title} ${cp.description} ${cp.category} ${(cp.tags || []).join(' ')}`,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            }
+          }
+          db.scheduleSave();
+        }
+
         return aiModeStorage.updateKnowledgeSource(id, {
           status: 'INDEXED',
+          name: crawl.title || source.name,
           document_count: crawl.policyChunks.length,
           product_count: crawl.extractedProducts.length,
           last_synced_at: new Date().toISOString(),
-          raw_content: crawl.textContent.substring(0, 5000)
+          raw_content: crawl.textContent.substring(0, 8000),
+          metadata: {
+            policy_count: crawl.policyChunks.length,
+            extracted_products_count: crawl.extractedProducts.length,
+            pages_crawled_count: crawl.pagesCrawledCount
+          }
         });
       } else {
         return aiModeStorage.updateKnowledgeSource(id, {

@@ -53,7 +53,7 @@ export class AIModeChatService {
         }
 
         await AIModeCartAdapter.addToCart({ product_id: targetProduct.id, workspaceId: params.workspaceId });
-        const cartActionResult = {
+        const cartActionResult: AIModeMessage['cart_action_performed'] = {
           action: 'ADD',
           product_title: targetProduct.title,
           quantity: 1
