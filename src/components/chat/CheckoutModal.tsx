@@ -294,11 +294,8 @@ export default function CheckoutModal({
               <Zap className="w-3.5 h-3.5 fill-current" />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+              <h3 className="text-xs font-bold text-zinc-900">
                 Instant Buy Now Checkout
-                <span className="text-[10px] font-semibold text-sky-700 bg-sky-100 px-1.5 py-0.2 rounded-full flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-sky-600" /> Razorpay Enabled
-                </span>
               </h3>
               <p className="text-[10px] text-zinc-500 font-mono">Secured by ShopMate Agentic Commerce</p>
             </div>
