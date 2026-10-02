@@ -9,10 +9,8 @@ import {
   Sparkles, 
   BookOpen, 
   Search, 
-  Eye, 
   Code2, 
-  Settings,
-  ArrowRight
+  Settings
 } from 'lucide-react';
 
 export default function AIModeLayout({ children }: { children: React.ReactNode }) {
@@ -22,7 +20,6 @@ export default function AIModeLayout({ children }: { children: React.ReactNode }
     { name: 'Overview', href: '/ai-mode', icon: Sparkles, exact: true },
     { name: 'Knowledge', href: '/ai-mode/knowledge', icon: BookOpen },
     { name: 'AI Search', href: '/ai-mode/search', icon: Search },
-    { name: 'Live Preview', href: '/ai-mode/preview', icon: Eye },
     { name: 'Deployment', href: '/ai-mode/deployment', icon: Code2 },
     { name: 'Settings', href: '/ai-mode/settings', icon: Settings },
   ];
