@@ -77,7 +77,7 @@ export class AIModeKnowledgeService {
         document_count: crawlResult.policyChunks.length,
         product_count: crawlResult.extractedProducts.length,
         last_synced_at: new Date().toISOString(),
-        raw_content: crawlResult.textContent.substring(0, 8000),
+        raw_content: crawlResult.textContent,
         metadata: {
           policy_count: crawlResult.policyChunks.length,
           extracted_products_count: crawlResult.extractedProducts.length,
@@ -172,7 +172,7 @@ export class AIModeKnowledgeService {
           document_count: crawl.policyChunks.length,
           product_count: crawl.extractedProducts.length,
           last_synced_at: new Date().toISOString(),
-          raw_content: crawl.textContent.substring(0, 8000),
+          raw_content: crawl.textContent,
           metadata: {
             policy_count: crawl.policyChunks.length,
             extracted_products_count: crawl.extractedProducts.length,

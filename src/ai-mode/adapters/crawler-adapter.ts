@@ -209,9 +209,9 @@ export class AIModeCrawlerAdapter {
       return {
         url,
         title: siteTitle,
-        textContent: aggregatedTextContent.substring(0, 15000),
+        textContent: aggregatedTextContent.trim(),
         extractedProducts: productsArray,
-        policyChunks: allPolicyChunks.slice(0, 50),
+        policyChunks: allPolicyChunks,
         pagesCrawledCount: visitedUrls.size || 1,
         status: 'SUCCESS'
       };
