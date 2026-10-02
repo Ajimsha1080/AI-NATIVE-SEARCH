@@ -32,19 +32,9 @@ export default function AIModeLayout({ children }: { children: React.ReactNode }
 
         {/* AI Mode Sub-Header & Navigation */}
         <div className="bg-white border-b border-zinc-200/80 px-6 py-3 shrink-0 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shadow-xs">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold text-zinc-900 tracking-tight">AI Mode</h1>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  NEW
-                </span>
-              </div>
-              <p className="text-[11px] text-zinc-500">Autonomous conversational product discovery &amp; recommendation layer</p>
-            </div>
+          <div>
+            <h1 className="text-sm font-bold text-zinc-900 tracking-tight">AI Mode</h1>
+            <p className="text-[11px] text-zinc-500">Autonomous conversational product discovery &amp; recommendation layer</p>
           </div>
 
           <div className="flex items-center gap-1 bg-zinc-100/80 p-1 rounded-xl border border-zinc-200/60">
