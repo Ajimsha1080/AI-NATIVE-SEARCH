@@ -1068,10 +1068,10 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       show_branding: true
     },
     starter_questions: [
-      'Show UPF 50+ Sunscreen Jackets',
+      'Explore latest collection',
       'Track order #10482',
       'What is your 7-day exchange policy?',
-      'Do you have Travel Joggers?'
+      'Recommend trending styles'
     ],
     memory: {
       enabled: true,
@@ -1166,11 +1166,11 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
       id: 'eval_case_01',
       agent_id: agent1.id,
       workspace_id: workspace.id,
-      name: 'Constraint Search (UPF 50+ Sunscreen Jacket under ₹2500 size L)',
-      user_input: 'Find UPF 50+ Sunscreen Jackets under ₹2500 in size Large.',
+      name: 'Constraint Search (Linen Shirts under ₹2500 size L)',
+      user_input: 'Find Linen Shirts under ₹2500 in size Large.',
       expected_intent: 'PRODUCT_SEARCH',
       expected_tools: ['product_search', 'inventory_lookup'],
-      expected_keywords: ['Sunscreen', '2499', 'Large'],
+      expected_keywords: ['Shirt', '2499', 'Large'],
       created_at: new Date().toISOString()
     },
     {

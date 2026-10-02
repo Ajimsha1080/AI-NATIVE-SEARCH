@@ -248,7 +248,7 @@ export default function HomePage() {
                 {/* User query */}
                 <div className="flex items-start gap-3 justify-end">
                   <div className="bg-zinc-900 text-white rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs font-medium max-w-sm shadow-2xs">
-                    {activeTab === 'search' && "Show UPF 50+ Sunscreen Jackets in Obsidian Black Large"}
+                    {activeTab === 'search' && "Find trending stylish outfits and collection"}
                     {activeTab === 'tracking' && "Where is order #10482?"}
                     {activeTab === 'returns' && "What is your exchange window policy?"}
                   </div>

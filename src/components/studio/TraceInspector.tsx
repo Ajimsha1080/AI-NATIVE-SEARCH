@@ -94,7 +94,7 @@ export default function TraceInspector({ trace, onSelectPrompt }: { trace: any; 
               {[
                 {
                   title: 'Catalog Query & Variant Pricing',
-                  prompt: 'Show UPF 50+ Sunscreen Jackets with pricing in INR',
+                  prompt: 'Find stylish trending outfits with pricing in INR',
                   tag: 'TOOL: query_inventory',
                   color: 'text-emerald-700 bg-emerald-50 border-emerald-200'
                 },

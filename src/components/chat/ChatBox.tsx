@@ -71,10 +71,10 @@ export default function ChatBox({
   const [activeSubtitle, setActiveSubtitle] = useState<string>(subtitle || 'We usually reply in a few seconds');
   const [activeShowBranding, setActiveShowBranding] = useState<boolean>(showBranding);
   const [activeStarterQuestions, setActiveStarterQuestions] = useState<string[]>([
-    'Show UPF 50+ Sunscreen Jackets',
+    'Explore latest collection',
     'Track order #10482',
     'What is your 7-day exchange policy?',
-    'Do you have Travel Joggers?'
+    'Recommend trending styles'
   ]);
 
   useEffect(() => {

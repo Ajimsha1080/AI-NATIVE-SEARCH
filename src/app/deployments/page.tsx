@@ -434,10 +434,10 @@ export default function DeploymentsWorkspacePage() {
   const [headerSubtitle, setHeaderSubtitle] = useState('We usually reply in a few seconds');
   const [greetingMessage, setGreetingMessage] = useState("Hello! 👋 I'm ShopMate, your AI shopping concierge for Blue Tyga. How can I help you today?");
   const [starterQuestions, setStarterQuestions] = useState<string[]>([
-    "Show UPF 50+ Sunscreen Jackets",
+    "Explore latest collection",
     "Track order #10482",
     "What is your 7-day exchange policy?",
-    "Do you have Travel Joggers?"
+    "Recommend trending styles"
   ]);
   const [newQuestionInput, setNewQuestionInput] = useState('');
 
