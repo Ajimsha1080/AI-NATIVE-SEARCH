@@ -681,21 +681,99 @@ curl -X POST ${origin}/api/ai-mode/search \\
                 ))}
               </div>
 
-              {/* Code Display Card */}
-              <div className="bg-zinc-950 rounded-xl border border-zinc-800 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-900 border-b border-zinc-800 text-[11px] font-mono text-zinc-400">
-                  <span className="text-zinc-300 font-semibold">{snippetMap[activeSnippet].title}</span>
+              {/* Code Display Card with Beautiful IDE Syntax Highlighting */}
+              <div className="bg-[#0b0f17] rounded-2xl border border-zinc-800/90 shadow-xl overflow-hidden">
+                {/* Editor Header Bar */}
+                <div className="flex items-center justify-between px-4 py-3 bg-[#111622] border-b border-zinc-800/80 text-[11px] font-mono">
+                  <div className="flex items-center gap-3">
+                    {/* Mac Window Control Dots */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/50 inline-block" />
+                      <span className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]/50 inline-block" />
+                      <span className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29]/50 inline-block" />
+                    </div>
+
+                    <div className="flex items-center gap-2 pl-2 border-l border-zinc-700/60">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        {activeSnippet === 'script' ? 'HTML / LIQUID' : activeSnippet === 'react' ? 'TYPESCRIPT / NEXT.JS' : activeSnippet === 'api' ? 'CURL / BASH' : 'IFRAME'}
+                      </span>
+                      <span className="text-zinc-300 font-medium text-xs">{snippetMap[activeSnippet].title}</span>
+                    </div>
+                  </div>
+
                   <button
                     onClick={() => handleCopySnippet(snippetMap[activeSnippet].code)}
-                    className="px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 border border-zinc-700 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 border border-zinc-700/80 hover:border-zinc-600 shadow-xs cursor-pointer active:scale-95"
                   >
-                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copied ? 'Copied!' : 'Copy Code'}</span>
+                    {copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-300">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Copy Code</span>
+                      </>
+                    )}
                   </button>
                 </div>
 
-                <div className="p-4 text-emerald-400 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all leading-relaxed select-all">
-                  {snippetMap[activeSnippet].code}
+                {/* Syntax-Highlighted Code Lines */}
+                <div className="p-4 font-mono text-xs space-y-0.5 select-all overflow-x-auto bg-[#0b0f17]">
+                  {activeSnippet === 'script' && (
+                    <>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">1</span><span className="text-zinc-500 italic">&lt;!-- AI Mode Universal Storefront Search Widget --&gt;</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">2</span><span className="text-pink-400 font-bold">&lt;script</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">3</span><span>  <span className="text-sky-300">src</span>=<span className="text-emerald-300 font-semibold">"{origin}/api/ai-mode/widget/{selectedDep.id}/script.js"</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">4</span><span>  <span className="text-amber-300 font-semibold">async</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">5</span><span>  <span className="text-amber-300 font-semibold">defer</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">6</span><span className="text-pink-400 font-bold">&gt;&lt;/script&gt;</span></div>
+                    </>
+                  )}
+
+                  {activeSnippet === 'react' && (
+                    <>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">1</span><span className="text-zinc-500 italic">// Next.js / React (App Router or Pages Router)</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">2</span><span><span className="text-purple-400 font-bold">import </span><span className="text-cyan-300 font-bold">Script </span><span className="text-purple-400 font-bold">from </span><span className="text-emerald-300 font-semibold">'next/script'</span>;</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">3</span><span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">4</span><span><span className="text-purple-400 font-bold">export default function </span><span className="text-amber-300 font-bold">StoreLayout</span>({`{ children }: { children: `}<span className="text-cyan-300 font-bold">React</span>.<span className="text-cyan-300 font-bold">ReactNode</span>{` }`}) {`{`}</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">5</span><span>  <span className="text-purple-400 font-bold">return</span> (</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">6</span><span>    <span className="text-pink-400 font-bold">&lt;&gt;</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">7</span><span>      {`{children}`}</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">8</span><span className="text-zinc-500 italic">      {`{/* AI Mode Shopping & Search Widget */}`}</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">9</span><span>      <span className="text-pink-400 font-bold">&lt;Script</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">10</span><span>        <span className="text-sky-300">src</span>=<span className="text-emerald-300 font-semibold">"{origin}/api/ai-mode/widget/{selectedDep.id}/script.js"</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">11</span><span>        <span className="text-sky-300">strategy</span>=<span className="text-emerald-300 font-semibold">"lazyOnload"</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">12</span><span>      <span className="text-pink-400 font-bold">/&gt;</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">13</span><span>    <span className="text-pink-400 font-bold">&lt;/&gt;</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">14</span><span>  );</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">15</span><span>{`}`}</span></div>
+                    </>
+                  )}
+
+                  {activeSnippet === 'api' && (
+                    <>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">1</span><span className="text-zinc-500 italic"># Headless REST API Endpoint (Mobile Apps &amp; Custom Frontends)</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">2</span><span><span className="text-pink-400 font-bold">curl </span><span className="text-amber-400 font-semibold">-X </span><span className="text-purple-400 font-bold">POST </span><span className="text-sky-300 font-medium">{origin}/api/ai-mode/search</span> \</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">3</span><span>  <span className="text-amber-400 font-semibold">-H </span><span className="text-emerald-300 font-semibold">"Content-Type: application/json"</span> \</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">4</span><span>  <span className="text-amber-400 font-semibold">-d </span><span className="text-amber-300 font-bold">'</span>{`{`}</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">5</span><span>    <span className="text-cyan-300">"query"</span>: <span className="text-emerald-300 font-medium">"women products"</span>,</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">6</span><span>    <span className="text-cyan-300">"deployment_id"</span>: <span className="text-emerald-300 font-medium">"{selectedDep.id}"</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">7</span><span>  {`}`}<span className="text-amber-300 font-bold">'</span></span></div>
+                    </>
+                  )}
+
+                  {activeSnippet === 'iframe' && (
+                    <>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">1</span><span className="text-zinc-500 italic">&lt;!-- Embedded Responsive Storefront AI Search Frame --&gt;</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">2</span><span className="text-pink-400 font-bold">&lt;iframe</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">3</span><span>  <span className="text-sky-300">src</span>=<span className="text-emerald-300 font-semibold">"{origin}/ai-mode/embed/{selectedDep.id}"</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">4</span><span>  <span className="text-sky-300">style</span>=<span className="text-emerald-300 font-semibold">"width: 100%; max-width: 540px; height: 650px; border: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);"</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">5</span><span>  <span className="text-sky-300">allow</span>=<span className="text-emerald-300 font-semibold">"clipboard-write"</span></span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">6</span><span className="text-pink-400 font-bold">&gt;&lt;/iframe&gt;</span></div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
