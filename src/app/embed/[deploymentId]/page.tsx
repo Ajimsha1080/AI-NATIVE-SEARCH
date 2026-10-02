@@ -20,9 +20,15 @@ interface Message {
   created_at?: string;
   metadata?: {
     products?: Array<{ id: string; title: string; price: number; comparePrice?: number; handle: string; imageUrl?: string; rating?: number; description?: string }>;
-    order?: { id: string; orderNumber: string; status: string; carrier?: string; trackingNumber?: string; total: number; currency: string; items: any[] };
+    order?: { id: string; orderNumber?: string; order_number?: string; status: string; carrier?: string; trackingNumber?: string; tracking_number?: string; total?: number; total_amount?: number; currency: string; items: any[] };
     returnStatus?: { eligible: boolean; policy: string; instructions?: string; returnLabelUrl?: string };
     cart?: { id: string; total: number; currency: string; items: any[] };
+    razorpay?: { order_id?: string; amount?: number; currency?: string; payment_link?: string; key_id?: string; is_mock?: boolean };
+    payment_link?: string;
+    paymentGateway?: string;
+    data?: any;
+    type?: string;
+    [key: string]: any;
   };
 }
 
@@ -499,6 +505,61 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                 </div>
               )}
 
+              {/* Dynamic Razorpay Agentic Payment Link Card */}
+              {(m.metadata?.razorpay?.payment_link || m.metadata?.payment_link || (m.metadata as any)?.data?.razorpay || (m.metadata as any)?.paymentGateway === 'RAZORPAY') && (
+                <div className={`w-full border rounded-2xl p-3.5 mt-1 space-y-2.5 text-xs shadow-xs ${
+                  isDark ? 'bg-sky-950/40 border-sky-800/60 text-white' : 'bg-gradient-to-br from-sky-50/90 to-white border-sky-200 text-zinc-900'
+                }`}>
+                  <div className={`flex items-center justify-between border-b pb-2 ${isDark ? 'border-sky-800/50' : 'border-sky-100'}`}>
+                    <span className="font-bold flex items-center gap-1.5 text-sky-400">
+                      <Zap className="w-4 h-4 fill-current" /> Razorpay Agentic Payment
+                    </span>
+                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-bold border border-sky-500/30">
+                      ⚡ Instant
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 text-xs">
+                    <p className={isDark ? 'text-zinc-300' : 'text-zinc-600'}>Direct checkout session verified by Razorpay Engine.</p>
+                    {((m.metadata?.razorpay as any)?.amount || (m.metadata as any)?.data?.razorpay?.amount) && (
+                      <p className="font-mono font-bold text-sm">
+                        Payable: ₹{(((m.metadata?.razorpay as any)?.amount || (m.metadata as any)?.data?.razorpay?.amount) / 100).toLocaleString('en-IN')}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetProd = (m.metadata as any)?.data?.product || (m.metadata as any)?.product || m.metadata?.products?.[0];
+                        if (targetProd) {
+                          handleBuyNow(targetProd, (m.metadata as any)?.data?.variant, (m.metadata as any)?.data?.quantity || 1);
+                        } else {
+                          const link = m.metadata?.razorpay?.payment_link || (m.metadata as any)?.data?.razorpay?.payment_link || m.metadata?.payment_link;
+                          if (link) window.open(link, '_blank');
+                        }
+                      }}
+                      className="flex-1 py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-current" /> Pay with Razorpay ⚡
+                    </button>
+                    {(m.metadata?.razorpay?.payment_link || (m.metadata as any)?.data?.razorpay?.payment_link || m.metadata?.payment_link) && (
+                      <a
+                        href={m.metadata?.razorpay?.payment_link || (m.metadata as any)?.data?.razorpay?.payment_link || m.metadata?.payment_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`px-3 py-2 rounded-xl border text-xs font-semibold transition flex items-center gap-1 shrink-0 cursor-pointer ${
+                          isDark ? 'bg-zinc-800 border-zinc-700 text-sky-400 hover:bg-zinc-700' : 'bg-white border-sky-200 text-sky-700 hover:bg-sky-50'
+                        }`}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Open Link
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Dynamic Order Card */}
               {m.metadata?.order && (
                 <div className={`w-full border rounded-2xl p-4 mt-1 space-y-2 text-xs shadow-2xs ${
@@ -525,7 +586,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                     )}
                     <div className={`flex justify-between font-bold pt-1.5 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
                       <span className="font-sans text-zinc-400">Total:</span>
-                      <span style={{ color: primaryColor }}>${m.metadata.order.total.toFixed(2)} {m.metadata.order.currency}</span>
+                      <span style={{ color: primaryColor }}>₹{(m.metadata.order.total ?? m.metadata.order.total_amount ?? 0).toLocaleString('en-IN')} {m.metadata.order.currency}</span>
                     </div>
                   </div>
                 </div>

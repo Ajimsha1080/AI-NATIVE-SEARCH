@@ -198,7 +198,7 @@ export class LocalCommerceProvider {
 
     // 1. High-Level Intent & Scope Detection
     const hasHumanEscalation = /talk to (?:a |an )?(?:human|agent|representative|person|operator)|speak (?:with|to) (?:a )?(?:human|person|representative)|connect me to support/i.test(cleanQ);
-    const isBuyNow = /\b(?:buy (?:this|that|it|the (?:first|second|third|fourth|\w+) one|one|\w+)|buy now|purchase (?:this|that|it|now)|i want (?:this|that|it|the (?:first|second|third|fourth|\w+) one)|i want to buy|order (?:this|that|it)|checkout now)\b/i.test(cleanQ);
+    const isBuyNow = /\b(?:buy (?:this|that|it|the (?:first|second|third|fourth|\w+) one|one|\w+)|buy now|purchase (?:this|that|it|now)|i want (?:this|that|it|the (?:first|second|third|fourth|\w+) one)|i want to buy|order (?:this|that|it)|checkout now|pay via razorpay|razorpay pay|pay with razorpay|send payment link|payment link|generate payment link|agentic payment|pay now)\b/i.test(cleanQ);
     const isComparison = /which (?:one |item |product )?is (?:cheaper|most expensive|better|the best)|compare (?:these|the first and second|the products|them)|difference between/i.test(cleanQ);
     const isInventory = /(?:is (?:this|that|the \w+ one) (?:in stock|available)|do you have (?:this|that|it) in (?:size )?(\w+)|is size (\w+) (?:available|in stock)|stock level|inventory count)/i.test(cleanQ);
     const isCart = /(?:add (?:this|that|it|the (?:first|second|third|\w+) one) to (?:my )?cart|add to (?:my )?cart|add (?:that|this|it)|remove (?:this|that|the (?:first|second|\w+) one)|show (?:my )?cart|view (?:my )?cart|what(?:'s| is) in my (?:cart|bag))/i.test(cleanQ);

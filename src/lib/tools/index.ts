@@ -228,6 +228,103 @@ export async function executeTool(request: ToolCallRequest): Promise<ToolCallRes
         };
       }
 
+      case 'create_razorpay_order': {
+        const { amount, currency = 'INR', product_id, variant_id, quantity = 1 } = parameters;
+        let finalAmount = amount;
+        let product: any = null;
+
+        if (product_id) {
+          product = await commerceEngine.getProduct(workspace_id, product_id);
+          if (product && !finalAmount) {
+            const variant = product.variants?.find((v: any) => v.id === variant_id) || product.variants?.[0];
+            finalAmount = (variant?.price || product.price) * Math.max(1, Number(quantity) || 1);
+          }
+        }
+
+        const { razorpayService } = await import('../payments/razorpay');
+        const order = await razorpayService.createOrder({
+          amount: finalAmount || 999,
+          currency,
+          notes: {
+            workspace_id,
+            product_id: product_id || '',
+            variant_id: variant_id || '',
+            quantity: String(quantity)
+          }
+        });
+
+        return {
+          tool_id,
+          status: 'SUCCESS',
+          message: `Razorpay Order ${order.id} generated for ₹${(finalAmount || 999).toLocaleString('en-IN')}`,
+          data: order,
+          interactive_payload: {
+            type: 'CONFIRMATION',
+            data: {
+              paymentGateway: 'RAZORPAY',
+              order_id: order.id,
+              amount: finalAmount,
+              currency,
+              product
+            }
+          },
+          latency_ms: Date.now() - startTime
+        };
+      }
+
+      case 'generate_payment_link': {
+        const { amount, description = 'Order Payment', customer_name, customer_email, product_id } = parameters;
+        const { razorpayService } = await import('../payments/razorpay');
+        const link = await razorpayService.createPaymentLink({
+          amount: amount || 999,
+          description,
+          customer: {
+            name: customer_name || 'Customer',
+            email: customer_email || 'customer@example.com'
+          },
+          notes: {
+            workspace_id,
+            product_id: product_id || ''
+          }
+        });
+
+        return {
+          tool_id,
+          status: 'SUCCESS',
+          message: `Razorpay Payment Link generated: ${link.short_url}`,
+          data: link,
+          interactive_payload: {
+            type: 'CONFIRMATION',
+            data: {
+              paymentGateway: 'RAZORPAY',
+              payment_link: link.short_url,
+              amount: link.amount,
+              currency: link.currency,
+              id: link.id
+            }
+          },
+          latency_ms: Date.now() - startTime
+        };
+      }
+
+      case 'verify_razorpay_payment': {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = parameters;
+        const { razorpayService } = await import('../payments/razorpay');
+        const isValid = razorpayService.verifySignature({
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature: razorpay_signature || 'mock_valid_signature'
+        });
+
+        return {
+          tool_id,
+          status: isValid ? 'SUCCESS' : 'FAILED',
+          message: isValid ? 'Razorpay payment verified successfully.' : 'Payment verification failed.',
+          data: { verified: isValid, payment_id: razorpay_payment_id },
+          latency_ms: Date.now() - startTime
+        };
+      }
+
       case 'human_handoff': {
         const conv = db.conversations.find(c => c.id === request.conversation_id);
         if (conv) {

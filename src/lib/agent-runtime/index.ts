@@ -508,13 +508,39 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
       }
     }
   } else if (detectedIntent === 'BUY_NOW') {
-    planningSteps.push('3. Executing Buy Now flow: Resolving referenced product, validating inventory and preparing instant checkout session.');
+    planningSteps.push('3. Executing Agentic Buy Now / Razorpay flow: Resolving referenced product, validating inventory and preparing instant checkout session.');
     const targetProduct = resolveReferencedProduct(cleanMessage);
     if (targetProduct) {
       const selectedVariant = (requestedSize && targetProduct.variants?.find((v: any) => v.attributes?.size?.toLowerCase() === requestedSize?.toLowerCase() || v.title?.toLowerCase().includes(requestedSize?.toLowerCase()))) || targetProduct.variants?.[0];
       const unitPrice = selectedVariant?.price || targetProduct.price;
+      const isRazorpayExplicit = /\b(?:razorpay|payment link|pay link|send link|agentic payment)\b/i.test(cleanMessage);
 
-      responseText = `⚡ Instant checkout ready for **${targetProduct.title}**${selectedVariant ? ` (${selectedVariant.title || selectedVariant.attributes?.size || 'Standard'})` : ''} at **₹${unitPrice.toLocaleString('en-IN')}**. Please complete your shipping and payment details in the checkout window:`;
+      const { razorpayService } = await import('../payments/razorpay');
+      const rzpOrder = await razorpayService.createOrder({
+        amount: unitPrice,
+        currency: targetProduct.currency || 'INR',
+        notes: {
+          workspace_id,
+          product_id: targetProduct.id,
+          variant_id: selectedVariant?.id || ''
+        }
+      });
+
+      const paymentLink = await razorpayService.createPaymentLink({
+        amount: unitPrice,
+        currency: targetProduct.currency || 'INR',
+        description: `Payment for ${targetProduct.title}`,
+        customer: {
+          name: params.customer_identifier || 'Valued Customer',
+          email: params.customer_identifier?.includes('@') ? params.customer_identifier : 'customer@example.com'
+        }
+      });
+
+      if (isRazorpayExplicit) {
+        responseText = `⚡ **Razorpay Agentic Payment Ready!**\n\nI've generated a secure Razorpay checkout order for **${targetProduct.title}** at **₹${unitPrice.toLocaleString('en-IN')}**.\n\nYou can complete payment directly in the popup or via UPI/Cards:`;
+      } else {
+        responseText = `⚡ Instant checkout ready for **${targetProduct.title}**${selectedVariant ? ` (${selectedVariant.title || selectedVariant.attributes?.size || 'Standard'})` : ''} at **₹${unitPrice.toLocaleString('en-IN')}**. Please complete your shipping and payment details in the checkout window:`;
+      }
       
       interactivePayload = {
         type: 'CHECKOUT_SESSION',
@@ -522,11 +548,19 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
           product: targetProduct,
           variant: selectedVariant,
           quantity: 1,
-          checkoutId: `chk_${Date.now()}`
+          checkoutId: `chk_${Date.now()}`,
+          razorpay: {
+            order_id: rzpOrder.id,
+            amount: rzpOrder.amount,
+            currency: rzpOrder.currency,
+            key_id: rzpOrder.key_id,
+            payment_link: paymentLink.short_url,
+            is_mock: rzpOrder.is_mock
+          }
         }
       };
     } else {
-      responseText = `Which product would you like to buy? You can click **Buy Now** on any product card or tell me the item name.`;
+      responseText = `Which product would you like to buy or generate a payment link for? You can click **Buy Now** on any product card or tell me the item name.`;
     }
   } else if (detectedIntent === 'ORDER_TRACKING') {
     planningSteps.push('3. Extracting order identifier and customer email.');
