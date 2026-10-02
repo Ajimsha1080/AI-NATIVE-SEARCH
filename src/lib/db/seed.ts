@@ -237,8 +237,8 @@ export async function seedDatabaseIfEmpty(force: boolean = false): Promise<void>
   // 2. Workspace
   const workspace = {
     id: 'ws_acme_corp',
-    name: 'Blue Tyga Store',
-    slug: 'blue-tyga-store',
+    name: 'Ajimsha M',
+    slug: 'ajimsha-m',
     plan: 'GROWTH' as const,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

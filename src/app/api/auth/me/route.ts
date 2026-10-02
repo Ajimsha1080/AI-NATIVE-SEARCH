@@ -28,7 +28,8 @@ export async function GET(req: Request) {
       email: session.user.email,
       name: session.user.name,
       avatar_url: session.user.avatar_url,
-      is_super_admin: session.user.is_super_admin
+      is_super_admin: session.user.is_super_admin,
+      workspaceName: workspace?.name || 'Ajimsha M'
     },
     workspace,
     role: session.role,

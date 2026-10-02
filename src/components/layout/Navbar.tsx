@@ -95,7 +95,7 @@ export default function Navbar() {
           <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-medium text-zinc-700">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             <Building className="w-3.5 h-3.5 text-zinc-500" />
-            <span className="truncate max-w-[110px] sm:max-w-[150px] font-semibold text-zinc-900">{user?.workspaceName || 'Blue Tyga Store'}</span>
+            <span className="truncate max-w-[110px] sm:max-w-[150px] font-semibold text-zinc-900">{user?.workspaceName || 'Ajimsha M'}</span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-200/80 text-zinc-600 font-medium hidden sm:inline">
               {user?.role || 'OWNER'}
             </span>

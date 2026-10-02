@@ -11,7 +11,7 @@ import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
 
 export default function SettingsWorkspacePage() {
   const cachedSettings = getClientCachedData('/api/settings');
-  const [workspaceName, setWorkspaceName] = useState(() => cachedSettings?.workspace?.name || 'Blue Tyga Store');
+  const [workspaceName, setWorkspaceName] = useState(() => cachedSettings?.workspace?.name || 'Ajimsha M');
   const [defaultCurrency, setDefaultCurrency] = useState(() => cachedSettings?.workspace?.currency || 'INR');
   const [timezone, setTimezone] = useState(() => cachedSettings?.workspace?.timezone || 'Asia/Kolkata');
   const [loading, setLoading] = useState(!cachedSettings);
@@ -23,7 +23,7 @@ export default function SettingsWorkspacePage() {
       try {
         const data = await fetchWithCache('/api/settings');
         if (data?.workspace) {
-          setWorkspaceName(data.workspace.name || 'Blue Tyga Store');
+          setWorkspaceName(data.workspace.name || 'Ajimsha M');
           setDefaultCurrency(data.workspace.currency || 'INR');
           setTimezone(data.workspace.timezone || 'Asia/Kolkata');
         }
