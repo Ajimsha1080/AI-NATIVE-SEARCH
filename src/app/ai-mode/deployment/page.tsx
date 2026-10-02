@@ -18,16 +18,14 @@ import {
   Server,
   X,
   Plus,
-  Send,
+  Search,
   ShoppingBag,
-  Bot,
-  HelpCircle,
   RotateCcw,
-  Layout,
-  MessageSquare,
-  Maximize2
+  RefreshCw,
+  Zap,
+  Tag
 } from 'lucide-react';
-import { AIModeDeployment, AIModeMessage } from '@/ai-mode/types';
+import { AIModeDeployment, AIModeProduct } from '@/ai-mode/types';
 
 type TabType = 'channels' | 'appearance' | 'content' | 'general' | 'embed';
 type SnippetType = 'script' | 'react' | 'api' | 'iframe';
@@ -62,13 +60,13 @@ export default function AIModeDeploymentPage() {
 
   // Content State
   const [widgetTitle, setWidgetTitle] = useState('Storefront AI Concierge');
-  const [widgetSubtitle, setWidgetSubtitle] = useState('Personalized Discovery & Styling Assistant');
-  const [welcomeMessage, setWelcomeMessage] = useState('Hello! 👋 I am your AI Shopping Concierge. Ask me to discover products, find sizes, or compare styles.');
+  const [widgetSubtitle, setWidgetSubtitle] = useState('Personalized Discovery & Search Assistant');
+  const [welcomeMessage, setWelcomeMessage] = useState('Ask me to find products, discover outfits, or search by price.');
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([
-    'Show me women sarees & drapes',
-    'Find trending shirts under 2000',
-    'Compare top sellers side-by-side',
-    'What is your return & exchange policy?'
+    'women products',
+    'sarees for women',
+    'cotton shirts under 2000',
+    'couple combos'
   ]);
   const [newPromptInput, setNewPromptInput] = useState('');
 
@@ -77,16 +75,10 @@ export default function AIModeDeploymentPage() {
   const [showBranding, setShowBranding] = useState(true);
   const [soundEffects, setSoundEffects] = useState(true);
 
-  // Live Interactive Preview State
-  const [previewMessages, setPreviewMessages] = useState<AIModeMessage[]>([
-    {
-      id: 'prev_welcome',
-      role: 'assistant',
-      content: 'Hello! 👋 I am your AI Shopping Concierge. Ask me to discover products, find sizes, or compare styles.',
-      created_at: new Date().toISOString()
-    }
-  ]);
-  const [previewInput, setPreviewInput] = useState('');
+  // Live Interactive Search Preview State (Matching reference Image 1)
+  const [previewQuery, setPreviewQuery] = useState('women products');
+  const [previewProducts, setPreviewProducts] = useState<AIModeProduct[]>([]);
+  const [previewTotalMatches, setPreviewTotalMatches] = useState(0);
   const [previewLoading, setPreviewLoading] = useState(false);
 
   useEffect(() => {
@@ -106,25 +98,45 @@ export default function AIModeDeploymentPage() {
           setPrimaryColor(dep.theme?.primary_color || '#4f46e5');
           setPosition(dep.branding?.position || 'bottom-right');
           setWidgetTitle(dep.branding?.title || 'Storefront AI Concierge');
-          setWidgetSubtitle(dep.branding?.subtitle || 'Personalized Discovery & Styling Assistant');
-          setWelcomeMessage(dep.branding?.welcome_message || 'Hello! 👋 I am your AI Shopping Concierge. Ask me to discover products, find sizes, or compare styles.');
+          setWidgetSubtitle(dep.branding?.subtitle || 'Personalized Discovery & Search Assistant');
+          setWelcomeMessage(dep.branding?.welcome_message || 'Ask me to find products, discover outfits, or search by price.');
           if (dep.branding?.suggested_prompts && dep.branding.suggested_prompts.length > 0) {
             setSuggestedPrompts(dep.branding.suggested_prompts);
           }
           setCorsDomains((dep.allowed_domains || ['*']).join(', '));
-          
-          setPreviewMessages([
-            {
-              id: 'prev_welcome',
-              role: 'assistant',
-              content: dep.branding?.welcome_message || 'Hello! 👋 I am your AI Shopping Concierge. Ask me to discover products, find sizes, or compare styles.',
-              created_at: new Date().toISOString()
-            }
-          ]);
         }
+      }
+      // Load initial preview products
+      executePreviewSearch('women products');
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function executePreviewSearch(queryToSearch: string) {
+    if (!queryToSearch.trim()) return;
+    setPreviewLoading(true);
+    setPreviewQuery(queryToSearch);
+    try {
+      const res = await fetch('/api/ai-mode/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: queryToSearch,
+          page: 1,
+          page_size: 12
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setPreviewProducts(data.products || []);
+        setPreviewTotalMatches(data.total_matches || 0);
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setPreviewLoading(false);
     }
   }
 
@@ -188,41 +200,6 @@ export default function AIModeDeploymentPage() {
     setSuggestedPrompts(suggestedPrompts.filter((_, i) => i !== idx));
   }
 
-  async function handleSendPreviewMessage(textToSend?: string) {
-    const text = textToSend || previewInput;
-    if (!text.trim() || previewLoading) return;
-
-    const userMsg: AIModeMessage = {
-      id: `u_${Date.now()}`,
-      role: 'user',
-      content: text,
-      created_at: new Date().toISOString()
-    };
-
-    setPreviewMessages(prev => [...prev, userMsg]);
-    setPreviewInput('');
-    setPreviewLoading(true);
-
-    try {
-      const res = await fetch('/api/ai-mode/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.responseMessage) {
-          setPreviewMessages(prev => [...prev, data.responseMessage]);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setPreviewLoading(false);
-    }
-  }
-
   if (!selectedDep) {
     return (
       <div className="p-8 text-center text-zinc-500 text-xs font-mono">Loading AI Mode deployment studio...</div>
@@ -231,7 +208,7 @@ export default function AIModeDeploymentPage() {
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
 
-  const scriptSnippet = `<!-- AI Mode Universal Floating Shopping Widget -->
+  const scriptSnippet = `<!-- AI Mode Universal Storefront Search Widget -->
 <script 
   src="${origin}/api/ai-mode/widget/${selectedDep.id}/script.js" 
   async 
@@ -245,7 +222,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
   return (
     <>
       {children}
-      {/* AI Mode Shopping Assistant */}
+      {/* AI Mode Shopping & Search Widget */}
       <Script 
         src="${origin}/api/ai-mode/widget/${selectedDep.id}/script.js" 
         strategy="lazyOnload" 
@@ -255,17 +232,17 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
 }`;
 
   const apiSnippet = `# Headless REST API Endpoint (Mobile Apps & Custom Frontends)
-curl -X POST ${origin}/api/ai-mode/chat \\
+curl -X POST ${origin}/api/ai-mode/search \\
   -H "Content-Type: application/json" \\
   -d '{
-    "message": "Show me women products under 3000",
+    "query": "women products",
     "deployment_id": "${selectedDep.id}"
   }'`;
 
-  const iframeSnippet = `<!-- Embedded Responsive Shopping Assistant Frame -->
+  const iframeSnippet = `<!-- Embedded Responsive Storefront AI Search Frame -->
 <iframe 
   src="${origin}/ai-mode/embed/${selectedDep.id}"
-  style="width: 100%; max-width: 420px; height: 600px; border: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);"
+  style="width: 100%; max-width: 540px; height: 650px; border: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);"
   allow="clipboard-write"
 ></iframe>`;
 
@@ -280,7 +257,7 @@ curl -X POST ${origin}/api/ai-mode/chat \\
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Studio Top Header & Sub-Tabs */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
-        {/* Navigation Tabs (matching reference image) */}
+        {/* Navigation Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
           {[
             { id: 'channels', label: 'Channels & Deployments' },
@@ -328,15 +305,15 @@ curl -X POST ${origin}/api/ai-mode/chat \\
         <div className="lg:col-span-7 space-y-6">
 
           {/* ============================================================= */}
-          {/* TAB 1: APPEARANCE (Matching reference image) */}
+          {/* TAB 1: APPEARANCE */}
           {/* ============================================================= */}
           {activeTab === 'appearance' && (
             <div className="space-y-6">
               {/* Card Header */}
               <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-2xs flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-zinc-900">AI Agent Appearance</h3>
-                  <p className="text-xs text-zinc-500 mt-0.5">Customize widget themes, brand accent colors, launcher shape, and screen position.</p>
+                  <h3 className="text-sm font-bold text-zinc-900">AI Search Appearance</h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">Customize search themes, brand accent colors, launcher button, and screen position.</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full text-xs font-mono font-bold text-white shadow-2xs" style={{ backgroundColor: primaryColor }}>
@@ -419,7 +396,7 @@ curl -X POST ${origin}/api/ai-mode/chat \\
               <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-2xs space-y-5">
                 <div className="border-b border-zinc-100 pb-3">
                   <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">2. Launcher Shape &amp; Position</h4>
-                  <p className="text-[11px] text-zinc-500">Choose how the floating trigger bubble looks and where it appears on the screen.</p>
+                  <p className="text-[11px] text-zinc-500">Choose how the storefront trigger bubble looks and where it appears.</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -481,13 +458,13 @@ curl -X POST ${origin}/api/ai-mode/chat \\
           )}
 
           {/* ============================================================= */}
-          {/* TAB 2: CONTENT & PROMPTS */}
+          {/* TAB 2: CONTENT & SUGGESTED SEARCHES */}
           {/* ============================================================= */}
           {activeTab === 'content' && (
             <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-2xs space-y-5">
               <div className="border-b border-zinc-100 pb-3">
-                <h3 className="text-sm font-bold text-zinc-900">Content &amp; Suggested Prompts</h3>
-                <p className="text-xs text-zinc-500 mt-0.5">Configure the assistant greeting, titles, and starter question chips.</p>
+                <h3 className="text-sm font-bold text-zinc-900">Search Content &amp; Suggested Queries</h3>
+                <p className="text-xs text-zinc-500 mt-0.5">Configure the search header, placeholder text, and quick suggestion pills.</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -512,24 +489,24 @@ curl -X POST ${origin}/api/ai-mode/chat \\
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">Greeting Welcome Message</label>
-                <textarea
-                  rows={3}
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Search Bar Placeholder</label>
+                <input
+                  type="text"
                   value={welcomeMessage}
                   onChange={e => setWelcomeMessage(e.target.value)}
-                  className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl p-3 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition resize-none leading-relaxed"
+                  className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition"
                 />
               </div>
 
-              {/* Starter Questions Chips */}
+              {/* Starter Search Chips */}
               <div className="space-y-3 pt-2">
-                <label className="block text-xs font-semibold text-zinc-700">Suggested Starter Questions</label>
+                <label className="block text-xs font-semibold text-zinc-700">Quick Suggestion Search Pills</label>
                 
                 <div className="space-y-2">
                   {suggestedPrompts.map((p, idx) => (
                     <div key={idx} className="flex items-center justify-between p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-800">
                       <span className="flex items-center gap-2">
-                        <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
+                        <Search className="w-3.5 h-3.5 text-indigo-600" />
                         <span>{p}</span>
                       </span>
                       <button
@@ -545,7 +522,7 @@ curl -X POST ${origin}/api/ai-mode/chat \\
                 <div className="flex gap-2 pt-1">
                   <input
                     type="text"
-                    placeholder="Add a new suggested question..."
+                    placeholder="Add a new suggested search (e.g. 'linen shirts under 1500')..."
                     value={newPromptInput}
                     onChange={e => setNewPromptInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddPrompt()}
@@ -571,7 +548,7 @@ curl -X POST ${origin}/api/ai-mode/chat \\
             <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-2xs space-y-5">
               <div className="border-b border-zinc-100 pb-3">
                 <h3 className="text-sm font-bold text-zinc-900">General &amp; Domain Governance</h3>
-                <p className="text-xs text-zinc-500 mt-0.5">Configure allowed origin domains, rate limiting, and widget metadata.</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Configure allowed origin domains and search metadata.</p>
               </div>
 
               <div className="space-y-2">
@@ -603,7 +580,7 @@ curl -X POST ${origin}/api/ai-mode/chat \\
                 <div className="flex items-center justify-between p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl">
                   <div>
                     <div className="text-xs font-bold text-zinc-900">Sound Effects</div>
-                    <div className="text-[10px] text-zinc-500">Play chime on incoming messages</div>
+                    <div className="text-[10px] text-zinc-500">Play chime on search completion</div>
                   </div>
                   <input
                     type="checkbox"
@@ -635,9 +612,9 @@ curl -X POST ${origin}/api/ai-mode/chat \\
               </div>
 
               {[
-                { channel: 'Storefront Website Script', icon: Globe, status: selectedDep.status, id: selectedDep.id, desc: 'Universal 1-line script tag for Shopify, WordPress, Webflow, and HTML stores.' },
+                { channel: 'Storefront Search Script', icon: Globe, status: selectedDep.status, id: selectedDep.id, desc: 'Universal 1-line script tag for Shopify, WordPress, Webflow, and HTML stores.' },
                 { channel: 'React & Next.js SDK', icon: Layers, status: selectedDep.status, id: `sdk_${selectedDep.id}`, desc: 'Native TypeScript component integration for Next.js App Router and React frontends.' },
-                { channel: 'Headless REST API', icon: Server, status: selectedDep.status, id: `api_${selectedDep.id}`, desc: 'Programmatic JSON endpoint for Flutter, iOS, Android, and backend microservices.' },
+                { channel: 'Headless Search REST API', icon: Server, status: selectedDep.status, id: `api_${selectedDep.id}`, desc: 'Programmatic JSON endpoint for Flutter, iOS, Android, and backend microservices.' },
                 { channel: 'Responsive Iframe Frame', icon: Code2, status: selectedDep.status, id: `iframe_${selectedDep.id}`, desc: 'Embedded container for landing page cards, help portals, and blog embeds.' },
               ].map((ch, idx) => {
                 const IconComp = ch.icon;
@@ -725,15 +702,17 @@ curl -X POST ${origin}/api/ai-mode/chat \\
           )}
         </div>
 
-        {/* Right Column: Real-Time Live Widget Preview */}
+        {/* ========================================================================= */}
+        {/* RIGHT COLUMN: STOREFRONT AI SEARCH LIVE PREVIEW (MATCHING IMAGE 1) */}
+        {/* ========================================================================= */}
         <div className="lg:col-span-5 space-y-4">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: primaryColor }} />
-              <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider font-mono">Live Interactive Preview</span>
+              <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider font-mono">Live Storefront Search Preview</span>
             </div>
             <a
-              href={`/ai-mode/embed/${selectedDep.id}`}
+              href={`/ai-mode/search`}
               target="_blank"
               rel="noreferrer"
               className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
@@ -743,9 +722,9 @@ curl -X POST ${origin}/api/ai-mode/chat \\
             </a>
           </div>
 
-          {/* Interactive Widget Box */}
-          <div className="bg-white rounded-3xl border border-zinc-200/90 shadow-lg overflow-hidden flex flex-col h-[600px]">
-            {/* Widget Top Bar with Custom Primary Color */}
+          {/* Storefront Search Preview Container */}
+          <div className="bg-white rounded-3xl border border-zinc-200/90 shadow-lg overflow-hidden flex flex-col h-[650px]">
+            {/* Top Brand Banner */}
             <div 
               className="p-4 text-white flex items-center justify-between shadow-xs transition-colors duration-300"
               style={{ backgroundColor: primaryColor }}
@@ -760,97 +739,111 @@ curl -X POST ${origin}/api/ai-mode/chat \\
                 </div>
               </div>
               <button 
-                onClick={() => setPreviewMessages([{ id: 'prev_w', role: 'assistant', content: welcomeMessage, created_at: new Date().toISOString() }])}
+                onClick={() => executePreviewSearch('women products')}
                 className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition"
-                title="Reset conversation"
+                title="Reset search"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* Messages Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafafa]">
-              {previewMessages.map(msg => (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1`}
-                >
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'text-white font-medium'
-                        : 'bg-white text-zinc-900 border border-zinc-200/80 shadow-2xs'
-                    }`}
-                    style={msg.role === 'user' ? { backgroundColor: primaryColor } : {}}
-                  >
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                  </div>
-
-                  {/* Attached Products */}
-                  {msg.products && msg.products.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2 w-full pt-1">
-                      {msg.products.slice(0, 2).map(p => (
-                        <div key={p.id} className="bg-white rounded-xl border border-zinc-200 p-2 shadow-2xs space-y-1">
-                          <div className="h-20 rounded-lg bg-zinc-100 overflow-hidden">
-                            {p.images?.[0] ? (
-                              <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-zinc-400">
-                                <ShoppingBag className="w-5 h-5" />
-                              </div>
-                            )}
-                          </div>
-                          <h5 className="text-[10px] font-bold text-zinc-900 line-clamp-1">{p.title}</h5>
-                          <span className="text-[11px] font-black text-zinc-900 block">₹{p.price.toLocaleString('en-IN')}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            {/* AI Search Bar Box (Matching Reference Image 1) */}
+            <div className="p-4 bg-white border-b border-zinc-100 space-y-3">
+              <form 
+                onSubmit={e => { e.preventDefault(); executePreviewSearch(previewQuery); }}
+                className="flex items-center gap-2"
+              >
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    placeholder={welcomeMessage || "Search products with AI..."}
+                    value={previewQuery}
+                    onChange={e => setPreviewQuery(e.target.value)}
+                    className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition font-medium"
+                  />
                 </div>
-              ))}
+                <button
+                  type="submit"
+                  disabled={previewLoading || !previewQuery.trim()}
+                  className="px-3.5 py-2 rounded-xl text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {previewLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3 text-white" />}
+                  <span>Execute AI Search</span>
+                </button>
+              </form>
 
-              {previewLoading && (
-                <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-                  <Sparkles className="w-3 h-3 text-indigo-500 animate-spin" />
-                  <span>AI assistant is thinking...</span>
+              {/* Quick Search Chips */}
+              {suggestedPrompts.length > 0 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto text-[10px] pb-1">
+                  <span className="text-zinc-400 font-medium shrink-0">Try:</span>
+                  {suggestedPrompts.map((prompt, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => executePreviewSearch(prompt)}
+                      className="px-2.5 py-1 rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border border-zinc-200/80 font-medium shrink-0 transition"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Suggested Starter Questions Chips */}
-            {suggestedPrompts.length > 0 && (
-              <div className="px-3 py-2 bg-white border-t border-zinc-100 flex items-center gap-1.5 overflow-x-auto text-[10px]">
-                {suggestedPrompts.slice(0, 3).map((prompt, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSendPreviewMessage(prompt)}
-                    className="px-2.5 py-1 rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border border-zinc-200 font-medium shrink-0 transition"
-                  >
-                    {prompt}
-                  </button>
-                ))}
+            {/* Live Search Products Grid */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafafa]">
+              <div className="flex items-center justify-between text-[11px] text-zinc-500 font-medium">
+                <span>Results for <strong className="text-zinc-800">"{previewQuery}"</strong></span>
+                <span className="font-mono text-zinc-700 font-semibold">{previewTotalMatches} Products Found</span>
               </div>
-            )}
 
-            {/* Chat Input */}
-            <form onSubmit={e => { e.preventDefault(); handleSendPreviewMessage(); }} className="p-3 bg-white border-t border-zinc-200/80 flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Ask anything..."
-                value={previewInput}
-                onChange={e => setPreviewInput(e.target.value)}
-                className="flex-1 bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition"
-              />
-              <button
-                type="submit"
-                disabled={!previewInput.trim() || previewLoading}
-                className="p-2 rounded-xl text-white disabled:opacity-50 transition shadow-xs cursor-pointer"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
+              {previewLoading ? (
+                <div className="flex flex-col items-center justify-center h-48 text-xs text-zinc-400 space-y-2">
+                  <RefreshCw className="w-5 h-5 text-indigo-500 animate-spin" />
+                  <span>Searching full catalog with AI...</span>
+                </div>
+              ) : previewProducts.length === 0 ? (
+                <div className="text-center py-12 text-zinc-400 text-xs space-y-1">
+                  <ShoppingBag className="w-8 h-8 mx-auto text-zinc-300" />
+                  <p>No products found matching "{previewQuery}"</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {previewProducts.map((p, idx) => (
+                    <div key={p.id || idx} className="bg-white rounded-2xl border border-zinc-200/80 p-2.5 shadow-2xs space-y-2 flex flex-col justify-between hover:border-zinc-300 transition">
+                      <div className="space-y-1.5">
+                        <div className="h-28 rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100">
+                          {p.images?.[0] ? (
+                            <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-zinc-400">
+                              <ShoppingBag className="w-6 h-6" />
+                            </div>
+                          )}
+                          <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase bg-white/90 text-zinc-800 backdrop-blur-xs border border-zinc-200/60">
+                            {p.category || 'Apparel'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h5 className="text-[11px] font-bold text-zinc-900 line-clamp-1">{p.title}</h5>
+                          <p className="text-[10px] text-zinc-500 line-clamp-1">{p.description || 'Catalog item'}</p>
+                        </div>
+                      </div>
+
+                      <div className="pt-1.5 border-t border-zinc-100 flex items-center justify-between">
+                        <span className="text-xs font-black text-zinc-900">₹{p.price.toLocaleString('en-IN')}</span>
+                        <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                          In Stock
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
