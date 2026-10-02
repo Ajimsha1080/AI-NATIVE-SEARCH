@@ -12,7 +12,8 @@ import {
   ShieldCheck, 
   Sparkles,
   Layers,
-  Palette
+  Palette,
+  Layout
 } from 'lucide-react';
 import { AIModeDeployment } from '@/ai-mode/types';
 
@@ -20,6 +21,7 @@ export default function AIModeDeploymentPage() {
   const [deployments, setDeployments] = useState<AIModeDeployment[]>([]);
   const [selectedDep, setSelectedDep] = useState<AIModeDeployment | null>(null);
   const [copied, setCopied] = useState(false);
+  const [embedType, setEmbedType] = useState<'script' | 'iframe'>('script');
   const [originInput, setOriginInput] = useState('*');
   const [saving, setSaving] = useState(false);
 
@@ -65,11 +67,8 @@ export default function AIModeDeploymentPage() {
     }
   }
 
-  function handleCopyEmbed() {
-    if (!selectedDep) return;
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const code = `<script src="${origin}/api/ai-mode/widget/${selectedDep.id}/script.js" async defer></script>`;
-    navigator.clipboard.writeText(code);
+  function handleCopyEmbed(textToCopy: string) {
+    navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -81,7 +80,14 @@ export default function AIModeDeploymentPage() {
   }
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const currentEmbedCode = `<script src="${origin}/api/ai-mode/widget/${selectedDep.id}/script.js" async defer></script>`;
+  const scriptEmbedCode = `<script src="${origin}/api/ai-mode/widget/${selectedDep.id}/script.js" async defer></script>`;
+  const iframeEmbedCode = `<iframe 
+  src="${origin}/ai-mode/embed/${selectedDep.id}"
+  style="width: 380px; height: 600px; border: none; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);"
+  allow="clipboard-write"
+></iframe>`;
+
+  const activeCode = embedType === 'script' ? scriptEmbedCode : iframeEmbedCode;
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
@@ -120,19 +126,68 @@ export default function AIModeDeploymentPage() {
               <span className="text-[11px] text-zinc-400 font-mono">Deployment ID: {selectedDep.id}</span>
             </div>
 
+            {/* Type selector tabs */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center p-1 bg-zinc-100 rounded-xl gap-1">
+                <button
+                  type="button"
+                  onClick={() => setEmbedType('script')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    embedType === 'script' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  &lt;script&gt; Tag (Recommended)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEmbedType('iframe')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    embedType === 'iframe' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  &lt;iframe&gt; Embed
+                </button>
+              </div>
+
+              <span className="text-[11px] text-zinc-500">
+                {embedType === 'script' ? 'Floating store widget' : 'Inline embedded frame'}
+              </span>
+            </div>
+
             <p className="text-xs text-zinc-500">
-              Paste this asynchronous script tag into your website's <code className="bg-zinc-100 px-1 py-0.5 rounded font-mono text-[11px] text-zinc-800">&lt;head&gt;</code> or right before the closing <code className="bg-zinc-100 px-1 py-0.5 rounded font-mono text-[11px] text-zinc-800">&lt;/body&gt;</code> tag.
+              {embedType === 'script'
+                ? "Paste this asynchronous script tag into your website's <head> or right before the closing </body> tag."
+                : "Paste this iframe tag into any page, blog post, or modal container where you want the shopping assistant displayed."}
             </p>
 
-            <div className="bg-zinc-900 text-emerald-400 rounded-xl p-4 font-mono text-xs overflow-x-auto border border-zinc-800 relative group">
-              <pre>{currentEmbedCode}</pre>
-              <button
-                onClick={handleCopyEmbed}
-                className="absolute right-3 top-3 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-xs transition flex items-center gap-1.5 shadow-xs"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied!' : 'Copy Code'}</span>
-              </button>
+            {/* Code container with top header (no overlap) */}
+            <div className="bg-zinc-950 rounded-xl border border-zinc-800 overflow-hidden">
+              {/* Header bar with clean Copy button */}
+              <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800 text-[11px] font-mono text-zinc-400">
+                <span>{embedType === 'script' ? 'HTML / Shopify theme.liquid' : 'HTML / Component'}</span>
+                <button
+                  onClick={() => handleCopyEmbed(activeCode)}
+                  className="px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition flex items-center gap-1.5 border border-zinc-700"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'Copied to Clipboard!' : 'Copy Code'}</span>
+                </button>
+              </div>
+
+              {/* Code text block */}
+              <div className="p-4 text-emerald-400 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all leading-relaxed select-all">
+                {activeCode}
+              </div>
+            </div>
+
+            {/* Quick guide */}
+            <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200/60 text-[11px] text-zinc-600 space-y-1">
+              <strong className="block text-zinc-800 font-semibold">How to install:</strong>
+              <ul className="list-disc list-inside space-y-0.5 text-zinc-600">
+                <li><strong>Shopify:</strong> Go to Online Store &gt; Themes &gt; Edit Code &gt; open <code className="font-mono bg-zinc-200/60 px-1 py-0.2 rounded">theme.liquid</code> &gt; paste right before <code className="font-mono bg-zinc-200/60 px-1 py-0.2 rounded">&lt;/body&gt;</code>.</li>
+                <li><strong>WordPress / WooCommerce:</strong> Add to your header/footer script manager plugin.</li>
+                <li><strong>Custom HTML / React / Next.js:</strong> Add to your root HTML document.</li>
+              </ul>
             </div>
           </div>
 
@@ -144,7 +199,7 @@ export default function AIModeDeploymentPage() {
             </div>
 
             <p className="text-xs text-zinc-500">
-              Protect your deployment by restricting widget execution to verified domains (e.g. <code className="font-mono text-[11px]">yourstore.com, store.myshopify.com</code>). Enter <code className="font-mono text-[11px]">*</code> to allow all domains.
+              Protect your deployment by restricting widget execution to verified domains (e.g. <code className="font-mono text-[11px]">https://yourstore.com, https://store.myshopify.com</code>). Enter <code className="font-mono text-[11px]">*</code> to allow all domains.
             </p>
 
             <div className="flex items-center gap-2">
@@ -161,7 +216,7 @@ export default function AIModeDeploymentPage() {
                   handleUpdateDeployment({ allowed_domains: domains });
                 }}
                 disabled={saving}
-                className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition shadow-xs"
+                className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition shadow-xs cursor-pointer"
               >
                 Save Origins
               </button>
