@@ -90,7 +90,7 @@ export default function AIModeSearchPlayground() {
             className="px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
           >
             {loadingSearch ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-            <span>Execute Search</span>
+            <span>AI Search</span>
           </button>
         </form>
       </div>
