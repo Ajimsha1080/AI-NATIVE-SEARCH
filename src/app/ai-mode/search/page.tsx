@@ -209,100 +209,11 @@ export default function AIModeSearchPlayground() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {result.products.map((product, idx) => (
-                <div key={product.id || idx} className="bg-white rounded-2xl border border-zinc-200/80 p-3.5 shadow-2xs space-y-3 flex flex-col justify-between hover:border-zinc-300 transition group">
-                  <div className="space-y-2.5">
-                    <div className="aspect-[3/4] w-full rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100">
-                      {product.images?.[0] ? (
-                        <img 
-                          src={product.images[0]} 
-                          alt={product.title} 
-                          className="w-full h-full object-cover object-top group-hover:scale-105 transition duration-300" 
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-400">
-                          <ShoppingBag className="w-8 h-8" />
-                        </div>
-                      )}
-
-                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase bg-white/90 text-zinc-800 backdrop-blur-xs shadow-xs border border-zinc-200/60">
-                        {product.category || 'Apparel'}
-                      </span>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-bold text-zinc-900 line-clamp-1 group-hover:text-indigo-600 transition" title={product.title}>
-                        {product.title}
-                      </h4>
-                      <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">
-                        {product.description || 'Exclusive item from official store collection.'}
-                      </p>
-                    </div>
-
-                    {product.subcategories && product.subcategories.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-0.5">
-                        {product.subcategories.slice(0, 3).map((tag, tIdx) => (
-                          <span key={tIdx} className="text-[9px] bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded font-mono">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="pt-2.5 border-t border-zinc-100 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-black text-zinc-900">
-                          ₹{product.price.toLocaleString('en-IN')}
-                        </span>
-                        {Boolean(product.sale_price && product.sale_price > product.price) && (
-                          <span className="text-[10px] text-zinc-400 line-through ml-1.5 font-mono">
-                            ₹{product.sale_price?.toLocaleString('en-IN')}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                        In Stock
-                      </span>
-                    </div>
-
-                    {/* Buy Now / View on Store Navigation Action */}
-                    <div className="pt-0.5">
-                      {product.source_url ? (
-                        <a
-                          href={product.source_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => {
-                            fetch('/api/ai-mode/track', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                event: 'buy_now_click',
-                                product_id: product.id,
-                                source_url: product.source_url,
-                                query
-                              })
-                            }).catch(() => {});
-                          }}
-                          className="w-full bg-zinc-900 hover:bg-zinc-800 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer text-center group/btn"
-                        >
-                          <ShoppingBag className="w-3.5 h-3.5 text-zinc-300" />
-                          <span>Buy Now</span>
-                          <ExternalLink className="w-3 h-3 opacity-60 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 transition" />
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          className="w-full bg-zinc-100 text-zinc-400 text-[11px] font-semibold py-2 px-3 rounded-xl cursor-not-allowed text-center"
-                        >
-                          Details on Store
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <AIModeProductCard 
+                  key={product.id || idx} 
+                  product={product} 
+                  query={query} 
+                />
               ))}
             </div>
           )}
@@ -346,6 +257,178 @@ export default function AIModeSearchPlayground() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+interface AIModeProductCardProps {
+  product: AIModeProduct;
+  query: string;
+}
+
+function AIModeProductCard({ product, query }: AIModeProductCardProps) {
+  const images = (product.images && product.images.length > 0) ? product.images : [];
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (images.length <= 1) return;
+    setActiveImgIdx((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (images.length <= 1) return;
+    setActiveImgIdx((prev) => (prev + 1) % images.length);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-zinc-200/80 p-3.5 shadow-2xs space-y-3 flex flex-col justify-between hover:border-zinc-300 transition group">
+      <div className="space-y-2.5">
+        {/* Interactive Multi-Photo Container */}
+        <div className="aspect-[3/4] w-full rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100 select-none group/img">
+          {images.length > 0 ? (
+            <img 
+              src={images[activeImgIdx] || images[0]} 
+              alt={`${product.title} - View ${activeImgIdx + 1}`} 
+              className="w-full h-full object-cover object-top transition duration-300" 
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-zinc-400">
+              <ShoppingBag className="w-8 h-8" />
+            </div>
+          )}
+
+          {/* Category Tag */}
+          <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase bg-white/90 text-zinc-800 backdrop-blur-xs shadow-xs border border-zinc-200/60 z-10 pointer-events-none">
+            {product.category || 'Apparel'}
+          </span>
+
+          {/* Multi-photo Counter Badge */}
+          {images.length > 1 && (
+            <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[9px] font-mono font-bold bg-zinc-900/80 text-white backdrop-blur-xs shadow-xs border border-white/20 z-10 pointer-events-none">
+              {activeImgIdx + 1}/{images.length}
+            </span>
+          )}
+
+          {/* Prev / Next Navigation Arrows for Multi-image */}
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrevImage}
+                title="Previous photo"
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-zinc-800 shadow-md flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity z-10 cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNextImage}
+                title="Next photo"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-zinc-800 shadow-md flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity z-10 cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Dot Indicators */}
+              <div className="absolute bottom-2 right-2 flex items-center gap-1 z-10 bg-black/30 backdrop-blur-xs px-1.5 py-0.5 rounded-full">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveImgIdx(i);
+                    }}
+                    className={`rounded-full transition-all cursor-pointer ${
+                      activeImgIdx === i 
+                        ? 'w-2 h-2 bg-white' 
+                        : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div>
+          <h4 className="text-xs font-bold text-zinc-900 line-clamp-1 group-hover:text-indigo-600 transition" title={product.title}>
+            {product.title}
+          </h4>
+          <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">
+            {product.description || 'Exclusive item from official store collection.'}
+          </p>
+        </div>
+
+        {product.subcategories && product.subcategories.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {product.subcategories.slice(0, 3).map((tag, tIdx) => (
+              <span key={tIdx} className="text-[9px] bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded font-mono">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="pt-2.5 border-t border-zinc-100 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-black text-zinc-900">
+              ₹{product.price.toLocaleString('en-IN')}
+            </span>
+            {Boolean(product.sale_price && product.sale_price > product.price) && (
+              <span className="text-[10px] text-zinc-400 line-through ml-1.5 font-mono">
+                ₹{product.sale_price?.toLocaleString('en-IN')}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+            In Stock
+          </span>
+        </div>
+
+        {/* Buy Now / View on Store Navigation Action */}
+        <div className="pt-0.5">
+          {product.source_url ? (
+            <a
+              href={product.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                fetch('/api/ai-mode/track', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    event: 'buy_now_click',
+                    product_id: product.id,
+                    source_url: product.source_url,
+                    query
+                  })
+                }).catch(() => {});
+              }}
+              className="w-full bg-zinc-900 hover:bg-zinc-800 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer text-center group/btn"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-zinc-300" />
+              <span>Buy Now</span>
+              <ExternalLink className="w-3 h-3 opacity-60 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 transition" />
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="w-full bg-zinc-100 text-zinc-400 text-[11px] font-semibold py-2 px-3 rounded-xl cursor-not-allowed text-center"
+            >
+              Details on Store
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

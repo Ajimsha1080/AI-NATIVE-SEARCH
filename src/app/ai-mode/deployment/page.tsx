@@ -23,7 +23,9 @@ import {
   RotateCcw,
   RefreshCw,
   Zap,
-  Tag
+  Tag,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { AIModeDeployment, AIModeProduct } from '@/ai-mode/types';
 
@@ -876,40 +878,114 @@ curl -X POST ${origin}/api/ai-mode/search \\
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   {previewProducts.map((p, idx) => (
-                    <div key={p.id || idx} className="bg-white rounded-2xl border border-zinc-200/80 p-2.5 shadow-2xs space-y-2 flex flex-col justify-between hover:border-zinc-300 transition">
-                      <div className="space-y-1.5">
-                        <div className="aspect-[3/4] w-full rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100">
-                          {p.images?.[0] ? (
-                            <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover object-top" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-zinc-400">
-                              <ShoppingBag className="w-6 h-6" />
-                            </div>
-                          )}
-                          <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase bg-white/90 text-zinc-800 backdrop-blur-xs border border-zinc-200/60">
-                            {p.category || 'Apparel'}
-                          </span>
-                        </div>
-
-                        <div>
-                          <h5 className="text-[11px] font-bold text-zinc-900 line-clamp-1">{p.title}</h5>
-                          <p className="text-[10px] text-zinc-500 line-clamp-1">{p.description || 'Catalog item'}</p>
-                        </div>
-                      </div>
-
-                      <div className="pt-1.5 border-t border-zinc-100 flex items-center justify-between">
-                        <span className="text-xs font-black text-zinc-900">₹{p.price.toLocaleString('en-IN')}</span>
-                        <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                          In Stock
-                        </span>
-                      </div>
-                    </div>
+                    <DeploymentPreviewProductCard key={p.id || idx} product={p} />
                   ))}
                 </div>
               )}
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function DeploymentPreviewProductCard({ product }: { product: AIModeProduct }) {
+  const images = (product.images && product.images.length > 0) ? product.images : [];
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (images.length <= 1) return;
+    setActiveImgIdx((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (images.length <= 1) return;
+    setActiveImgIdx((prev) => (prev + 1) % images.length);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-zinc-200/80 p-2.5 shadow-2xs space-y-2 flex flex-col justify-between hover:border-zinc-300 transition group">
+      <div className="space-y-1.5">
+        <div className="aspect-[3/4] w-full rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100 select-none group/img">
+          {images.length > 0 ? (
+            <img 
+              src={images[activeImgIdx] || images[0]} 
+              alt={`${product.title} - View ${activeImgIdx + 1}`} 
+              className="w-full h-full object-cover object-top transition duration-300" 
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-zinc-400">
+              <ShoppingBag className="w-6 h-6" />
+            </div>
+          )}
+
+          <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase bg-white/90 text-zinc-800 backdrop-blur-xs border border-zinc-200/60 z-10 pointer-events-none">
+            {product.category || 'Apparel'}
+          </span>
+
+          {images.length > 1 && (
+            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold bg-zinc-900/80 text-white backdrop-blur-xs shadow-xs border border-white/20 z-10 pointer-events-none">
+              {activeImgIdx + 1}/{images.length}
+            </span>
+          )}
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrevImage}
+                title="Previous photo"
+                className="absolute left-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white/90 hover:bg-white text-zinc-800 shadow flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity z-10 cursor-pointer"
+              >
+                <ChevronLeft className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNextImage}
+                title="Next photo"
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white/90 hover:bg-white text-zinc-800 shadow flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity z-10 cursor-pointer"
+              >
+                <ChevronRight className="w-3 h-3" />
+              </button>
+
+              <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 z-10 bg-black/30 backdrop-blur-xs px-1 py-0.5 rounded-full">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveImgIdx(i);
+                    }}
+                    className={`rounded-full transition-all cursor-pointer ${
+                      activeImgIdx === i 
+                        ? 'w-1.5 h-1.5 bg-white' 
+                        : 'w-1 h-1 bg-white/50 hover:bg-white/80'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div>
+          <h5 className="text-[11px] font-bold text-zinc-900 line-clamp-1">{product.title}</h5>
+          <p className="text-[10px] text-zinc-500 line-clamp-1">{product.description || 'Catalog item'}</p>
+        </div>
+      </div>
+
+      <div className="pt-1.5 border-t border-zinc-100 flex items-center justify-between">
+        <span className="text-xs font-black text-zinc-900">₹{product.price.toLocaleString('en-IN')}</span>
+        <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+          In Stock
+        </span>
       </div>
     </div>
   );
