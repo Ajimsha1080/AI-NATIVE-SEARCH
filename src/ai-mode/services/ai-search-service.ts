@@ -76,7 +76,7 @@ export class AIModeSearchService {
       }
 
       // -------------------------------------------------------------
-      // 2. Score & Rank Valid Candidates (Inside Valid Candidate Set)
+      // 2. Score & Rank Valid Candidates
       // -------------------------------------------------------------
       const titleLower = (product.title || '').toLowerCase();
       const descLower = (product.description || '').toLowerCase();

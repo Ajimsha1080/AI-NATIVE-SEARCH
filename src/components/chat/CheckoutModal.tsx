@@ -301,15 +301,15 @@ export default function CheckoutModal({
       >
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/70">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-zinc-100 text-zinc-800 text-xs font-bold shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-xl bg-zinc-900 text-white flex items-center justify-center text-xs font-bold shadow-2xs">
               <ShoppingBag className="w-3.5 h-3.5" />
             </div>
             <div>
               <h3 className="text-xs font-bold text-zinc-900">
-                Instant Buy Now Checkout
+                Buy Now Checkout
               </h3>
-              <p className="text-[10px] text-zinc-500 font-mono">Secured by ShopMate Agentic Commerce</p>
+              <p className="text-[10px] text-zinc-500 font-mono">Secured by ShopMate Commerce Engine</p>
             </div>
           </div>
 

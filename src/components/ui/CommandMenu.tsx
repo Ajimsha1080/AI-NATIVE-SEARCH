@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Search, Bot, LayoutDashboard, MessageSquare, Database, 
-  Layers, Key, CreditCard, Settings, Shield, Plus, Sparkles,
+  Layers, Key, CreditCard, Settings, Shield, Plus,
   Play, CheckCircle2, ArrowRight, ExternalLink, Globe
 } from 'lucide-react';
 
@@ -70,7 +70,7 @@ export default function CommandMenu({ isOpen, onClose }: CommandMenuProps) {
   const agentItems = agents.map(a => ({
     label: `${a.name} (v${a.version || '1.0'}) — Studio`,
     path: `/agents/${a.id}`,
-    icon: Sparkles,
+    icon: Bot,
     category: 'Agents',
   }));
 

@@ -484,7 +484,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                           <button 
                             onClick={() => handleBuyNow(p)}
                             style={{ backgroundColor: primaryColor }}
-                            className="px-2.5 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold text-white transition flex items-center justify-center gap-1 shadow-xs cursor-pointer hover:opacity-90 active:scale-95"
+                            className="px-2 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold text-white transition flex items-center justify-center gap-1 shadow-xs cursor-pointer hover:opacity-90 active:scale-95"
                             title="Instant Checkout"
                           >
                             <span className="truncate">Buy Now</span>
@@ -808,7 +808,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                       handleBuyNow({ title: itemTitle, price: previewModal.price || 999, imageUrl: previewModal.url, description: previewModal.description });
                     }}
                     style={{ backgroundColor: primaryColor }}
-                    className="px-4 py-2 rounded-xl text-white text-xs font-semibold flex items-center justify-center transition shrink-0 shadow-xs hover:opacity-90 cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-white text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs hover:opacity-90 cursor-pointer"
                   >
                     Buy Now
                   </button>

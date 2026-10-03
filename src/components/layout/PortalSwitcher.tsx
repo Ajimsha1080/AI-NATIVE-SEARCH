@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShieldAlert, 
-  ChevronDown, ExternalLink, ArrowRight, Sparkles, Layers
+  ChevronDown, ExternalLink, ArrowRight, Layers
 } from 'lucide-react';
 import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
 

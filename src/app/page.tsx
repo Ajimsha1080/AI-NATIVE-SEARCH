@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
-  Bot, ShoppingBag, ShieldCheck, ArrowRight, Zap, 
+  Bot, ShoppingBag, ShieldCheck, ArrowRight, 
   Layers, Database, BarChart3, Rocket, MessageSquare, CheckCircle2, 
   ChevronRight, Terminal, Truck, RotateCcw, Cpu, Check, Star, 
   ExternalLink, Code2, Globe2, ShieldAlert, Play, ArrowUpRight,
-  Search, Sliders, CheckCircle, Lock, Server, Sparkles, LayoutDashboard
+  Search, Sliders, CheckCircle, Lock, Server, LayoutDashboard
 } from 'lucide-react';
 
 export default function HomePage() {

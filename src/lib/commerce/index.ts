@@ -534,41 +534,39 @@ export class LocalCommerceProvider {
         return false;
       }
 
-      // Explicit Category constraint with word-boundary precision
+      // Explicit Category constraint
       if (explicitCategory) {
         const expCatL = explicitCategory.toLowerCase().trim();
         const expCatStem = this.stemWord(expCatL);
 
-        const isReqShirt = expCatL === 'shirt';
-        const isReqTshirt = /t-?shirt|tee/i.test(expCatL);
+        const isCategoryExact = catL === expCatL;
+        const isCategoryStemmed = this.stemWord(catL) === expCatStem;
+        const isTitleExact = titleL.includes(expCatL) || titleL.split(/\s+/).map(t => this.stemWord(t)).includes(expCatStem);
+        const isTagExact = tagsL.includes(expCatL) || tagsL.map(t => this.stemWord(t)).includes(expCatStem);
+        const isCrumbExact = crumbsL.includes(expCatL);
 
-        if (isReqShirt) {
-          const hasShirtWord = /\bshirts?\b/i.test(fullText);
-          const isExclusivelyTshirt = /\b(t-?shirt|tee|tshirt|t-shirts|tees|tshirts)\b/i.test(catL) ||
-                                      (/\b(t-?shirt|tee|tshirt|tees)\b/i.test(titleL) && !/\b(linen shirt|cotton shirt|printed shirt|oxford shirt|embroidered shirt|sleeve shirt|formal shirt|casual shirt)\b/i.test(titleL));
-          const isOtherType = /\b(pant|pants|jogger|joggers|shorts|dress|dresses|saree|sari|kurta|kurti|hoodie|jacket|shoes|sneakers|visor|balaclava)\b/i.test(catL) && !/\bshirts?\b/i.test(catL);
-
-          if (!hasShirtWord || isExclusivelyTshirt || isOtherType) {
-            return false;
-          }
-        } else if (isReqTshirt) {
-          const hasTshirtWord = /\b(t-?shirt|tee|tshirt|t-shirts|tees|tshirts)\b/i.test(fullText);
-          if (!hasTshirtWord) return false;
-        } else {
-          const reqRegex = new RegExp(`\\b${expCatStem.replace(/s$/, '')}s?\\b`, 'i');
-          if (!reqRegex.test(fullText)) return false;
+        if (!isCategoryExact && !isCategoryStemmed && !isTitleExact && !isTagExact && !isCrumbExact) {
+          return false;
         }
       }
 
-      // Price constraints (parent product level)
-      if (minPrice !== undefined && p.price < minPrice && (!p.variants || p.variants.length === 0)) return false;
-      if (maxPrice !== undefined && p.price > maxPrice && (!p.variants || p.variants.length === 0)) return false;
+      // Price constraints
+      if (minPrice !== undefined && p.price < minPrice) return false;
+      if (maxPrice !== undefined && p.price > maxPrice) return false;
 
       // In Stock constraint
       if (inStockOnly && (!p.in_stock || p.total_inventory <= 0)) return false;
 
-      // Variant-level constraints (Color, Size, Price on single variant)
-      if (p.variants && p.variants.length > 0) {
+      // Size constraint
+      if (size) {
+        const sizeL = size.toLowerCase();
+        const hasSize = p.variants.some(v => v.attributes.size?.toLowerCase() === sizeL && v.inventory_quantity > 0);
+        if (!hasSize) return false;
+      }
+
+      // Color constraint
+      if (color) {
+        const colorL = color.toLowerCase();
         const colorSynonyms: Record<string, string[]> = {
           red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral'],
           blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky'],
@@ -578,50 +576,13 @@ export class LocalCommerceProvider {
           yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon'],
           brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha']
         };
-
-        const colorL = color ? color.toLowerCase() : undefined;
-        const colorFamily = colorL ? [colorL, ...(colorSynonyms[colorL] || [])] : undefined;
-        const sizeL = size ? size.toLowerCase() : undefined;
-
-        const hasMatchingVariant = p.variants.some(v => {
-          if (inStockOnly && v.inventory_quantity <= 0) return false;
-          if (maxPrice !== undefined && v.price > maxPrice) return false;
-          if (minPrice !== undefined && v.price < minPrice) return false;
-
-          if (sizeL) {
-            const vSize = (v.attributes.size || v.title || '').toLowerCase();
-            const sizeRegex = new RegExp(`(^|\\b|\\s)${sizeL}(\\b|\\s|$)`, 'i');
-            if (!sizeRegex.test(vSize)) return false;
-          }
-
-          if (colorFamily) {
-            const vColor = `${v.attributes.color || ''} ${v.title || ''}`.toLowerCase();
-            const matchesVarColor = colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(vColor));
-            const matchesParentColor = colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(fullText));
-            if (!matchesVarColor && !matchesParentColor) return false;
-          }
-
-          return true;
+        const colorFamily = [colorL, ...(colorSynonyms[colorL] || [])];
+        const hasColorInText = colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(fullText));
+        const hasColorInVariant = p.variants.some(v => {
+          const vColor = `${v.attributes.color || ''} ${v.title || ''}`.toLowerCase();
+          return colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(vColor));
         });
-
-        if (!hasMatchingVariant) return false;
-      } else {
-        // Fallback for product without variants
-        if (size) return false;
-        if (color) {
-          const colorL = color.toLowerCase();
-          const colorSynonyms: Record<string, string[]> = {
-            red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral'],
-            blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky'],
-            green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest'],
-            black: ['black', 'stealth', 'charcoal', 'jet', 'dark', 'obsidian'],
-            white: ['white', 'off-white', 'off white', 'ivory', 'cream'],
-            yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon'],
-            brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha']
-          };
-          const colorFamily = [colorL, ...(colorSynonyms[colorL] || [])];
-          if (!colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(fullText))) return false;
-        }
+        if (!hasColorInText && !hasColorInVariant) return false;
       }
 
       return true;
@@ -727,9 +688,8 @@ export class LocalCommerceProvider {
       const maxScore = scoredCandidates.length > 0 ? Math.max(...scoredCandidates.map(s => s.score)) : 0;
 
       if (maxScore >= minThreshold) {
-        const scoreRatio = contentTokens.length >= 3 ? 0.55 : 0.35;
         candidates = scoredCandidates
-          .filter(s => s.score >= minThreshold && (contentTokens.length < 2 || s.score >= maxScore * scoreRatio))
+          .filter(s => s.score >= minThreshold && (contentTokens.length < 2 || s.score >= maxScore * 0.35))
           .map(s => s.product);
       } else {
         candidates = [];

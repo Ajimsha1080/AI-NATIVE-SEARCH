@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Bot, Shield, LogOut, ChevronDown, User, Plus, 
-  Building, Search, Sparkles, ExternalLink, ArrowRight,
+  Building, Search, ExternalLink, ArrowRight,
   Menu, X, LayoutGrid, Package, BookOpen, Layers, 
   MessageSquare, BarChart3, Globe, ShieldCheck, Users, CreditCard, Settings
 } from 'lucide-react';
