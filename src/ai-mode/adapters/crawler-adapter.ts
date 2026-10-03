@@ -243,24 +243,67 @@ export class AIModeCrawlerAdapter {
         const json = JSON.parse(ldMatch[1].trim());
         const entities = Array.isArray(json) ? json : (json['@graph'] || [json]);
         for (const item of entities) {
-          if (item['@type'] === 'Product' || (item.name && item.offers)) {
+          if (item && (item['@type'] === 'Product' || (Array.isArray(item['@type']) && item['@type'].includes('Product')) || (item.name && item.offers))) {
             const offers = Array.isArray(item.offers) ? item.offers[0] : item.offers;
-            const price = parseFloat(offers?.price || '0') || 0;
-            const images = Array.isArray(item.image) ? item.image : (item.image ? [item.image] : []);
+            const price = parseFloat(String(offers?.price || offers?.lowPrice || '0').replace(/[^0-9.]/g, '')) || 0;
+            
+            // Extract all image URLs from schema
+            let images: string[] = [];
+            const rawImg = item.image || item.images;
+            if (Array.isArray(rawImg)) {
+              images = rawImg.map((img: any) => typeof img === 'string' ? img : img?.url || img?.contentUrl).filter(Boolean);
+            } else if (typeof rawImg === 'string') {
+              images = [rawImg];
+            } else if (rawImg?.url || rawImg?.contentUrl) {
+              images = [rawImg.url || rawImg.contentUrl];
+            }
 
-            products.push({
-              id: `prod_${generateSlug(item.name || 'product')}`,
-              title: item.name || 'Discovered Product',
-              price,
-              description: cleanHtmlText(item.description || ''),
-              category: item.category || inferCategory(item.name || '', []),
-              images: images.length > 0 ? images : [],
-              url: item.url || pageUrl,
-              in_stock: offers?.availability?.includes('InStock') ?? true
-            });
+            const title = String(item.name || item.title || '').trim();
+            if (title) {
+              products.push({
+                id: `prod_${generateSlug(title)}`,
+                title,
+                price,
+                description: cleanHtmlText(item.description || ''),
+                category: item.category || (item.brand?.name ? item.brand.name : inferCategory(title, [])),
+                images: images.length > 0 ? images : [],
+                url: item.url || pageUrl,
+                in_stock: offers?.availability ? !String(offers.availability).toLowerCase().includes('outofstock') : true
+              });
+            }
           }
         }
       } catch (e) {}
+    }
+
+    // 2. OpenGraph Product Extraction Fallback
+    if (products.length === 0) {
+      const getMeta = (prop: string): string => {
+        const regex = new RegExp(`<meta\\s+(?:property|name)=["']${prop}["']\\s+content=["']([^"']*)["']`, 'i');
+        const match = html.match(regex);
+        return match ? match[1].trim() : '';
+      };
+
+      const ogTitle = getMeta('og:title') || getMeta('twitter:title');
+      const ogType = getMeta('og:type');
+
+      if (ogTitle && (ogType === 'product' || ogType === 'og:product' || /product/i.test(pageUrl))) {
+        const ogDesc = getMeta('og:description') || getMeta('description');
+        const ogImage = getMeta('og:image') || getMeta('twitter:image');
+        const ogPrice = parseFloat(getMeta('product:price:amount') || getMeta('og:price:amount') || '0');
+        const ogAvailability = getMeta('product:availability') || getMeta('og:availability');
+
+        products.push({
+          id: `prod_${generateSlug(ogTitle)}`,
+          title: ogTitle,
+          price: ogPrice,
+          description: cleanHtmlText(ogDesc),
+          category: inferCategory(ogTitle, []),
+          images: ogImage ? [ogImage] : [],
+          url: pageUrl,
+          in_stock: ogAvailability ? !ogAvailability.toLowerCase().includes('outofstock') : true
+        });
+      }
     }
 
     return products;
