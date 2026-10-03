@@ -58,6 +58,87 @@ const DEMOGRAPHIC_ALIASES: Record<string, string> = {
   'couples': 'unisex'
 };
 
+const COMMON_PRODUCT_CONCEPTS: Record<string, string> = {
+  'dress': 'dress',
+  'dresses': 'dress',
+  'saree': 'saree',
+  'sarees': 'saree',
+  'sari': 'saree',
+  'saris': 'saree',
+  'kurti': 'kurti',
+  'kurtis': 'kurti',
+  'kurta': 'kurti',
+  'kurtas': 'kurti',
+  'skirt': 'skirt',
+  'skirts': 'skirt',
+  'gown': 'dress',
+  'gowns': 'dress',
+  'frock': 'dress',
+  'frocks': 'dress',
+  'shirt': 'shirt',
+  'shirts': 'shirt',
+  'tshirt': 't-shirt',
+  'tshirts': 't-shirt',
+  't-shirt': 't-shirt',
+  't-shirts': 't-shirt',
+  'tee': 't-shirt',
+  'tees': 't-shirt',
+  'hoodie': 'hoodie',
+  'hoodies': 'hoodie',
+  'sweatshirt': 'sweatshirt',
+  'sweatshirts': 'sweatshirt',
+  'sweater': 'sweater',
+  'sweaters': 'sweater',
+  'jogger': 'joggers',
+  'joggers': 'joggers',
+  'pant': 'pants',
+  'pants': 'pants',
+  'trouser': 'pants',
+  'trousers': 'pants',
+  'jeans': 'pants',
+  'shorts': 'pants',
+  'jacket': 'jacket',
+  'jackets': 'jacket',
+  'coat': 'jacket',
+  'coats': 'jacket',
+  'blazer': 'jacket',
+  'blazers': 'jacket',
+  'shoe': 'shoes',
+  'shoes': 'shoes',
+  'sneaker': 'shoes',
+  'sneakers': 'shoes',
+  'footwear': 'shoes',
+  'boot': 'shoes',
+  'boots': 'shoes',
+  'sandal': 'shoes',
+  'sandals': 'shoes',
+  'bag': 'bags',
+  'bags': 'bags',
+  'backpack': 'bags',
+  'backpacks': 'bags',
+  'handbag': 'bags',
+  'handbags': 'bags',
+  'tote': 'bags',
+  'totes': 'bags',
+  'wallet': 'bags',
+  'wallets': 'bags',
+  'sleeve': 'sleeves',
+  'sleeves': 'sleeves',
+  'laptop sleeve': 'sleeves',
+  'scrunchie': 'accessories',
+  'scrunchies': 'accessories',
+  'bow': 'accessories',
+  'bows': 'accessories',
+  'hair bow': 'accessories',
+  'hair bows': 'accessories',
+  'belt': 'accessories',
+  'belts': 'accessories',
+  'cap': 'accessories',
+  'caps': 'accessories',
+  'hat': 'accessories',
+  'hats': 'accessories'
+};
+
 export class QueryUnderstandingEngine {
   /**
    * Universal natural language query understanding with dynamic constraint extraction,
@@ -309,7 +390,31 @@ export class QueryUnderstandingEngine {
     }
 
     // -------------------------------------------------------------
-    // 7. General Attribute Match Fallbacks (when schema is sparse)
+    // 7. General Category & Product Concept Fallbacks
+    // -------------------------------------------------------------
+    if (!extractedCategory) {
+      for (const [term, normalizedCat] of Object.entries(COMMON_PRODUCT_CONCEPTS)) {
+        const termRegex = new RegExp(`\\b${escapeRegex(term)}\\b`, 'i');
+        if (termRegex.test(queryLower) && !exclusions.includes(term)) {
+          extractedCategory = normalizedCat;
+          extractedProductType = term;
+          productConcepts.push(term);
+          hardConstraints.push({
+            field: 'category',
+            operator: '=',
+            value: normalizedCat,
+            is_hard: true,
+            is_variant_level: false,
+            confidence: 0.92,
+            raw_token: term
+          });
+          break;
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 8. General Attribute Match Fallbacks (when schema is sparse)
     // -------------------------------------------------------------
     // Explicit / Standalone Size Regex (e.g. "size M", "size 9", "size XL", "size 32", "Red M shirt")
     if (!extractedSize) {

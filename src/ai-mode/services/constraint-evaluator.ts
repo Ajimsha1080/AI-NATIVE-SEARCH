@@ -46,24 +46,56 @@ export class ConstraintEvaluator {
       const tagsLower = (product.subcategories || []).map(t => t.toLowerCase());
       const allProductText = `${titleLower} ${descLower} ${catLower} ${tagsLower.join(' ')}`;
 
-      const isExplicitlyWomen = /\b(women|woman|womens|women's|female|ladies|lady|girl|girls|saree|sarees|bow|bows|hair|scrunchie|scrunchies|dress|dresses|kurti|kurtis|skirt|skirts|blouse)\b/i.test(allProductText);
-      const isExplicitlyMen = (/\b(men|mens|men's|male|man|guys|boy|boys)\b/i.test(allProductText) || tagsLower.includes('men') || descLower.includes('for men') || descLower.includes("men's")) && !isExplicitlyWomen;
-      const isUnisex = /\b(unisex|couple|combo|oversized|streetwear|tee|t-shirt|hoodie|jacket)\b/i.test(allProductText);
+      // Explicit Unisex indicator (ONLY if truly unisex or couple combo)
+      const isExplicitlyUnisex = /\b(unisex|couple\s+combo|all\s+genders?)\b/i.test(allProductText) ||
+                                 tagsLower.includes('unisex') || 
+                                 tagsLower.includes('couple combo');
 
-      if (targetGender === 'women' && isExplicitlyMen && !isExplicitlyWomen && !isUnisex) {
-        return {
-          isValid: false,
-          failureReason: `Product is for men, user requested women's collection`,
-          failedConstraint: 'gender: women'
-        };
+      // Explicit Women indicators
+      const isExplicitlyWomen = /\b(women|woman|womens|women's|female|ladies|lady|girl|girls|saree|sarees|bow|bows|scrunchie|scrunchies|dress|dresses|kurti|kurtis|skirt|skirts|blouse)\b/i.test(allProductText) ||
+                                tagsLower.some(t => /\b(women|womens|women's|saree|kurti|scrunchie|bow)\b/i.test(t));
+
+      // Explicit Men indicators
+      const isExplicitlyMen = /\b(men|mens|men's|male|man|guys|boy|boys)\b/i.test(allProductText) || 
+                              tagsLower.some(t => /\b(men|mens|men's)\b/i.test(t)) || 
+                              /\b(for men|men's collection)\b/i.test(descLower) || 
+                              /\b(for men|men's)\b/i.test(titleLower);
+
+      if (targetGender === 'women') {
+        // If product is explicitly for men and NOT explicitly co-tagged for women or explicitly unisex -> REJECT
+        if (isExplicitlyMen && !isExplicitlyWomen && !isExplicitlyUnisex) {
+          return {
+            isValid: false,
+            failureReason: `Product is for men, user requested women's collection`,
+            failedConstraint: 'gender: women'
+          };
+        }
+        // If product is categorized under Men without Women/Unisex -> REJECT
+        if (tagsLower.includes('men') && !tagsLower.includes('women') && !isExplicitlyUnisex && !isExplicitlyWomen) {
+          return {
+            isValid: false,
+            failureReason: `Product is categorized under Men`,
+            failedConstraint: 'gender: women'
+          };
+        }
       }
 
-      if (targetGender === 'men' && isExplicitlyWomen && !isUnisex) {
-        return {
-          isValid: false,
-          failureReason: `Product is for women, user requested men's collection`,
-          failedConstraint: 'gender: men'
-        };
+      if (targetGender === 'men') {
+        // If product is explicitly for women and NOT explicitly unisex -> REJECT
+        if (isExplicitlyWomen && !isExplicitlyMen && !isExplicitlyUnisex) {
+          return {
+            isValid: false,
+            failureReason: `Product is for women, user requested men's collection`,
+            failedConstraint: 'gender: men'
+          };
+        }
+        if (tagsLower.includes('women') && !tagsLower.includes('men') && !isExplicitlyUnisex) {
+          return {
+            isValid: false,
+            failureReason: `Product is categorized under Women`,
+            failedConstraint: 'gender: men'
+          };
+        }
       }
 
       if (targetGender === 'kids') {
@@ -81,21 +113,41 @@ export class ConstraintEvaluator {
     // -------------------------------------------------------------
     // 3. Category / Product Type Precision Check
     // -------------------------------------------------------------
-    const requiredCategory = plan.extracted_filters.category;
+    const requiredCategory = plan.extracted_filters.category || plan.extracted_filters.product_type;
     if (requiredCategory) {
-      const catLower = requiredCategory.toLowerCase();
+      const catLower = requiredCategory.toLowerCase().trim();
+      const rootCat = catLower.replace(/(es|s)$/i, '');
+
       const prodCatLower = (product.category || '').toLowerCase();
       const prodTitleLower = (product.title || '').toLowerCase();
       const prodTagsLower = (product.subcategories || []).map(t => t.toLowerCase());
 
-      const matchesCategory = prodCatLower.includes(catLower) || 
-                              prodTitleLower.includes(catLower) || 
-                              prodTagsLower.some(t => t.includes(catLower));
+      // Category synonym / family dictionary
+      const categorySynonyms: Record<string, string[]> = {
+        dress: ['dress', 'dresses', 'saree', 'sarees', 'kurti', 'kurtis', 'gown', 'gowns', 'frock', 'frocks', 'skirt', 'skirts', 'suit', 'lehenga', 'sari'],
+        saree: ['saree', 'sarees', 'sari', 'saris'],
+        kurti: ['kurti', 'kurtis', 'kurta', 'kurtas', 'suit', 'suits'],
+        shirt: ['shirt', 'shirts', 'tshirt', 't-shirt', 'tee', 'tees', 'top', 'tops', 'polo'],
+        't-shirt': ['tshirt', 't-shirt', 't-shirts', 'tshirts', 'tee', 'tees', 'top'],
+        joggers: ['jogger', 'joggers', 'pant', 'pants', 'trouser', 'trousers', 'trackpant', 'trackpants'],
+        pants: ['pant', 'pants', 'trouser', 'trousers', 'jeans', 'jogger', 'joggers', 'trackpant'],
+        shoes: ['shoe', 'shoes', 'sneaker', 'sneakers', 'footwear', 'sandal', 'sandals', 'boot', 'boots'],
+        bags: ['bag', 'bags', 'backpack', 'backpacks', 'handbag', 'handbags', 'tote', 'wallet'],
+        sleeves: ['sleeve', 'sleeves', 'laptop sleeve', 'cover', 'case'],
+        accessories: ['accessory', 'accessories', 'scrunchie', 'scrunchies', 'bow', 'bows', 'belt', 'belts', 'cap', 'caps', 'hat', 'hats']
+      };
+
+      const synonymList = categorySynonyms[catLower] || categorySynonyms[rootCat] || [catLower, rootCat];
+      const synonymRegex = new RegExp(`\\b(${synonymList.map(s => escapeRegex(s.replace(/(es|s)$/i, '')) + '(es|s)?').join('|')})\\b`, 'i');
+
+      const matchesCategory = synonymRegex.test(prodCatLower) || 
+                              synonymRegex.test(prodTitleLower) || 
+                              prodTagsLower.some(t => synonymRegex.test(t));
 
       if (!matchesCategory) {
         return {
           isValid: false,
-          failureReason: `Category mismatch: expected "${requiredCategory}", got "${product.category}"`,
+          failureReason: `Category mismatch: expected "${requiredCategory}", got "${product.category || product.title}"`,
           failedConstraint: `category: ${requiredCategory}`
         };
       }
