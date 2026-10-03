@@ -10,9 +10,10 @@
  * 5. Variant-Aware Multi-Attribute Consistency
  * 6. Hard-Constraint Invariant Enforcement (0% violation rate across all results)
  * 7. Soft Preferences & Stylistic Alignment
- * 8. Conversational Multi-Turn Shopping & State Refinements
- * 9. Accurate Post-Validation Pagination & Diagnostics
- * 10. Isolated Deployments & Widget Script Generation
+ * 8. Arbitrary Multi-Constraint Combination Invariant Enforcement
+ * 9. Conversational Multi-Turn Shopping & State Refinements
+ * 10. Accurate Post-Validation Pagination & Diagnostics
+ * 11. Isolated Deployments & Widget Script Generation
  */
 
 import { aiModeStorage } from '../src/ai-mode/services/storage';
@@ -187,9 +188,85 @@ async function runTests() {
   }
 
   // -------------------------------------------------------------
-  // Test Suite 6: Conversational Shopping & Cart Intent Detection
+  // Test Suite 6: Arbitrary Multi-Constraint Combination Invariants
   // -------------------------------------------------------------
-  console.log('\n💬 Test Suite 6: Conversational Multi-turn Agent & State Refinements');
+  console.log('\n🎯 Test Suite 6: Arbitrary Multi-Constraint Invariant Verification');
+  try {
+    const multiConstraintQueries = [
+      {
+        query: 'red colour shirt for men under 2000 rupee',
+        desc: '[color] + [product type] + [audience] + [price]',
+        check: (p: AIModeSearchPlan) => {
+          return p.extracted_filters.color === 'red' &&
+                 p.extracted_filters.category?.toLowerCase() === 'shirt' &&
+                 p.extracted_filters.gender === 'men' &&
+                 p.extracted_filters.max_price === 2000;
+        }
+      },
+      {
+        query: 'cotton shirt for men under 1500',
+        desc: '[material] + [product type] + [audience] + [price]',
+        check: (p: AIModeSearchPlan) => {
+          return p.extracted_filters.material === 'cotton' &&
+                 p.extracted_filters.category?.toLowerCase() === 'shirt' &&
+                 p.extracted_filters.gender === 'men' &&
+                 p.extracted_filters.max_price === 1500;
+        }
+      },
+      {
+        query: 'size M black shirt',
+        desc: '[size] + [color] + [product type]',
+        check: (p: AIModeSearchPlan) => {
+          return p.extracted_filters.size === 'M' &&
+                 p.extracted_filters.color === 'black' &&
+                 p.extracted_filters.category?.toLowerCase() === 'shirt';
+        }
+      },
+      {
+        query: 'women dress under 3000',
+        desc: '[audience] + [category] + [price]',
+        check: (p: AIModeSearchPlan) => {
+          return p.extracted_filters.gender === 'women' &&
+                 p.extracted_filters.max_price === 3000;
+        }
+      },
+      {
+        query: 'shirt without black under 2000',
+        desc: '[product type] + [negative exclusion] + [price]',
+        check: (p: AIModeSearchPlan) => {
+          return p.exclusions.includes('black') &&
+                 p.extracted_filters.category?.toLowerCase() === 'shirt' &&
+                 p.extracted_filters.max_price === 2000;
+        }
+      }
+    ];
+
+    for (const testCase of multiConstraintQueries) {
+      const plan = AIModeSearchService.parseQuery(testCase.query, undefined, testWorkspaceId);
+      assert(testCase.check(plan), `Parsed all explicit constraints for: "${testCase.query}" (${testCase.desc})`);
+      
+      const searchRes = await AIModeSearchService.search(plan, testWorkspaceId);
+      // Verify Invariant: For EVERY returned final product, ALL applicable hard constraints are satisfied
+      let invariantHolds = true;
+      for (const prod of searchRes.products) {
+        const evalRes = ConstraintEvaluator.evaluateProduct(prod, plan);
+        if (!evalRes.isValid) {
+          invariantHolds = false;
+          console.error(`Invariant violation on ${prod.title}: ${evalRes.failureReason}`);
+          break;
+        }
+      }
+      assert(invariantHolds, `INVARIANT: 100% of returned products (${searchRes.products.length}) satisfy all constraints for "${testCase.query}"`);
+      assert(searchRes.diagnostics !== undefined, `Diagnostics recorded filter expression & execution metadata`);
+    }
+  } catch (err: any) {
+    assert(false, `Multi-constraint invariant test threw error: ${err.message}`);
+  }
+
+  // -------------------------------------------------------------
+  // Test Suite 7: Conversational Shopping & Cart Intent Detection
+  // -------------------------------------------------------------
+  console.log('\n💬 Test Suite 7: Conversational Multi-turn Agent & State Refinements');
   let convId = '';
   try {
     // Turn 1: Product inquiry
@@ -226,9 +303,9 @@ async function runTests() {
   }
 
   // -------------------------------------------------------------
-  // Test Suite 7: Isolated Deployments & Widget Embed
+  // Test Suite 8: Isolated Deployments & Widget Embed
   // -------------------------------------------------------------
-  console.log('\n🌐 Test Suite 7: Isolated Deployments & Script Generator');
+  console.log('\n🌐 Test Suite 8: Isolated Deployments & Script Generator');
   let testDeploymentId = '';
   try {
     const deployment = AIModeDeploymentService.createDeployment({

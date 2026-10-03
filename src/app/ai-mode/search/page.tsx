@@ -122,13 +122,18 @@ export default function AIModeSearchPlayground() {
                 )}
               </div>
 
-              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
-                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Hard Constraints</span>
-                <div className="space-y-0.5">
+              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1 sm:col-span-2 lg:col-span-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Hard Constraints</span>
+                  <span className="text-[10px] text-zinc-500 font-mono">({result.search_plan.hard_constraints?.length || 0})</span>
+                </div>
+                <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
                   {result.search_plan.hard_constraints && result.search_plan.hard_constraints.length > 0 ? (
-                    result.search_plan.hard_constraints.slice(0, 3).map((c, cIdx) => (
-                      <div key={cIdx} className="text-[11px] text-amber-300 truncate">
-                        • {c.field} {c.operator} {typeof c.value === 'number' ? `₹${c.value}` : String(c.value)}
+                    result.search_plan.hard_constraints.map((c, cIdx) => (
+                      <div key={cIdx} className="text-[11px] text-amber-300 flex items-center justify-between gap-1 bg-zinc-900/50 px-1.5 py-0.5 rounded border border-zinc-700/40">
+                        <span className="font-semibold text-amber-200">{c.field}</span>
+                        <span className="text-zinc-400 font-mono">{c.operator}</span>
+                        <span className="text-emerald-300 truncate max-w-[120px]">{typeof c.value === 'number' ? `₹${c.value}` : Array.isArray(c.value) ? `[₹${c.value.join('–')}]` : String(c.value)}</span>
                       </div>
                     ))
                   ) : (
@@ -139,7 +144,7 @@ export default function AIModeSearchPlayground() {
 
               <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
                 <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Soft Preferences</span>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1 max-h-36 overflow-y-auto">
                   {result.search_plan.soft_preferences && result.search_plan.soft_preferences.length > 0 ? (
                     result.search_plan.soft_preferences.map((p, pIdx) => (
                       <span key={pIdx} className="px-1.5 py-0.5 rounded bg-zinc-700 text-indigo-300 text-[10px]">
@@ -159,6 +164,11 @@ export default function AIModeSearchPlayground() {
                   <p className="text-[10px] text-rose-300 truncate">Excluded: {result.search_plan.exclusions.join(', ')}</p>
                 ) : (
                   <p className="text-[10px] text-emerald-400 truncate">No Exclusions</p>
+                )}
+                {result.diagnostics?.rejection_reasons && Object.keys(result.diagnostics.rejection_reasons).length > 0 && (
+                  <div className="pt-1 border-t border-zinc-700/50 text-[9px] text-zinc-400">
+                    <span className="text-zinc-300 font-bold">Filtered out:</span> {Object.entries(result.diagnostics.rejection_reasons).map(([k, v]) => `${k.replace('_failed', '')} (${v})`).join(', ')}
+                  </div>
                 )}
               </div>
             </div>

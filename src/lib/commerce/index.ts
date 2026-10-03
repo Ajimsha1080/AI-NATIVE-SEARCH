@@ -554,35 +554,52 @@ export class LocalCommerceProvider {
       if (minPrice !== undefined && p.price < minPrice) return false;
       if (maxPrice !== undefined && p.price > maxPrice) return false;
 
-      // In Stock constraint
-      if (inStockOnly && (!p.in_stock || p.total_inventory <= 0)) return false;
+      // Variant-Level Multi-Attribute Consistency (Size, Color, Variant Stock)
+      const colorSynonyms: Record<string, string[]> = {
+        red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral'],
+        blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky'],
+        green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest'],
+        black: ['black', 'stealth', 'charcoal', 'jet', 'dark', 'obsidian'],
+        white: ['white', 'off-white', 'off white', 'ivory', 'cream'],
+        yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon'],
+        brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha']
+      };
+      const colorFamily = color ? [color.toLowerCase(), ...(colorSynonyms[color.toLowerCase()] || [])] : null;
 
-      // Size constraint
-      if (size) {
-        const sizeL = size.toLowerCase();
-        const hasSize = p.variants.some(v => v.attributes.size?.toLowerCase() === sizeL && v.inventory_quantity > 0);
-        if (!hasSize) return false;
-      }
+      if (p.variants && p.variants.length > 0) {
+        const hasMatchingVariant = p.variants.some(v => {
+          if (inStockOnly && v.inventory_quantity <= 0) return false;
 
-      // Color constraint
-      if (color) {
-        const colorL = color.toLowerCase();
-        const colorSynonyms: Record<string, string[]> = {
-          red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral'],
-          blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky'],
-          green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest'],
-          black: ['black', 'stealth', 'charcoal', 'jet', 'dark', 'obsidian'],
-          white: ['white', 'off-white', 'off white', 'ivory', 'cream'],
-          yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon'],
-          brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha']
-        };
-        const colorFamily = [colorL, ...(colorSynonyms[colorL] || [])];
-        const hasColorInText = colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(fullText));
-        const hasColorInVariant = p.variants.some(v => {
-          const vColor = `${v.attributes.color || ''} ${v.title || ''}`.toLowerCase();
-          return colorFamily.some(c => new RegExp(`\\b${c}\\b`, 'i').test(vColor));
+          if (size) {
+            const sizeL = size.toLowerCase();
+            const vSize = (v.attributes?.size || v.title || '').toLowerCase();
+            if (vSize !== sizeL && !new RegExp(`\\b${escapeRegex(sizeL)}\\b`, 'i').test(vSize)) return false;
+          }
+
+          if (colorFamily) {
+            const vAttrColor = (v.attributes?.color || '').toLowerCase().trim();
+            const vTitle = (v.title || '').toLowerCase().trim();
+            const pTitle = (p.title || '').toLowerCase();
+
+            if (vAttrColor) {
+              const matches = colorFamily.some(c => new RegExp(`\\b${escapeRegex(c)}\\b`, 'i').test(vAttrColor));
+              if (!matches) return false;
+            } else if (vTitle && colorFamily.some(c => new RegExp(`\\b${escapeRegex(c)}\\b`, 'i').test(vTitle))) {
+              // Matches variant title
+            } else if (colorFamily.some(c => new RegExp(`\\b${escapeRegex(c)}\\b`, 'i').test(pTitle))) {
+              // Matches product title
+            } else {
+              return false;
+            }
+          }
+
+          return true;
         });
-        if (!hasColorInText && !hasColorInVariant) return false;
+
+        if (!hasMatchingVariant) return false;
+      } else {
+        if (inStockOnly && (!p.in_stock || p.total_inventory <= 0)) return false;
+        if (colorFamily && !colorFamily.some(c => new RegExp(`\\b${escapeRegex(c)}\\b`, 'i').test(titleL))) return false;
       }
 
       return true;
@@ -992,3 +1009,7 @@ export class LocalCommerceProvider {
 }
 
 export const commerceEngine = new LocalCommerceProvider();
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

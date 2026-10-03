@@ -73,10 +73,13 @@ export interface SearchConstraint {
   field: string;
   operator: SearchConstraintOperator;
   value: any;
+  normalized_value?: any;
   is_hard: boolean;
   is_variant_level: boolean;
   confidence?: number;
+  source?: 'explicit' | 'inferred' | 'catalog' | 'conversational';
   raw_token?: string;
+  unverified?: boolean;
 }
 
 export interface AIModeSearchPlan {
@@ -114,9 +117,20 @@ export interface AIModeSearchPlan {
 }
 
 export interface SearchDiagnosticRecord {
-  total_catalog_count: number;
+  original_query: string;
+  parsed_query: string;
+  extracted_entities: Record<string, any>;
+  explicit_constraints: SearchConstraint[];
+  normalized_constraints: SearchConstraint[];
+  semantic_query: string;
+  lexical_query: string;
   candidate_count: number;
+  candidate_products: number;
+  filter_expression: string;
+  filtered_count: number;
   valid_count: number;
+  total_catalog_count: number;
+  rejection_reasons?: Record<string, number>;
   rejections?: Array<{
     product_id: string;
     title: string;
@@ -124,6 +138,7 @@ export interface SearchDiagnosticRecord {
     reason: string;
   }>;
   relaxed_constraints?: string[];
+  final_count: number;
 }
 
 export interface AIModeSearchResult {

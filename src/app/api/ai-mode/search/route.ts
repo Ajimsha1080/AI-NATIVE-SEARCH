@@ -12,7 +12,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Query or filters are required' }, { status: 400 });
     }
 
-    const plan = AIModeSearchService.parseQuery(query || '');
+    const workspaceId = session?.workspaceId;
+    const plan = AIModeSearchService.parseQuery(query || '', undefined, workspaceId);
     if (filters) {
       plan.extracted_filters = { ...plan.extracted_filters, ...filters };
     }
