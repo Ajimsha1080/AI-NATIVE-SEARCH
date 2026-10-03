@@ -3,10 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
-  Sparkles, 
   Tag, 
   ShoppingBag, 
-  Zap, 
   RefreshCw,
   ChevronLeft,
   ChevronRight
@@ -100,70 +98,6 @@ export default function AIModeSearchPlayground() {
       {/* Results Section */}
       {result && (
         <div className="space-y-6">
-          {/* Diagnostic Query Plan Card */}
-          <div className="bg-zinc-900 text-white rounded-2xl p-5 shadow-lg border border-zinc-800 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-bold font-mono text-zinc-200">Dynamic AI Search Plan</span>
-              </div>
-              <div className="flex items-center gap-3 text-[11px] font-mono text-zinc-400">
-                <span>Validated: <strong className="text-emerald-400">{result.total_matches}</strong></span>
-                <span>Latency: <strong className="text-emerald-400">{result.latency_ms}ms</strong></span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
-              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
-                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Intent</span>
-                <span className="text-emerald-400 font-bold">{result.search_plan.intent}</span>
-                {result.search_plan.product_concepts && result.search_plan.product_concepts.length > 0 && (
-                  <p className="text-[11px] text-zinc-300 truncate">Concept: {result.search_plan.product_concepts.join(', ')}</p>
-                )}
-              </div>
-
-              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
-                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Hard Constraints</span>
-                <div className="space-y-0.5">
-                  {result.search_plan.hard_constraints && result.search_plan.hard_constraints.length > 0 ? (
-                    result.search_plan.hard_constraints.slice(0, 3).map((c, cIdx) => (
-                      <div key={cIdx} className="text-[11px] text-amber-300 truncate">
-                        • {c.field} {c.operator} {typeof c.value === 'number' ? `₹${c.value}` : String(c.value)}
-                      </div>
-                    ))
-                  ) : (
-                    <span className="text-zinc-400 text-[11px]">None (Broad Discovery)</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
-                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Soft Preferences</span>
-                <div className="flex flex-wrap gap-1">
-                  {result.search_plan.soft_preferences && result.search_plan.soft_preferences.length > 0 ? (
-                    result.search_plan.soft_preferences.map((p, pIdx) => (
-                      <span key={pIdx} className="px-1.5 py-0.5 rounded bg-zinc-700 text-indigo-300 text-[10px]">
-                        {p}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-zinc-400 text-[11px]">Standard Ranking</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
-                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Exclusions &amp; Sort</span>
-                <p className="text-[11px] text-indigo-300 truncate">Sort: {result.search_plan.sorting || 'relevance'}</p>
-                {result.search_plan.exclusions && result.search_plan.exclusions.length > 0 ? (
-                  <p className="text-[10px] text-rose-300 truncate">Excluded: {result.search_plan.exclusions.join(', ')}</p>
-                ) : (
-                  <p className="text-[10px] text-emerald-400 truncate">No Exclusions</p>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Results Bar & Page Size Selector */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white px-5 py-3.5 rounded-2xl border border-zinc-200 shadow-2xs">
             <div className="text-xs text-zinc-600 font-medium">
