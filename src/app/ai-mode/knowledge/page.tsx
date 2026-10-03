@@ -17,10 +17,7 @@ import {
   Eye,
   Info,
   Check,
-  MessageSquare,
-  Sparkles,
   Layers,
-  Send,
   UploadCloud,
   FileCode,
   ShieldCheck,
@@ -38,7 +35,6 @@ export default function AIModeKnowledgePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addTab, setAddTab] = useState<'DOCUMENT' | 'WEBSITE' | 'FAQ'>('WEBSITE');
   const [previewSource, setPreviewSource] = useState<any | null>(null);
-  const [showTestChatModal, setShowTestChatModal] = useState(false);
   
   // Form fields
   const [name, setName] = useState('');
@@ -50,13 +46,6 @@ export default function AIModeKnowledgePage() {
   const [error, setError] = useState<string | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-
-  // Test Chat state
-  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; products?: any[] }>>([
-    { role: 'assistant', text: 'Hello! I am your AI Shopping Concierge. You can ask me questions about your store policies, shipping, returns, or catalog products.' }
-  ]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
     loadSources();
@@ -248,46 +237,6 @@ export default function AIModeKnowledgePage() {
     setError(null);
   }
 
-  async function handleSendTestMessage(e: React.FormEvent) {
-    e.preventDefault();
-    if (!chatInput.trim() || chatLoading) return;
-    const userText = chatInput.trim();
-    setChatInput('');
-    setChatMessages(prev => [...prev, { role: 'user', text: userText }]);
-    setChatLoading(true);
-
-    try {
-      const res = await fetch('/api/ai-mode/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userText })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setChatMessages(prev => [
-          ...prev, 
-          { 
-            role: 'assistant', 
-            text: data.reply || data.response || 'I processed your request using the indexed knowledge base.',
-            products: data.products || []
-          }
-        ]);
-      } else {
-        setChatMessages(prev => [
-          ...prev, 
-          { role: 'assistant', text: 'I am ready to help! Indexed store knowledge and policies are active.' }
-        ]);
-      }
-    } catch (err: any) {
-      setChatMessages(prev => [
-        ...prev, 
-        { role: 'assistant', text: 'Knowledge base active. How can I assist you with products or store policies?' }
-      ]);
-    } finally {
-      setChatLoading(false);
-    }
-  }
-
   // Counts for Left Sidebar
   const countAll = sources.length;
   const countActive = sources.filter(s => s.status !== 'DISABLED' && s.status !== 'ERROR').length;
@@ -461,21 +410,10 @@ export default function AIModeKnowledgePage() {
       {/* RIGHT MAIN CONTENT AREA */}
       {/* ========================================================================= */}
       <main className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
-        {/* Top Header & Test Chat Action */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Content &amp; Knowledge</h2>
-            <p className="text-xs text-zinc-500 mt-1">Manage authoritative documents, live website crawls, and verified store policies.</p>
-          </div>
-
-          <button
-            onClick={() => setShowTestChatModal(true)}
-            className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer active:scale-[0.98] shrink-0"
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Test Chat</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          </button>
+        {/* Top Header */}
+        <div>
+          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Content &amp; Knowledge</h2>
+          <p className="text-xs text-zinc-500 mt-1">Manage authoritative documents, live website crawls, and verified store policies.</p>
         </div>
 
         {/* Search Bar */}
@@ -896,84 +834,6 @@ export default function AIModeKnowledgePage() {
                 Close
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: TEST CHAT / SHOPPING AGENT SIMULATOR */}
-      {/* ========================================================================= */}
-      {showTestChatModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-zinc-200 shadow-2xl max-w-lg w-full h-[540px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            {/* Chat Modal Header */}
-            <div className="px-5 py-3.5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-zinc-900">Knowledge Test Chat</h3>
-                  <p className="text-[10px] text-zinc-500 font-mono">Live RAG verification with active store sources</p>
-                </div>
-              </div>
-              <button onClick={() => setShowTestChatModal(false)} className="text-zinc-400 hover:text-zinc-700 p-1 rounded-lg">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Messages Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafafa]">
-              {chatMessages.map((m, i) => (
-                <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
-                    m.role === 'user'
-                      ? 'bg-zinc-900 text-white rounded-tr-xs'
-                      : 'bg-white text-zinc-800 border border-zinc-200/80 shadow-2xs rounded-tl-xs'
-                  }`}>
-                    <p>{m.text}</p>
-                    {m.products && m.products.length > 0 && (
-                      <div className="mt-2.5 pt-2 border-t border-zinc-100 space-y-1.5">
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Recommended Products:</span>
-                        {m.products.slice(0, 2).map((p: any, pIdx: number) => (
-                          <div key={pIdx} className="flex items-center gap-2 p-1.5 rounded-lg bg-zinc-50 border border-zinc-200/60">
-                            {p.images?.[0] && <img src={p.images[0]} alt={p.title} className="w-7 h-7 rounded object-cover" />}
-                            <div className="min-w-0 flex-1">
-                              <p className="text-[11px] font-bold text-zinc-900 truncate">{p.title}</p>
-                              <span className="text-[10px] text-emerald-600 font-bold">₹{p.price}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {chatLoading && (
-                <div className="flex items-center gap-2 text-xs text-zinc-400 pl-2">
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-500" />
-                  <span>Searching knowledge &amp; catalog...</span>
-                </div>
-              )}
-            </div>
-
-            {/* Input Bar */}
-            <form onSubmit={handleSendTestMessage} className="p-3 border-t border-zinc-100 bg-white flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Ask about shipping, returns, sarees, shirts..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 px-3.5 py-2 rounded-xl border border-zinc-200 text-xs focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400"
-              />
-              <button
-                type="submit"
-                disabled={chatLoading || !chatInput.trim()}
-                className="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white rounded-xl text-xs font-semibold flex items-center justify-center transition cursor-pointer"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
           </div>
         </div>
       )}
