@@ -48,16 +48,39 @@ export default function AIModeSearchPlayground() {
     const maxPage = Math.ceil(result.total_matches / pageSize);
     if (newPage > maxPage) return;
     handleSearch(query, newPage, pageSize);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   function handlePageSizeChange(newSize: number) {
     setPageSize(newSize);
     handleSearch(query, 1, newSize);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   const totalPages = result ? Math.ceil(result.total_matches / pageSize) : 1;
   const startCount = result && result.total_matches > 0 ? (currentPage - 1) * pageSize + 1 : 0;
   const endCount = result ? Math.min(currentPage * pageSize, result.total_matches) : 0;
+
+  function getPaginationPages(current: number, total: number, maxVisible = 5) {
+    if (total <= maxVisible) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = start + maxVisible - 1;
+    if (end > total) {
+      end = total;
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    const pages: number[] = [];
+    for (let p = start; p <= end; p++) {
+      pages.push(p);
+    }
+    return pages;
+  }
 
   const quickPills = [
     'women products',
@@ -259,22 +282,19 @@ export default function AIModeSearchPlayground() {
                 >
                   Previous
                 </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const pNum = i + 1;
-                  return (
-                    <button
-                      key={pNum}
-                      onClick={() => handlePageChange(pNum)}
-                      className={`w-8 h-8 rounded-xl text-xs font-mono font-bold transition ${
-                        currentPage === pNum
-                          ? 'bg-zinc-900 text-white'
-                          : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border border-zinc-200'
-                      }`}
-                    >
-                      {pNum}
-                    </button>
-                  );
-                })}
+                {getPaginationPages(currentPage, totalPages).map(pNum => (
+                  <button
+                    key={pNum}
+                    onClick={() => handlePageChange(pNum)}
+                    className={`w-8 h-8 rounded-xl text-xs font-mono font-bold transition cursor-pointer ${
+                      currentPage === pNum
+                        ? 'bg-zinc-900 text-white'
+                        : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border border-zinc-200'
+                    }`}
+                  >
+                    {pNum}
+                  </button>
+                ))}
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage >= totalPages}
