@@ -400,6 +400,72 @@ export default function ChatBox({
                 {renderMessageContent(m.content)}
               </div>
 
+              {/* Dynamic Interpreted Search Plan Bar */}
+              {(() => {
+                const plan = m.metadata?.search_plan || m.metadata?.last_search_state;
+                if (!plan) return null;
+
+                const constraints: Array<{ label: string; value: string }> = [];
+                if (plan.hard_constraints && Array.isArray(plan.hard_constraints)) {
+                  for (const c of plan.hard_constraints) {
+                    if (c.field === 'all' && c.operator === 'NOT_IN') {
+                      constraints.push({ label: 'exclude', value: String(c.value) });
+                    } else if (c.field && c.value !== undefined) {
+                      constraints.push({ label: c.field, value: `${c.operator || '='} ${c.value}` });
+                    }
+                  }
+                } else if (plan.extracted_filters) {
+                  for (const [k, v] of Object.entries(plan.extracted_filters)) {
+                    if (v !== undefined && v !== null && !['exclusions', 'custom_attributes'].includes(k)) {
+                      constraints.push({ label: k, value: String(v) });
+                    }
+                  }
+                }
+
+                const concepts = plan.product_concepts || [];
+                const prefs = plan.soft_preferences || [];
+
+                if (constraints.length === 0 && concepts.length === 0 && prefs.length === 0) return null;
+
+                return (
+                  <div className="w-full bg-zinc-50 border border-zinc-200/80 rounded-2xl p-2.5 mt-1 text-[11px] font-mono space-y-1.5 shadow-2xs">
+                    <div className="flex items-center justify-between border-b border-zinc-200/60 pb-1 text-[10px] uppercase font-bold text-zinc-500">
+                      <span>Interpreted Search Plan</span>
+                      <span className="text-zinc-700 font-semibold">{plan.intent || 'DISCOVERY'}</span>
+                    </div>
+
+                    {concepts.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-zinc-400">Product:</span>
+                        {concepts.map((c: string, idx: number) => (
+                          <span key={idx} className="bg-white border border-zinc-200 px-1.5 py-0.5 rounded text-zinc-800 font-semibold">{c}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {constraints.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-zinc-400">Constraints:</span>
+                        {constraints.map((c, idx) => (
+                          <span key={idx} className="bg-white border border-zinc-200 px-1.5 py-0.5 rounded text-zinc-800">
+                            <strong>{c.label}</strong> {c.value}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {prefs.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-zinc-400">Preferences:</span>
+                        {prefs.map((p: string, idx: number) => (
+                          <span key={idx} className="bg-purple-50 border border-purple-200 text-purple-700 px-1.5 py-0.5 rounded font-medium">{p}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* Dynamic Product Cards */}
               {(() => {
                 const productsList = m.metadata?.products || (m.metadata?.type === 'PRODUCTS' ? m.metadata?.data : (Array.isArray(m.metadata?.data) ? m.metadata.data : (Array.isArray(m.metadata) ? m.metadata : [])));

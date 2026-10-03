@@ -5,20 +5,30 @@ export interface EvaluationResult {
   matchingVariantId?: string;
   failureReason?: string;
   failedConstraint?: string;
-  failureCode?: 'price_failed' | 'color_failed' | 'size_failed' | 'category_failed' | 'audience_failed' | 'brand_failed' | 'material_failed' | 'variant_consistency_failed' | 'exclusion_failed' | 'attribute_failed' | 'stock_failed';
 }
 
-const COLOR_SYNONYM_FAMILIES: Record<string, string[]> = {
-  red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral', 'scarlet'],
-  blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky', 'royal blue', 'denim'],
-  green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest', 'khaki'],
-  black: ['black', 'stealth', 'charcoal', 'jet', 'dark', 'obsidian', 'pitch black'],
-  white: ['white', 'off-white', 'off white', 'ivory', 'cream', 'pearl'],
-  yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon', 'canary'],
-  brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha', 'chocolate', 'beige', 'camel'],
-  purple: ['purple', 'violet', 'lavender', 'lilac', 'plum', 'mauve', 'magenta'],
-  pink: ['pink', 'rose', 'blush', 'salmon', 'fuchsia', 'coral', 'peach'],
-  grey: ['grey', 'gray', 'silver', 'slate', 'ash', 'charcoal', 'heather']
+const COLOR_FAMILIES: Record<string, string[]> = {
+  blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky', 'royal', 'cobalt', 'ocean', 'denim'],
+  navy: ['navy', 'navy blue', 'dark blue', 'midnight blue', 'indigo'],
+  red: ['red', 'wine', 'maroon', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral', 'brick', 'rose', 'scarlet'],
+  maroon: ['maroon', 'wine', 'burgundy', 'dark red'],
+  wine: ['wine', 'maroon', 'burgundy', 'dark red'],
+  green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest', 'army', 'bottle', 'lime'],
+  olive: ['olive', 'olive green', 'sage', 'khaki green', 'army green'],
+  emerald: ['emerald', 'emerald green', 'bottle green', 'forest green'],
+  black: ['black', 'stealth', 'charcoal', 'jet', 'dark', 'obsidian', 'onyx', 'pitch', 'ebony'],
+  white: ['white', 'off-white', 'off white', 'ivory', 'cream', 'pearl', 'snow', 'eggshell'],
+  'off white': ['off white', 'off-white', 'ivory', 'cream'],
+  'off-white': ['off white', 'off-white', 'ivory', 'cream'],
+  yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon', 'ochre', 'sunny'],
+  mustard: ['mustard', 'mustard yellow', 'ochre', 'gold'],
+  brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha', 'chocolate', 'camel', 'caramel', 'bronze', 'beige', 'taupe'],
+  beige: ['beige', 'tan', 'khaki', 'cream', 'camel'],
+  pink: ['pink', 'rose', 'blush', 'magenta', 'salmon', 'fuchsia', 'coral', 'peach'],
+  purple: ['purple', 'violet', 'lavender', 'lilac', 'plum', 'mauve', 'eggplant', 'grape'],
+  grey: ['grey', 'gray', 'silver', 'ash', 'smoke', 'slate', 'gunmetal', 'heather', 'charcoal'],
+  gray: ['grey', 'gray', 'silver', 'ash', 'smoke', 'slate', 'gunmetal', 'heather', 'charcoal'],
+  orange: ['orange', 'rust', 'coral', 'peach', 'amber', 'apricot', 'tangerine']
 };
 
 export class ConstraintEvaluator {
@@ -35,17 +45,32 @@ export class ConstraintEvaluator {
     // 1. Negative Constraints / Exclusions (Parent & Variant level)
     // -------------------------------------------------------------
     if (plan.exclusions && plan.exclusions.length > 0) {
-      const allText = `${product.title} ${product.description || ''} ${product.category || ''} ${(product.subcategories || []).join(' ')} ${JSON.stringify(product.attributes || {})}`.toLowerCase();
+      const allParentText = `${product.title} ${product.description || ''} ${product.category || ''} ${(product.subcategories || []).join(' ')} ${JSON.stringify(product.attributes || {})}`.toLowerCase();
+      
       for (const exclusion of plan.exclusions) {
         const exclLower = exclusion.toLowerCase().trim();
         const exclRegex = new RegExp(`\\b${escapeRegex(exclLower)}\\b`, 'i');
-        if (exclRegex.test(allText)) {
+        
+        if (exclRegex.test(allParentText)) {
           return {
             isValid: false,
             failureReason: `Contains excluded term "${exclusion}"`,
-            failedConstraint: `exclusion: ${exclusion}`,
-            failureCode: 'exclusion_failed'
+            failedConstraint: `exclusion: ${exclusion}`
           };
+        }
+
+        // Check inside variants
+        if (product.variants && product.variants.length > 0) {
+          for (const v of product.variants) {
+            const vText = `${v.title} ${JSON.stringify(v.attributes || {})}`.toLowerCase();
+            if (exclRegex.test(vText)) {
+              return {
+                isValid: false,
+                failureReason: `Variant contains excluded term "${exclusion}"`,
+                failedConstraint: `exclusion: ${exclusion}`
+              };
+            }
+          }
         }
       }
     }
@@ -53,7 +78,7 @@ export class ConstraintEvaluator {
     // -------------------------------------------------------------
     // 2. Demographic / Audience Compatibility
     // -------------------------------------------------------------
-    const targetGender = plan.extracted_filters.gender || plan.extracted_filters.audience;
+    const targetGender = plan.extracted_filters.gender;
     if (targetGender) {
       const titleLower = (product.title || '').toLowerCase();
       const descLower = (product.description || '').toLowerCase();
@@ -61,16 +86,15 @@ export class ConstraintEvaluator {
       const tagsLower = (product.subcategories || []).map(t => t.toLowerCase());
       const allProductText = `${titleLower} ${descLower} ${catLower} ${tagsLower.join(' ')}`;
 
-      const isExplicitlyWomen = /\b(women|woman|womens|women's|female|ladies|lady|girl|girls|saree|sarees|bow|bows|hair|scrunchie|scrunchies|dress|dresses|kurti|kurtis|skirt|skirts|blouse|gown|lehenga)\b/i.test(allProductText);
-      const isExplicitlyMen = (/\b(men|mens|men's|male|man|guys|boy|boys)\b/i.test(allProductText) || tagsLower.includes('men') || descLower.includes('for men') || descLower.includes("men's") || titleLower.includes('men')) && !isExplicitlyWomen;
-      const isUnisex = /\b(unisex|couple|combo|oversized|streetwear|tee|t-shirt|hoodie|jacket)\b/i.test(allProductText);
+      const isExplicitlyWomen = /\b(women|woman|womens|women's|female|ladies|lady|girl|girls|saree|sarees|bow|bows|hair|scrunchie|scrunchies|dress|dresses|kurti|kurtis|skirt|skirts|blouse)\b/i.test(allProductText);
+      const isExplicitlyMen = (/\b(men|mens|men's|male|man|guys|boy|boys)\b/i.test(allProductText) || tagsLower.includes('men') || tagsLower.includes('men shirt') || descLower.includes('for men') || descLower.includes("men's")) && !isExplicitlyWomen;
+      const isUnisex = /\b(unisex|couple|combo|oversized|streetwear|hoodie|jacket)\b/i.test(allProductText);
 
       if (targetGender === 'women' && isExplicitlyMen && !isExplicitlyWomen && !isUnisex) {
         return {
           isValid: false,
           failureReason: `Product is for men, user requested women's collection`,
-          failedConstraint: 'audience = women',
-          failureCode: 'audience_failed'
+          failedConstraint: 'audience: women'
         };
       }
 
@@ -78,8 +102,7 @@ export class ConstraintEvaluator {
         return {
           isValid: false,
           failureReason: `Product is for women, user requested men's collection`,
-          failedConstraint: 'audience = men',
-          failureCode: 'audience_failed'
+          failedConstraint: 'audience: men'
         };
       }
 
@@ -89,8 +112,7 @@ export class ConstraintEvaluator {
           return {
             isValid: false,
             failureReason: `Product is not for kids`,
-            failedConstraint: 'audience = kids',
-            failureCode: 'audience_failed'
+            failedConstraint: 'audience: kids'
           };
         }
       }
@@ -101,25 +123,56 @@ export class ConstraintEvaluator {
     // -------------------------------------------------------------
     const requiredCategory = plan.extracted_filters.category || plan.extracted_filters.product_type;
     if (requiredCategory) {
-      const catLower = requiredCategory.toLowerCase().trim();
+      const reqCatLower = requiredCategory.toLowerCase().trim();
       const prodCatLower = (product.category || '').toLowerCase().trim();
-      const prodTypeLower = (product.product_type || '').toLowerCase().trim();
-      const prodTitleLower = (product.title || '').toLowerCase();
-      const prodTagsLower = (product.subcategories || []).map(t => t.toLowerCase());
+      const prodTitleLower = (product.title || '').toLowerCase().trim();
+      const prodTagsLower = (product.subcategories || []).map(t => t.toLowerCase().trim());
+      const fullTaxonomy = `${prodCatLower} ${prodTitleLower} ${prodTagsLower.join(' ')}`;
 
-      const catRegex = new RegExp(`\\b${escapeRegex(catLower)}s?\\b`, 'i');
-      const matchesCategory = catRegex.test(prodCatLower) || 
-                              catRegex.test(prodTypeLower) || 
-                              catRegex.test(prodTitleLower) || 
-                              prodTagsLower.some(t => catRegex.test(t));
+      // Special Word Boundary Precision for Apparel
+      const isReqShirt = reqCatLower === 'shirt';
+      const isReqTshirt = /t-?shirt|tee/i.test(reqCatLower);
 
-      if (!matchesCategory) {
-        return {
-          isValid: false,
-          failureReason: `Category mismatch: expected "${requiredCategory}", got "${product.category}"`,
-          failedConstraint: `category = ${requiredCategory}`,
-          failureCode: 'category_failed'
-        };
+      if (isReqShirt) {
+        // Query specifically asked for "shirt"
+        // Must have word boundary "shirt" or "shirts" and NOT be exclusively a "t-shirt" / "tee"
+        const hasShirtWord = /\bshirts?\b/i.test(fullTaxonomy);
+        const isExclusivelyTshirt = /\b(t-?shirt|tee|tshirt|t-shirts|tees|tshirts)\b/i.test(prodCatLower) ||
+                                    (/\b(t-?shirt|tee|tshirt|tees)\b/i.test(prodTitleLower) && !/\b(linen shirt|cotton shirt|printed shirt|oxford shirt|embroidered shirt|sleeve shirt|formal shirt|casual shirt)\b/i.test(prodTitleLower));
+        
+        // Reject if it's pants, dress, saree, shorts, or exclusively a t-shirt
+        const isOtherType = /\b(pant|pants|jogger|joggers|shorts|dress|dresses|saree|sari|kurta|kurti|hoodie|jacket|shoes|sneakers|visor|balaclava)\b/i.test(prodCatLower) && !/\bshirts?\b/i.test(prodCatLower);
+
+        if (!hasShirtWord || isExclusivelyTshirt || isOtherType) {
+          return {
+            isValid: false,
+            failureReason: `Expected product type "Shirt", got "${product.category || product.title}"`,
+            failedConstraint: `category: Shirt`
+          };
+        }
+      } else if (isReqTshirt) {
+        // Query specifically asked for "t-shirt" or "tee"
+        const hasTshirtWord = /\b(t-?shirt|tee|tshirt|t-shirts|tees|tshirts)\b/i.test(fullTaxonomy);
+        if (!hasTshirtWord) {
+          return {
+            isValid: false,
+            failureReason: `Expected product type "T-Shirt", got "${product.category || product.title}"`,
+            failedConstraint: `category: T-Shirt`
+          };
+        }
+      } else {
+        // Arbitrary generic category / product type precision
+        const reqStem = reqCatLower.replace(/s$/, '');
+        const reqRegex = new RegExp(`\\b${escapeRegex(reqStem)}s?\\b`, 'i');
+        const matchesCat = reqRegex.test(fullTaxonomy);
+
+        if (!matchesCat) {
+          return {
+            isValid: false,
+            failureReason: `Category mismatch: expected "${requiredCategory}", got "${product.category}"`,
+            failedConstraint: `category: ${requiredCategory}`
+          };
+        }
       }
     }
 
@@ -130,44 +183,60 @@ export class ConstraintEvaluator {
     if (requiredBrand) {
       const brandLower = requiredBrand.toLowerCase().trim();
       const prodBrandLower = (product.brand || product.attributes?.brand || '').toLowerCase().trim();
-      const prodTitleLower = (product.title || '').toLowerCase();
-      const brandRegex = new RegExp(`\\b${escapeRegex(brandLower)}\\b`, 'i');
+      const prodTitleLower = (product.title || '').toLowerCase().trim();
 
+      const brandRegex = new RegExp(`\\b${escapeRegex(brandLower)}\\b`, 'i');
       if (!brandRegex.test(prodBrandLower) && !brandRegex.test(prodTitleLower)) {
         return {
           isValid: false,
           failureReason: `Brand mismatch: expected "${requiredBrand}"`,
-          failedConstraint: `brand = ${requiredBrand}`,
-          failureCode: 'brand_failed'
+          failedConstraint: `brand: ${requiredBrand}`
         };
       }
     }
 
     // -------------------------------------------------------------
-    // 5. Variant-Aware Multi-Attribute Consistency Evaluation
+    // 5. Material Match Check
+    // -------------------------------------------------------------
+    const requiredMaterial = plan.extracted_filters.material;
+    if (requiredMaterial) {
+      const matLower = requiredMaterial.toLowerCase().trim();
+      const matRegex = new RegExp(`\\b${escapeRegex(matLower)}\\b`, 'i');
+      const allText = `${product.title} ${product.description || ''} ${(product.subcategories || []).join(' ')} ${JSON.stringify(product.attributes || {})}`.toLowerCase();
+
+      if (!matRegex.test(allText)) {
+        return {
+          isValid: false,
+          failureReason: `Material mismatch: expected "${requiredMaterial}"`,
+          failedConstraint: `material: ${requiredMaterial}`
+        };
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 6. Variant-Aware Multi-Attribute Consistency Evaluation
     // -------------------------------------------------------------
     const variantConstraints = plan.hard_constraints.filter(c => c.is_variant_level && c.is_hard);
     const hasVariantConstraints = variantConstraints.length > 0;
+
     const variants = product.variants && product.variants.length > 0 ? product.variants : [];
 
     if (variants.length > 0) {
       // Must find AT LEAST ONE single variant that satisfies ALL variant-level constraints simultaneously
       let matchingVariant: AIModeProductVariant | null = null;
-      let primaryFailureReason = '';
-      let primaryFailedConstraint = '';
-      let primaryFailureCode: EvaluationResult['failureCode'] = 'variant_consistency_failed';
+      let firstFailureReason = '';
+      let firstFailedConstraint = '';
 
       for (const variant of variants) {
         let variantPassed = true;
 
         for (const constraint of variantConstraints) {
           const evalRes = this.evaluateVariantConstraint(variant, product, constraint);
-          if (!evalRes.passed) {
+          if (!evalRes.pass) {
             variantPassed = false;
-            if (!primaryFailureReason) {
-              primaryFailureReason = evalRes.reason;
-              primaryFailedConstraint = `${constraint.field} ${constraint.operator} ${JSON.stringify(constraint.value)}`;
-              primaryFailureCode = evalRes.code;
+            if (!firstFailureReason) {
+              firstFailureReason = evalRes.reason || `Variant violates constraint ${constraint.field}`;
+              firstFailedConstraint = `${constraint.field}: ${JSON.stringify(constraint.value)}`;
             }
             break;
           }
@@ -182,9 +251,8 @@ export class ConstraintEvaluator {
       if (hasVariantConstraints && !matchingVariant) {
         return {
           isValid: false,
-          failureReason: primaryFailureReason || `No single variant satisfies all combined variant constraints simultaneously`,
-          failedConstraint: primaryFailedConstraint || variantConstraints.map(c => `${c.field} ${c.operator} ${JSON.stringify(c.value)}`).join(' AND '),
-          failureCode: primaryFailureCode || 'variant_consistency_failed'
+          failureReason: firstFailureReason || `No single variant satisfies all combined variant constraints simultaneously`,
+          failedConstraint: firstFailedConstraint || variantConstraints.map(c => `${c.field} ${c.operator} ${JSON.stringify(c.value)}`).join(' AND ')
         };
       }
 
@@ -196,13 +264,12 @@ export class ConstraintEvaluator {
 
     // Fallback: Product has no sub-variants, evaluate directly against parent product attributes
     for (const constraint of variantConstraints) {
-      const evalRes = this.evaluateParentAsVariant(product, constraint);
-      if (!evalRes.passed) {
+      const pass = this.evaluateParentAsVariant(product, constraint);
+      if (!pass) {
         return {
           isValid: false,
-          failureReason: evalRes.reason,
-          failedConstraint: `${constraint.field} ${constraint.operator} ${JSON.stringify(constraint.value)}`,
-          failureCode: evalRes.code
+          failureReason: `Parent product violates constraint "${constraint.field} ${constraint.operator} ${constraint.value}"`,
+          failedConstraint: `${constraint.field}: ${constraint.value}`
         };
       }
     }
@@ -217,164 +284,110 @@ export class ConstraintEvaluator {
     variant: AIModeProductVariant,
     parent: AIModeProduct,
     constraint: SearchConstraint
-  ): { passed: boolean; reason: string; code: EvaluationResult['failureCode'] } {
+  ): { pass: boolean; reason?: string } {
     const { field, operator, value } = constraint;
 
-    // Price
+    // 1. Price
     if (field === 'price') {
       const effectivePrice = typeof variant.price === 'number' && variant.price > 0 ? variant.price : parent.price;
-      if (typeof effectivePrice !== 'number') {
-        return { passed: false, reason: 'Price unavailable', code: 'price_failed' };
-      }
+      if (typeof effectivePrice !== 'number') return { pass: false, reason: 'Invalid price' };
 
       const numVal = Number(value);
-      if (operator === '<=' && effectivePrice > numVal) return { passed: false, reason: `Price ₹${effectivePrice} exceeds max ₹${numVal}`, code: 'price_failed' };
-      if (operator === '>=' && effectivePrice < numVal) return { passed: false, reason: `Price ₹${effectivePrice} below min ₹${numVal}`, code: 'price_failed' };
-      if (operator === '<' && effectivePrice >= numVal) return { passed: false, reason: `Price ₹${effectivePrice} not below ₹${numVal}`, code: 'price_failed' };
-      if (operator === '>' && effectivePrice <= numVal) return { passed: false, reason: `Price ₹${effectivePrice} not above ₹${numVal}`, code: 'price_failed' };
-      if (operator === '=' && effectivePrice !== numVal) return { passed: false, reason: `Price ₹${effectivePrice} != ₹${numVal}`, code: 'price_failed' };
-      if (operator === 'BETWEEN' && Array.isArray(value) && (effectivePrice < value[0] || effectivePrice > value[1])) {
-        return { passed: false, reason: `Price ₹${effectivePrice} not in range [₹${value[0]}, ₹${value[1]}]`, code: 'price_failed' };
+      if (operator === '<=' && !(effectivePrice <= numVal)) {
+        return { pass: false, reason: `Variant price ₹${effectivePrice} exceeds maximum ₹${numVal}` };
       }
-      return { passed: true, reason: '', code: undefined };
+      if (operator === '>=' && !(effectivePrice >= numVal)) {
+        return { pass: false, reason: `Variant price ₹${effectivePrice} is below minimum ₹${numVal}` };
+      }
+      if (operator === '<' && !(effectivePrice < numVal)) {
+        return { pass: false, reason: `Variant price ₹${effectivePrice} is not less than ₹${numVal}` };
+      }
+      if (operator === '>' && !(effectivePrice > numVal)) {
+        return { pass: false, reason: `Variant price ₹${effectivePrice} is not greater than ₹${numVal}` };
+      }
+      if (operator === '=' && !(effectivePrice === numVal)) {
+        return { pass: false, reason: `Variant price ₹${effectivePrice} does not match ₹${numVal}` };
+      }
+      return { pass: true };
     }
 
-    // Availability
+    // 2. Availability / In Stock
     if (field === 'in_stock') {
-      const inStock = Boolean(variant.in_stock);
-      return {
-        passed: inStock,
-        reason: inStock ? '' : 'Variant out of stock',
-        code: 'stock_failed'
-      };
+      const isAvailable = Boolean(variant.in_stock);
+      if (!isAvailable) {
+        return { pass: false, reason: 'Variant is out of stock' };
+      }
+      return { pass: true };
     }
 
-    // Color
+    // 3. Color (Variant-level with Color Family support)
     if (field === 'color') {
-      const targetColor = String(value).toLowerCase().trim();
-      const synonyms = COLOR_SYNONYM_FAMILIES[targetColor] || [targetColor];
-      const colorRegex = new RegExp(`\\b(?:${synonyms.map(escapeRegex).join('|')})\\b`, 'i');
+      const expectedColor = String(value).toLowerCase().trim();
+      const colorFamily = COLOR_FAMILIES[expectedColor] || [expectedColor];
 
-      const varAttrColor = (variant.attributes?.color || variant.attributes?.colour || variant.attributes?.option1 || '').toLowerCase().trim();
-      const varTitle = (variant.title || '').toLowerCase().trim();
-
-      // 1. If variant explicitly specifies its color in attributes
-      if (varAttrColor) {
-        const matches = colorRegex.test(varAttrColor);
-        return {
-          passed: matches,
-          reason: matches ? '' : `Variant color "${varAttrColor}" does not match requested color "${targetColor}"`,
-          code: 'color_failed'
-        };
-      }
-
-      // 2. If variant title has color word
-      if (varTitle && colorRegex.test(varTitle)) {
-        return { passed: true, reason: '', code: undefined };
-      }
-
-      // 3. Fallback: If variant does not specify color, check parent attributes or parent title with word boundary
-      const parentAttrColor = (parent.attributes?.color || parent.attributes?.colour || '').toLowerCase().trim();
-      if (parentAttrColor) {
-        const matches = colorRegex.test(parentAttrColor);
-        return {
-          passed: matches,
-          reason: matches ? '' : `Product color "${parentAttrColor}" does not match "${targetColor}"`,
-          code: 'color_failed'
-        };
-      }
+      const vTitle = (variant.title || '').toLowerCase();
+      const vAttrs = JSON.stringify(variant.attributes || {}).toLowerCase();
+      const vText = `${vTitle} ${vAttrs}`;
 
       const parentTitle = (parent.title || '').toLowerCase();
-      if (colorRegex.test(parentTitle)) {
-        return { passed: true, reason: '', code: undefined };
-      }
+      const parentAttrs = JSON.stringify(parent.attributes || {}).toLowerCase();
+      const parentTags = (parent.subcategories || []).map(t => t.toLowerCase()).join(' ');
+      const parentText = `${parentTitle} ${parentTags} ${parentAttrs}`;
 
-      return {
-        passed: false,
-        reason: `Product does not match color "${targetColor}"`,
-        code: 'color_failed'
-      };
+      const matchesVariant = colorFamily.some(c => {
+        const cRegex = new RegExp(`\\b${escapeRegex(c)}\\b`, 'i');
+        return cRegex.test(vText);
+      });
+
+      const matchesParent = colorFamily.some(c => {
+        const cRegex = new RegExp(`\\b${escapeRegex(c)}\\b`, 'i');
+        return cRegex.test(parentText);
+      });
+
+      if (!matchesVariant && !matchesParent) {
+        return { pass: false, reason: `Variant color does not match expected color "${expectedColor}"` };
+      }
+      return { pass: true };
     }
 
-    // Size
+    // 4. Size (Word Boundary Matching)
     if (field === 'size') {
-      const targetSize = String(value).toUpperCase().trim();
-      const varAttrSize = String(variant.attributes?.size || variant.attributes?.option1 || variant.attributes?.option2 || '').toUpperCase().trim();
-      const varTitle = (variant.title || '').toUpperCase().trim();
+      const expectedSize = String(value).toUpperCase().trim();
+      const vTitle = (variant.title || '').toUpperCase().trim();
+      const vSizeAttr = (variant.attributes?.size || variant.attributes?.Size || '').toUpperCase().trim();
+      const parentSizeAttr = (parent.attributes?.size || parent.attributes?.Size || '').toUpperCase().trim();
 
-      const sizeRegex = new RegExp(`\\b${escapeRegex(targetSize)}\\b`, 'i');
-      if (varAttrSize === targetSize || sizeRegex.test(varAttrSize) || varTitle === targetSize || sizeRegex.test(varTitle)) {
-        return { passed: true, reason: '', code: undefined };
+      const sizeRegex = new RegExp(`(^|\\b|\\s)${escapeRegex(expectedSize)}(\\b|\\s|$)`, 'i');
+      const matchesSize = sizeRegex.test(vTitle) || sizeRegex.test(vSizeAttr) || sizeRegex.test(parentSizeAttr);
+
+      if (!matchesSize) {
+        return { pass: false, reason: `Variant size does not match expected size "${expectedSize}"` };
       }
-
-      // Check parent attributes / title fallback
-      const parentAttrSize = String(parent.attributes?.size || '').toUpperCase().trim();
-      if (parentAttrSize === targetSize || sizeRegex.test(parentAttrSize)) {
-        return { passed: true, reason: '', code: undefined };
-      }
-
-      return {
-        passed: false,
-        reason: `Variant size "${varAttrSize || varTitle}" does not match requested size "${targetSize}"`,
-        code: 'size_failed'
-      };
+      return { pass: true };
     }
 
-    // Material
-    if (field === 'material') {
-      const targetMat = String(value).toLowerCase().trim();
-      const matRegex = new RegExp(`\\b${escapeRegex(targetMat)}\\b`, 'i');
-      const varAttrMat = String(variant.attributes?.material || '').toLowerCase();
-      const parentAttrMat = String(parent.attributes?.material || '').toLowerCase();
-      const parentTitle = (parent.title || '').toLowerCase();
-      const parentDesc = (parent.description || '').toLowerCase();
-
-      if (matRegex.test(varAttrMat) || matRegex.test(parentAttrMat) || matRegex.test(parentTitle) || matRegex.test(parentDesc)) {
-        return { passed: true, reason: '', code: undefined };
-      }
-
-      return {
-        passed: false,
-        reason: `Material does not match "${targetMat}"`,
-        code: 'material_failed'
-      };
-    }
-
-    // Generic Custom Attribute Match (e.g. storage, ram, fit, occasion, specification)
-    const expectedStr = String(value).toLowerCase().trim();
-    const attrVal = String(variant.attributes?.[field] || parent.attributes?.[field] || '').toLowerCase().trim();
-
+    // 5. Custom Dynamic Variant Attributes (e.g. storage, ram, fit, collar, sleeve)
+    const attrVal = variant.attributes?.[field] || parent.attributes?.[field];
     if (attrVal) {
-      if (operator === '=') {
-        const matches = attrVal === expectedStr || new RegExp(`\\b${escapeRegex(expectedStr)}\\b`, 'i').test(attrVal);
-        return {
-          passed: matches,
-          reason: matches ? '' : `Attribute ${field}="${attrVal}" does not match "${expectedStr}"`,
-          code: 'attribute_failed'
-        };
+      const valStr = String(attrVal).toLowerCase().trim();
+      const expectedStr = String(value).toLowerCase().trim();
+      if (operator === '=' && valStr !== expectedStr && !valStr.includes(expectedStr)) {
+        return { pass: false, reason: `Attribute ${field} mismatch: expected ${expectedStr}, got ${valStr}` };
       }
-      if (operator === 'CONTAINS') {
-        const matches = new RegExp(`\\b${escapeRegex(expectedStr)}\\b`, 'i').test(attrVal);
-        return {
-          passed: matches,
-          reason: matches ? '' : `Attribute ${field} does not contain "${expectedStr}"`,
-          code: 'attribute_failed'
-        };
+      if (operator === 'CONTAINS' && !valStr.includes(expectedStr)) {
+        return { pass: false, reason: `Attribute ${field} does not contain ${expectedStr}` };
       }
+      return { pass: true };
     }
 
-    // Check title/text with exact word boundary
-    const attrRegex = new RegExp(`\\b${escapeRegex(expectedStr)}\\b`, 'i');
-    const fullText = `${variant.title} ${parent.title} ${parent.description || ''}`.toLowerCase();
-    if (attrRegex.test(fullText)) {
-      return { passed: true, reason: '', code: undefined };
+    // 6. Generic string token search in variant title
+    const vTitleLower = (variant.title || '').toLowerCase();
+    const expectedLower = String(value).toLowerCase().trim();
+    if (vTitleLower.includes(expectedLower)) {
+      return { pass: true };
     }
 
-    return {
-      passed: false,
-      reason: `Missing required attribute "${field} = ${expectedStr}"`,
-      code: 'attribute_failed'
-    };
+    return { pass: true };
   }
 
   /**
@@ -383,48 +396,42 @@ export class ConstraintEvaluator {
   private static evaluateParentAsVariant(
     parent: AIModeProduct,
     constraint: SearchConstraint
-  ): { passed: boolean; reason: string; code: EvaluationResult['failureCode'] } {
+  ): boolean {
     const { field, operator, value } = constraint;
 
     if (field === 'price') {
       const price = parent.price;
-      if (typeof price !== 'number') return { passed: false, reason: 'Price unavailable', code: 'price_failed' };
+      if (typeof price !== 'number') return false;
       const numVal = Number(value);
-      if (operator === '<=' && price > numVal) return { passed: false, reason: `Price ₹${price} exceeds ₹${numVal}`, code: 'price_failed' };
-      if (operator === '>=' && price < numVal) return { passed: false, reason: `Price ₹${price} below ₹${numVal}`, code: 'price_failed' };
-      if (operator === '<' && price >= numVal) return { passed: false, reason: `Price ₹${price} not below ₹${numVal}`, code: 'price_failed' };
-      if (operator === '>' && price <= numVal) return { passed: false, reason: `Price ₹${price} not above ₹${numVal}`, code: 'price_failed' };
-      if (operator === '=' && price !== numVal) return { passed: false, reason: `Price ₹${price} != ₹${numVal}`, code: 'price_failed' };
-      return { passed: true, reason: '', code: undefined };
+      if (operator === '<=') return price <= numVal;
+      if (operator === '>=') return price >= numVal;
+      if (operator === '<') return price < numVal;
+      if (operator === '>') return price > numVal;
+      if (operator === '=') return price === numVal;
+      return true;
     }
 
     if (field === 'in_stock') {
-      const inStock = Boolean(parent.in_stock);
-      return { passed: inStock, reason: inStock ? '' : 'Product out of stock', code: 'stock_failed' };
+      return Boolean(parent.in_stock);
     }
 
     if (field === 'color') {
-      const targetColor = String(value).toLowerCase().trim();
-      const synonyms = COLOR_SYNONYM_FAMILIES[targetColor] || [targetColor];
-      const colorRegex = new RegExp(`\\b(?:${synonyms.map(escapeRegex).join('|')})\\b`, 'i');
-      const parentColor = (parent.attributes?.color || parent.attributes?.colour || '').toLowerCase();
-      const parentTitle = (parent.title || '').toLowerCase();
-
-      if (colorRegex.test(parentColor) || colorRegex.test(parentTitle)) {
-        return { passed: true, reason: '', code: undefined };
-      }
-      return { passed: false, reason: `Product does not match color "${targetColor}"`, code: 'color_failed' };
+      const expectedColor = String(value).toLowerCase().trim();
+      const colorFamily = COLOR_FAMILIES[expectedColor] || [expectedColor];
+      const allText = `${parent.title} ${parent.description || ''} ${(parent.subcategories || []).join(' ')} ${JSON.stringify(parent.attributes || {})}`.toLowerCase();
+      return colorFamily.some(c => new RegExp(`\\b${escapeRegex(c)}\\b`, 'i').test(allText));
     }
 
+    if (field === 'size') {
+      const expectedSize = String(value).toUpperCase().trim();
+      const allText = `${parent.title} ${JSON.stringify(parent.attributes || {})}`.toUpperCase();
+      const sizeRegex = new RegExp(`(^|\\b|\\s)${escapeRegex(expectedSize)}(\\b|\\s|$)`, 'i');
+      return sizeRegex.test(allText);
+    }
+
+    const allText = `${parent.title} ${parent.description || ''} ${JSON.stringify(parent.attributes || {})}`.toLowerCase();
     const expected = String(value).toLowerCase().trim();
-    const regex = new RegExp(`\\b${escapeRegex(expected)}\\b`, 'i');
-    const fullText = `${parent.title} ${JSON.stringify(parent.attributes || {})}`.toLowerCase();
-    const passed = regex.test(fullText);
-    return {
-      passed,
-      reason: passed ? '' : `Parent product violates "${field} ${operator} ${expected}"`,
-      code: 'attribute_failed'
-    };
+    return allText.includes(expected);
   }
 }
 

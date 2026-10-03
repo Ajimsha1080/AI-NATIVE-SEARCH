@@ -9,7 +9,7 @@ const GENERAL_STOP_WORDS = new Set([
   'rupee', 'rupees', 'rs', 'inr', 'buck', 'bucks', 'price', 'cost', 'budget',
   'around', 'approx', 'rate', 'rates', 'worth', 'value', 'under', 'below', 'above',
   'which', 'that', 'this', 'ones', 'only', 'from', 'between', 'upto', 'less', 'more', 'than',
-  'colour', 'color', 'colors', 'colours', 'shade', 'shades', 'type', 'types'
+  'search', 'browse', 'recommend', 'suggest', 'collection', 'catalog', 'pieces', 'piece'
 ]);
 
 const SOFT_PREFERENCE_VOCABULARY = new Set([
@@ -18,8 +18,8 @@ const SOFT_PREFERENCE_VOCABULARY = new Set([
   'daily wear', 'summer', 'winter', 'autumn', 'spring', 'monsoon', 'vacation', 'holiday',
   'trip', 'travel', 'comfortable', 'comfort', 'luxury', 'premium', 'minimalist', 'bold',
   'trendy', 'popular', 'latest', 'lightweight', 'breathable', 'durable', 'cozy', 'warm',
-  'active', 'gym', 'workout', 'fitness', 'sporty', 'night', 'dinner', 'date', 'simple',
-  'fancy', 'traditional', 'ethnic', 'contemporary', 'designer', 'affordable', 'budget-friendly'
+  'active', 'gym', 'workout', 'fitness', 'sporty', 'night', 'dinner', 'date', 'cool', 'nice',
+  'fancy', 'designer', 'classy', 'smart', 'neat', 'clean', 'simple', 'luxe', 'aesthetic'
 ]);
 
 const DEMOGRAPHIC_ALIASES: Record<string, string> = {
@@ -60,23 +60,46 @@ const DEMOGRAPHIC_ALIASES: Record<string, string> = {
   'couples': 'unisex'
 };
 
-const STANDARD_COLORS = [
-  'navy blue', 'dark blue', 'royal blue', 'sky blue', 'light blue', 'blue',
-  'dark green', 'olive green', 'mint green', 'forest green', 'emerald green', 'sage green', 'green',
-  'dark red', 'wine', 'maroon', 'burgundy', 'crimson', 'ruby', 'rust', 'cherry', 'coral', 'scarlet', 'red',
-  'jet black', 'pitch black', 'stealth black', 'black',
-  'off white', 'off-white', 'ivory', 'cream', 'pure white', 'white',
-  'mustard yellow', 'lemon yellow', 'golden yellow', 'gold', 'yellow',
-  'coffee brown', 'dark brown', 'chocolate brown', 'khaki', 'tan', 'beige', 'camel', 'mocha', 'brown',
-  'dark purple', 'lavender', 'lilac', 'plum', 'violet', 'magenta', 'mauve', 'purple',
-  'baby pink', 'dusty pink', 'rose pink', 'blush pink', 'salmon pink', 'peach', 'fuchsia', 'pink',
-  'silver', 'charcoal', 'slate', 'ash', 'grey', 'gray', 'orange', 'teal', 'turquoise', 'indigo', 'cyan'
+const COMPOUND_COLORS = [
+  'navy blue', 'dark blue', 'light blue', 'sky blue', 'royal blue', 'baby blue', 'powder blue', 'midnight blue', 'ocean blue', 'denim blue', 'azure blue', 'ice blue',
+  'dark green', 'olive green', 'mint green', 'forest green', 'sage green', 'emerald green', 'bottle green', 'army green', 'lime green', 'sea green',
+  'wine red', 'dark red', 'cherry red', 'brick red', 'ruby red', 'crimson red', 'coral red', 'blood red',
+  'jet black', 'pitch black', 'matte black', 'charcoal black',
+  'off white', 'off-white', 'pure white', 'snow white', 'pearl white', 'cream white',
+  'charcoal grey', 'dark grey', 'light grey', 'slate grey', 'ash grey', 'silver grey', 'charcoal gray', 'dark gray', 'light gray', 'slate gray', 'ash gray',
+  'dusty pink', 'baby pink', 'rose pink', 'hot pink', 'salmon pink', 'blush pink',
+  'mustard yellow', 'lemon yellow', 'golden yellow', 'bright yellow',
+  'dark brown', 'light brown', 'coffee brown', 'chocolate brown', 'camel brown',
+  'rose gold', 'yellow gold', 'metallic silver', 'space grey', 'space gray'
 ];
 
-const STANDARD_MATERIALS = [
-  'cotton', 'linen', 'silk', 'denim', 'leather', 'wool', 'corduroy', 'fleece',
-  'nylon', 'polyester', 'satin', 'chiffon', 'velvet', 'georgette', 'khadi',
-  'rayon', 'modal', 'canvas', 'spandex', 'elastane', 'twill', 'suede'
+const SINGLE_COLORS = [
+  'black', 'white', 'red', 'blue', 'green', 'yellow', 'brown', 'grey', 'gray', 'pink',
+  'purple', 'emerald', 'maroon', 'beige', 'navy', 'orange', 'gold', 'silver', 'olive',
+  'cream', 'burgundy', 'crimson', 'teal', 'violet', 'indigo', 'rust', 'coral', 'khaki',
+  'tan', 'charcoal', 'wine', 'turquoise', 'fuchsia', 'magenta', 'plum', 'lavender',
+  'lilac', 'peach', 'bronze', 'copper', 'mint', 'mustard', 'ochre', 'ivory', 'amber', 'cyan', 'azure', 'denim'
+];
+
+const COMMON_MATERIALS = [
+  'cotton', 'linen', 'silk', 'denim', 'corduroy', 'polyester', 'leather', 'wool', 'fleece',
+  'nylon', 'satin', 'velvet', 'canvas', 'mesh', 'cashmere', 'viscose', 'modal', 'rayon',
+  'spandex', 'poplin', 'chiffon', 'georgette', 'crepe', 'khadi', 'flannel', 'tweed',
+  'bamboo', 'lycra', 'terry', 'jersey', 'gold', 'silver', 'stainless steel', 'titanium',
+  'wood', 'ceramic', 'glass', 'plastic'
+];
+
+const STANDARD_PRODUCT_TYPES = [
+  't-shirt', 'tshirt', 'tee', 'shirt', 'hoodie', 'sweatshirt', 'jacket', 'shacket', 'blazer',
+  'coat', 'jogger', 'joggers', 'sweatpants', 'trackpant', 'trackpants', 'pant', 'pants',
+  'trouser', 'trousers', 'chinos', 'jeans', 'denim', 'short', 'shorts', 'saree', 'sari',
+  'kurta', 'kurti', 'dress', 'dresses', 'gown', 'gowns', 'frock', 'skirt', 'skirts',
+  'lehenga', 'shoe', 'shoes', 'sneaker', 'sneakers', 'sandal', 'sandals', 'boot', 'boots',
+  'slipper', 'slippers', 'balaclava', 'visor', 'visors', 'cap', 'caps', 'hat', 'hats',
+  'beanie', 'sunglasses', 'eyewear', 'glasses', 'watch', 'watches', 'smartwatch', 'bag',
+  'bags', 'backpack', 'backpacks', 'handbag', 'handbags', 'wallet', 'wallets', 'perfume',
+  'perfumes', 'fragrance', 'cologne', 'sunscreen', 'scrunchie', 'scrunchies', 'belt', 'belts',
+  'combo', 'suit', 'activewear'
 ];
 
 export class QueryUnderstandingEngine {
@@ -127,7 +150,7 @@ export class QueryUnderstandingEngine {
     // -------------------------------------------------------------
     // 2. Negative Constraints & Exclusions ("not leather", "without sleeves", "exclude red", "no black")
     // -------------------------------------------------------------
-    const exclusionRegex = /\b(?:not|without|no|exclude|except|non-?)\s+([a-z0-9\-_]+)\b/gi;
+    const exclusionRegex = /\b(?:not|without|no|exclude|excluding|except|non-?)\s+([a-z0-9\-_]+(?:\s+[a-z0-9\-_]+)?)\b/gi;
     let exclMatch;
     while ((exclMatch = exclusionRegex.exec(queryLower)) !== null) {
       const term = exclMatch[1].trim();
@@ -137,26 +160,18 @@ export class QueryUnderstandingEngine {
           field: 'all',
           operator: 'NOT_IN',
           value: term,
-          normalized_value: term,
           is_hard: true,
           is_variant_level: false,
           confidence: 0.95,
-          source: 'explicit',
           raw_token: exclMatch[0]
         });
       }
     }
 
-    const isExcluded = (term: string) => {
-      const t = term.toLowerCase().trim();
-      return exclusions.some(e => e === t || t.includes(e) || e.includes(t)) ||
-             new RegExp(`\\b(?:not|without|no|exclude|except|non-?)\\s+${escapeRegex(t)}\\b`, 'i').test(queryLower);
-    };
-
     // -------------------------------------------------------------
     // 3. Numeric Price & Range Constraints
     // -------------------------------------------------------------
-    // Range: "between 1000 and 2000", "from 500 to 1500", "1000 - 2000", "1000 to 2500"
+    // Range: "between 1000 and 2000", "from 500 to 1500", "1000 - 2000", "1000 to 2000"
     const rangeMatch = queryLower.match(/(?:between|from)\s*(?:rs\.?|inr|₹|\$)?\s*(\d+(?:,\d+)?)\s*(?:to|-|and)\s*(?:rs\.?|inr|₹|\$)?\s*(\d+(?:,\d+)?)/i) ||
                        queryLower.match(/(\d+(?:,\d+)?)\s*(?:-|to)\s*(\d+(?:,\d+)?)\s*(?:rs\.?|inr|rupees?|bucks?|₹|\$)/i);
     if (rangeMatch) {
@@ -164,20 +179,24 @@ export class QueryUnderstandingEngine {
       extractedMaxPrice = parseFloat(rangeMatch[2].replace(/,/g, ''));
     }
 
-    // Upper bound: "under 2000", "below 1500", "less than 2000", "max 3000", "budget 2500", "up to 2000", "within 2000"
+    // Upper bound: "under 2000", "below 1500", "less than 2000", "max 3000", "budget 2500", "up to 2000", "upto 2k"
     if (extractedMaxPrice === undefined) {
-      const underMatch = queryLower.match(/(?:under|below|less\s+than|max(?:imum)?|budget|within|upto|up\s+to)\s*(?:rs\.?|inr|₹|\$)?\s*(\d+(?:,\d+)?)/i) ||
-                         queryLower.match(/(\d+)\s*(?:k|thousand)\s*(?:budget|max|under)?\b/i);
+      const underMatch = queryLower.match(/(?:under|below|less\s+than|max(?:imum)?|budget|within|upto|up\s+to)\s*(?:rs\.?|inr|₹|\$)?\s*(\d+(?:,\d+)?(?:\.\d+)?)\s*(k|thousand)?\b/i) ||
+                         queryLower.match(/(\d+(?:\.\d+)?)\s*(?:k|thousand)\s*(?:budget|max|under)?\b/i);
       if (underMatch) {
-        extractedMaxPrice = underMatch[0].includes('k') ? parseFloat(underMatch[1]) * 1000 : parseFloat(underMatch[1].replace(/,/g, ''));
+        const isK = underMatch[0].toLowerCase().includes('k') || underMatch[2]?.toLowerCase() === 'k';
+        const numVal = parseFloat(underMatch[1].replace(/,/g, ''));
+        extractedMaxPrice = isK ? numVal * 1000 : numVal;
       }
     }
 
     // Lower bound: "above 500", "over 1000", "more than 500", "min 500", "starting from 1000", "at least 500"
     if (extractedMinPrice === undefined) {
-      const aboveMatch = queryLower.match(/(?:above|over|more\s+than|min(?:imum)?|from|starting\s+at|at\s+least)\s*(?:rs\.?|inr|₹|\$)?\s*(\d+(?:,\d+)?)/i);
+      const aboveMatch = queryLower.match(/(?:above|over|more\s+than|min(?:imum)?|from|starting\s+at|starting\s+from|at\s+least)\s*(?:rs\.?|inr|₹|\$)?\s*(\d+(?:,\d+)?(?:\.\d+)?)\s*(k|thousand)?\b/i);
       if (aboveMatch) {
-        extractedMinPrice = parseFloat(aboveMatch[1].replace(/,/g, ''));
+        const isK = aboveMatch[0].toLowerCase().includes('k') || aboveMatch[2]?.toLowerCase() === 'k';
+        const numVal = parseFloat(aboveMatch[1].replace(/,/g, ''));
+        extractedMinPrice = isK ? numVal * 1000 : numVal;
       }
     }
 
@@ -191,42 +210,26 @@ export class QueryUnderstandingEngine {
       }
     }
 
-    if (extractedMaxPrice !== undefined && extractedMinPrice !== undefined) {
+    if (extractedMaxPrice !== undefined) {
       hardConstraints.push({
         field: 'price',
-        operator: 'BETWEEN',
-        value: [extractedMinPrice, extractedMaxPrice],
-        normalized_value: [extractedMinPrice, extractedMaxPrice],
+        operator: '<=',
+        value: extractedMaxPrice,
         is_hard: true,
         is_variant_level: true,
-        confidence: 0.98,
-        source: 'explicit'
+        confidence: 0.98
       });
-    } else {
-      if (extractedMaxPrice !== undefined) {
-        hardConstraints.push({
-          field: 'price',
-          operator: '<=',
-          value: extractedMaxPrice,
-          normalized_value: extractedMaxPrice,
-          is_hard: true,
-          is_variant_level: true,
-          confidence: 0.98,
-          source: 'explicit'
-        });
-      }
-      if (extractedMinPrice !== undefined) {
-        hardConstraints.push({
-          field: 'price',
-          operator: '>=',
-          value: extractedMinPrice,
-          normalized_value: extractedMinPrice,
-          is_hard: true,
-          is_variant_level: true,
-          confidence: 0.98,
-          source: 'explicit'
-        });
-      }
+    }
+
+    if (extractedMinPrice !== undefined) {
+      hardConstraints.push({
+        field: 'price',
+        operator: '>=',
+        value: extractedMinPrice,
+        is_hard: true,
+        is_variant_level: true,
+        confidence: 0.98
+      });
     }
 
     // -------------------------------------------------------------
@@ -238,11 +241,9 @@ export class QueryUnderstandingEngine {
         field: 'in_stock',
         operator: '=',
         value: true,
-        normalized_value: true,
         is_hard: true,
         is_variant_level: true,
-        confidence: 0.95,
-        source: 'explicit'
+        confidence: 0.95
       });
     }
 
@@ -250,18 +251,16 @@ export class QueryUnderstandingEngine {
     // 5. Gender / Demographic Audience Constraint
     // -------------------------------------------------------------
     for (const [alias, normalizedGender] of Object.entries(DEMOGRAPHIC_ALIASES)) {
-      const aliasRegex = new RegExp(`\\b${alias}\\b`, 'i');
-      if (aliasRegex.test(queryLower) && !isExcluded(alias)) {
+      const aliasRegex = new RegExp(`\\b${escapeRegex(alias)}\\b`, 'i');
+      if (aliasRegex.test(queryLower) && !exclusions.includes(alias)) {
         extractedGender = normalizedGender;
         hardConstraints.push({
           field: 'audience',
           operator: '=',
           value: normalizedGender,
-          normalized_value: normalizedGender,
           is_hard: true,
           is_variant_level: false,
           confidence: 0.95,
-          source: 'explicit',
           raw_token: alias
         });
         break;
@@ -269,224 +268,66 @@ export class QueryUnderstandingEngine {
     }
 
     // -------------------------------------------------------------
-    // 6. Explicit Color Extraction (Single & Compound Colors, Color Phrases)
+    // 6. Dynamic Color Extraction (Compound first, then single)
     // -------------------------------------------------------------
-    for (const colorCandidate of STANDARD_COLORS) {
-      if (isExcluded(colorCandidate)) continue;
-      const colorRegex = new RegExp(`\\b(?:in\\s+|color:?\\s*|colour:?\\s*)?${escapeRegex(colorCandidate)}(?:\\s+colou?r)?\\b`, 'i');
-      if (colorRegex.test(queryLower)) {
-        extractedColor = colorCandidate;
+    // Check compound colors first (e.g. "navy blue", "dark green", "off white")
+    for (const cColor of COMPOUND_COLORS) {
+      const cRegex = new RegExp(`\\b${escapeRegex(cColor)}\\b`, 'i');
+      if (cRegex.test(queryLower) && !exclusions.includes(cColor)) {
+        extractedColor = cColor;
         hardConstraints.push({
           field: 'color',
           operator: '=',
-          value: colorCandidate,
-          normalized_value: colorCandidate,
+          value: cColor,
           is_hard: true,
           is_variant_level: true,
           confidence: 0.96,
-          source: 'explicit',
-          raw_token: colorCandidate
+          raw_token: cColor
         });
         break;
       }
     }
 
-    // -------------------------------------------------------------
-    // 7. Explicit Material Extraction
-    // -------------------------------------------------------------
-    for (const matCandidate of STANDARD_MATERIALS) {
-      if (isExcluded(matCandidate)) continue;
-      const matRegex = new RegExp(`\\b(?:made\\s+of\\s+|in\\s+|pure\\s+)?${escapeRegex(matCandidate)}(?:\\s+fabric|\\s+material)?\\b`, 'i');
-      if (matRegex.test(queryLower)) {
-        extractedMaterial = matCandidate;
-        hardConstraints.push({
-          field: 'material',
-          operator: '=',
-          value: matCandidate,
-          normalized_value: matCandidate,
-          is_hard: true,
-          is_variant_level: true,
-          confidence: 0.95,
-          source: 'explicit',
-          raw_token: matCandidate
-        });
-        break;
-      }
-    }
-
-    // -------------------------------------------------------------
-    // 8. Explicit Size Extraction (e.g. "size M", "size 32", "size 9", "M size", "XL size", "Blue M shirt")
-    // -------------------------------------------------------------
-    const sizeMatch = queryLower.match(/\bsize\s*([0-9a-z\-_]+)\b/i) || 
-                      queryLower.match(/\b(xxxl|xxl|xl|xs|[smlx])\s+size\b/i) ||
-                      queryLower.match(/\b(free\s*size)\b/i) ||
-                      queryLower.match(/\b([0-9]{2})\s+size\b/i) ||
-                      queryLower.match(/\b(xxxl|xxl|xl|xs|[smlx])\b/i);
-    if (sizeMatch && !isExcluded(sizeMatch[1].toLowerCase())) {
-      extractedSize = sizeMatch[1].toUpperCase().trim();
-      hardConstraints.push({
-        field: 'size',
-        operator: '=',
-        value: extractedSize,
-        normalized_value: extractedSize,
-        is_hard: true,
-        is_variant_level: true,
-        confidence: 0.95,
-        source: 'explicit',
-        raw_token: sizeMatch[0]
-      });
-    }
-
-    // -------------------------------------------------------------
-    // 9. Catalog Schema Driven Introspection (Categories, Brands, Custom Attributes)
-    // -------------------------------------------------------------
-    if (schema) {
-      // Check Brand
-      for (const brand of schema.brands) {
-        const brandNorm = brand.toLowerCase().trim();
-        if (isExcluded(brandNorm)) continue;
-        const brandRegex = new RegExp(`\\b${escapeRegex(brandNorm)}\\b`, 'i');
-        if (brandRegex.test(queryLower)) {
-          extractedBrand = brand;
+    // Fallback: Check single color tokens if no compound color matched
+    if (!extractedColor) {
+      for (const sColor of SINGLE_COLORS) {
+        const sRegex = new RegExp(`\\b${escapeRegex(sColor)}\\b`, 'i');
+        if (sRegex.test(queryLower) && !exclusions.includes(sColor)) {
+          extractedColor = sColor;
           hardConstraints.push({
-            field: 'brand',
+            field: 'color',
             operator: '=',
-            value: brand,
-            normalized_value: brand,
+            value: sColor,
             is_hard: true,
-            is_variant_level: false,
-            confidence: 0.98,
-            source: 'explicit',
-            raw_token: brand
-          });
-          break;
-        }
-      }
-
-      // Check Categories & Product Types
-      const hasTshirt = /\b(?:t-?shirts?|tees?)\b/i.test(queryLower);
-      let catMatched = false;
-
-      for (const cat of schema.categories) {
-        const catNorm = cat.toLowerCase().trim();
-        if (isExcluded(catNorm)) continue;
-        const isCompoundCat = /t-?shirt|tee/i.test(catNorm);
-
-        if (isCompoundCat && hasTshirt) {
-          extractedCategory = cat;
-          productConcepts.push(cat);
-          hardConstraints.push({
-            field: 'category',
-            operator: '=',
-            value: cat,
-            normalized_value: cat,
-            is_hard: true,
-            is_variant_level: false,
+            is_variant_level: true,
             confidence: 0.95,
-            source: 'explicit',
-            raw_token: cat
+            raw_token: sColor
           });
-          catMatched = true;
           break;
         }
       }
+    }
 
-      if (!catMatched) {
-        for (const cat of schema.categories) {
-          const catNorm = cat.toLowerCase().trim();
-          if (isExcluded(catNorm)) continue;
-          if (/shirt/i.test(catNorm) && hasTshirt) continue; // Don't match generic "Shirt" if query asks for "T-Shirt"
-
-          const catRegex = new RegExp(`\\b${escapeRegex(catNorm)}s?\\b`, 'i');
-          if (catRegex.test(queryLower)) {
-            extractedCategory = cat;
-            productConcepts.push(cat);
-            hardConstraints.push({
-              field: 'category',
-              operator: '=',
-              value: cat,
-              normalized_value: cat,
-              is_hard: true,
-              is_variant_level: false,
-              confidence: 0.92,
-              source: 'explicit',
-              raw_token: cat
-            });
-            catMatched = true;
-            break;
-          }
-        }
-      }
-
-      // Introspect Discovered Dynamic Attributes across merchant catalog
+    // Introspect schema for merchant custom color attribute values
+    if (schema) {
       for (const [attrKey, attrValueSet] of schema.attributeValues.entries()) {
-        if (['category', 'product_type', 'brand', 'price'].includes(attrKey)) continue;
-
-        for (const attrVal of attrValueSet) {
-          const valNorm = attrVal.toLowerCase().trim();
-          if (valNorm.length < 2 || GENERAL_STOP_WORDS.has(valNorm) || isExcluded(valNorm)) continue;
-
-          const valRegex = new RegExp(`\\b${escapeRegex(valNorm)}\\b`, 'i');
-          if (valRegex.test(queryLower)) {
-            if (attrKey.includes('color') || isColorToken(valNorm)) {
-              if (!extractedColor) {
-                extractedColor = attrVal;
+        if (attrKey.includes('color')) {
+          for (const val of attrValueSet) {
+            const valNorm = val.toLowerCase().trim();
+            if (valNorm.length >= 2 && !exclusions.includes(valNorm)) {
+              const valRegex = new RegExp(`\\b${escapeRegex(valNorm)}\\b`, 'i');
+              if (valRegex.test(queryLower) && !extractedColor) {
+                extractedColor = val;
                 hardConstraints.push({
                   field: 'color',
                   operator: '=',
-                  value: attrVal,
-                  normalized_value: attrVal,
+                  value: val,
                   is_hard: true,
                   is_variant_level: true,
                   confidence: 0.95,
-                  source: 'explicit',
-                  raw_token: attrVal
+                  raw_token: val
                 });
-              }
-            } else if (attrKey.includes('size') || isSizeToken(valNorm)) {
-              if (!extractedSize) {
-                extractedSize = attrVal;
-                hardConstraints.push({
-                  field: 'size',
-                  operator: '=',
-                  value: attrVal,
-                  normalized_value: attrVal,
-                  is_hard: true,
-                  is_variant_level: true,
-                  confidence: 0.95,
-                  source: 'explicit',
-                  raw_token: attrVal
-                });
-              }
-            } else if (attrKey.includes('material')) {
-              if (!extractedMaterial) {
-                extractedMaterial = attrVal;
-                hardConstraints.push({
-                  field: 'material',
-                  operator: '=',
-                  value: attrVal,
-                  normalized_value: attrVal,
-                  is_hard: true,
-                  is_variant_level: true,
-                  confidence: 0.95,
-                  source: 'explicit',
-                  raw_token: attrVal
-                });
-              }
-            } else {
-              if (!customAttributes[attrKey]) {
-                customAttributes[attrKey] = attrVal;
-                hardConstraints.push({
-                  field: attrKey,
-                  operator: '=',
-                  value: attrVal,
-                  normalized_value: attrVal,
-                  is_hard: true,
-                  is_variant_level: true,
-                  confidence: 0.90,
-                  source: 'explicit',
-                  raw_token: attrVal
-                });
+                break;
               }
             }
           }
@@ -495,62 +336,239 @@ export class QueryUnderstandingEngine {
     }
 
     // -------------------------------------------------------------
-    // 10. Generic Key-Value Regex Matches ("fit: slim", "storage: 256gb", "sleeve: full")
+    // 7. Dynamic Size Extraction (Explicit & Variant)
     // -------------------------------------------------------------
-    const kvRegex = /\b([a-z_]{3,15})\s*[:=]\s*([a-z0-9\-_]+)\b/gi;
-    let kvMatch;
-    while ((kvMatch = kvRegex.exec(queryLower)) !== null) {
-      const key = kvMatch[1].trim();
-      const val = kvMatch[2].trim();
-      if (!GENERAL_STOP_WORDS.has(key) && !GENERAL_STOP_WORDS.has(val) && !isExcluded(val)) {
-        customAttributes[key] = val;
+    const sizeMatch = queryLower.match(/\bsize\s*([0-9a-z\-_]+(?:\s*[0-9a-z\-_]+)?)\b/i) || 
+                      queryLower.match(/\b(xxxl|xxl|3xl|2xl|xl|xs|[smlx]|free\s*size)\s+size\b/i) ||
+                      queryLower.match(/\b(xxxl|xxl|3xl|2xl|xl|xs|[smlx]|free\s*size)\b/i);
+    if (sizeMatch && !exclusions.includes(sizeMatch[1].toLowerCase())) {
+      extractedSize = sizeMatch[1].toUpperCase().replace(/\s+/g, ' ');
+      hardConstraints.push({
+        field: 'size',
+        operator: '=',
+        value: extractedSize,
+        is_hard: true,
+        is_variant_level: true,
+        confidence: 0.95,
+        raw_token: sizeMatch[0]
+      });
+    }
+
+    // -------------------------------------------------------------
+    // 8. Dynamic Material Extraction
+    // -------------------------------------------------------------
+    for (const mat of COMMON_MATERIALS) {
+      const matRegex = new RegExp(`\\b${escapeRegex(mat)}\\b`, 'i');
+      if (matRegex.test(queryLower) && !exclusions.includes(mat)) {
+        extractedMaterial = mat;
         hardConstraints.push({
-          field: key,
+          field: 'material',
           operator: '=',
-          value: val,
-          normalized_value: val,
+          value: mat,
           is_hard: true,
-          is_variant_level: true,
-          confidence: 0.95,
-          source: 'explicit',
-          raw_token: kvMatch[0]
+          is_variant_level: false,
+          confidence: 0.92,
+          raw_token: mat
         });
+        break;
       }
     }
 
     // -------------------------------------------------------------
-    // 11. Soft Preferences & Stylistic Concepts
+    // 9. Dynamic Brand Extraction
+    // -------------------------------------------------------------
+    if (schema) {
+      for (const brand of schema.brands) {
+        const brandNorm = brand.toLowerCase().trim();
+        const brandRegex = new RegExp(`\\b${escapeRegex(brandNorm)}\\b`, 'i');
+        if (brandRegex.test(queryLower) && !exclusions.includes(brandNorm)) {
+          extractedBrand = brand;
+          hardConstraints.push({
+            field: 'brand',
+            operator: '=',
+            value: brand,
+            is_hard: true,
+            is_variant_level: false,
+            confidence: 0.98,
+            raw_token: brand
+          });
+          break;
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 10. Dynamic Category & Product Type Introspection
+    // -------------------------------------------------------------
+    // Check compound apparel terms (e.g. t-shirt / tee vs basic shirt)
+    const hasTshirtToken = /\b(t-?shirt|tee|tshirt|t-shirts|tees|tshirts)\b/i.test(queryLower);
+
+    if (hasTshirtToken) {
+      extractedCategory = 'T-Shirt';
+      extractedProductType = 'T-Shirt';
+      productConcepts.push('T-Shirt');
+      hardConstraints.push({
+        field: 'category',
+        operator: '=',
+        value: 'T-Shirt',
+        is_hard: true,
+        is_variant_level: false,
+        confidence: 0.95,
+        raw_token: 't-shirt'
+      });
+    } else if (/\bshirts?\b/i.test(queryLower)) {
+      extractedCategory = 'Shirt';
+      extractedProductType = 'Shirt';
+      productConcepts.push('Shirt');
+      hardConstraints.push({
+        field: 'category',
+        operator: '=',
+        value: 'Shirt',
+        is_hard: true,
+        is_variant_level: false,
+        confidence: 0.95,
+        raw_token: 'shirt'
+      });
+    } else if (schema && schema.categories.size > 0) {
+      for (const cat of schema.categories) {
+        const catNorm = cat.toLowerCase().trim();
+        const catStem = catNorm.replace(/s$/, '');
+        const catRegex = new RegExp(`\\b${escapeRegex(catStem)}s?\\b`, 'i');
+        
+        if (catRegex.test(queryLower) && !exclusions.includes(catNorm)) {
+          extractedCategory = cat;
+          extractedProductType = cat;
+          productConcepts.push(cat);
+          hardConstraints.push({
+            field: 'category',
+            operator: '=',
+            value: cat,
+            is_hard: true,
+            is_variant_level: false,
+            confidence: 0.92,
+            raw_token: cat
+          });
+          break;
+        }
+      }
+    }
+
+    // Fallback: Standard ecommerce product types if category not resolved from schema
+    if (!extractedCategory) {
+      for (const pType of STANDARD_PRODUCT_TYPES) {
+        const isCompound = /t-?shirt|tee/i.test(pType);
+        if (isCompound && hasTshirtToken) {
+          extractedCategory = 'T-Shirt';
+          extractedProductType = 'T-Shirt';
+          productConcepts.push('T-Shirt');
+          hardConstraints.push({
+            field: 'category',
+            operator: '=',
+            value: 'T-Shirt',
+            is_hard: true,
+            is_variant_level: false,
+            confidence: 0.92,
+            raw_token: pType
+          });
+          break;
+        }
+
+        if (!isCompound && pType === 'shirt' && !hasTshirtToken && /\bshirts?\b/i.test(queryLower)) {
+          extractedCategory = 'Shirt';
+          extractedProductType = 'Shirt';
+          productConcepts.push('Shirt');
+          hardConstraints.push({
+            field: 'category',
+            operator: '=',
+            value: 'Shirt',
+            is_hard: true,
+            is_variant_level: false,
+            confidence: 0.92,
+            raw_token: 'shirt'
+          });
+          break;
+        }
+
+        const pTypeRegex = new RegExp(`\\b${escapeRegex(pType)}s?\\b`, 'i');
+        if (pTypeRegex.test(queryLower) && !exclusions.includes(pType)) {
+          const capType = pType.charAt(0).toUpperCase() + pType.slice(1);
+          extractedCategory = capType;
+          extractedProductType = capType;
+          productConcepts.push(capType);
+          hardConstraints.push({
+            field: 'category',
+            operator: '=',
+            value: capType,
+            is_hard: true,
+            is_variant_level: false,
+            confidence: 0.90,
+            raw_token: pType
+          });
+          break;
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 11. Dynamic Schema Attributes (Arbitrary E-Commerce Dimensions)
+    // -------------------------------------------------------------
+    if (schema) {
+      for (const [attrKey, attrValueSet] of schema.attributeValues.entries()) {
+        if (attrKey.includes('color') || attrKey.includes('size') || attrKey === 'brand' || attrKey === 'category') continue;
+
+        for (const attrVal of attrValueSet) {
+          const valNorm = attrVal.toLowerCase().trim();
+          if (valNorm.length < 2 || GENERAL_STOP_WORDS.has(valNorm) || exclusions.includes(valNorm)) continue;
+
+          const valRegex = new RegExp(`\\b${escapeRegex(valNorm)}\\b`, 'i');
+          if (valRegex.test(queryLower)) {
+            customAttributes[attrKey] = attrVal;
+            hardConstraints.push({
+              field: attrKey,
+              operator: '=',
+              value: attrVal,
+              is_hard: true,
+              is_variant_level: true,
+              confidence: 0.90,
+              raw_token: attrVal
+            });
+          }
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 12. Soft Preferences & Stylistic Concepts
     // -------------------------------------------------------------
     const rawTokens = queryLower.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
     for (const token of rawTokens) {
-      if (SOFT_PREFERENCE_VOCABULARY.has(token) && !isExcluded(token)) {
+      if (SOFT_PREFERENCE_VOCABULARY.has(token) && !exclusions.includes(token)) {
         softPreferences.push(token);
       }
     }
 
     // -------------------------------------------------------------
-    // 12. Semantic & Lexical Query Cleaning
+    // 13. Semantic & Lexical Query Cleaning
     // -------------------------------------------------------------
     const nonContentTokens = new Set([
       ...GENERAL_STOP_WORDS,
       ...exclusions,
       ...(extractedBrand ? extractedBrand.toLowerCase().split(/\s+/) : []),
-      ...(extractedColor ? [extractedColor.toLowerCase()] : []),
+      ...(extractedColor ? extractedColor.toLowerCase().split(/\s+/) : []),
       ...(extractedSize ? [extractedSize.toLowerCase()] : []),
       ...(extractedGender ? [extractedGender.toLowerCase()] : [])
     ]);
 
     const lexicalTokens = rawTokens.filter(t => !nonContentTokens.has(t) && isNaN(Number(t)));
     const lexical_query = lexicalTokens.join(' ');
-    
-    // Clean semantic query (stripped of exclusion clauses)
+
     let semantic_query = queryClean;
     if (exclusions.length > 0) {
-      semantic_query = semantic_query.replace(/\b(?:not|without|no|exclude|except|non-?)\s+[a-z0-9\-_]+/gi, '').trim();
+      semantic_query = semantic_query.replace(/\b(?:not|without|no|exclude|excluding|except|non-?)\s+[a-z0-9\-_]+/gi, '').trim();
     }
 
     // -------------------------------------------------------------
-    // 13. Sorting Preferences
+    // 14. Sorting Preference
     // -------------------------------------------------------------
     let sorting: AIModeSearchPlan['sorting'] = 'relevance';
     if (/\b(cheap|cheaper|lowest\s+price|low\s+to\s+high|price\s+low|affordable)\b/i.test(queryLower)) {
@@ -562,7 +580,7 @@ export class QueryUnderstandingEngine {
     }
 
     // -------------------------------------------------------------
-    // 14. Conversational Refinement & State Merging
+    // 15. Conversational Refinement & State Merging
     // -------------------------------------------------------------
     if (intent === 'REFINEMENT' && previousState) {
       if (extractedMaxPrice === undefined && previousState.extracted_filters.max_price !== undefined) {
@@ -594,24 +612,11 @@ export class QueryUnderstandingEngine {
       }
     }
 
-    // -------------------------------------------------------------
-    // 15. Deduplicate Hard Constraints by Field & Value
-    // -------------------------------------------------------------
-    const seenConstraintKeys = new Set<string>();
-    const uniqueHardConstraints: SearchConstraint[] = [];
-    for (const c of hardConstraints) {
-      const key = `${c.field}:${c.operator}:${JSON.stringify(c.normalized_value ?? c.value)}`;
-      if (!seenConstraintKeys.has(key)) {
-        seenConstraintKeys.add(key);
-        uniqueHardConstraints.push(c);
-      }
-    }
-
     return {
       original_query: queryClean,
       intent,
       product_concepts: Array.from(new Set(productConcepts)),
-      hard_constraints: uniqueHardConstraints,
+      hard_constraints: hardConstraints,
       soft_preferences: Array.from(new Set(softPreferences)),
       semantic_query: semantic_query || queryClean,
       lexical_query: lexical_query || queryClean,
@@ -631,7 +636,6 @@ export class QueryUnderstandingEngine {
         color: extractedColor,
         size: extractedSize,
         gender: extractedGender,
-        audience: extractedGender,
         brand: extractedBrand,
         material: extractedMaterial,
         in_stock_only: inStockOnly,
@@ -644,12 +648,4 @@ export class QueryUnderstandingEngine {
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function isColorToken(token: string): boolean {
-  return /^(black|white|red|green|yellow|blue|brown|grey|gray|pink|purple|emerald|maroon|beige|navy|orange|gold|silver|olive|cream|burgundy|crimson|teal|violet|indigo)$/i.test(token);
-}
-
-function isSizeToken(token: string): boolean {
-  return /^(xxxl|xxl|xl|xs|[smlx]|[0-9]{1,3}|[0-9]{1,2}\.[0-9])$/i.test(token);
 }

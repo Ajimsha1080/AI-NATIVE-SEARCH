@@ -28,10 +28,6 @@ export class AIModeSearchService {
     const startTime = Date.now();
     const allProducts = AIModeCatalogAdapter.getProducts(workspaceId);
 
-    const filterExpression = plan.hard_constraints
-      .map(c => `${c.field} ${c.operator} ${JSON.stringify(c.value)}`)
-      .join(' AND ') || 'None (Broad Search)';
-
     if (allProducts.length === 0) {
       return {
         products: [],
@@ -43,20 +39,9 @@ export class AIModeSearchService {
         search_plan: plan,
         latency_ms: Date.now() - startTime,
         diagnostics: {
-          original_query: plan.original_query,
-          parsed_query: plan.semantic_query,
-          extracted_entities: plan.extracted_filters,
-          explicit_constraints: plan.hard_constraints,
-          normalized_constraints: plan.hard_constraints,
-          semantic_query: plan.semantic_query,
-          lexical_query: plan.lexical_query,
-          candidate_count: 0,
-          candidate_products: 0,
-          filter_expression: filterExpression,
-          filtered_count: 0,
-          valid_count: 0,
           total_catalog_count: 0,
-          final_count: 0
+          candidate_count: 0,
+          valid_count: 0
         }
       };
     }
@@ -69,7 +54,6 @@ export class AIModeSearchService {
       .filter(t => t.length > 1);
 
     const rejections: SearchDiagnosticRecord['rejections'] = [];
-    const rejectionReasons: Record<string, number> = {};
     const validScoredCandidates: Array<{ product: AIModeProduct; score: number }> = [];
 
     // -------------------------------------------------------------
@@ -80,9 +64,6 @@ export class AIModeSearchService {
       const evalResult = ConstraintEvaluator.evaluateProduct(product, plan);
 
       if (!evalResult.isValid) {
-        const code = evalResult.failureCode || 'constraint_violation';
-        rejectionReasons[code] = (rejectionReasons[code] || 0) + 1;
-
         if (rejections.length < 50) {
           rejections.push({
             product_id: product.id,
@@ -95,7 +76,7 @@ export class AIModeSearchService {
       }
 
       // -------------------------------------------------------------
-      // 2. Score & Rank Valid Candidates
+      // 2. Score & Rank Valid Candidates (Inside Valid Candidate Set)
       // -------------------------------------------------------------
       const titleLower = (product.title || '').toLowerCase();
       const descLower = (product.description || '').toLowerCase();
@@ -199,22 +180,10 @@ export class AIModeSearchService {
     const hasMore = startIndex + pageSize < totalMatches;
 
     const diagnostics: SearchDiagnosticRecord = {
-      original_query: plan.original_query,
-      parsed_query: plan.semantic_query,
-      extracted_entities: plan.extracted_filters,
-      explicit_constraints: plan.hard_constraints,
-      normalized_constraints: plan.hard_constraints,
-      semantic_query: plan.semantic_query,
-      lexical_query: plan.lexical_query,
-      candidate_count: allProducts.length,
-      candidate_products: allProducts.length,
-      filter_expression: filterExpression,
-      filtered_count: allProducts.length - totalMatches,
-      valid_count: totalMatches,
       total_catalog_count: allProducts.length,
-      rejection_reasons: Object.keys(rejectionReasons).length > 0 ? rejectionReasons : undefined,
-      rejections: rejections.length > 0 ? rejections : undefined,
-      final_count: paginatedProducts.length
+      candidate_count: allProducts.length,
+      valid_count: totalMatches,
+      rejections: rejections.length > 0 ? rejections : undefined
     };
 
     return {
