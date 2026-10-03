@@ -623,7 +623,7 @@ export default function CheckoutModal({
               
               <div className="space-y-2">
                 {[
-                  { id: 'RAZORPAY', label: '⚡ Razorpay Agentic Pay (UPI, GPay, PhonePe, Cards, NetBanking)', tag: 'Recommended', featured: true },
+                  { id: 'RAZORPAY', label: 'Razorpay Agentic Pay (UPI, GPay, PhonePe, Cards, NetBanking)', tag: 'Recommended', featured: true },
                   { id: 'UPI', label: 'Direct UPI / QR Code', tag: 'Fast' },
                   { id: 'CARD', label: 'Credit / Debit Card (Visa, Mastercard, RuPay)', tag: 'Secure' },
                   { id: 'NETBANKING', label: 'Net Banking (All Major Indian Banks)', tag: 'Direct' },

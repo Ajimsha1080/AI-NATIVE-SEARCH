@@ -537,9 +537,9 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
       });
 
       if (isRazorpayExplicit) {
-        responseText = `⚡ **Razorpay Agentic Payment Ready!**\n\nI've generated a secure Razorpay checkout order for **${targetProduct.title}** at **₹${unitPrice.toLocaleString('en-IN')}**.\n\nYou can complete payment directly in the popup or via UPI/Cards:`;
+        responseText = `**Razorpay Agentic Payment Ready!**\n\nI've generated a secure Razorpay checkout order for **${targetProduct.title}** at **₹${unitPrice.toLocaleString('en-IN')}**.\n\nYou can complete payment directly in the popup or via UPI/Cards:`;
       } else {
-        responseText = `⚡ Instant checkout ready for **${targetProduct.title}**${selectedVariant ? ` (${selectedVariant.title || selectedVariant.attributes?.size || 'Standard'})` : ''} at **₹${unitPrice.toLocaleString('en-IN')}**. Please complete your shipping and payment details in the checkout window:`;
+        responseText = `Instant checkout ready for **${targetProduct.title}**${selectedVariant ? ` (${selectedVariant.title || selectedVariant.attributes?.size || 'Standard'})` : ''} at **₹${unitPrice.toLocaleString('en-IN')}**. Please complete your shipping and payment details in the checkout window:`;
       }
       
       interactivePayload = {

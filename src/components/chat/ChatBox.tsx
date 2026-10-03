@@ -531,7 +531,7 @@ export default function ChatBox({
                       <Zap className="w-4 h-4 text-sky-600 fill-current" /> Razorpay Agentic Payment
                     </span>
                     <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold border border-sky-200">
-                      ⚡ Instant
+                      Instant
                     </span>
                   </div>
 
@@ -558,7 +558,7 @@ export default function ChatBox({
                       }}
                       className="flex-1 py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
                     >
-                      <Zap className="w-3.5 h-3.5 fill-current" /> Pay with Razorpay ⚡
+                      <Zap className="w-3.5 h-3.5 fill-current" /> Pay with Razorpay
                     </button>
                     {(m.metadata?.razorpay?.payment_link || m.metadata?.data?.razorpay?.payment_link || m.metadata?.payment_link) && (
                       <a
