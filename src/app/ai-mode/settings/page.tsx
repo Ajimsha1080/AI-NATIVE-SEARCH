@@ -67,7 +67,6 @@ export default function AIModeSettingsPage() {
         {/* Capability Toggles */}
         <div className="bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-2xs space-y-4">
           <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
             <h3 className="text-xs font-bold text-zinc-900">Conversational Capabilities</h3>
           </div>
 

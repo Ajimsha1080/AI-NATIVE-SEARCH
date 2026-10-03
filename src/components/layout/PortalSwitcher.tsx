@@ -100,7 +100,7 @@ export default function PortalSwitcher({ isSuperAdmin: propIsSuperAdmin }: Porta
         <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-80 bg-white border border-zinc-200 rounded-2xl shadow-xl p-2 z-50 space-y-1.5 animate-in fade-in zoom-in-95 duration-100">
           <div className="px-3 py-2 border-b border-zinc-100 flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-semibold flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-indigo-600" /> Switch Main UI Portal
+              <Layers className="w-3 h-3 text-indigo-600" /> Switch Main UI Portal
             </span>
             <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-full font-semibold">
               {portals.length} UIs Live

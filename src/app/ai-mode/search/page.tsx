@@ -69,15 +69,8 @@ export default function AIModeSearchPlayground() {
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-zinc-900 tracking-tight">AI Search Playground</h2>
-            <p className="text-xs text-zinc-500">Test natural-language query planning, constraint extraction, and hybrid ranking algorithms.</p>
-          </div>
-        </div>
+        <h2 className="text-lg font-bold text-zinc-900 tracking-tight">AI Search Playground</h2>
+        <p className="text-xs text-zinc-500">Test natural-language query planning, constraint extraction, and hybrid ranking algorithms.</p>
       </div>
 
       {/* Search Input Bar */}
@@ -98,8 +91,8 @@ export default function AIModeSearchPlayground() {
             disabled={loadingSearch || !query.trim()}
             className="px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
           >
-            {loadingSearch ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-indigo-400" />}
-            <span>Execute AI Search</span>
+            {loadingSearch ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+            <span>Execute Search</span>
           </button>
         </form>
       </div>

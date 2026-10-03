@@ -48,7 +48,7 @@ export default function Sidebar() {
     { 
       name: 'AI Mode', 
       href: '/ai-mode', 
-      icon: Sparkles,
+      icon: Layers,
       isActive: (path: string) => path.startsWith('/ai-mode')
     },
     { 

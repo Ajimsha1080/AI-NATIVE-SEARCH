@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import { 
-  Sparkles, 
+  Layers, 
   BookOpen, 
   Search, 
   Code2, 
@@ -17,7 +17,7 @@ export default function AIModeLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname();
 
   const tabs = [
-    { name: 'Overview', href: '/ai-mode', icon: Sparkles, exact: true },
+    { name: 'Overview', href: '/ai-mode', icon: Layers, exact: true },
     { name: 'Knowledge', href: '/ai-mode/knowledge', icon: BookOpen },
     { name: 'AI Search', href: '/ai-mode/search', icon: Search },
     { name: 'Deployment', href: '/ai-mode/deployment', icon: Code2 },

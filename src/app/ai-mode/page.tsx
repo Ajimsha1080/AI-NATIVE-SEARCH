@@ -41,7 +41,6 @@ export default function AIModeOverviewPage() {
       <div className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-indigo-950 text-white rounded-3xl p-6 lg:p-8 shadow-xl border border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2 max-w-xl">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 text-white text-[11px] font-mono backdrop-blur-xs">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
             AI-Native Shopping Layer
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Welcome to AI Mode</h2>
