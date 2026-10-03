@@ -912,7 +912,26 @@ function DeploymentPreviewProductCard({ product }: { product: AIModeProduct }) {
     <div className="bg-white rounded-2xl border border-zinc-200/80 p-2.5 shadow-2xs space-y-2 flex flex-col justify-between hover:border-zinc-300 transition group">
       <div className="space-y-1.5">
         <div className="aspect-[3/4] w-full rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100 select-none group/img">
-          {images.length > 0 ? (
+          {product.source_url ? (
+            <a
+              href={product.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full h-full cursor-pointer"
+            >
+              {images.length > 0 ? (
+                <img 
+                  src={images[activeImgIdx] || images[0]} 
+                  alt={`${product.title} - View ${activeImgIdx + 1}`} 
+                  className="w-full h-full object-cover object-top transition duration-300 group-hover/img:scale-105" 
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-zinc-400">
+                  <ShoppingBag className="w-6 h-6" />
+                </div>
+              )}
+            </a>
+          ) : images.length > 0 ? (
             <img 
               src={images[activeImgIdx] || images[0]} 
               alt={`${product.title} - View ${activeImgIdx + 1}`} 
@@ -976,7 +995,13 @@ function DeploymentPreviewProductCard({ product }: { product: AIModeProduct }) {
         </div>
 
         <div>
-          <h5 className="text-[11px] font-bold text-zinc-900 line-clamp-1">{product.title}</h5>
+          {product.source_url ? (
+            <a href={product.source_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+              <h5 className="text-[11px] font-bold text-zinc-900 line-clamp-1">{product.title}</h5>
+            </a>
+          ) : (
+            <h5 className="text-[11px] font-bold text-zinc-900 line-clamp-1">{product.title}</h5>
+          )}
           <p className="text-[10px] text-zinc-500 line-clamp-1">{product.description || 'Catalog item'}</p>
         </div>
       </div>

@@ -288,7 +288,38 @@ function AIModeProductCard({ product, query }: AIModeProductCardProps) {
       <div className="space-y-2.5">
         {/* Interactive Multi-Photo Container */}
         <div className="aspect-[3/4] w-full rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100 select-none group/img">
-          {images.length > 0 ? (
+          {product.source_url ? (
+            <a
+              href={product.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                fetch('/api/ai-mode/track', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    event: 'product_click',
+                    product_id: product.id,
+                    source_url: product.source_url,
+                    query
+                  })
+                }).catch(() => {});
+              }}
+              className="block w-full h-full cursor-pointer"
+            >
+              {images.length > 0 ? (
+                <img 
+                  src={images[activeImgIdx] || images[0]} 
+                  alt={`${product.title} - View ${activeImgIdx + 1}`} 
+                  className="w-full h-full object-cover object-top transition duration-300 group-hover/img:scale-105" 
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-zinc-400">
+                  <ShoppingBag className="w-8 h-8" />
+                </div>
+              )}
+            </a>
+          ) : images.length > 0 ? (
             <img 
               src={images[activeImgIdx] || images[0]} 
               alt={`${product.title} - View ${activeImgIdx + 1}`} 
@@ -356,9 +387,34 @@ function AIModeProductCard({ product, query }: AIModeProductCardProps) {
         </div>
 
         <div>
-          <h4 className="text-xs font-bold text-zinc-900 line-clamp-1 group-hover:text-indigo-600 transition" title={product.title}>
-            {product.title}
-          </h4>
+          {product.source_url ? (
+            <a
+              href={product.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                fetch('/api/ai-mode/track', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    event: 'product_click',
+                    product_id: product.id,
+                    source_url: product.source_url,
+                    query
+                  })
+                }).catch(() => {});
+              }}
+              className="hover:underline"
+            >
+              <h4 className="text-xs font-bold text-zinc-900 line-clamp-1 group-hover:text-indigo-600 transition" title={product.title}>
+                {product.title}
+              </h4>
+            </a>
+          ) : (
+            <h4 className="text-xs font-bold text-zinc-900 line-clamp-1 group-hover:text-indigo-600 transition" title={product.title}>
+              {product.title}
+            </h4>
+          )}
           <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">
             {product.description || 'Exclusive item from official store collection.'}
           </p>
