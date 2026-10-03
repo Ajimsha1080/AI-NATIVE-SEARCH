@@ -10,8 +10,7 @@ import {
   BookOpen, 
   Search, 
   Code2, 
-  Settings,
-  Sparkles
+  Settings
 } from 'lucide-react';
 
 export default function AIModeLayout({ children }: { children: React.ReactNode }) {
@@ -33,20 +32,9 @@ export default function AIModeLayout({ children }: { children: React.ReactNode }
 
         {/* AI Mode Sub-Header & Navigation */}
         <div className="bg-white/95 backdrop-blur-md border-b border-zinc-200/80 px-6 py-2.5 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200/50 flex items-center justify-center text-indigo-600 shadow-2xs">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xs font-bold text-zinc-900 tracking-tight">AI Mode</h1>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Live Engine
-                </span>
-              </div>
-              <p className="text-[11px] text-zinc-500">Autonomous conversational product discovery &amp; recommendation layer</p>
-            </div>
+          <div>
+            <h1 className="text-xs font-bold text-zinc-900 tracking-tight">AI Mode</h1>
+            <p className="text-[11px] text-zinc-500">Autonomous conversational product discovery &amp; recommendation layer</p>
           </div>
 
           {/* Premium Segmented Navigation Tabs */}
