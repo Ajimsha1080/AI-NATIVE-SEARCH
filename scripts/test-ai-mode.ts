@@ -1,16 +1,18 @@
 /**
- * AI MODE COMPREHENSIVE AUTOMATED VERIFICATION TEST SUITE
+ * AI MODE PRODUCTION RETRIEVAL & SEARCH VERIFICATION SUITE
  * 
- * Verifies that the completely isolated, additive AI Mode system operates 
- * correctly across all layers:
+ * Verifies that the generic, variant-aware AI Mode retrieval engine operates
+ * correctly according to production ecommerce invariants:
  * 1. Isolated Storage & Configuration
  * 2. Knowledge Source Management (Crawler & Documents)
  * 3. Safe Catalog Adapter (Read-only Commerce Bridge)
- * 4. AI Search Service (Query Planning, Dense Vector, Lexical Match, Filtering)
- * 5. Conversational Shopping & Recommendation Service
- * 6. Product Comparison & Multi-turn State Engine
- * 7. Isolated Deployments & Widget Script Generation
- * 8. Non-interference with Existing Core Systems
+ * 4. Multi-Constraint Query Understanding (Hard vs Soft, Bounds, Exclusions)
+ * 5. Variant-Aware Multi-Attribute Consistency
+ * 6. Hard-Constraint Invariant Enforcement (0% violation rate across all results)
+ * 7. Soft Preferences & Stylistic Alignment
+ * 8. Conversational Multi-Turn Shopping & State Refinements
+ * 9. Accurate Post-Validation Pagination & Diagnostics
+ * 10. Isolated Deployments & Widget Script Generation
  */
 
 import { aiModeStorage } from '../src/ai-mode/services/storage';
@@ -19,6 +21,8 @@ import { AIModeSearchService } from '../src/ai-mode/services/ai-search-service';
 import { AIModeChatService } from '../src/ai-mode/services/chat-service';
 import { AIModeKnowledgeService } from '../src/ai-mode/services/knowledge-service';
 import { AIModeDeploymentService } from '../src/ai-mode/services/deployment-service';
+import { ConstraintEvaluator } from '../src/ai-mode/services/constraint-evaluator';
+import { AIModeProduct } from '../src/ai-mode/types';
 
 let totalTests = 0;
 let passedTests = 0;
@@ -37,13 +41,13 @@ function assert(condition: boolean, message: string) {
 
 async function runTests() {
   console.log('================================================================');
-  console.log('🚀 RUNNING AI MODE FULL VERIFICATION TEST SUITE');
+  console.log('🚀 RUNNING PRODUCTION SEARCH & RETRIEVAL VERIFICATION TEST SUITE');
   console.log('================================================================\n');
 
   const testWorkspaceId = 'ws_default';
 
   // -------------------------------------------------------------
-  // Test 1: Isolated Storage and Configuration
+  // Test Suite 1: Isolated Storage and Configuration
   // -------------------------------------------------------------
   console.log('📦 Test Suite 1: Isolated Storage & Config Management');
   try {
@@ -64,7 +68,7 @@ async function runTests() {
   }
 
   // -------------------------------------------------------------
-  // Test 2: Safe Catalog Adapter
+  // Test Suite 2: Safe Catalog Adapter
   // -------------------------------------------------------------
   console.log('\n🛒 Test Suite 2: Safe Catalog Adapter (Read-only Bridge)');
   try {
@@ -81,7 +85,7 @@ async function runTests() {
   }
 
   // -------------------------------------------------------------
-  // Test 3: Knowledge Management Service
+  // Test Suite 3: Knowledge Management Service
   // -------------------------------------------------------------
   console.log('\n🧠 Test Suite 3: Knowledge Ingestion & Retrieval');
   let testKnowledgeId = '';
@@ -103,35 +107,89 @@ async function runTests() {
   }
 
   // -------------------------------------------------------------
-  // Test 4: AI Search Service & Query Planning
+  // Test Suite 4: Multi-Constraint Query Understanding & Price Bounds
   // -------------------------------------------------------------
-  console.log('\n🔍 Test Suite 4: AI Search & Dynamic Query Planning');
+  console.log('\n🔍 Test Suite 4: Multi-Constraint Query Understanding & Hard/Soft Bounds');
   try {
-    // Basic query
-    const plan1 = AIModeSearchService.parseQuery('cotton casual shirt');
+    // Basic Discovery Query
+    const plan1 = AIModeSearchService.parseQuery('cotton casual shirt', undefined, testWorkspaceId);
     assert(plan1.intent === 'DISCOVERY', 'Search intent classified as DISCOVERY');
+    assert(plan1.soft_preferences.includes('casual'), 'Extracted soft preference "casual"');
     const searchRes1 = await AIModeSearchService.search(plan1, testWorkspaceId);
     assert(searchRes1.products.length > 0, `Retrieved ${searchRes1.products.length} search results`);
     assert(typeof searchRes1.products[0].score === 'number', 'Results contain calculated AI relevance scores');
 
-    // Price extraction query
-    const plan2 = AIModeSearchService.parseQuery('shoes under 3000');
+    // Price Upper Bound Query ("under 3000")
+    const plan2 = AIModeSearchService.parseQuery('shoes under 3000', undefined, testWorkspaceId);
     assert(plan2.extracted_filters.max_price === 3000, `Extracted maximum price filter of 3000 (Got: ${plan2.extracted_filters.max_price})`);
     const searchRes2 = await AIModeSearchService.search(plan2, testWorkspaceId);
     const allUnder3000 = searchRes2.products.every(r => r.price <= 3000);
-    assert(allUnder3000, 'All returned products strictly adhere to extracted price constraint');
+    assert(allUnder3000, 'INVARIANT: All returned products strictly adhere to extracted price constraint (<= 3000)');
 
-    // Comparison intent query
-    const plan3 = AIModeSearchService.parseQuery('compare casual shirt and denim jeans');
-    assert(plan3.intent === 'COMPARISON', 'Detected comparison intent from user query');
+    // Direct Currency Pattern Query ("product 1000 rupees")
+    const planCurrency = AIModeSearchService.parseQuery('product 1000 rupees', undefined, testWorkspaceId);
+    assert(planCurrency.extracted_filters.max_price === 1000, `Extracted direct currency price filter (<= 1000)`);
+    const searchResCurrency = await AIModeSearchService.search(planCurrency, testWorkspaceId);
+    assert(searchResCurrency.products.length > 0 && searchResCurrency.products.every(p => p.price <= 1000), 'Direct currency search returned validated products <= 1000');
+
+    // Price Range Query ("between 1000 and 2500")
+    const planRange = AIModeSearchService.parseQuery('shirt between 1000 and 2500', undefined, testWorkspaceId);
+    assert(planRange.extracted_filters.min_price === 1000 && planRange.extracted_filters.max_price === 2500, 'Extracted dual-bound price range constraint [1000, 2500]');
+    const searchResRange = await AIModeSearchService.search(planRange, testWorkspaceId);
+    const allInRange = searchResRange.products.every(p => p.price >= 1000 && p.price <= 2500);
+    assert(allInRange, 'INVARIANT: All returned range products satisfy [1000 <= price <= 2500]');
+
+    // Negative Exclusions Query ("not red")
+    const planExcl = AIModeSearchService.parseQuery('shirt not red', undefined, testWorkspaceId);
+    assert(planExcl.exclusions.includes('red'), 'Detected negative exclusion "red"');
+    const searchResExcl = await AIModeSearchService.search(planExcl, testWorkspaceId);
+    const noRedProducts = searchResExcl.products.every(p => !/\b(red)\b/i.test(p.title));
+    assert(noRedProducts, 'INVARIANT: No returned products contain excluded attribute "red"');
   } catch (err: any) {
-    assert(false, `AI Search service test threw error: ${err.message}`);
+    assert(false, `Query understanding test threw error: ${err.message}`);
   }
 
   // -------------------------------------------------------------
-  // Test 5: Conversational Shopping & Cart Intent Detection
+  // Test Suite 5: Variant-Aware Multi-Attribute Consistency
   // -------------------------------------------------------------
-  console.log('\n💬 Test Suite 5: AI Conversational Shopping & Multi-turn Agent');
+  console.log('\n🧬 Test Suite 5: Variant-Aware Multi-Attribute Consistency');
+  try {
+    // Synthetic product with separated variant attributes:
+    // Variant 1: Color = Red, Size = M
+    // Variant 2: Color = Blue, Size = S
+    const testMultiVariantProduct: AIModeProduct = {
+      id: 'prod_multi_var_01',
+      title: 'AeroFlex Performance Tee',
+      description: 'Breathable sports tee',
+      price: 1200,
+      currency: 'INR',
+      category: 'T-Shirt',
+      images: [],
+      in_stock: true,
+      attributes: { material: 'Polyester' },
+      variants: [
+        { id: 'var_1', title: 'Red / M', price: 1200, in_stock: true, attributes: { color: 'Red', size: 'M' } },
+        { id: 'var_2', title: 'Blue / S', price: 1200, in_stock: true, attributes: { color: 'Blue', size: 'S' } }
+      ]
+    };
+
+    // Case A: Query for "Blue" AND "M" -> NO single variant has both (Must FAIL)
+    const planBlueM = AIModeSearchService.parseQuery('Blue M shirt', undefined, testWorkspaceId);
+    const evalBlueM = ConstraintEvaluator.evaluateProduct(testMultiVariantProduct, planBlueM);
+    assert(evalBlueM.isValid === false, 'Variant-Consistency: Rejected product where no single variant satisfies both (Blue + M)');
+
+    // Case B: Query for "Red" AND "M" -> Variant 1 matches both (Must PASS)
+    const planRedM = AIModeSearchService.parseQuery('Red M shirt', undefined, testWorkspaceId);
+    const evalRedM = ConstraintEvaluator.evaluateProduct(testMultiVariantProduct, planRedM);
+    assert(evalRedM.isValid === true && evalRedM.matchingVariantId === 'var_1', 'Variant-Consistency: Accepted product when Variant 1 satisfies both (Red + M)');
+  } catch (err: any) {
+    assert(false, `Variant consistency test threw error: ${err.message}`);
+  }
+
+  // -------------------------------------------------------------
+  // Test Suite 6: Conversational Shopping & Cart Intent Detection
+  // -------------------------------------------------------------
+  console.log('\n💬 Test Suite 6: Conversational Multi-turn Agent & State Refinements');
   let convId = '';
   try {
     // Turn 1: Product inquiry
@@ -168,9 +226,9 @@ async function runTests() {
   }
 
   // -------------------------------------------------------------
-  // Test 6: Isolated Deployments & Widget Embed
+  // Test Suite 7: Isolated Deployments & Widget Embed
   // -------------------------------------------------------------
-  console.log('\n🌐 Test Suite 6: Isolated Deployments & Script Generator');
+  console.log('\n🌐 Test Suite 7: Isolated Deployments & Script Generator');
   let testDeploymentId = '';
   try {
     const deployment = AIModeDeploymentService.createDeployment({

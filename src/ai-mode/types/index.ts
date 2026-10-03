@@ -32,52 +32,98 @@ export interface AIModeKnowledgeSource {
   updated_at: string;
 }
 
+export interface AIModeProductVariant {
+  id: string;
+  parent_product_id?: string;
+  title: string;
+  price: number;
+  sale_price?: number;
+  in_stock: boolean;
+  sku?: string;
+  images?: string[];
+  attributes?: Record<string, string>;
+}
+
 export interface AIModeProduct {
   id: string;
   title: string;
   handle?: string;
   description: string;
+  product_type?: string;
   price: number;
   sale_price?: number;
   currency: string;
   category: string;
   subcategories?: string[];
   brand?: string;
+  audience?: 'men' | 'women' | 'unisex' | 'kids' | string;
   images: string[];
   in_stock: boolean;
-  variants: Array<{
-    id: string;
-    title: string;
-    price: number;
-    in_stock: boolean;
-    attributes?: Record<string, string>;
-  }>;
+  variants: AIModeProductVariant[];
   attributes: Record<string, string>;
+  tags?: string[];
+  searchable_text?: string;
   source_url?: string;
   score?: number;
 }
 
+export type SearchConstraintOperator = '=' | '!=' | '<' | '<=' | '>' | '>=' | 'IN' | 'NOT_IN' | 'CONTAINS' | 'BETWEEN';
+
+export interface SearchConstraint {
+  field: string;
+  operator: SearchConstraintOperator;
+  value: any;
+  is_hard: boolean;
+  is_variant_level: boolean;
+  confidence?: number;
+  raw_token?: string;
+}
+
 export interface AIModeSearchPlan {
   original_query: string;
-  intent: 'DISCOVERY' | 'RECOMMENDATION' | 'COMPARISON' | 'SIMILAR' | 'REFINEMENT' | 'INVENTORY' | 'POLICY' | 'GENERAL';
+  intent: 'DISCOVERY' | 'EXACT_MATCH' | 'RECOMMENDATION' | 'COMPARISON' | 'SIMILAR' | 'REFINEMENT' | 'INVENTORY' | 'POLICY' | 'GENERAL';
+  product_concepts: string[];
+  hard_constraints: SearchConstraint[];
+  soft_preferences: string[];
   semantic_query: string;
-  extracted_filters: {
-    category?: string;
-    min_price?: number;
-    max_price?: number;
-    color?: string;
-    size?: string;
-    gender?: string;
-    occasion?: string;
-    brand?: string;
-    in_stock_only?: boolean;
-    custom_attributes?: Record<string, string>;
-  };
+  lexical_query: string;
+  exclusions: string[];
+  sorting?: 'relevance' | 'price_asc' | 'price_desc' | 'newest';
   sort?: 'relevance' | 'price_asc' | 'price_desc' | 'newest';
   pagination: {
     page: number;
     page_size: number;
   };
+  confidence: number;
+  extracted_filters: {
+    category?: string;
+    product_type?: string;
+    min_price?: number;
+    max_price?: number;
+    color?: string;
+    size?: string;
+    gender?: string;
+    audience?: string;
+    occasion?: string;
+    brand?: string;
+    material?: string;
+    in_stock_only?: boolean;
+    exclusions?: string[];
+    custom_attributes?: Record<string, string>;
+  };
+}
+
+export interface SearchDiagnosticRecord {
+  total_catalog_count: number;
+  candidate_count: number;
+  valid_count: number;
+  rejections?: Array<{
+    product_id: string;
+    title: string;
+    failed_constraint: string;
+    reason: string;
+  }>;
+  relaxed_constraints?: string[];
 }
 
 export interface AIModeSearchResult {
@@ -89,6 +135,7 @@ export interface AIModeSearchResult {
   applied_filters: Record<string, any>;
   search_plan: AIModeSearchPlan;
   latency_ms: number;
+  diagnostics?: SearchDiagnosticRecord;
 }
 
 export interface AIModeMessage {

@@ -107,30 +107,59 @@ export default function AIModeSearchPlayground() {
                 <Zap className="w-4 h-4 text-emerald-400" />
                 <span className="text-xs font-bold font-mono text-zinc-200">Dynamic AI Search Plan</span>
               </div>
-              <span className="text-[11px] font-mono text-zinc-400">Latency: <strong className="text-emerald-400">{result.latency_ms}ms</strong></span>
+              <div className="flex items-center gap-3 text-[11px] font-mono text-zinc-400">
+                <span>Validated: <strong className="text-emerald-400">{result.total_matches}</strong></span>
+                <span>Latency: <strong className="text-emerald-400">{result.latency_ms}ms</strong></span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
-              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
+              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
                 <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Intent</span>
                 <span className="text-emerald-400 font-bold">{result.search_plan.intent}</span>
+                {result.search_plan.product_concepts && result.search_plan.product_concepts.length > 0 && (
+                  <p className="text-[11px] text-zinc-300 truncate">Concept: {result.search_plan.product_concepts.join(', ')}</p>
+                )}
               </div>
-              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50">
-                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Target Demographic</span>
-                <span className="text-indigo-300 font-bold capitalize">
-                  {result.search_plan.extracted_filters.gender || 'All / General'}
-                </span>
+
+              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
+                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Hard Constraints</span>
+                <div className="space-y-0.5">
+                  {result.search_plan.hard_constraints && result.search_plan.hard_constraints.length > 0 ? (
+                    result.search_plan.hard_constraints.slice(0, 3).map((c, cIdx) => (
+                      <div key={cIdx} className="text-[11px] text-amber-300 truncate">
+                        • {c.field} {c.operator} {typeof c.value === 'number' ? `₹${c.value}` : String(c.value)}
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-zinc-400 text-[11px]">None (Broad Discovery)</span>
+                  )}
+                </div>
               </div>
-              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50">
-                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Category &amp; Price</span>
-                <span className="text-amber-300 font-bold">
-                  {result.search_plan.extracted_filters.category || 'Any Category'}
-                  {result.search_plan.extracted_filters.max_price ? ` (≤ ₹${result.search_plan.extracted_filters.max_price})` : ''}
-                </span>
+
+              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
+                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Soft Preferences</span>
+                <div className="flex flex-wrap gap-1">
+                  {result.search_plan.soft_preferences && result.search_plan.soft_preferences.length > 0 ? (
+                    result.search_plan.soft_preferences.map((p, pIdx) => (
+                      <span key={pIdx} className="px-1.5 py-0.5 rounded bg-zinc-700 text-indigo-300 text-[10px]">
+                        {p}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-zinc-400 text-[11px]">Standard Ranking</span>
+                  )}
+                </div>
               </div>
-              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50">
-                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Total Matches</span>
-                <span className="text-emerald-300 font-bold">{result.total_matches} Products Found</span>
+
+              <div className="bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 space-y-1">
+                <span className="text-zinc-400 block text-[10px] uppercase font-semibold">Exclusions &amp; Sort</span>
+                <p className="text-[11px] text-indigo-300 truncate">Sort: {result.search_plan.sorting || 'relevance'}</p>
+                {result.search_plan.exclusions && result.search_plan.exclusions.length > 0 ? (
+                  <p className="text-[10px] text-rose-300 truncate">Excluded: {result.search_plan.exclusions.join(', ')}</p>
+                ) : (
+                  <p className="text-[10px] text-emerald-400 truncate">No Exclusions</p>
+                )}
               </div>
             </div>
           </div>
