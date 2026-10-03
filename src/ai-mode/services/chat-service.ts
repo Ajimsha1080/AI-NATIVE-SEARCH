@@ -3,6 +3,7 @@ import { aiModeStorage } from './storage';
 import { AIModeSearchService } from './ai-search-service';
 import { AIModeCatalogAdapter } from '../adapters/catalog-adapter';
 import { AIModeCartAdapter } from '../adapters/cart-adapter';
+import { AIModeLLMService } from './llm-service';
 import { generateId } from '@/lib/utils';
 
 export class AIModeChatService {
@@ -124,13 +125,27 @@ export class AIModeChatService {
           comparisonSummary = `If budget is your priority, **${cheaper.title}** saves you ₹${diffPrice.toLocaleString('en-IN')}. However, **${premium.title}** offers premium detailing.`;
         }
 
+        // Optional LLM comparison synthesis
+        const llmVerdict = await AIModeLLMService.generateResponse({
+          userMessage: params.userMessage,
+          workspaceId: params.workspaceId,
+          intent: 'COMPARISON',
+          products: [itemA, itemB],
+          comparisonData: { itemA, itemB, summary: comparisonSummary },
+          conversationHistory: conv.messages.map(m => ({ role: m.role, content: m.content }))
+        });
+
+        const finalContent = llmVerdict || (
+          `Here is a side-by-side comparison between **${itemA.title}** and **${itemB.title}**:\n\n` +
+          `• **${cheaper.title}** (₹${cheaper.price.toLocaleString('en-IN')}): Best value pick with high versatility.\n` +
+          `• **${premium.title}** (₹${premium.price.toLocaleString('en-IN')}): Premium build with distinct styling.\n\n` +
+          `💡 **AI Verdict**: ${comparisonSummary}`
+        );
+
         const responseMsg: AIModeMessage = {
           id: `msg_${generateId('ast')}`,
           role: 'assistant',
-          content: `Here is a side-by-side comparison between **${itemA.title}** and **${itemB.title}**:\n\n` +
-            `• **${cheaper.title}** (₹${cheaper.price.toLocaleString('en-IN')}): Best value pick with high versatility.\n` +
-            `• **${premium.title}** (₹${premium.price.toLocaleString('en-IN')}): Premium build with distinct styling.\n\n` +
-            `💡 **AI Verdict**: ${comparisonSummary}`,
+          content: finalContent,
           comparison: {
             item_a: itemA,
             item_b: itemB,
@@ -168,6 +183,13 @@ export class AIModeChatService {
     const searchResult = await AIModeSearchService.search(plan, params.workspaceId);
     conv.last_search_state = plan;
 
+    // Ingest knowledge sources for policy/FAQ/merchant context
+    const knowledgeSources = aiModeStorage.getKnowledgeSources(params.workspaceId);
+    const knowledgeContext = knowledgeSources
+      .map(k => `[Source: ${k.name}]: ${k.raw_content || ''}`)
+      .filter(Boolean)
+      .join('\n\n');
+
     let assistantText = '';
     if (searchResult.products.length === 0) {
       assistantText = `I couldn't find any products matching "${params.userMessage}". Try adjusting your budget or exploring our featured categories.`;
@@ -179,6 +201,23 @@ export class AIModeChatService {
       assistantText = `Updated your search results with your specified filters:`;
     } else {
       assistantText = `Found ${searchResult.total_matches} matching product${searchResult.total_matches === 1 ? '' : 's'} in our collection:`;
+    }
+
+    // Invoke connected LLM to synthesize intelligent e-commerce response if available
+    if (searchResult.products.length > 0 || knowledgeContext) {
+      const llmAnswer = await AIModeLLMService.generateResponse({
+        userMessage: params.userMessage,
+        workspaceId: params.workspaceId,
+        searchPlan: plan,
+        products: searchResult.products,
+        knowledgeContext,
+        intent: plan.intent === 'RECOMMENDATION' ? 'RECOMMENDATION' : 'SEARCH',
+        conversationHistory: conv.messages.map(m => ({ role: m.role, content: m.content }))
+      });
+
+      if (llmAnswer) {
+        assistantText = llmAnswer;
+      }
     }
 
     const responseMsg: AIModeMessage = {

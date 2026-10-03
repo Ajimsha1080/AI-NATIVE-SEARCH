@@ -18,11 +18,11 @@ export class AIModeSearchService {
   /**
    * Production-grade Hybrid Retrieval Pipeline:
    * 1. Dynamic Query Understanding & Hard/Soft Constraint Extraction
-   * 2. Candidate Retrieval from Authoritative Catalog Index
-   * 3. Strict Variant-Aware Hard Constraint Validation (Exclusions, Single-Variant Consistency, Price Bounds, Color & Audience Precision)
-   * 4. Multi-Signal Ranking of Valid Products Only (Exact Concept, Lexical, Semantic Cosine, Soft Preferences)
-   * 5. Post-Ranking Final Safety Invariant Verification
-   * 6. Accurate Post-Validation Pagination & Comprehensive Diagnostics
+   * 2. Broad Multi-Signal Candidate Retrieval (Vector + Lexical + Taxonomy)
+   * 3. Variant-Aware Hard Constraint Validation (Exclusions, Single-Variant Consistency, Price Bounds)
+   * 4. Multi-Signal Ranking of Valid Products (Exact Concept, Lexical, Semantic Cosine, Soft Preferences)
+   * 5. Post-Validation Count & Accurate Pagination
+   * 6. Comprehensive Observability & Diagnostic Trace Generation
    */
   public static async search(plan: AIModeSearchPlan, workspaceId?: string): Promise<AIModeSearchResult> {
     const startTime = Date.now();
@@ -53,17 +53,18 @@ export class AIModeSearchService {
       .split(/\s+/)
       .filter(t => t.length > 1);
 
-    const rejections: NonNullable<SearchDiagnosticRecord['rejections']> = [];
+    const rejections: SearchDiagnosticRecord['rejections'] = [];
     const validScoredCandidates: Array<{ product: AIModeProduct; score: number }> = [];
 
     // -------------------------------------------------------------
-    // 1. Filter Candidates via Strict Hard Constraint Validation
+    // 1. Iterate Over Candidates & Apply Hard Constraint Validation
     // -------------------------------------------------------------
     for (const product of allProducts) {
+      // Execute strict variant-aware validation
       const evalResult = ConstraintEvaluator.evaluateProduct(product, plan);
 
       if (!evalResult.isValid) {
-        if (rejections.length < 100) {
+        if (rejections.length < 50) {
           rejections.push({
             product_id: product.id,
             title: product.title,
@@ -80,7 +81,7 @@ export class AIModeSearchService {
       const titleLower = (product.title || '').toLowerCase();
       const descLower = (product.description || '').toLowerCase();
       const catLower = (product.category || '').toLowerCase();
-      const tagsLower = (product.subcategories || product.tags || []).map(t => t.toLowerCase());
+      const tagsLower = (product.subcategories || []).map(t => t.toLowerCase());
       const allProductText = `${titleLower} ${descLower} ${catLower} ${tagsLower.join(' ')}`;
 
       // Signal A: Exact Concept / Product Type Match
@@ -100,7 +101,7 @@ export class AIModeSearchService {
       let titleHits = 0;
       if (lexicalTokens.length > 0) {
         for (const token of lexicalTokens) {
-          const tokenRegex = new RegExp(`(^|[^a-zA-Z0-9])${escapeRegex(token)}([^a-zA-Z0-9]|$)`, 'i');
+          const tokenRegex = new RegExp(`\\b${escapeRegex(token)}`, 'i');
           if (tokenRegex.test(titleLower)) {
             titleHits++;
             lexicalHits++;
@@ -133,7 +134,7 @@ export class AIModeSearchService {
       let proximityScore = 0;
       if (plan.extracted_filters.max_price && product.price <= plan.extracted_filters.max_price) {
         const ratio = product.price / plan.extracted_filters.max_price;
-        proximityScore = ratio * 0.15;
+        proximityScore = ratio * 0.15; // Closer to desired budget without exceeding
       }
 
       // Total Composite Score
@@ -169,21 +170,13 @@ export class AIModeSearchService {
     }
 
     // -------------------------------------------------------------
-    // 4. FINAL HARD-CONSTRAINT SAFETY ASSERTION (Post-Ranking Invariant Guard)
+    // 4. Accurate Post-Validation Pagination & Result Calculation
     // -------------------------------------------------------------
-    const strictlyVerifiedCandidates = validScoredCandidates.filter(c => {
-      const finalCheck = ConstraintEvaluator.evaluateProduct(c.product, plan);
-      return finalCheck.isValid;
-    });
-
-    // -------------------------------------------------------------
-    // 5. Accurate Post-Validation Pagination & Result Calculation
-    // -------------------------------------------------------------
-    const totalMatches = strictlyVerifiedCandidates.length;
+    const totalMatches = validScoredCandidates.length;
     const page = Math.max(1, plan.pagination.page);
     const pageSize = Math.max(1, plan.pagination.page_size);
     const startIndex = (page - 1) * pageSize;
-    const paginatedProducts = strictlyVerifiedCandidates.slice(startIndex, startIndex + pageSize).map(c => c.product);
+    const paginatedProducts = validScoredCandidates.slice(startIndex, startIndex + pageSize).map(c => c.product);
     const hasMore = startIndex + pageSize < totalMatches;
 
     const diagnostics: SearchDiagnosticRecord = {
