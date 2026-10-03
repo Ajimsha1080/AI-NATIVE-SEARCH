@@ -12,15 +12,11 @@ import {
 import { AIModeSearchResult, AIModeProduct } from '@/ai-mode/types';
 
 export default function AIModeSearchPlayground() {
-  const [query, setQuery] = useState('women products');
+  const [query, setQuery] = useState('');
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [result, setResult] = useState<AIModeSearchResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(48);
-
-  useEffect(() => {
-    handleSearch('women products', 1, pageSize);
-  }, []);
 
   async function handleSearch(searchQuery: string, page = 1, size = pageSize) {
     if (!searchQuery.trim()) return;
@@ -63,6 +59,15 @@ export default function AIModeSearchPlayground() {
   const startCount = result && result.total_matches > 0 ? (currentPage - 1) * pageSize + 1 : 0;
   const endCount = result ? Math.min(currentPage * pageSize, result.total_matches) : 0;
 
+  const quickPills = [
+    'women products',
+    'red shirts for men',
+    'sarees for festive wear',
+    'men joggers under 2000',
+    'laptop sleeves',
+    'cotton shirts'
+  ];
+
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -72,13 +77,13 @@ export default function AIModeSearchPlayground() {
       </div>
 
       {/* Search Input Bar */}
-      <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-2xs">
+      <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-2xs space-y-3">
         <form onSubmit={e => { e.preventDefault(); handleSearch(query, 1, pageSize); }} className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
             <input
               type="text"
-              placeholder="Ask any shopping query (e.g. 'women products', 'cotton shirts under 1500', 'sarees for wedding')..."
+              placeholder="Ask any shopping query (e.g. 'women products', 'cotton shirts under 1500', 'red shirts for men')..."
               value={query}
               onChange={e => setQuery(e.target.value)}
               className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition font-medium"
@@ -93,9 +98,35 @@ export default function AIModeSearchPlayground() {
             <span>AI Search</span>
           </button>
         </form>
+
+        {/* Quick Suggestion Pills */}
+        <div className="flex items-center gap-1.5 flex-wrap pt-1">
+          <span className="text-[11px] font-medium text-zinc-400 mr-1">Suggestions:</span>
+          {quickPills.map(pill => (
+            <button
+              key={pill}
+              type="button"
+              onClick={() => {
+                setQuery(pill);
+                handleSearch(pill, 1, pageSize);
+              }}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-zinc-50 hover:bg-zinc-100 text-zinc-600 border border-zinc-200/80 transition cursor-pointer"
+            >
+              {pill}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Results Section */}
+      {!result && !loadingSearch && (
+        <div className="bg-white rounded-2xl border border-dashed border-zinc-300 p-12 text-center space-y-2">
+          <ShoppingBag className="w-8 h-8 text-zinc-300 mx-auto" />
+          <h3 className="text-xs font-bold text-zinc-700">Enter a query or select a suggestion</h3>
+          <p className="text-[11px] text-zinc-400 max-w-sm mx-auto">AI Search will extract demographic, category, price, and color constraints dynamically.</p>
+        </div>
+      )}
+
       {result && (
         <div className="space-y-6">
           {/* Results Bar & Page Size Selector */}
