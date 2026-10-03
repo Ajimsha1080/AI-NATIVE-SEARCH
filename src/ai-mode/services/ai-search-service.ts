@@ -6,13 +6,16 @@ const STOP_WORDS = new Set([
   'product', 'products', 'item', 'items', 'show', 'me', 'find', 'get', 'give',
   'all', 'the', 'a', 'an', 'in', 'for', 'of', 'to', 'with', 'and', 'or', 'some',
   'please', 'looking', 'look', 'want', 'need', 'buy', 'shop', 'display', 'list',
-  'available', 'good', 'best', 'top', 'any', 'have', 'you', 'can', 'is', 'are'
+  'available', 'good', 'best', 'top', 'any', 'have', 'you', 'can', 'is', 'are',
+  'rupee', 'rupees', 'rs', 'inr', 'buck', 'bucks', 'price', 'cost', 'budget',
+  'around', 'approx', 'rate', 'rates', 'worth', 'value', 'under', 'below', 'above'
 ]);
 
 const EXPLORATORY_WORDS = new Set([
   'new', 'latest', 'recent', 'arrival', 'arrivals', 'trending', 'popular', 
   'featured', 'bestseller', 'bestsellers', 'hot', 'everything', 'browse', 
-  'collection', 'catalog', 'stuff', 'clothes', 'clothing', 'apparel'
+  'collection', 'catalog', 'stuff', 'clothes', 'clothing', 'apparel', 'deals',
+  'offers', 'options', 'recommendations', 'suggestions'
 ]);
 
 export class AIModeSearchService {
@@ -86,6 +89,16 @@ export class AIModeSearchService {
       max_price = parseFloat(rangeMatch[2]);
     }
 
+    // Direct currency pattern: "1000 rupees", "1000 rs", "1000 inr", "₹1000", "product 1000", "items 1500"
+    if (max_price === undefined && min_price === undefined) {
+      const directCurrencyMatch = queryLower.match(/(\d+(?:,\d+)?)\s*(?:rs\.?|inr|rupees?|bucks?|₹|\$)/i) ||
+                                  queryLower.match(/(?:rs\.?|inr|₹|\$)\s*(\d+(?:,\d+)?)/i) ||
+                                  queryLower.match(/(?:product|products|item|items|price|budget|around|approx)\s+(\d{2,6})\b/i);
+      if (directCurrencyMatch) {
+        max_price = parseFloat(directCurrencyMatch[1].replace(/,/g, ''));
+      }
+    }
+
     // 6. Sorting
     let sort: AIModeSearchPlan['sort'] = 'relevance';
     if (/\b(cheap|cheaper|lowest\s+price|low\s+to\s+high|price\s+low)\b/i.test(queryLower)) {
@@ -144,11 +157,11 @@ export class AIModeSearchService {
     const targetCategory = plan.extracted_filters.category?.toLowerCase();
     const targetColor = plan.extracted_filters.color?.toLowerCase();
 
-    // Extract meaningful tokens (non-stopwords)
+    // Extract meaningful tokens (non-stopwords, non-numbers)
     const rawTokens = queryLower.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
-    const meaningfulTokens = rawTokens.filter(t => t.length > 1 && !STOP_WORDS.has(t));
+    const meaningfulTokens = rawTokens.filter(t => t.length > 1 && !STOP_WORDS.has(t) && isNaN(Number(t)));
 
-    // Check if query is an exploratory / broad catalog query (e.g. "new products", "all items", "latest collection")
+    // Check if query is an exploratory / broad catalog query (e.g. "new products", "all items", "product 1000 rupees")
     const specificKeywordTokens = meaningfulTokens.filter(t => !EXPLORATORY_WORDS.has(t));
     const isExploratoryQuery = meaningfulTokens.length === 0 || specificKeywordTokens.length === 0;
     const isNewArrivalsQuery = /\b(new|latest|recent|arrivals?)\b/i.test(queryLower);
@@ -286,8 +299,15 @@ export class AIModeSearchService {
         continue;
       }
 
-      // Base score for exploratory queries is 0.50 so all valid catalog items display
+      // Base score for exploratory or budget queries is 0.50 so all valid catalog items display
       const baseScore = isExploratoryQuery ? 0.50 : 0.0;
+
+      // Price proximity score bonus if max_price was specified
+      let priceProximityBonus = 0;
+      if (plan.extracted_filters.max_price && product.price <= plan.extracted_filters.max_price) {
+        const ratio = product.price / plan.extracted_filters.max_price;
+        priceProximityBonus = ratio * 0.15; // reward items that match the user's budget range
+      }
 
       const totalScore = Math.min(
         0.99,
@@ -298,6 +318,7 @@ export class AIModeSearchService {
         categoryBonus + 
         colorBonus + 
         exploratoryBonus +
+        priceProximityBonus +
         exactBonus
       );
 

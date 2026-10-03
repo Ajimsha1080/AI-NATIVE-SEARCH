@@ -275,14 +275,18 @@ export class LocalCommerceProvider {
     // Price Bounds
     let maxPrice: number | undefined;
     let minPrice: number | undefined;
-    const maxPriceMatch = cleanQ.match(/(?:under|below|less than|max|around|budget|up to)\s*(?:₹|\$)?\s*(\d+)/i) || cleanQ.match(/(\d+)\s*(?:k|thousand)\b/i);
+    const maxPriceMatch = cleanQ.match(/(?:under|below|less than|max|around|budget|up to)\s*(?:₹|\$|rs\.?|inr)?\s*(\d+)/i) || 
+                          cleanQ.match(/(\d+)\s*(?:k|thousand)\b/i) ||
+                          cleanQ.match(/(\d+(?:,\d+)?)\s*(?:rs\.?|inr|rupees?|bucks?|₹|\$)/i) ||
+                          cleanQ.match(/(?:rs\.?|inr|₹|\$)\s*(\d+(?:,\d+)?)/i) ||
+                          cleanQ.match(/(?:product|products|item|items|price|budget|around|approx)\s+(\d{2,6})\b/i);
     if (maxPriceMatch) {
-      maxPrice = maxPriceMatch[0].includes('k') ? parseFloat(maxPriceMatch[1]) * 1000 : parseFloat(maxPriceMatch[1]);
+      maxPrice = maxPriceMatch[0].includes('k') ? parseFloat(maxPriceMatch[1]) * 1000 : parseFloat(maxPriceMatch[1].replace(/,/g, ''));
     }
 
-    const minPriceMatch = cleanQ.match(/(?:above|over|more than|min|at least|starting from)\s*(?:₹|\$)?\s*(\d+)/i);
+    const minPriceMatch = cleanQ.match(/(?:above|over|more than|min|at least|starting from)\s*(?:₹|\$|rs\.?|inr)?\s*(\d+)/i);
     if (minPriceMatch) {
-      minPrice = parseFloat(minPriceMatch[1]);
+      minPrice = parseFloat(minPriceMatch[1].replace(/,/g, ''));
     }
 
     // Gender
@@ -368,7 +372,8 @@ export class LocalCommerceProvider {
       'products', 'items', 'item', 'catalog', 'collection', 'arrivals', 'arrival', 'good', 'something',
       'nice', 'need', 'want', 'buy', 'recommend', 'would', 'like', 'there', 'have', 'i', 'get', 'to',
       'some', 'of', 'and', 'or', 'is', 'it', 'this', 'that', 'from', 'best', 'top', 'do', 'help', 'choose',
-      'more', 'page', 'see', 'load', 'all', 'entire', 'everything', 'give', 'ones', 'only'
+      'more', 'page', 'see', 'load', 'all', 'entire', 'everything', 'give', 'ones', 'only',
+      'rupee', 'rupees', 'rs', 'inr', 'buck', 'bucks', 'price', 'cost', 'budget', 'rate', 'rates', 'worth', 'value', 'around', 'approx'
     ]);
     let contentTokens = queryTokens.filter(t => !stopWords.has(t) && isNaN(Number(t)));
     let parsedSemanticTerms = Array.from(semanticTerms);
