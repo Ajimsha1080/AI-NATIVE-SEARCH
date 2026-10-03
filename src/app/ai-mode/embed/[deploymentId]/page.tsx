@@ -7,7 +7,6 @@ import {
   ShoppingBag, 
   X, 
   RefreshCw,
-  ExternalLink,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -304,7 +303,6 @@ function EmbedProductCard({ product, query, deploymentId, primaryColor }: EmbedP
           >
             <ShoppingBag className="w-2.5 h-2.5" />
             <span>Buy Now</span>
-            <ExternalLink className="w-2.5 h-2.5 opacity-75" />
           </a>
         ) : null}
       </div>

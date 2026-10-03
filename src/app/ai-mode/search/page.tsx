@@ -7,8 +7,7 @@ import {
   ShoppingBag, 
   RefreshCw,
   ChevronLeft,
-  ChevronRight,
-  ExternalLink
+  ChevronRight
 } from 'lucide-react';
 import { AIModeSearchResult, AIModeProduct } from '@/ai-mode/types';
 
@@ -416,7 +415,6 @@ function AIModeProductCard({ product, query }: AIModeProductCardProps) {
             >
               <ShoppingBag className="w-3.5 h-3.5 text-zinc-300" />
               <span>Buy Now</span>
-              <ExternalLink className="w-3 h-3 opacity-60 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 transition" />
             </a>
           ) : (
             <button
