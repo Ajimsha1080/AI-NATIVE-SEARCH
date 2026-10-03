@@ -65,7 +65,7 @@
       "enable_cart_actions": true,
       "system_instructions": "You are an AI Mode shopping assistant specialized in product discovery, recommendations, comparisons, and verified merchant catalog advice.",
       "created_at": "2026-10-01T19:48:55.058Z",
-      "updated_at": "2026-10-03T05:49:24.506Z"
+      "updated_at": "2026-10-03T07:01:14.166Z"
     },
     {
       "id": "aimode_cfg_ws_acme_corp",
@@ -118062,6 +118062,1264 @@
         "confidence": 0.95,
         "extracted_filters": {
           "category": "Shirt",
+          "max_price": 2500
+        }
+      }
+    },
+    {
+      "id": "conv_aim_mus1mr5jf64nrbxk",
+      "workspace_id": "ws_default",
+      "messages": [
+        {
+          "id": "msg_user_mus1mr5jxgpt6rrp",
+          "role": "user",
+          "content": "Recommend a stylish shirt for summer under 2500",
+          "created_at": "2026-10-03T07:01:14.359Z"
+        },
+        {
+          "id": "msg_ast_mus1mr5mgu90k8w0",
+          "role": "assistant",
+          "content": "Based on your preferences, here are handpicked recommendations from our catalog:",
+          "products": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "title": "Sage Green Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_sage_ss",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_sage_ss",
+              "score": 0.53
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "title": "Mauve Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_mauve_ss",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_mauve_ss",
+              "score": 0.52
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_ss",
+              "title": "Khaki Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_khaki_ss",
+              "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bkss_m",
+                  "title": "Medium / Khaki",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkss_l",
+                  "title": "Large / Khaki",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_khaki_ss",
+              "score": 0.52
+            },
+            {
+              "id": "prod_shirt_bamboo_beige_fs",
+              "title": "Dark Beige Bamboo Full Sleeve Shirt",
+              "handle": "prod_shirt_bamboo_beige_fs",
+              "description": "Tailored dark beige bamboo shirt crafted with natural antimicrobial properties and elegant matte sheen.",
+              "price": 2299,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "beige",
+                "premium",
+                "luxe",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bbfs_m",
+                  "title": "Medium / Beige",
+                  "price": 2299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Beige"
+                  }
+                },
+                {
+                  "id": "var_bbfs_l",
+                  "title": "Large / Beige",
+                  "price": 2299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Beige"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_beige_fs",
+              "score": 0.48
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_fs",
+              "title": "Mauve Bamboo Full Sleeve Shirt",
+              "handle": "prod_shirt_bamboo_mauve_fs",
+              "description": "Eco-luxe organic bamboo fiber full-sleeve shirt with ultra-soft drape and natural thermo-regulation.",
+              "price": 2299,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "premium",
+                "luxe",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bmfs_m",
+                  "title": "Medium / Mauve",
+                  "price": 2299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmfs_l",
+                  "title": "Large / Mauve",
+                  "price": 2299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_mauve_fs",
+              "score": 0.48
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_fs",
+              "title": "Khaki Bamboo Full Sleeve Shirt",
+              "handle": "prod_shirt_bamboo_khaki_fs",
+              "description": "Sophisticated khaki bamboo fiber full-sleeve shirt offering silky touch and effortless breathability.",
+              "price": 2299,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "premium",
+                "luxe",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bkfs_m",
+                  "title": "Medium / Khaki",
+                  "price": 2299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkfs_l",
+                  "title": "Large / Khaki",
+                  "price": 2299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_khaki_fs",
+              "score": 0.47
+            },
+            {
+              "id": "prod_shirt_ylw_cot",
+              "title": "Yellow Cotton Shirt",
+              "handle": "prod_shirt_ylw_cot",
+              "description": "Vibrant mustard yellow tailored cotton shirt with crisp collar and soft texture.",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "cotton",
+                "men",
+                "yellow",
+                "casual",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_yc_m",
+                  "title": "Medium / Yellow",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Yellow"
+                  }
+                },
+                {
+                  "id": "var_yc_l",
+                  "title": "Large / Yellow",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Yellow"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_ylw_cot",
+              "score": 0.46
+            },
+            {
+              "id": "prod_shirt_cord_nvy",
+              "title": "Corduroy Shirt: Navy",
+              "handle": "prod_shirt_cord_nvy",
+              "description": "Luxe fine-wale corduroy button-down shirt designed for casual styling and evening dinner occasions.",
+              "price": 1499,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "corduroy",
+                "men",
+                "navy",
+                "casual",
+                "dinner",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_sc_nvy_m",
+                  "title": "Medium / Navy",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_sc_nvy_l",
+                  "title": "Large / Navy",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_cord_nvy",
+              "score": 0.43
+            },
+            {
+              "id": "prod_shirt_cord_brn",
+              "title": "Corduroy Shirt: Brown",
+              "handle": "prod_shirt_cord_brn",
+              "description": "Rich earth-tone fine-wale corduroy shirt for relaxed weekends and layering.",
+              "price": 1499,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "corduroy",
+                "men",
+                "brown",
+                "casual",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_sc_brn_m",
+                  "title": "Medium / Brown",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Brown"
+                  }
+                },
+                {
+                  "id": "var_sc_brn_l",
+                  "title": "Large / Brown",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Brown"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_cord_brn",
+              "score": 0.43
+            },
+            {
+              "id": "prod_shirt_grn_cot",
+              "title": "Green Cotton Shirt",
+              "handle": "prod_shirt_grn_cot",
+              "description": "Breathable lightweight green cotton shirt suited for daily office and casual wear.",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "cotton",
+                "men",
+                "green",
+                "casual",
+                "office",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_gc_m",
+                  "title": "Medium / Green",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_gc_l",
+                  "title": "Large / Green",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_grn_cot",
+              "score": 0.43
+            },
+            {
+              "id": "prod_shirt_plaid_nf",
+              "title": "Plaid: Navy Frost",
+              "handle": "prod_shirt_plaid_nf",
+              "description": "Crisp navy and cool blue check shirt designed for all-season versatility.",
+              "price": 1199,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "plaid",
+                "men",
+                "navy",
+                "blue",
+                "casual",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_pnf_m",
+                  "title": "Medium / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_pnf_l",
+                  "title": "Large / Navy",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_plaid_nf",
+              "score": 0.42
+            },
+            {
+              "id": "prod_shirt_celestial",
+              "title": "Celestial Mystique",
+              "handle": "prod_shirt_celestial",
+              "description": "Deep midnight navy printed designer casual shirt with subtle geometric motifs.",
+              "price": 1299,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "men",
+                "blue",
+                "navy",
+                "dinner",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_cm_m",
+                  "title": "Medium / Navy",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Navy"
+                  }
+                },
+                {
+                  "id": "var_cm_l",
+                  "title": "Large / Navy",
+                  "price": 1299,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Navy"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_celestial",
+              "score": 0.41
+            },
+            {
+              "id": "prod_shirt_cord_grn",
+              "title": "Corduroy Shirt: Evergreen",
+              "handle": "prod_shirt_cord_grn",
+              "description": "Forest evergreen corduroy overshirt crafted from soft breathable pure cotton.",
+              "price": 1499,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "corduroy",
+                "men",
+                "green",
+                "evergreen",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_sc_grn_m",
+                  "title": "Medium / Green",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_sc_grn_l",
+                  "title": "Large / Green",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_cord_grn",
+              "score": 0.4
+            },
+            {
+              "id": "prod_shirt_cord_wine",
+              "title": "Corduroy Shirt: Wine",
+              "handle": "prod_shirt_cord_wine",
+              "description": "Sophisticated deep crimson wine corduroy shirt with tailored fit and mother-of-pearl buttons.",
+              "price": 1499,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "corduroy",
+                "men",
+                "wine",
+                "red",
+                "crimson",
+                "dinner",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_sc_wine_m",
+                  "title": "Medium / Wine",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Wine"
+                  }
+                },
+                {
+                  "id": "var_sc_wine_l",
+                  "title": "Large / Wine",
+                  "price": 1499,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Wine"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_cord_wine",
+              "score": 0.39
+            },
+            {
+              "id": "prod_shirt_plaid_re",
+              "title": "Plaid: Rustic Earth",
+              "handle": "prod_shirt_plaid_re",
+              "description": "Classic yarn-dyed plaid check casual shirt made with premium brushed cotton.",
+              "price": 1199,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "plaid",
+                "men",
+                "brown",
+                "casual",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_pre_m",
+                  "title": "Medium / Brown",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Brown"
+                  }
+                },
+                {
+                  "id": "var_pre_l",
+                  "title": "Large / Brown",
+                  "price": 1199,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Brown"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_plaid_re",
+              "score": 0.36
+            }
+          ],
+          "recommendations": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "title": "Sage Green Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_sage_ss",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_sage_ss",
+              "score": 0.53
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "title": "Mauve Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_mauve_ss",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_mauve_ss",
+              "score": 0.52
+            },
+            {
+              "id": "prod_shirt_bamboo_khaki_ss",
+              "title": "Khaki Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_khaki_ss",
+              "description": "Earth-tone short-sleeve bamboo shirt engineered for lightweight all-day comfort.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "khaki",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bkss_m",
+                  "title": "Medium / Khaki",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Khaki"
+                  }
+                },
+                {
+                  "id": "var_bkss_l",
+                  "title": "Large / Khaki",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Khaki"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_khaki_ss",
+              "score": 0.52
+            }
+          ],
+          "created_at": "2026-10-03T07:01:14.362Z"
+        },
+        {
+          "id": "msg_user_mus1mr7gkl849yuu",
+          "role": "user",
+          "content": "Compare the first and second one",
+          "created_at": "2026-10-03T07:01:14.428Z"
+        },
+        {
+          "id": "msg_ast_mus1mrbezea2vhq0",
+          "role": "assistant",
+          "content": "Here is a side-by-side comparison between **Sage Green Bamboo Shirt** and **Mauve Bamboo Shirt**:\n\n• **Sage Green Bamboo Shirt** (₹1,699): Best value pick with high versatility.\n• **Mauve Bamboo Shirt** (₹1,699): Premium build with distinct styling.\n\n💡 **AI Verdict**: Both **Sage Green Bamboo Shirt** and **Mauve Bamboo Shirt** are priced identically at ₹1,699. Choose based on your styling preference.",
+          "comparison": {
+            "item_a": {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "title": "Sage Green Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_sage_ss",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_sage_ss",
+              "score": 0.53
+            },
+            "item_b": {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "title": "Mauve Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_mauve_ss",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_mauve_ss",
+              "score": 0.52
+            },
+            "pros_a": [
+              "Price: ₹1,699",
+              "Category: Shirts",
+              "In Stock (Ready to dispatch)",
+              "Subtle sage green breathable short-sleeve bamboo shirt with spread collar...."
+            ],
+            "pros_b": [
+              "Price: ₹1,699",
+              "Category: Shirts",
+              "In Stock (Ready to dispatch)",
+              "Short sleeve organic bamboo casual shirt for resort wear and warm climates...."
+            ],
+            "summary": "Both **Sage Green Bamboo Shirt** and **Mauve Bamboo Shirt** are priced identically at ₹1,699. Choose based on your styling preference."
+          },
+          "products": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "title": "Sage Green Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_sage_ss",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_sage_ss",
+              "score": 0.53
+            },
+            {
+              "id": "prod_shirt_bamboo_mauve_ss",
+              "title": "Mauve Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_mauve_ss",
+              "description": "Short sleeve organic bamboo casual shirt for resort wear and warm climates.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "mauve",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bmss_m",
+                  "title": "Medium / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Mauve"
+                  }
+                },
+                {
+                  "id": "var_bmss_l",
+                  "title": "Large / Mauve",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Mauve"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_mauve_ss",
+              "score": 0.52
+            }
+          ],
+          "created_at": "2026-10-03T07:01:14.570Z"
+        },
+        {
+          "id": "msg_user_mus1mrdczqvyzzgz",
+          "role": "user",
+          "content": "Add the first one to my cart",
+          "created_at": "2026-10-03T07:01:14.640Z"
+        },
+        {
+          "id": "msg_ast_mus1mrdetnoetngy",
+          "role": "assistant",
+          "content": "Added **Sage Green Bamboo Shirt** (₹1,699) to your shopping bag! 🛍️ Would you like to view other matching recommendations?",
+          "products": [
+            {
+              "id": "prod_shirt_bamboo_sage_ss",
+              "title": "Sage Green Bamboo Shirt",
+              "handle": "prod_shirt_bamboo_sage_ss",
+              "description": "Subtle sage green breathable short-sleeve bamboo shirt with spread collar.",
+              "price": 1699,
+              "currency": "INR",
+              "category": "Shirts",
+              "subcategories": [
+                "shirt",
+                "bamboo",
+                "men",
+                "green",
+                "sage",
+                "summer",
+                "apparel"
+              ],
+              "brand": "Merchant",
+              "images": [
+                "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=600&auto=format&fit=crop&q=80"
+              ],
+              "in_stock": true,
+              "variants": [
+                {
+                  "id": "var_bsss_m",
+                  "title": "Medium / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "M",
+                    "color": "Green"
+                  }
+                },
+                {
+                  "id": "var_bsss_l",
+                  "title": "Large / Sage",
+                  "price": 1699,
+                  "in_stock": true,
+                  "attributes": {
+                    "size": "L",
+                    "color": "Green"
+                  }
+                }
+              ],
+              "attributes": {
+                "category": "Shirts"
+              },
+              "source_url": "/products/prod_shirt_bamboo_sage_ss",
+              "score": 0.53
+            }
+          ],
+          "cart_action_performed": {
+            "action": "ADD",
+            "product_title": "Sage Green Bamboo Shirt",
+            "quantity": 1
+          },
+          "created_at": "2026-10-03T07:01:14.642Z"
+        }
+      ],
+      "created_at": "2026-10-03T07:01:14.359Z",
+      "updated_at": "2026-10-03T07:01:14.642Z",
+      "last_search_state": {
+        "original_query": "Recommend a stylish shirt for summer under 2500",
+        "intent": "RECOMMENDATION",
+        "product_concepts": [
+          "Shirt"
+        ],
+        "hard_constraints": [
+          {
+            "field": "price",
+            "operator": "<=",
+            "value": 2500,
+            "is_hard": true,
+            "is_variant_level": true,
+            "confidence": 0.98
+          },
+          {
+            "field": "category",
+            "operator": "=",
+            "value": "Shirt",
+            "is_hard": true,
+            "is_variant_level": false,
+            "confidence": 0.95,
+            "raw_token": "shirt"
+          }
+        ],
+        "soft_preferences": [
+          "stylish",
+          "summer"
+        ],
+        "semantic_query": "Recommend a stylish shirt for summer under 2500",
+        "lexical_query": "stylish shirt summer",
+        "exclusions": [],
+        "sorting": "relevance",
+        "sort": "relevance",
+        "pagination": {
+          "page": 1,
+          "page_size": 48
+        },
+        "confidence": 0.95,
+        "extracted_filters": {
+          "category": "Shirt",
+          "product_type": "Shirt",
           "max_price": 2500
         }
       }

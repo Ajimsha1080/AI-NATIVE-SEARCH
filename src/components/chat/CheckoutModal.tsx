@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Check, ShieldCheck, Truck, CreditCard, ChevronRight, 
-  ArrowLeft, ShoppingBag, Zap, CheckCircle2, Sparkles, MapPin, 
+  ArrowLeft, ShoppingBag, CheckCircle2, MapPin, 
   Phone, Mail, User, Lock, AlertCircle, RefreshCw, QrCode, ExternalLink,
   Smartphone, Building, Copy, ArrowUpRight
 } from 'lucide-react';
@@ -302,11 +302,8 @@ export default function CheckoutModal({
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/70">
           <div className="flex items-center gap-2">
-            <div 
-              className="w-7 h-7 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-2xs"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <Zap className="w-3.5 h-3.5 fill-current" />
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-zinc-100 text-zinc-800 text-xs font-bold shadow-2xs">
+              <ShoppingBag className="w-3.5 h-3.5" />
             </div>
             <div>
               <h3 className="text-xs font-bold text-zinc-900">

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, use } from 'react';
 import { 
   Send, Bot, User, ShoppingBag, Truck, CheckCircle2, RotateCcw, 
-  AlertCircle, Sparkles, Image as ImageIcon, X, ZoomIn, ZoomOut, Eye, ExternalLink, Zap
+  AlertCircle, Image as ImageIcon, X, ZoomIn, ZoomOut, Eye, ExternalLink
 } from 'lucide-react';
 import PortalSwitcher from '@/components/layout/PortalSwitcher';
 import { sanitizeImageUrl, getProductFallbackImage } from '@/lib/utils';
@@ -484,10 +484,10 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                           <button 
                             onClick={() => handleBuyNow(p)}
                             style={{ backgroundColor: primaryColor }}
-                            className="px-2 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold text-white transition flex items-center justify-center gap-1 shadow-xs cursor-pointer hover:opacity-90 active:scale-95"
+                            className="px-2.5 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-semibold text-white transition flex items-center justify-center gap-1 shadow-xs cursor-pointer hover:opacity-90 active:scale-95"
                             title="Instant Checkout"
                           >
-                            <Zap className="w-3.5 h-3.5 fill-current" /> <span className="truncate">Buy Now</span>
+                            <span className="truncate">Buy Now</span>
                           </button>
                           <button 
                             onClick={() => handleAddToCart(p.title)}
@@ -512,7 +512,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                 }`}>
                   <div className={`flex items-center justify-between border-b pb-2 ${isDark ? 'border-sky-800/50' : 'border-sky-100'}`}>
                     <span className="font-bold flex items-center gap-1.5 text-sky-400">
-                      <Zap className="w-4 h-4 fill-current" /> Razorpay Agentic Payment
+                      Razorpay Agentic Payment
                     </span>
                     <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-bold border border-sky-500/30">
                       Instant
@@ -542,7 +542,7 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                       }}
                       className="flex-1 py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
                     >
-                      <Zap className="w-3.5 h-3.5 fill-current" /> Pay with Razorpay
+                      Pay with Razorpay
                     </button>
                     {(m.metadata?.razorpay?.payment_link || (m.metadata as any)?.data?.razorpay?.payment_link || m.metadata?.payment_link) && (
                       <a
@@ -808,9 +808,9 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
                       handleBuyNow({ title: itemTitle, price: previewModal.price || 999, imageUrl: previewModal.url, description: previewModal.description });
                     }}
                     style={{ backgroundColor: primaryColor }}
-                    className="px-4 py-2 rounded-xl text-white text-xs font-semibold flex items-center gap-1.5 transition shrink-0 shadow-xs hover:opacity-90 cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-white text-xs font-semibold flex items-center justify-center transition shrink-0 shadow-xs hover:opacity-90 cursor-pointer"
                   >
-                    <Zap className="w-3.5 h-3.5 fill-current" /> Buy Now
+                    Buy Now
                   </button>
                   <button
                     onClick={() => {
