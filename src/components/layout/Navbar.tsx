@@ -85,11 +85,20 @@ export default function Navbar() {
         {/* Mobile Hamburger & Workspace Indicator */}
         <div className="flex items-center gap-2 sm:gap-3">
           <button
-            onClick={() => setMobileNavOpen(true)}
-            aria-label="Open Navigation Menu"
-            className="md:hidden p-1.5 rounded-lg text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100 border border-zinc-200 transition"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                setMobileNavOpen(true);
+              } else {
+                const current = localStorage.getItem('shopmate_sidebar_collapsed') === 'true';
+                localStorage.setItem('shopmate_sidebar_collapsed', String(!current));
+                window.dispatchEvent(new Event('shopmate_sidebar_toggle'));
+              }
+            }}
+            aria-label="Toggle Navigation Sidebar"
+            className="p-1.5 rounded-lg text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100 border border-zinc-200 transition cursor-pointer"
+            title="Toggle Sidebar (3-bar)"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-4 h-4" />
           </button>
 
           <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-medium text-zinc-700">

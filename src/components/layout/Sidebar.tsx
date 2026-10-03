@@ -1,19 +1,34 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutGrid, Bot, Package, BookOpen, Layers, 
   Wrench, MessageSquare, Search, BarChart3, 
-  Globe, ShieldCheck, Users, CreditCard, Settings, UserPlus
+  Globe, ShieldCheck, Users, CreditCard, Settings, UserPlus,
+  Menu
 } from 'lucide-react';
 import { fetchWithCache } from '@/lib/client-cache';
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
+    // Load persisted sidebar state
+    const saved = localStorage.getItem('shopmate_sidebar_collapsed');
+    if (saved !== null) {
+      setIsCollapsed(saved === 'true');
+    }
+
+    const handleToggle = () => {
+      const current = localStorage.getItem('shopmate_sidebar_collapsed') === 'true';
+      setIsCollapsed(current);
+    };
+
+    window.addEventListener('shopmate_sidebar_toggle', handleToggle);
+
     // Background pre-warm core endpoints on idle for instant 0ms feature switching
     const prewarm = () => {
       fetchWithCache('/api/commerce/products');
@@ -30,7 +45,20 @@ export default function Sidebar() {
     } else {
       setTimeout(prewarm, 400);
     }
+
+    return () => {
+      window.removeEventListener('shopmate_sidebar_toggle', handleToggle);
+    };
   }, []);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('shopmate_sidebar_collapsed', String(next));
+      window.dispatchEvent(new Event('shopmate_sidebar_toggle'));
+      return next;
+    });
+  };
 
   const navigation = [
     { 
@@ -102,18 +130,37 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="hidden md:flex md:w-[70px] lg:w-56 border-r border-zinc-200 bg-white flex-col justify-between shrink-0 select-none overflow-y-auto shadow-xs">
+    <aside 
+      className={`hidden md:flex border-r border-zinc-200 bg-white flex-col justify-between shrink-0 select-none overflow-y-auto shadow-xs transition-all duration-200 ease-in-out ${
+        isCollapsed ? 'w-16' : 'w-56'
+      }`}
+    >
       <div className="flex flex-col">
-        {/* Brand Header */}
-        <div className="h-14 px-4 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white z-10">
-          <Link href="/dashboard" className="flex items-center gap-2 group">
-            <span className="font-bold text-sm text-zinc-900 tracking-tight">
-              ShopMate
-            </span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 font-medium">
-              AI
-            </span>
-          </Link>
+        {/* Brand Header with 3-bar Toggle */}
+        <div className={`h-14 border-b border-zinc-100 flex items-center sticky top-0 bg-white z-10 transition-all ${
+          isCollapsed ? 'px-2 justify-center' : 'px-4 justify-between'
+        }`}>
+          {!isCollapsed && (
+            <Link href="/dashboard" className="flex items-center gap-2 group truncate">
+              <span className="font-bold text-sm text-zinc-900 tracking-tight">
+                ShopMate
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 font-medium">
+                AI
+              </span>
+            </Link>
+          )}
+
+          {/* 3-Bar (Hamburger) Button to Open/Close Sidebar */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={isCollapsed ? "Open sidebar" : "Close sidebar"}
+            className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 border border-transparent hover:border-zinc-200 transition cursor-pointer flex items-center justify-center shrink-0"
+            title={isCollapsed ? "Open sidebar (3-bar)" : "Close sidebar (3-bar)"}
+          >
+            <Menu className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Navigation Links */}
@@ -140,7 +187,9 @@ export default function Sidebar() {
                 prefetch={true}
                 onMouseEnter={handleHover}
                 title={item.name}
-                className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
+                className={`flex items-center rounded-xl text-xs font-medium transition-all duration-150 group relative ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2'
+                } ${
                   active
                     ? 'bg-zinc-100 text-zinc-950 font-semibold shadow-xs'
                     : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-50'
@@ -148,10 +197,12 @@ export default function Sidebar() {
               >
                 <Icon 
                   className={`w-4 h-4 shrink-0 transition-colors ${
-                    active ? 'text-zinc-950 stroke-[2.2]' : 'text-zinc-500'
+                    active ? 'text-zinc-950 stroke-[2.2]' : 'text-zinc-500 group-hover:text-zinc-900'
                   }`} 
                 />
-                <span className="hidden lg:inline tracking-tight truncate">{item.name}</span>
+                {!isCollapsed && (
+                  <span className="tracking-tight truncate">{item.name}</span>
+                )}
               </Link>
             );
           })}
@@ -159,14 +210,20 @@ export default function Sidebar() {
       </div>
 
       {/* Bottom Footer Actions */}
-      <div className="p-2.5 border-t border-zinc-100 sticky bottom-0 bg-white space-y-1">
+      <div className={`p-2.5 border-t border-zinc-100 sticky bottom-0 bg-white space-y-1 ${
+        isCollapsed ? 'flex justify-center' : ''
+      }`}>
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-600 hover:text-zinc-950 hover:bg-zinc-50 transition"
+          className={`flex items-center rounded-xl text-xs font-medium text-zinc-600 hover:text-zinc-950 hover:bg-zinc-50 transition group ${
+            isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2'
+          }`}
           title="Settings"
         >
-          <Settings className="w-4 h-4 text-zinc-500 shrink-0" />
-          <span className="hidden lg:inline text-xs">Settings</span>
+          <Settings className="w-4 h-4 text-zinc-500 group-hover:text-zinc-900 shrink-0" />
+          {!isCollapsed && (
+            <span className="text-xs">Settings</span>
+          )}
         </Link>
       </div>
     </aside>
