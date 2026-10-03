@@ -5,6 +5,7 @@
 
 # testing
 /coverage
+.pytest_cache/
 
 # next.js
 /.next/
