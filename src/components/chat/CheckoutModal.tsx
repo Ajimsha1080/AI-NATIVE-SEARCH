@@ -134,10 +134,11 @@ export default function CheckoutModal({
 
         const rzpOrder = orderData.order;
         const keyId = orderData.key_id;
+        const paymentUrl = orderData.payment_url || 'https://razorpay.me/@ajimshamuhammad2112';
 
-        // Check if real Razorpay Checkout is available
+        // Check if real Razorpay SDK is available and has live keys
         const Razorpay = (window as any).Razorpay;
-        if (Razorpay && !orderData.is_sandbox && !keyId.includes('test_shopmate')) {
+        if (Razorpay && !orderData.is_sandbox && keyId && !keyId.includes('test_shopmate')) {
           const options = {
             key: keyId,
             amount: rzpOrder.amount,
@@ -173,11 +174,17 @@ export default function CheckoutModal({
           return;
         }
 
-        // Show High-Fidelity Agentic Razorpay Payment Modal (UPI QR + Instant verification)
+        // Automatically open the real official Razorpay payment page
+        if (typeof window !== 'undefined') {
+          window.open(paymentUrl, '_blank');
+        }
+
+        // Show Official Razorpay Active Payment Screen
         setRazorpayModalData({
           orderId: rzpOrder.id,
           keyId: keyId,
           amount: totalAmount,
+          paymentLink: paymentUrl,
           isMock: orderData.is_sandbox
         });
         setIsSubmitting(false);
@@ -339,31 +346,29 @@ export default function CheckoutModal({
             </div>
           )}
 
-          {/* RAZORPAY LIVE / AGENTIC PAYMENT MODAL POPUP */}
+          {/* OFFICIAL RAZORPAY PAYMENT SCREEN */}
           {razorpayModalData && (
             <div className="space-y-4 text-center py-2 animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-center gap-2 mb-1">
-                <div className="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                <div className="w-8 h-8 rounded-lg bg-[#0c2340] text-[#528ff0] flex items-center justify-center font-bold text-sm shadow-xs border border-sky-900">
                   R
                 </div>
                 <div className="text-left">
-                  <h4 className="text-sm font-bold text-zinc-900">Razorpay Agentic Pay</h4>
-                  <p className="text-[10px] text-zinc-500 font-mono">Order ID: {razorpayModalData.orderId}</p>
+                  <h4 className="text-sm font-bold text-zinc-900">Official Razorpay Gateway</h4>
+                  <p className="text-[10px] text-zinc-500 font-mono">Merchant: @ajimshamuhammad2112</p>
                 </div>
               </div>
 
-              <div className="bg-sky-50/70 border border-sky-200 rounded-2xl p-4 text-center space-y-3">
-                <div className="inline-block p-3 bg-white rounded-2xl border border-sky-100 shadow-xs">
-                  {/* Generated Dynamic SVG QR Code */}
-                  <div className="w-36 h-36 mx-auto bg-white flex flex-col items-center justify-center relative border border-zinc-100 rounded-xl overflow-hidden p-2">
-                    <QrCode className="w-28 h-28 text-sky-900" />
-                    <span className="text-[9px] font-mono text-sky-700 font-bold mt-1">UPI QR • ₹{totalAmount.toLocaleString('en-IN')}</span>
-                  </div>
+              <div className="bg-sky-50/80 border border-sky-200 rounded-2xl p-4 text-center space-y-3">
+                <div className="w-12 h-12 mx-auto rounded-full bg-sky-100 text-sky-700 flex items-center justify-center">
+                  <ExternalLink className="w-6 h-6" />
                 </div>
 
                 <div>
-                  <p className="text-xs font-bold text-zinc-900">Scan to Pay with any UPI App</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">Google Pay • PhonePe • Paytm • BHIM • Cred</p>
+                  <p className="text-xs font-bold text-zinc-900">Official Razorpay Payment Tab Opened</p>
+                  <p className="text-[11px] text-zinc-600 mt-1">
+                    Complete your payment of <strong className="text-zinc-900 font-mono">₹{totalAmount.toLocaleString('en-IN')}</strong> securely on Razorpay via UPI, GPay, PhonePe, Cards, or NetBanking.
+                  </p>
                 </div>
 
                 <div className="border-t border-sky-200/60 pt-2 flex items-center justify-between text-xs px-2">
@@ -374,13 +379,13 @@ export default function CheckoutModal({
 
               <div className="space-y-2 pt-1">
                 <a
-                  href="https://razorpay.me/@ajimshamuhammad2112"
+                  href={razorpayModalData.paymentLink || "https://razorpay.me/@ajimshamuhammad2112"}
                   target="_blank"
                   rel="noreferrer"
                   className="w-full py-2.5 rounded-xl bg-white border border-sky-300 text-sky-700 hover:bg-sky-50 text-xs font-semibold shadow-2xs flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Open Official Razorpay Link (@ajimshamuhammad2112)</span>
+                  <span>Re-open Official Razorpay Link (@ajimshamuhammad2112)</span>
                 </a>
 
                 <button
@@ -396,12 +401,12 @@ export default function CheckoutModal({
                   {isSubmitting ? (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Verifying Razorpay Signature...</span>
+                      <span>Verifying Payment...</span>
                     </>
                   ) : (
                     <>
                       <ShieldCheck className="w-4 h-4" />
-                      <span>Confirm &amp; Place Verified Order</span>
+                      <span>I've Paid — Confirm &amp; Place Order</span>
                     </>
                   )}
                 </button>
