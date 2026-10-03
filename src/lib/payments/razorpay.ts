@@ -64,7 +64,7 @@ export class RazorpayPaymentService {
   private merchantRazorpayMe: string = 'https://razorpay.me/@ajimshamuhammad2112';
 
   constructor() {
-    this.keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_shopmate_agentic';
+    this.keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag';
     this.keySecret = process.env.RAZORPAY_KEY_SECRET || 'rzp_secret_shopmate_agentic_key';
     this.isTestMode = !process.env.RAZORPAY_KEY_ID || this.keyId.startsWith('rzp_test');
     this.merchantRazorpayMe = process.env.RAZORPAY_ME_URL || 'https://razorpay.me/@ajimshamuhammad2112';
