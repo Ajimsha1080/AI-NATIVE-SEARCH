@@ -10,7 +10,8 @@ import {
   BookOpen, 
   Search, 
   Code2, 
-  Settings
+  Settings,
+  Sparkles
 } from 'lucide-react';
 
 export default function AIModeLayout({ children }: { children: React.ReactNode }) {
@@ -31,13 +32,25 @@ export default function AIModeLayout({ children }: { children: React.ReactNode }
         <Navbar />
 
         {/* AI Mode Sub-Header & Navigation */}
-        <div className="bg-white border-b border-zinc-200/80 px-6 py-3 shrink-0 flex items-center justify-between">
-          <div>
-            <h1 className="text-sm font-bold text-zinc-900 tracking-tight">AI Mode</h1>
-            <p className="text-[11px] text-zinc-500">Autonomous conversational product discovery &amp; recommendation layer</p>
+        <div className="bg-white/95 backdrop-blur-md border-b border-zinc-200/80 px-6 py-2.5 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200/50 flex items-center justify-center text-indigo-600 shadow-2xs">
+              <Sparkles className="w-4 h-4 text-indigo-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xs font-bold text-zinc-900 tracking-tight">AI Mode</h1>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Engine
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500">Autonomous conversational product discovery &amp; recommendation layer</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1 bg-zinc-100/80 p-1 rounded-xl border border-zinc-200/60">
+          {/* Premium Segmented Navigation Tabs */}
+          <nav className="flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl border border-zinc-200/70 shadow-2xs self-start sm:self-auto">
             {tabs.map(tab => {
               const Icon = tab.icon;
               const isActive = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
@@ -45,18 +58,18 @@ export default function AIModeLayout({ children }: { children: React.ReactNode }
                 <Link
                   key={tab.name}
                   href={tab.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer select-none ${
                     isActive
-                      ? 'bg-white text-zinc-900 font-semibold shadow-xs border border-zinc-200/60'
-                      : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/50'
+                      ? 'bg-white text-zinc-900 font-semibold shadow-xs border border-zinc-200/80'
+                      : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600' : 'text-zinc-500'}`} />
+                  <Icon className={`w-3.5 h-3.5 transition-colors ${isActive ? 'text-indigo-600' : 'text-zinc-500'}`} />
                   <span>{tab.name}</span>
                 </Link>
               );
             })}
-          </div>
+          </nav>
         </div>
 
         {/* Main Content Body */}
