@@ -253,9 +253,9 @@ export default function AIModeSearchPlayground() {
                       <span className="text-xs font-black text-zinc-900">
                         ₹{product.price.toLocaleString('en-IN')}
                       </span>
-                      {product.sale_price && product.sale_price > product.price && (
+                      {Boolean(product.sale_price && product.sale_price > product.price) && (
                         <span className="text-[10px] text-zinc-400 line-through ml-1.5 font-mono">
-                          ₹{product.sale_price.toLocaleString('en-IN')}
+                          ₹{product.sale_price?.toLocaleString('en-IN')}
                         </span>
                       )}
                     </div>

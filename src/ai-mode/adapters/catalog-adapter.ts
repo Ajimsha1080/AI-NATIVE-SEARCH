@@ -18,7 +18,7 @@ export class AIModeCatalogAdapter {
       handle: p.id,
       description: p.description || '',
       price: p.price,
-      sale_price: p.compare_at_price,
+      sale_price: typeof p.compare_at_price === 'number' && p.compare_at_price > 0 ? p.compare_at_price : undefined,
       currency: p.currency || 'INR',
       category: p.category || 'General',
       subcategories: p.tags || [],
