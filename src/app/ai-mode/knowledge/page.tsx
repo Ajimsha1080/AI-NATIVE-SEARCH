@@ -62,32 +62,51 @@ export default function AIModeKnowledgePage() {
     loadSources();
   }, []);
 
+  function extractDomainKey(nameOrUrl: string): string {
+    if (!nameOrUrl) return '';
+    let str = nameOrUrl.toLowerCase().trim();
+    str = str.replace(/https?:\/\//g, '').replace(/^(www\.)/g, '');
+    str = str.replace(/\s*\(store pages & policies\)/gi, '').replace(/\s*\(store pages\)/gi, '').replace(/\s*\(store\)/gi, '');
+    str = str.split('/')[0].split('?')[0].trim();
+    return str;
+  }
+
   async function loadSources() {
     setLoading(true);
     try {
-      // Fetch from both AI Mode and core Knowledge endpoints to aggregate all store knowledge
       const [aiRes, coreRes] = await Promise.allSettled([
         fetch('/api/ai-mode/knowledge'),
         fetch('/api/knowledge')
       ]);
 
-      const merged: any[] = [];
-      const seenTitles = new Set<string>();
+      const mergedMap = new Map<string, any>();
 
+      // 1. Primary AI Mode native sources
       if (aiRes.status === 'fulfilled' && aiRes.value.ok) {
         const aiData = await aiRes.value.json();
         (aiData.sources || []).forEach((s: any) => {
-          merged.push(s);
-          if (s.name) seenTitles.add(s.name.toLowerCase().trim());
+          const key = extractDomainKey(s.source_url || s.name) || s.id;
+          mergedMap.set(key, s);
         });
       }
 
+      // 2. Core knowledge documents (merge or add only if not already represented)
       if (coreRes.status === 'fulfilled' && coreRes.value.ok) {
         const coreData = await coreRes.value.json();
         const coreDocs = coreData.documents || coreData.sources || [];
         coreDocs.forEach((d: any) => {
-          if (!seenTitles.has(d.name?.toLowerCase().trim())) {
-            merged.push({
+          const key = extractDomainKey(d.metadata?.url || d.source_url || d.name) || d.id;
+          if (mergedMap.has(key)) {
+            // Enhance existing AI Mode record with raw content if richer
+            const existing = mergedMap.get(key);
+            if (!existing.raw_content && (d.raw_content || d.content)) {
+              existing.raw_content = d.raw_content || d.content;
+            }
+            if (!existing.source_url && (d.source_url || d.metadata?.url)) {
+              existing.source_url = d.source_url || d.metadata?.url;
+            }
+          } else {
+            mergedMap.set(key, {
               id: d.id,
               name: d.name,
               type: d.type === 'URL' ? 'WEBSITE' : (d.type === 'FAQ' || d.type === 'QA') ? 'FAQ' : 'DOCUMENT',
@@ -103,7 +122,7 @@ export default function AIModeKnowledgePage() {
         });
       }
 
-      setSources(merged);
+      setSources(Array.from(mergedMap.values()));
     } catch (e) {
       console.error(e);
     } finally {
