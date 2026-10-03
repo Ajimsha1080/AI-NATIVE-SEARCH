@@ -22,9 +22,24 @@ export class ConstraintEvaluator {
     // -------------------------------------------------------------
     if (plan.exclusions && plan.exclusions.length > 0) {
       const allText = `${product.title} ${product.description || ''} ${product.category || ''} ${(product.subcategories || []).join(' ')} ${JSON.stringify(product.attributes || {})}`.toLowerCase();
+      
+      const colorSynonyms: Record<string, string[]> = {
+        red: ['red', 'maroon', 'wine', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'scarlet'],
+        blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sapphire'],
+        green: ['green', 'emerald', 'olive', 'mint', 'sage', 'forest'],
+        black: ['black', 'charcoal', 'jet', 'onyx'],
+        white: ['white', 'off-white', 'ivory', 'cream'],
+        yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon'],
+        brown: ['brown', 'coffee', 'tan', 'mocha', 'chocolate'],
+        purple: ['purple', 'violet', 'lavender', 'magenta', 'lilac', 'plum'],
+        pink: ['pink', 'rose', 'blush', 'coral', 'fuchsia'],
+        orange: ['orange', 'tangerine', 'peach', 'terracotta']
+      };
+
       for (const exclusion of plan.exclusions) {
         const exclLower = exclusion.toLowerCase().trim();
-        const exclRegex = new RegExp(`\\b${escapeRegex(exclLower)}\\b`, 'i');
+        const family = colorSynonyms[exclLower] || [exclLower];
+        const exclRegex = new RegExp(`\\b(${family.map(escapeRegex).join('|')})\\b`, 'i');
         if (exclRegex.test(allText)) {
           return {
             isValid: false,
