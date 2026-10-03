@@ -30,41 +30,154 @@ async function callSarvamLLM(
   contextText: string,
   history: { role: string; content: string }[] = []
 ): Promise<string | null> {
-  const apiKey = process.env.SARVAM_API_KEY;
-  if (!apiKey) return null;
+  const provider = (process.env.LLM_PROVIDER || '').toLowerCase();
+  const sarvamKey = process.env.SARVAM_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const ollamaUrl = process.env.OLLAMA_BASE_URL;
 
-  try {
-    const messages = [
-      {
-        role: 'system',
-        content: `${systemPrompt}\n\nRelevant Store Knowledge Context:\n${contextText || 'No specific knowledge document matched.'}`
-      },
-      ...history.slice(-4),
-      { role: 'user', content: userMessage }
-    ];
+  const messages = [
+    {
+      role: 'system',
+      content: `${systemPrompt}\n\nRelevant Store Knowledge Context:\n${contextText || 'No specific knowledge document matched.'}`
+    },
+    ...history.slice(-4),
+    { role: 'user', content: userMessage }
+  ];
 
-    const res = await fetch('https://api.sarvam.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-subscription-key': apiKey
-      },
-      body: JSON.stringify({
-        model: process.env.SARVAM_MODEL || 'sarvam-105b-conversations',
-        messages: messages,
-        temperature: 0.3
-      }),
-      signal: AbortSignal.timeout(3500)
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const answer = data.choices?.[0]?.message?.content;
-      if (answer) return answer;
+  // 1. Try Sarvam AI if configured
+  if ((provider === 'sarvam' || !provider || sarvamKey) && sarvamKey) {
+    try {
+      const res = await fetch('https://api.sarvam.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-subscription-key': sarvamKey
+        },
+        body: JSON.stringify({
+          model: process.env.SARVAM_MODEL || 'sarvam-105b-conversations',
+          messages: messages,
+          temperature: 0.3
+        }),
+        signal: AbortSignal.timeout(3500)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const answer = data.choices?.[0]?.message?.content;
+        if (answer) return answer;
+      }
+    } catch (e) {
+      console.warn('Sarvam AI call error:', e);
     }
-  } catch (e) {
-    console.error('Sarvam AI direct call error:', e);
   }
+
+  // 2. Try OpenAI
+  if ((provider === 'openai' || openaiKey) && openaiKey) {
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiKey}`
+        },
+        body: JSON.stringify({
+          model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+          messages: messages,
+          temperature: 0.3
+        }),
+        signal: AbortSignal.timeout(3500)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const answer = data.choices?.[0]?.message?.content;
+        if (answer) return answer;
+      }
+    } catch (e) {
+      console.warn('OpenAI call error:', e);
+    }
+  }
+
+  // 3. Try Groq
+  if ((provider === 'groq' || groqKey) && groqKey) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqKey}`
+        },
+        body: JSON.stringify({
+          model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+          messages: messages,
+          temperature: 0.3
+        }),
+        signal: AbortSignal.timeout(3500)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const answer = data.choices?.[0]?.message?.content;
+        if (answer) return answer;
+      }
+    } catch (e) {
+      console.warn('Groq call error:', e);
+    }
+  }
+
+  // 4. Try Anthropic
+  if ((provider === 'anthropic' || anthropicKey) && anthropicKey) {
+    try {
+      const systemContent = messages.find(m => m.role === 'system')?.content || '';
+      const userAndAssistant = messages.filter(m => m.role !== 'system');
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: process.env.ANTHROPIC_MODEL || 'claude-3-5-haiku-20241022',
+          system: systemContent,
+          messages: userAndAssistant,
+          max_tokens: 400
+        }),
+        signal: AbortSignal.timeout(3500)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const answer = data.content?.[0]?.text;
+        if (answer) return answer;
+      }
+    } catch (e) {
+      console.warn('Anthropic call error:', e);
+    }
+  }
+
+  // 5. Try Ollama Local
+  if (provider === 'ollama' || ollamaUrl) {
+    try {
+      const baseUrl = ollamaUrl || 'http://localhost:11434';
+      const res = await fetch(`${baseUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: process.env.OLLAMA_MODEL || 'llama3.2',
+          messages: messages,
+          stream: false
+        }),
+        signal: AbortSignal.timeout(3500)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const answer = data.message?.content;
+        if (answer) return answer;
+      }
+    } catch (e) {
+      console.warn('Ollama call error:', e);
+    }
+  }
+
   return null;
 }
 
@@ -412,12 +525,16 @@ export async function runAgentCycle(params: AgentRunParams): Promise<AgentRunRes
     }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
 
     if (scoredChunks.length > 0) {
-      return scoredChunks.slice(0, 2).map(s => s.chunk.content.replace(/^=+|=+$/gm, '').trim()).join('\n\n');
+      const text = scoredChunks[0].chunk.content.replace(/^=+|=+$/gm, '').trim();
+      const firstLines = text.split('\n').filter((l: string) => l.trim().length > 10).slice(0, 3).join(' ');
+      return firstLines || text.slice(0, 250);
     }
     if (citations.length > 0) {
-      return citations[0].chunk_text.replace(/^=+|=+$/gm, '').trim();
+      const text = citations[0].chunk_text.replace(/^=+|=+$/gm, '').trim();
+      const firstLines = text.split('\n').filter((l: string) => l.trim().length > 10).slice(0, 3).join(' ');
+      return firstLines || text.slice(0, 250);
     }
-    return `Welcome to **${brand}**! Feel free to ask about our store products, sizing, order tracking, shipping, and exchange policies.`;
+    return `At **${brand}**, all orders include doorstep delivery, secure checkout, and easy returns & exchanges. How can I help you find the right item today?`;
   };
 
   // Phase D: Execution of Authoritative Tools
