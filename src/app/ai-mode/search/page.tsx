@@ -211,12 +211,12 @@ export default function AIModeSearchPlayground() {
               {result.products.map((product, idx) => (
                 <div key={product.id || idx} className="bg-white rounded-2xl border border-zinc-200/80 p-3.5 shadow-2xs space-y-3 flex flex-col justify-between hover:border-zinc-300 transition group">
                   <div className="space-y-2.5">
-                    <div className="h-48 rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100">
+                    <div className="aspect-[3/4] w-full rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100">
                       {product.images?.[0] ? (
                         <img 
                           src={product.images[0]} 
                           alt={product.title} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
+                          className="w-full h-full object-cover object-top group-hover:scale-105 transition duration-300" 
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-zinc-400">

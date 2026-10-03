@@ -157,9 +157,9 @@ export default function AIModeEmbedWidget() {
             {products.map((p, idx) => (
               <div key={p.id || idx} className="bg-white rounded-2xl border border-zinc-200/80 p-2.5 shadow-2xs space-y-2 flex flex-col justify-between hover:border-zinc-300 transition">
                 <div className="space-y-1.5">
-                  <div className="h-28 rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100">
+                  <div className="aspect-[3/4] w-full rounded-xl bg-zinc-100 overflow-hidden relative border border-zinc-100">
                     {p.images?.[0] ? (
-                      <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover" />
+                      <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover object-top" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-zinc-400">
                         <ShoppingBag className="w-6 h-6" />
