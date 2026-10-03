@@ -159,11 +159,11 @@ async function runTests() {
     // Variant 2: Color = Blue, Size = S
     const testMultiVariantProduct: AIModeProduct = {
       id: 'prod_multi_var_01',
-      title: 'AeroFlex Performance Tee',
-      description: 'Breathable sports tee',
+      title: 'AeroFlex Performance Shirt',
+      description: 'Breathable sports shirt',
       price: 1200,
       currency: 'INR',
-      category: 'T-Shirt',
+      category: 'Shirts',
       images: [],
       in_stock: true,
       attributes: { material: 'Polyester' },
@@ -256,6 +256,82 @@ async function runTests() {
     assert(script.includes('aimode-widget-frame'), 'Script configures isolation DOM wrapper');
   } catch (err: any) {
     assert(false, `Deployment test threw error: ${err.message}`);
+  }
+
+  // -------------------------------------------------------------
+  // Test Suite 8: Arbitrary Category Generalization & Invariant Enforcement
+  // -------------------------------------------------------------
+  console.log('\n🎯 Test Suite 8: Arbitrary Natural Language Generalization & Invariant Enforcement');
+  try {
+    // 1. "red men shirt products" -> Invariant: Must only return men's shirts in red/wine color family
+    const planRedMen = AIModeSearchService.parseQuery('red men shirt products', undefined, testWorkspaceId);
+    const resRedMen = await AIModeSearchService.search(planRedMen, testWorkspaceId);
+    assert(resRedMen.total_matches > 0, `Retrieved ${resRedMen.total_matches} matching products for "red men shirt products"`);
+    const allRedMenShirts = resRedMen.products.every(p => {
+      const titleLower = p.title.toLowerCase();
+      const catLower = (p.category || '').toLowerCase();
+      const tagsLower = (p.subcategories || p.tags || []).map(t => t.toLowerCase());
+      const isShirt = catLower.includes('shirt') || titleLower.includes('shirt');
+      const isMen = tagsLower.includes('men') || titleLower.includes('men') || !tagsLower.includes('women');
+      const isRedOrWine = tagsLower.includes('red') || tagsLower.includes('wine') || tagsLower.includes('maroon') || titleLower.includes('wine') || titleLower.includes('red');
+      return isShirt && isMen && isRedOrWine;
+    });
+    assert(allRedMenShirts, 'INVARIANT: All returned products for "red men shirt products" are strictly men shirts in red family (0% green/navy/yellow/jacket leak)');
+
+    // 2. "green cotton shirt under 1500" -> Invariant: All returned products must be green shirts <= 1500
+    const planGreen = AIModeSearchService.parseQuery('green cotton shirt under 1500', undefined, testWorkspaceId);
+    const resGreen = await AIModeSearchService.search(planGreen, testWorkspaceId);
+    assert(resGreen.total_matches > 0, `Retrieved ${resGreen.total_matches} matching products for "green cotton shirt under 1500"`);
+    const allGreenUnder1500 = resGreen.products.every(p => {
+      const titleLower = p.title.toLowerCase();
+      const tagsLower = (p.subcategories || p.tags || []).map(t => t.toLowerCase());
+      const isGreen = tagsLower.includes('green') || tagsLower.includes('evergreen') || tagsLower.includes('sage') || titleLower.includes('green') || titleLower.includes('evergreen');
+      return p.price <= 1500 && isGreen;
+    });
+    assert(allGreenUnder1500, 'INVARIANT: All returned products for "green cotton shirt under 1500" are strictly green shirts <= 1500');
+
+    // 3. "not red shirts" -> Invariant: Zero returned products contain red/wine/maroon colors
+    const planNotRed = AIModeSearchService.parseQuery('not red shirts', undefined, testWorkspaceId);
+    const resNotRed = await AIModeSearchService.search(planNotRed, testWorkspaceId);
+    assert(resNotRed.total_matches > 0, `Retrieved ${resNotRed.total_matches} matching products for "not red shirts"`);
+    const zeroRed = resNotRed.products.every(p => {
+      const tags = (p.subcategories || p.tags || []).map(t => t.toLowerCase());
+      const title = p.title.toLowerCase();
+      return !tags.includes('red') && !tags.includes('wine') && !tags.includes('maroon') && !title.includes('wine') && !title.includes('red');
+    });
+    assert(zeroRed, 'INVARIANT: Negative constraint "not red shirts" completely filtered out all red/wine products');
+
+    // 4. "yellow saree" -> Invariant: Category must be Saree and color yellow
+    const planSaree = AIModeSearchService.parseQuery('yellow saree', undefined, testWorkspaceId);
+    const resSaree = await AIModeSearchService.search(planSaree, testWorkspaceId);
+    assert(resSaree.total_matches > 0, `Retrieved ${resSaree.total_matches} matching saree(s)`);
+    const allYellowSarees = resSaree.products.every(p => p.category.toLowerCase().includes('saree') || p.title.toLowerCase().includes('saree'));
+    assert(allYellowSarees, 'INVARIANT: "yellow saree" returned only sarees (zero shirts or jackets)');
+
+    // 5. Synthetic arbitrary ecommerce items (e.g. dynamic backpacks and electronics)
+    const syntheticBackpack: AIModeProduct = {
+      id: 'prod_bp_01',
+      title: 'Voyager Waterproof Hiking Backpack 45L',
+      description: 'Durable nylon outdoor camping backpack with laptop sleeve',
+      price: 2499,
+      currency: 'INR',
+      category: 'Backpacks',
+      images: [],
+      in_stock: true,
+      attributes: { capacity: '45L', material: 'Nylon', color: 'Blue' },
+      variants: [
+        { id: 'var_bp_1', title: 'Blue / 45L', price: 2499, in_stock: true, attributes: { color: 'Blue', size: '45L' } }
+      ]
+    };
+    const backpackPlan = AIModeSearchService.parseQuery('blue waterproof backpack under 3000');
+    const evalBackpack = ConstraintEvaluator.evaluateProduct(syntheticBackpack, backpackPlan);
+    assert(evalBackpack.isValid === true, 'Generalization: Successfully evaluated arbitrary non-apparel category ("Backpacks")');
+
+    const incompatibleBackpackPlan = AIModeSearchService.parseQuery('red backpack under 2000');
+    const evalIncompat = ConstraintEvaluator.evaluateProduct(syntheticBackpack, incompatibleBackpackPlan);
+    assert(evalIncompat.isValid === false, 'Generalization: Rejected incompatible non-apparel candidate (price & color mismatch)');
+  } catch (err: any) {
+    assert(false, `Generalization test threw error: ${err.message}`);
   }
 
   // -------------------------------------------------------------

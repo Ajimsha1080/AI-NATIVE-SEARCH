@@ -8,7 +8,8 @@ const GENERAL_STOP_WORDS = new Set([
   'available', 'good', 'best', 'top', 'any', 'have', 'you', 'can', 'is', 'are',
   'rupee', 'rupees', 'rs', 'inr', 'buck', 'bucks', 'price', 'cost', 'budget',
   'around', 'approx', 'rate', 'rates', 'worth', 'value', 'under', 'below', 'above',
-  'which', 'that', 'this', 'ones', 'only', 'from', 'between', 'upto', 'less', 'more', 'than'
+  'which', 'that', 'this', 'ones', 'only', 'from', 'between', 'upto', 'less', 'more', 'than',
+  'something', 'like'
 ]);
 
 const SOFT_PREFERENCE_VOCABULARY = new Set([
@@ -17,7 +18,7 @@ const SOFT_PREFERENCE_VOCABULARY = new Set([
   'daily wear', 'summer', 'winter', 'autumn', 'spring', 'monsoon', 'vacation', 'holiday',
   'trip', 'travel', 'comfortable', 'comfort', 'luxury', 'premium', 'minimalist', 'bold',
   'trendy', 'popular', 'latest', 'lightweight', 'breathable', 'durable', 'cozy', 'warm',
-  'breathable', 'active', 'gym', 'workout', 'fitness', 'sporty', 'night', 'dinner', 'date'
+  'active', 'gym', 'workout', 'fitness', 'sporty', 'night', 'dinner', 'date'
 ]);
 
 const DEMOGRAPHIC_ALIASES: Record<string, string> = {
@@ -57,6 +58,13 @@ const DEMOGRAPHIC_ALIASES: Record<string, string> = {
   'couple': 'unisex',
   'couples': 'unisex'
 };
+
+const KNOWN_COLORS = [
+  'black', 'white', 'red', 'green', 'yellow', 'blue', 'brown', 'grey', 'gray',
+  'pink', 'purple', 'emerald', 'maroon', 'beige', 'navy', 'orange', 'gold',
+  'silver', 'olive', 'cream', 'burgundy', 'crimson', 'teal', 'violet', 'indigo',
+  'khaki', 'rust', 'coral', 'charcoal', 'tan', 'mocha', 'cyan', 'magenta', 'azure'
+];
 
 export class QueryUnderstandingEngine {
   /**
@@ -105,7 +113,7 @@ export class QueryUnderstandingEngine {
     // -------------------------------------------------------------
     // 2. Negative Constraints & Exclusions ("not leather", "without sleeves", "exclude red")
     // -------------------------------------------------------------
-    const exclusionRegex = /\b(?:not|without|no|exclude|except|non-?)\s+([a-z0-9\-_]+(?:\s+[a-z0-9\-_]+)?)\b/gi;
+    const exclusionRegex = /\b(?:not|without|no|exclude|except|non-?)\s+([a-z0-9\-_]+)\b/gi;
     let exclMatch;
     while ((exclMatch = exclusionRegex.exec(queryLower)) !== null) {
       const term = exclMatch[1].trim();
@@ -202,7 +210,7 @@ export class QueryUnderstandingEngine {
     // 5. Gender / Demographic Audience Constraint
     // -------------------------------------------------------------
     for (const [alias, normalizedGender] of Object.entries(DEMOGRAPHIC_ALIASES)) {
-      const aliasRegex = new RegExp(`\\b${alias}\\b`, 'i');
+      const aliasRegex = new RegExp(`(^|[^a-zA-Z0-9])${escapeRegex(alias)}([^a-zA-Z0-9]|$)`, 'i');
       if (aliasRegex.test(queryLower) && !exclusions.includes(alias)) {
         extractedGender = normalizedGender;
         hardConstraints.push({
@@ -219,13 +227,33 @@ export class QueryUnderstandingEngine {
     }
 
     // -------------------------------------------------------------
-    // 6. Dynamic Catalog Attributes & Brand Introspection
+    // 6. Color Extraction (Strict Word-Boundary Token Matching)
+    // -------------------------------------------------------------
+    for (const color of KNOWN_COLORS) {
+      const colorRegex = new RegExp(`(^|[^a-zA-Z0-9])${escapeRegex(color)}([^a-zA-Z0-9]|$)`, 'i');
+      if (colorRegex.test(queryLower) && !exclusions.includes(color)) {
+        extractedColor = color;
+        hardConstraints.push({
+          field: 'color',
+          operator: '=',
+          value: color,
+          is_hard: true,
+          is_variant_level: true,
+          confidence: 0.96,
+          raw_token: color
+        });
+        break;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 7. Dynamic Catalog Category & Product Type Introspection
     // -------------------------------------------------------------
     if (schema) {
       // Check Brand
       for (const brand of schema.brands) {
         const brandNorm = brand.toLowerCase().trim();
-        const brandRegex = new RegExp(`\\b${escapeRegex(brandNorm)}\\b`, 'i');
+        const brandRegex = new RegExp(`(^|[^a-zA-Z0-9])${escapeRegex(brandNorm)}([^a-zA-Z0-9]|$)`, 'i');
         if (brandRegex.test(queryLower) && !exclusions.includes(brandNorm)) {
           extractedBrand = brand;
           hardConstraints.push({
@@ -241,57 +269,37 @@ export class QueryUnderstandingEngine {
         }
       }
 
-      // Check Categories & Product Types
+      // Check Categories with Stemming (Bidirectional plural/singular matching)
       for (const cat of schema.categories) {
         const catNorm = cat.toLowerCase().trim();
-        const catRegex = new RegExp(`\\b${escapeRegex(catNorm)}s?\\b`, 'i');
+        const catStem = stemWord(catNorm);
+        
+        const catRegex = new RegExp(`(^|[^a-zA-Z0-9])(?:${escapeRegex(catNorm)}|${escapeRegex(catStem)})(?:s|es)?([^a-zA-Z0-9]|$)`, 'i');
         if (catRegex.test(queryLower) && !exclusions.includes(catNorm)) {
           extractedCategory = cat;
-          productConcepts.push(cat);
+          productConcepts.push(catStem);
           hardConstraints.push({
             field: 'category',
             operator: '=',
             value: cat,
             is_hard: true,
             is_variant_level: false,
-            confidence: 0.92,
+            confidence: 0.94,
             raw_token: cat
           });
           break;
         }
       }
 
-      // Check Variant Attribute Values (e.g. Color, Size, Material, Custom Dimensions)
+      // Check Custom Variant Attributes (e.g. Material, Dimensions, Specs)
       for (const [attrKey, attrValueSet] of schema.attributeValues.entries()) {
         for (const attrVal of attrValueSet) {
           const valNorm = attrVal.toLowerCase().trim();
           if (valNorm.length < 2 || GENERAL_STOP_WORDS.has(valNorm) || exclusions.includes(valNorm)) continue;
           
-          const valRegex = new RegExp(`\\b${escapeRegex(valNorm)}\\b`, 'i');
+          const valRegex = new RegExp(`(^|[^a-zA-Z0-9])${escapeRegex(valNorm)}([^a-zA-Z0-9]|$)`, 'i');
           if (valRegex.test(queryLower)) {
-            if (attrKey.includes('color') || isColorToken(valNorm)) {
-              extractedColor = attrVal;
-              hardConstraints.push({
-                field: 'color',
-                operator: '=',
-                value: attrVal,
-                is_hard: true,
-                is_variant_level: true,
-                confidence: 0.95,
-                raw_token: attrVal
-              });
-            } else if (attrKey.includes('size') || isSizeToken(valNorm)) {
-              extractedSize = attrVal;
-              hardConstraints.push({
-                field: 'size',
-                operator: '=',
-                value: attrVal,
-                is_hard: true,
-                is_variant_level: true,
-                confidence: 0.95,
-                raw_token: attrVal
-              });
-            } else {
+            if (!attrKey.includes('color') && !attrKey.includes('size') && !attrKey.includes('audience') && !attrKey.includes('gender')) {
               customAttributes[attrKey] = attrVal;
               hardConstraints.push({
                 field: attrKey,
@@ -309,14 +317,35 @@ export class QueryUnderstandingEngine {
     }
 
     // -------------------------------------------------------------
-    // 7. General Attribute Match Fallbacks (when schema is sparse)
+    // 8. General Concept & Size Token Fallbacks
     // -------------------------------------------------------------
-    // Explicit / Standalone Size Regex (e.g. "size M", "size 9", "size XL", "size 32", "Red M shirt")
+    // Check general product type words (e.g. shirt, t-shirt, dress, jacket, pants, shoes, saree, kurta, backpack, bag)
+    if (!extractedCategory) {
+      const genericConceptMatch = queryLower.match(/\b(t-?shirts?|tees?|shirts?|jackets?|hoodies?|dresses?|sarees?|kurtas?|kurtis?|pants?|joggers?|shorts?|shoes?|sneakers?|boots?|sandals?|backpacks?|bags?|watches?|perfumes?|headphones?|visors?|balaclavas?)\b/i);
+      if (genericConceptMatch && !exclusions.includes(genericConceptMatch[1].toLowerCase())) {
+        const rawMatchedConcept = genericConceptMatch[1].toLowerCase();
+        const baseConcept = stemWord(rawMatchedConcept);
+        extractedCategory = baseConcept;
+        extractedProductType = baseConcept;
+        productConcepts.push(baseConcept);
+        hardConstraints.push({
+          field: 'category',
+          operator: '=',
+          value: baseConcept,
+          is_hard: true,
+          is_variant_level: false,
+          confidence: 0.90,
+          raw_token: genericConceptMatch[0]
+        });
+      }
+    }
+
+    // Explicit Size Regex (e.g. "size M", "size 9", "size XL", "size 32", "3XL", "2XL", "M", "L", "S")
     if (!extractedSize) {
       const explicitSizeMatch = queryLower.match(/\bsize\s*([0-9a-z\-_]+)\b/i) || 
-                                queryLower.match(/\b(xxxl|xxl|xl|xs|[smlx])\s+size\b/i) ||
-                                queryLower.match(/\b(xxxl|xxl|xl|xs|[smlx])\b/i);
-      if (explicitSizeMatch && !exclusions.includes(explicitSizeMatch[1].toLowerCase())) {
+                                queryLower.match(/\b(xxxl|xxl|3xl|2xl|xl|xs|[smlx])\s+size\b/i) ||
+                                queryLower.match(/\b(xxxl|xxl|3xl|2xl|xl|xs|[smlx])\b/i);
+      if (explicitSizeMatch && !exclusions.includes(explicitSizeMatch[1].toLowerCase()) && !GENERAL_STOP_WORDS.has(explicitSizeMatch[1].toLowerCase())) {
         extractedSize = explicitSizeMatch[1].toUpperCase();
         hardConstraints.push({
           field: 'size',
@@ -330,25 +359,8 @@ export class QueryUnderstandingEngine {
       }
     }
 
-    // Explicit Color Fallback
-    if (!extractedColor) {
-      const colorMatch = queryLower.match(/\b(black|white|red|green|yellow|blue|brown|grey|gray|pink|purple|emerald|maroon|beige|navy|orange|gold|silver|olive|cream|burgundy|crimson|teal|violet|indigo)\b/i);
-      if (colorMatch && !exclusions.includes(colorMatch[1].toLowerCase())) {
-        extractedColor = colorMatch[1].toLowerCase();
-        hardConstraints.push({
-          field: 'color',
-          operator: '=',
-          value: extractedColor,
-          is_hard: true,
-          is_variant_level: true,
-          confidence: 0.95,
-          raw_token: colorMatch[0]
-        });
-      }
-    }
-
     // -------------------------------------------------------------
-    // 8. Soft Preferences & Stylistic Concepts
+    // 9. Soft Preferences & Stylistic Concepts
     // -------------------------------------------------------------
     const rawTokens = queryLower.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
     for (const token of rawTokens) {
@@ -358,7 +370,7 @@ export class QueryUnderstandingEngine {
     }
 
     // -------------------------------------------------------------
-    // 9. Semantic & Lexical Query Cleaning
+    // 10. Semantic & Lexical Query Cleaning
     // -------------------------------------------------------------
     const nonContentTokens = new Set([
       ...GENERAL_STOP_WORDS,
@@ -372,14 +384,14 @@ export class QueryUnderstandingEngine {
     const lexicalTokens = rawTokens.filter(t => !nonContentTokens.has(t) && isNaN(Number(t)));
     const lexical_query = lexicalTokens.join(' ');
     
-    // Clean semantic query (stripped of exclusion clauses and pure numeric operators)
+    // Clean semantic query (stripped of exclusion clauses)
     let semantic_query = queryClean;
     if (exclusions.length > 0) {
       semantic_query = semantic_query.replace(/\b(?:not|without|no|exclude|except|non-?)\s+[a-z0-9\-_]+/gi, '').trim();
     }
 
     // -------------------------------------------------------------
-    // 10. Sorting
+    // 11. Sorting
     // -------------------------------------------------------------
     let sorting: AIModeSearchPlan['sorting'] = 'relevance';
     if (/\b(cheap|cheaper|lowest\s+price|low\s+to\s+high|price\s+low|affordable)\b/i.test(queryLower)) {
@@ -391,10 +403,9 @@ export class QueryUnderstandingEngine {
     }
 
     // -------------------------------------------------------------
-    // 11. Conversational Refinement & State Merging
+    // 12. Conversational Refinement & State Merging
     // -------------------------------------------------------------
     if (intent === 'REFINEMENT' && previousState) {
-      // Inherit unchanged constraints from previous turn unless explicitly modified
       if (extractedMaxPrice === undefined && previousState.extracted_filters.max_price !== undefined) {
         extractedMaxPrice = previousState.extracted_filters.max_price;
       }
@@ -454,14 +465,14 @@ export class QueryUnderstandingEngine {
   }
 }
 
+function stemWord(word: string): string {
+  const w = word.toLowerCase().trim();
+  if (w.endsWith('ies') && w.length > 4) return w.slice(0, -3) + 'y';
+  if (w.endsWith('es') && w.length > 3 && !w.endsWith('ees')) return w.slice(0, -2);
+  if (w.endsWith('s') && w.length > 3 && !w.endsWith('ss')) return w.slice(0, -1);
+  return w;
+}
+
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function isColorToken(token: string): boolean {
-  return /^(black|white|red|green|yellow|blue|brown|grey|gray|pink|purple|emerald|maroon|beige|navy|orange|gold|silver|olive|cream|burgundy|crimson|teal|violet|indigo)$/i.test(token);
-}
-
-function isSizeToken(token: string): boolean {
-  return /^(xxxl|xxl|xl|xs|[smlx]|[0-9]{1,3}|[0-9]{1,2}\.[0-9])$/i.test(token);
 }

@@ -210,6 +210,8 @@ export interface CommerceProduct {
   title: string;
   description: string;
   category: string;
+  product_type?: string;
+  audience?: string;
   tags: string[];
   price: number;
   compare_at_price?: number;
