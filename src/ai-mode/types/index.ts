@@ -67,6 +67,16 @@ export interface AIModeProduct {
   score?: number;
 }
 
+export type AIModeProductActionType = 'VIEW_PRODUCT' | 'BUY_NOW' | 'ADD_TO_CART' | 'CHECKOUT';
+
+export interface AIModeProductAction {
+  type: AIModeProductActionType;
+  label: string;
+  url?: string;
+  is_enabled: boolean;
+  disabled_reason?: string;
+}
+
 export type SearchConstraintOperator = '=' | '!=' | '<' | '<=' | '>' | '>=' | 'IN' | 'NOT_IN' | 'CONTAINS' | 'BETWEEN';
 
 export interface SearchConstraint {

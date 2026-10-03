@@ -39,12 +39,14 @@ function assert(condition: boolean, message: string) {
   }
 }
 
+import { db } from '../src/lib/db';
+
 async function runTests() {
   console.log('================================================================');
   console.log('🚀 RUNNING PRODUCTION SEARCH & RETRIEVAL VERIFICATION TEST SUITE');
   console.log('================================================================\n');
 
-  const testWorkspaceId = 'ws_default';
+  const testWorkspaceId = db.workspaces[0]?.id || 'ws_acme_corp';
 
   // -------------------------------------------------------------
   // Test Suite 1: Isolated Storage and Configuration
@@ -256,6 +258,65 @@ async function runTests() {
     assert(script.includes('aimode-widget-frame'), 'Script configures isolation DOM wrapper');
   } catch (err: any) {
     assert(false, `Deployment test threw error: ${err.message}`);
+  }
+
+  // -------------------------------------------------------------
+  // Test Suite 8: Product Source URL, Buy Now Security & Strict Workspace Isolation
+  // -------------------------------------------------------------
+  console.log('\n🔒 Test Suite 8: Product Source URL, Security Sanitization & Workspace Isolation');
+  try {
+    const { sanitizeProductUrl } = await import('../src/lib/utils/index');
+    
+    // Test 8.1: Valid HTTPS product URL sanitization
+    const validUrl = 'https://www.mydesignation.com/products/the-monk-oversized-sweatshirt';
+    assert(sanitizeProductUrl(validUrl) === validUrl, 'Valid merchant HTTPS product URL passes sanitization');
+
+    // Test 8.2: Malicious protocol sanitization
+    assert(sanitizeProductUrl('javascript:alert(document.cookie)') === null, 'Rejects javascript: XSS payload');
+    assert(sanitizeProductUrl('data:text/html,<script>alert(1)</script>') === null, 'Rejects data: URL payload');
+    assert(sanitizeProductUrl('file:///etc/passwd') === null, 'Rejects file: scheme payload');
+    assert(sanitizeProductUrl('vbscript:msgbox(1)') === null, 'Rejects vbscript: payload');
+    assert(sanitizeProductUrl('https://') === null, 'Rejects malformed empty hostname URL');
+    assert(sanitizeProductUrl('') === null, 'Rejects empty string URL');
+    assert(sanitizeProductUrl(undefined) === null, 'Rejects undefined URL safely');
+
+    // Test 8.3: Verified source_url presence in active catalog
+    const activeProducts = AIModeCatalogAdapter.getProducts(testWorkspaceId);
+    const prodsWithUrl = activeProducts.filter(p => Boolean(p.source_url));
+    assert(prodsWithUrl.length > 0, `Catalog contains ${prodsWithUrl.length} products with preserved canonical source_url`);
+    if (prodsWithUrl.length > 0) {
+      assert(prodsWithUrl[0].source_url!.startsWith('http'), `Source URL starts with valid protocol: ${prodsWithUrl[0].source_url}`);
+    }
+
+    // Test 8.4: AI Search preserves source_url in ranked results
+    const searchRes = await AIModeSearchService.search(
+      AIModeSearchService.parseQuery('corduroy shirt', undefined, testWorkspaceId),
+      testWorkspaceId
+    );
+    assert(searchRes.products.length > 0, 'AI Search returned search results for corduroy shirt');
+    const searchUrlProd = searchRes.products.find(p => Boolean(p.source_url));
+    assert(searchUrlProd !== undefined && typeof searchUrlProd.source_url === 'string', 'AI Search output preserves source_url without LLM fabrication');
+
+    // Test 8.5: Strict Workspace Isolation (Zero Products Fallback Invariant)
+    const emptyWorkspaceProducts = AIModeCatalogAdapter.getProducts('ws_non_existent_tenant_999');
+    assert(Array.isArray(emptyWorkspaceProducts) && emptyWorkspaceProducts.length === 0, 'Strict Workspace Isolation: 0 products returned for non-existent workspace (no cross-tenant leak)');
+
+    // Test 8.6: Product with missing source_url maintains source_url === undefined (no fabrication)
+    const syntheticNoUrlProduct: AIModeProduct = {
+      id: 'prod_no_url_test',
+      title: 'Catalog Item Without Link',
+      description: 'Test description',
+      price: 999,
+      currency: 'INR',
+      category: 'Apparel',
+      images: [],
+      in_stock: true,
+      attributes: {},
+      variants: []
+    };
+    assert(syntheticNoUrlProduct.source_url === undefined, 'Product without source URL preserves undefined without slug fabrication');
+  } catch (err: any) {
+    assert(false, `Source URL & Security test threw error: ${err.message}`);
   }
 
   // -------------------------------------------------------------

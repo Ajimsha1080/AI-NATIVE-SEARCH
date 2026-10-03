@@ -2,7 +2,7 @@ import { AIModeKnowledgeSource } from '../types';
 import { aiModeStorage } from './storage';
 import { AIModeCrawlerAdapter } from '../adapters/crawler-adapter';
 import { db } from '@/lib/db';
-import { generateId } from '@/lib/utils';
+import { generateId, sanitizeProductUrl } from '@/lib/utils';
 
 export class AIModeKnowledgeService {
   public static getSources(workspaceId: string): AIModeKnowledgeSource[] {
@@ -61,7 +61,7 @@ export class AIModeKnowledgeService {
                 inventory_quantity: 20,
                 attributes: v.attributes || {}
               })),
-              source_url: cp.url,
+              source_url: sanitizeProductUrl(cp.url) || undefined,
               searchable_text: `${cp.title} ${cp.description} ${cp.category} ${(cp.tags || []).join(' ')}`,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
@@ -156,7 +156,7 @@ export class AIModeKnowledgeService {
                   inventory_quantity: 20,
                   attributes: v.attributes || {}
                 })),
-                source_url: cp.url,
+                source_url: sanitizeProductUrl(cp.url) || undefined,
                 searchable_text: `${cp.title} ${cp.description} ${cp.category} ${(cp.tags || []).join(' ')}`,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()

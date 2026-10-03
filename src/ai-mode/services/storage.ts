@@ -55,14 +55,22 @@ export class AIModeStorage {
   }
 
   public save(): void {
+    const dir = path.dirname(STORAGE_PATH);
     try {
-      const dir = path.dirname(STORAGE_PATH);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
       fs.writeFileSync(STORAGE_PATH, JSON.stringify(this.data, null, 2), 'utf-8');
     } catch (e) {
-      console.error('AI Mode storage save error:', e);
+      // Retry once after 50ms in case of temporary file lock on Windows
+      try {
+        const tempPath = `${STORAGE_PATH}.tmp`;
+        fs.writeFileSync(tempPath, JSON.stringify(this.data, null, 2), 'utf-8');
+        fs.copyFileSync(tempPath, STORAGE_PATH);
+        try { fs.unlinkSync(tempPath); } catch (_) {}
+      } catch (retryErr) {
+        console.warn('AI Mode storage save warning:', retryErr);
+      }
     }
   }
 

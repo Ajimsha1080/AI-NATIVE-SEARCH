@@ -3,7 +3,7 @@ import { getAuthSession, requireRole } from '@/lib/auth';
 import { ingestDocument, generateEmbedding } from '@/lib/rag';
 import { safeFetch } from '@/lib/utils/safe-fetch';
 import { db } from '@/lib/db';
-import { generateId } from '@/lib/utils';
+import { generateId, sanitizeProductUrl } from '@/lib/utils';
 import { CommerceProduct, CommerceProductVariant } from '@/types';
 
 interface ExtractedProductRaw {
@@ -419,7 +419,7 @@ export async function POST(req: Request) {
         images,
         in_stock: raw.in_stock !== false,
         total_inventory: 80,
-        source_url: raw.source_url || `${parsedOrigin}/products/${cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        source_url: sanitizeProductUrl(raw.source_url) || undefined,
         searchable_text: searchableText,
         embedding,
         breadcrumbs: raw.breadcrumbs,

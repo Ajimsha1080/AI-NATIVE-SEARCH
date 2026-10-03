@@ -65,6 +65,37 @@ export function sanitizeImageUrl(url: string | undefined | null): string {
   return '';
 }
 
+/**
+ * Strict Security Sanitizer for Product URLs:
+ * - Requires absolute URL with http: or https:
+ * - Rejects javascript:, data:, file:, vbscript:, and malformed URLs
+ * - Trims whitespace and ensures valid domain
+ */
+export function sanitizeProductUrl(url: string | undefined | null): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  // Reject dangerous schemes
+  if (/^(javascript|data|file|vbscript|blob):/i.test(trimmed)) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      if (!parsed.hostname || parsed.hostname.includes(' ') || !parsed.hostname.includes('.')) {
+        return null;
+      }
+      return parsed.href;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 export function getProductFallbackImage(title?: string, category?: string, tags?: string[]): string {
   const combined = `${title || ''} ${category || ''} ${(tags || []).join(' ')}`.toLowerCase();
   

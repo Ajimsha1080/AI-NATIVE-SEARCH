@@ -176,11 +176,40 @@ export default function AIModeEmbedWidget() {
                   </div>
                 </div>
 
-                <div className="pt-1.5 border-t border-zinc-100 flex items-center justify-between">
-                  <span className="text-xs font-black text-zinc-900">₹{p.price.toLocaleString('en-IN')}</span>
-                  <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    In Stock
-                  </span>
+                <div className="pt-1.5 border-t border-zinc-100 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-zinc-900">₹{p.price.toLocaleString('en-IN')}</span>
+                    <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                      In Stock
+                    </span>
+                  </div>
+
+                  {p.source_url ? (
+                    <a
+                      href={p.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => {
+                        fetch('/api/ai-mode/track', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            event: 'buy_now_click',
+                            product_id: p.id,
+                            source_url: p.source_url,
+                            deployment_id: deploymentId,
+                            query
+                          })
+                        }).catch(() => {});
+                      }}
+                      className="w-full text-[10px] font-bold py-1.5 px-2 rounded-lg text-white flex items-center justify-center gap-1 shadow-xs transition"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      <ShoppingBag className="w-2.5 h-2.5" />
+                      <span>Buy Now</span>
+                      <ExternalLink className="w-2.5 h-2.5 opacity-75" />
+                    </a>
+                  ) : null}
                 </div>
               </div>
             ))}

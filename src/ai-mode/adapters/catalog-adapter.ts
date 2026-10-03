@@ -1,14 +1,13 @@
 import { db } from '@/lib/db';
+import { sanitizeProductUrl } from '@/lib/utils';
 import { AIModeProduct } from '../types';
 
 export class AIModeCatalogAdapter {
   public static getProducts(workspaceId?: string): AIModeProduct[] {
     let rawProducts = db.commerce_products || [];
     if (workspaceId) {
-      const filtered = rawProducts.filter(p => p.workspace_id === workspaceId);
-      if (filtered.length > 0) {
-        rawProducts = filtered;
-      }
+      // STRICT TENANT ISOLATION: Never fall back to all products if workspace has 0 products
+      rawProducts = rawProducts.filter(p => p.workspace_id === workspaceId);
     }
     
     // Convert to normalized AIModeProduct schema
@@ -36,12 +35,12 @@ export class AIModeCatalogAdapter {
         ...(p.attributes || {}),
         category: p.category || '',
       },
-      source_url: p.source_url || `/products/${p.id}`
+      source_url: sanitizeProductUrl(p.source_url) || undefined
     }));
   }
 
-  public static getProductById(id: string): AIModeProduct | null {
-    const products = this.getProducts();
+  public static getProductById(id: string, workspaceId?: string): AIModeProduct | null {
+    const products = this.getProducts(workspaceId);
     return products.find(p => p.id === id) || null;
   }
 }

@@ -7,7 +7,8 @@ import {
   ShoppingBag, 
   RefreshCw,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react';
 import { AIModeSearchResult, AIModeProduct } from '@/ai-mode/types';
 
@@ -248,20 +249,58 @@ export default function AIModeSearchPlayground() {
                     )}
                   </div>
 
-                  <div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-black text-zinc-900">
-                        ₹{product.price.toLocaleString('en-IN')}
-                      </span>
-                      {Boolean(product.sale_price && product.sale_price > product.price) && (
-                        <span className="text-[10px] text-zinc-400 line-through ml-1.5 font-mono">
-                          ₹{product.sale_price?.toLocaleString('en-IN')}
+                  <div className="pt-2.5 border-t border-zinc-100 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-black text-zinc-900">
+                          ₹{product.price.toLocaleString('en-IN')}
                         </span>
+                        {Boolean(product.sale_price && product.sale_price > product.price) && (
+                          <span className="text-[10px] text-zinc-400 line-through ml-1.5 font-mono">
+                            ₹{product.sale_price?.toLocaleString('en-IN')}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                        In Stock
+                      </span>
+                    </div>
+
+                    {/* Buy Now / View on Store Navigation Action */}
+                    <div className="pt-0.5">
+                      {product.source_url ? (
+                        <a
+                          href={product.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => {
+                            fetch('/api/ai-mode/track', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                event: 'buy_now_click',
+                                product_id: product.id,
+                                source_url: product.source_url,
+                                query
+                              })
+                            }).catch(() => {});
+                          }}
+                          className="w-full bg-zinc-900 hover:bg-zinc-800 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer text-center group/btn"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5 text-zinc-300" />
+                          <span>Buy Now</span>
+                          <ExternalLink className="w-3 h-3 opacity-60 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 transition" />
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full bg-zinc-100 text-zinc-400 text-[11px] font-semibold py-2 px-3 rounded-xl cursor-not-allowed text-center"
+                        >
+                          Details on Store
+                        </button>
                       )}
                     </div>
-                    <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                      In Stock
-                    </span>
                   </div>
                 </div>
               ))}
