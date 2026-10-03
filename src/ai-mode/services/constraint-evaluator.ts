@@ -205,12 +205,36 @@ export class ConstraintEvaluator {
       return Boolean(variant.in_stock);
     }
 
-    // Color
+    // Color (Strict Word-Boundary & Synonym Aware)
     if (field === 'color') {
-      const expectedColor = String(value).toLowerCase().trim();
-      const variantText = `${variant.title} ${JSON.stringify(variant.attributes || {})}`.toLowerCase();
-      const parentColor = `${parent.title} ${parent.description || ''} ${JSON.stringify(parent.attributes || {})}`.toLowerCase();
-      return variantText.includes(expectedColor) || parentColor.includes(expectedColor);
+      const rawColor = String(value).toLowerCase().trim();
+      const colorSynonyms: Record<string, string[]> = {
+        red: ['red', 'maroon', 'wine', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral', 'scarlet'],
+        blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky', 'sapphire'],
+        green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest', 'khaki'],
+        black: ['black', 'charcoal', 'jet', 'obsidian', 'onyx', 'pitch'],
+        white: ['white', 'off-white', 'off white', 'ivory', 'cream', 'snow'],
+        yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon'],
+        brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha', 'chocolate'],
+        purple: ['purple', 'violet', 'lavender', 'magenta', 'lilac', 'plum'],
+        pink: ['pink', 'rose', 'blush', 'coral', 'salmon', 'fuchsia'],
+        orange: ['orange', 'tangerine', 'peach', 'apricot', 'terracotta']
+      };
+
+      const colorFamily = colorSynonyms[rawColor] || [rawColor];
+      const colorRegex = new RegExp(`\\b(${colorFamily.map(escapeRegex).join('|')})\\b`, 'i');
+
+      const vAttrColor = String(variant.attributes?.color || '').toLowerCase();
+      if (vAttrColor && colorRegex.test(vAttrColor)) return true;
+
+      const vTitle = String(variant.title || '').toLowerCase();
+      if (colorRegex.test(vTitle)) return true;
+
+      const pTitle = String(parent.title || '').toLowerCase();
+      const pAttrColor = String(parent.attributes?.color || '').toLowerCase();
+      if (colorRegex.test(pTitle) || colorRegex.test(pAttrColor)) return true;
+
+      return false;
     }
 
     // Size
@@ -219,7 +243,7 @@ export class ConstraintEvaluator {
       const variantText = `${variant.title} ${JSON.stringify(variant.attributes || {})}`.toLowerCase();
       const parentSize = `${parent.title} ${JSON.stringify(parent.attributes || {})}`.toLowerCase();
       
-      const sizeRegex = new RegExp(`\\b${escapeRegex(expectedSize)}\\b`, 'i');
+      const sizeRegex = new RegExp(`(^|[\\s\\-_/])${escapeRegex(expectedSize)}($|[\\s\\-_/])`, 'i');
       return sizeRegex.test(variantText) || sizeRegex.test(parentSize);
     }
 
@@ -228,14 +252,14 @@ export class ConstraintEvaluator {
     if (attrVal) {
       const valStr = String(attrVal).toLowerCase().trim();
       const expectedStr = String(value).toLowerCase().trim();
-      if (operator === '=') return valStr === expectedStr || valStr.includes(expectedStr);
-      if (operator === 'CONTAINS') return valStr.includes(expectedStr);
+      if (operator === '=') return valStr === expectedStr || new RegExp(`\\b${escapeRegex(expectedStr)}\\b`, 'i').test(valStr);
+      if (operator === 'CONTAINS') return new RegExp(`\\b${escapeRegex(expectedStr)}\\b`, 'i').test(valStr);
     }
 
-    // General string match in variant title
+    // General word match in variant title
     const vTitleLower = (variant.title || '').toLowerCase();
     const expectedLower = String(value).toLowerCase().trim();
-    return vTitleLower.includes(expectedLower);
+    return new RegExp(`\\b${escapeRegex(expectedLower)}\\b`, 'i').test(vTitleLower);
   }
 
   /**
@@ -262,9 +286,33 @@ export class ConstraintEvaluator {
       return Boolean(parent.in_stock);
     }
 
-    const allText = `${parent.title} ${parent.description || ''} ${JSON.stringify(parent.attributes || {})}`.toLowerCase();
+    if (field === 'color') {
+      const rawColor = String(value).toLowerCase().trim();
+      const colorSynonyms: Record<string, string[]> = {
+        red: ['red', 'maroon', 'wine', 'crimson', 'burgundy', 'ruby', 'rust', 'cherry', 'coral', 'scarlet'],
+        blue: ['blue', 'navy', 'indigo', 'cyan', 'azure', 'teal', 'sky', 'sapphire'],
+        green: ['green', 'emerald', 'olive', 'mint', 'sage', 'evergreen', 'forest', 'khaki'],
+        black: ['black', 'charcoal', 'jet', 'obsidian', 'onyx', 'pitch'],
+        white: ['white', 'off-white', 'off white', 'ivory', 'cream', 'snow'],
+        yellow: ['yellow', 'mustard', 'gold', 'amber', 'lemon'],
+        brown: ['brown', 'coffee', 'tan', 'khaki', 'mocha', 'chocolate'],
+        purple: ['purple', 'violet', 'lavender', 'magenta', 'lilac', 'plum'],
+        pink: ['pink', 'rose', 'blush', 'coral', 'salmon', 'fuchsia'],
+        orange: ['orange', 'tangerine', 'peach', 'apricot', 'terracotta']
+      };
+
+      const colorFamily = colorSynonyms[rawColor] || [rawColor];
+      const colorRegex = new RegExp(`\\b(${colorFamily.map(escapeRegex).join('|')})\\b`, 'i');
+      const pTitle = String(parent.title || '').toLowerCase();
+      const pAttrColor = String(parent.attributes?.color || '').toLowerCase();
+      return colorRegex.test(pTitle) || colorRegex.test(pAttrColor);
+    }
+
     const expected = String(value).toLowerCase().trim();
-    return allText.includes(expected);
+    const expectedRegex = new RegExp(`\\b${escapeRegex(expected)}\\b`, 'i');
+    const pTitle = (parent.title || '').toLowerCase();
+    const pAttr = JSON.stringify(parent.attributes || {}).toLowerCase();
+    return expectedRegex.test(pTitle) || expectedRegex.test(pAttr);
   }
 }
 
