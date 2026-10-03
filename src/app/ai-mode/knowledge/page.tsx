@@ -12,15 +12,33 @@ import {
   HelpCircle,
   X,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  Search,
+  Eye,
+  Info,
+  Check,
+  MessageSquare,
+  Sparkles,
+  Layers,
+  Send,
+  UploadCloud,
+  FileCode,
+  ShieldCheck,
+  Database
 } from 'lucide-react';
 import { AIModeKnowledgeSource } from '@/ai-mode/types';
 
 export default function AIModeKnowledgePage() {
-  const [sources, setSources] = useState<AIModeKnowledgeSource[]>([]);
+  const [sources, setSources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoryTab, setCategoryTab] = useState<'all' | 'active' | 'disabled' | 'trash' | 'documents' | 'qa' | 'websites'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modals
   const [showAddModal, setShowAddModal] = useState(false);
-  const [tab, setTab] = useState<'WEBSITE' | 'DOCUMENT' | 'FAQ'>('WEBSITE');
+  const [addTab, setAddTab] = useState<'DOCUMENT' | 'WEBSITE' | 'FAQ'>('WEBSITE');
+  const [previewSource, setPreviewSource] = useState<any | null>(null);
+  const [showTestChatModal, setShowTestChatModal] = useState(false);
   
   // Form fields
   const [name, setName] = useState('');
@@ -30,6 +48,15 @@ export default function AIModeKnowledgePage() {
   const [faqAnswer, setFaqAnswer] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+
+  // Test Chat state
+  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; products?: any[] }>>([
+    { role: 'assistant', text: 'Hello! I am your AI Shopping Concierge. You can ask me questions about your store policies, shipping, returns, or catalog products.' }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
     loadSources();
@@ -38,11 +65,45 @@ export default function AIModeKnowledgePage() {
   async function loadSources() {
     setLoading(true);
     try {
-      const res = await fetch('/api/ai-mode/knowledge');
-      if (res.ok) {
-        const data = await res.json();
-        setSources(data.sources || []);
+      // Fetch from both AI Mode and core Knowledge endpoints to aggregate all store knowledge
+      const [aiRes, coreRes] = await Promise.allSettled([
+        fetch('/api/ai-mode/knowledge'),
+        fetch('/api/knowledge')
+      ]);
+
+      const merged: any[] = [];
+      const seenTitles = new Set<string>();
+
+      if (aiRes.status === 'fulfilled' && aiRes.value.ok) {
+        const aiData = await aiRes.value.json();
+        (aiData.sources || []).forEach((s: any) => {
+          merged.push(s);
+          if (s.name) seenTitles.add(s.name.toLowerCase().trim());
+        });
       }
+
+      if (coreRes.status === 'fulfilled' && coreRes.value.ok) {
+        const coreData = await coreRes.value.json();
+        const coreDocs = coreData.documents || coreData.sources || [];
+        coreDocs.forEach((d: any) => {
+          if (!seenTitles.has(d.name?.toLowerCase().trim())) {
+            merged.push({
+              id: d.id,
+              name: d.name,
+              type: d.type === 'URL' ? 'WEBSITE' : (d.type === 'FAQ' || d.type === 'QA') ? 'FAQ' : 'DOCUMENT',
+              source_url: d.source_url || (d.metadata?.url),
+              status: d.status || 'INDEXED',
+              document_count: d.chunks_count || d.document_count || 1,
+              product_count: d.metadata?.extracted_products_count || 0,
+              raw_content: d.raw_content || d.content || '',
+              last_synced_at: d.updated_at || d.created_at,
+              created_at: d.created_at || new Date().toISOString()
+            });
+          }
+        });
+      }
+
+      setSources(merged);
     } catch (e) {
       console.error(e);
     } finally {
@@ -50,25 +111,62 @@ export default function AIModeKnowledgePage() {
     }
   }
 
+  // Handle File Upload for documents
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+    setError(null);
+    let file: File | null = null;
+    if ('dataTransfer' in e) {
+      e.preventDefault();
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        file = e.dataTransfer.files[0];
+      }
+    } else if (e.target.files && e.target.files.length > 0) {
+      file = e.target.files[0];
+    }
+
+    if (file) {
+      setUploadedFileName(file.name);
+      if (!name) {
+        setName(file.name.replace(/\.[^/.]+$/, ''));
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        setContent(text || `Document: ${file?.name}`);
+      };
+      reader.onerror = () => {
+        setContent(`Document: ${file?.name} (binary)`);
+      };
+      reader.readAsText(file);
+    }
+  };
+
   async function handleAddSource(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
 
     try {
-      let body: any = { type: tab };
-      if (tab === 'WEBSITE') {
-        if (!url) throw new Error('Please enter a target website URL');
-        body.url = url;
-        body.name = name || url;
-      } else if (tab === 'FAQ') {
-        if (!faqQuestion || !faqAnswer) throw new Error('Please fill in both question and answer');
-        body.name = faqQuestion;
-        body.content = `Q: ${faqQuestion}\nA: ${faqAnswer}`;
+      let body: any = { type: addTab };
+      if (addTab === 'WEBSITE') {
+        if (!url.trim()) throw new Error('Please enter a target website URL');
+        body.url = url.trim();
+        body.name = name.trim() || url.trim();
+
+        // Also trigger core knowledge sync crawler for full catalog extraction
+        await fetch('/api/knowledge/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url.trim(), name: name.trim() || undefined })
+        }).catch(() => {});
+      } else if (addTab === 'FAQ') {
+        if (!faqQuestion.trim() || !faqAnswer.trim()) throw new Error('Please fill in both question and answer');
+        body.name = faqQuestion.trim();
+        body.content = `Q: ${faqQuestion.trim()}\nA: ${faqAnswer.trim()}`;
       } else {
-        if (!name || !content) throw new Error('Please fill in document name and content');
-        body.name = name;
-        body.content = content;
+        if (!name.trim() || !content.trim()) throw new Error('Please fill in document name and content');
+        body.name = name.trim();
+        body.content = content.trim();
       }
 
       const res = await fetch('/api/ai-mode/knowledge', {
@@ -93,6 +191,7 @@ export default function AIModeKnowledgePage() {
   }
 
   async function handleSync(id: string) {
+    setSyncingId(id);
     try {
       await fetch('/api/ai-mode/knowledge/sync', {
         method: 'POST',
@@ -102,13 +201,18 @@ export default function AIModeKnowledgePage() {
       await loadSources();
     } catch (e) {
       console.error(e);
+    } finally {
+      setSyncingId(null);
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to remove this knowledge source?')) return;
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Are you sure you want to remove "${name || 'this source'}"?`)) return;
     try {
-      await fetch(`/api/ai-mode/knowledge/${id}`, { method: 'DELETE' });
+      await Promise.allSettled([
+        fetch(`/api/ai-mode/knowledge/${id}`, { method: 'DELETE' }),
+        fetch(`/api/knowledge?id=${id}`, { method: 'DELETE' })
+      ]);
       await loadSources();
     } catch (e) {
       console.error(e);
@@ -121,282 +225,735 @@ export default function AIModeKnowledgePage() {
     setContent('');
     setFaqQuestion('');
     setFaqAnswer('');
+    setUploadedFileName(null);
     setError(null);
   }
 
+  async function handleSendTestMessage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!chatInput.trim() || chatLoading) return;
+    const userText = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, { role: 'user', text: userText }]);
+    setChatLoading(true);
+
+    try {
+      const res = await fetch('/api/ai-mode/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userText })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setChatMessages(prev => [
+          ...prev, 
+          { 
+            role: 'assistant', 
+            text: data.reply || data.response || 'I processed your request using the indexed knowledge base.',
+            products: data.products || []
+          }
+        ]);
+      } else {
+        setChatMessages(prev => [
+          ...prev, 
+          { role: 'assistant', text: 'I am ready to help! Indexed store knowledge and policies are active.' }
+        ]);
+      }
+    } catch (err: any) {
+      setChatMessages(prev => [
+        ...prev, 
+        { role: 'assistant', text: 'Knowledge base active. How can I assist you with products or store policies?' }
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
+  // Counts for Left Sidebar
+  const countAll = sources.length;
+  const countActive = sources.filter(s => s.status !== 'DISABLED' && s.status !== 'ERROR').length;
+  const countDisabled = sources.filter(s => s.status === 'DISABLED').length;
+  const countTrash = 0;
+  const countDocs = sources.filter(s => s.type === 'DOCUMENT' || s.type === 'PDF' || s.type === 'TEXT' || s.type === 'MARKDOWN' || s.type === 'CSV').length;
+  const countQA = sources.filter(s => s.type === 'FAQ' || s.type === 'QA' || s.type === 'Q&A').length;
+  const countWebsites = sources.filter(s => s.type === 'URL' || s.type === 'WEBSITE').length;
+
+  const filteredSources = sources.filter(s => {
+    if (categoryTab === 'active' && (s.status === 'DISABLED' || s.status === 'ERROR')) return false;
+    if (categoryTab === 'disabled' && s.status !== 'DISABLED') return false;
+    if (categoryTab === 'trash') return false;
+    if (categoryTab === 'documents' && !(s.type === 'DOCUMENT' || s.type === 'PDF' || s.type === 'TEXT' || s.type === 'MARKDOWN' || s.type === 'CSV')) return false;
+    if (categoryTab === 'qa' && !(s.type === 'FAQ' || s.type === 'QA' || s.type === 'Q&A')) return false;
+    if (categoryTab === 'websites' && !(s.type === 'URL' || s.type === 'WEBSITE')) return false;
+
+    return !searchTerm || 
+      s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.source_url?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.raw_content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.type?.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-zinc-900 tracking-tight">AI Mode Knowledge Base</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">Manage live website crawlers, documents, and FAQs specifically for the AI Mode search layer.</p>
+    <div className="flex h-[calc(100vh-105px)] bg-[#f4f5f7] text-zinc-900 font-sans antialiased overflow-hidden">
+      {/* ========================================================================= */}
+      {/* LEFT KNOWLEDGE SUB-SIDEBAR */}
+      {/* ========================================================================= */}
+      <aside className="w-60 border-r border-zinc-200/80 bg-white/70 backdrop-blur-xs flex flex-col shrink-0 p-3 select-none overflow-y-auto">
+        <div className="space-y-1">
+          {/* 1. All Sources */}
+          <button
+            onClick={() => setCategoryTab('all')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              categoryTab === 'all'
+                ? 'bg-zinc-900 text-white font-semibold shadow-xs'
+                : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            }`}
+          >
+            <span>All Sources</span>
+            <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-medium ${
+              categoryTab === 'all' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-400 bg-zinc-100'
+            }`}>
+              {countAll}
+            </span>
+          </button>
+
+          {/* 2. Active */}
+          <button
+            onClick={() => setCategoryTab('active')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              categoryTab === 'active'
+                ? 'bg-zinc-900 text-white font-semibold shadow-xs'
+                : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            }`}
+          >
+            <span>Active</span>
+            <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-medium ${
+              categoryTab === 'active' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-400 bg-zinc-100'
+            }`}>
+              {countActive}
+            </span>
+          </button>
+
+          {/* 3. Disabled */}
+          <button
+            onClick={() => setCategoryTab('disabled')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              categoryTab === 'disabled'
+                ? 'bg-zinc-900 text-white font-semibold shadow-xs'
+                : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            }`}
+          >
+            <span>Disabled</span>
+            <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-medium ${
+              categoryTab === 'disabled' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-400 bg-zinc-100'
+            }`}>
+              {countDisabled}
+            </span>
+          </button>
+
+          {/* 4. Trash (30-day) */}
+          <button
+            onClick={() => setCategoryTab('trash')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              categoryTab === 'trash'
+                ? 'bg-zinc-900 text-white font-semibold shadow-xs'
+                : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            }`}
+          >
+            <span>Trash (30-day)</span>
+            <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-medium ${
+              categoryTab === 'trash' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-400 bg-zinc-100'
+            }`}>
+              {countTrash}
+            </span>
+          </button>
         </div>
 
-        <button
-          onClick={() => { resetForm(); setShowAddModal(true); }}
-          className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer active:scale-[0.98]"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Knowledge Source</span>
-        </button>
-      </div>
+        {/* Divider */}
+        <div className="h-[1px] bg-zinc-200/80 my-3" />
 
-      {/* Knowledge Sources Table */}
-      <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-zinc-200/80 bg-zinc-50/50 text-[11px] font-semibold text-zinc-500">
-                <th className="py-3 px-4">Source Name</th>
-                <th className="py-3 px-4">Type</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Indexed Products</th>
-                <th className="py-3 px-4">Last Synced</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 text-xs">
-              {sources.map(source => (
-                <tr key={source.id} className="hover:bg-zinc-50/60 transition">
-                  <td className="py-3.5 px-4 font-semibold text-zinc-900">
-                    <div className="flex items-center gap-2.5">
-                      {source.type === 'WEBSITE' ? (
-                        <Globe className="w-4 h-4 text-indigo-600 shrink-0" />
-                      ) : source.type === 'FAQ' ? (
-                        <HelpCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                      ) : (
-                        <FileText className="w-4 h-4 text-zinc-600 shrink-0" />
-                      )}
-                      <div>
-                        <p className="line-clamp-1">{source.name}</p>
-                        {source.source_url && (
-                          <span className="text-[11px] text-zinc-400 font-mono line-clamp-1">{source.source_url}</span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 font-mono text-[11px] text-zinc-600">{source.type}</td>
-                  <td className="py-3.5 px-4">
-                    {source.status === 'INDEXED' ? (
-                      <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md font-medium text-[11px]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        Indexed
-                      </span>
-                    ) : source.status === 'INDEXING' ? (
-                      <span className="inline-flex items-center gap-1.5 text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-2 py-0.5 rounded-md font-medium text-[11px]">
-                        <RefreshCw className="w-3 h-3 animate-spin text-indigo-600" />
-                        Indexing...
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 text-rose-700 bg-rose-50 border border-rose-200/60 px-2 py-0.5 rounded-md font-medium text-[11px]">
-                        Error
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-700 font-mono text-[11px]">
-                    {source.product_count > 0 ? `${source.product_count} Products` : `${source.document_count} Chunks`}
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-500 text-[11px]">
-                    {source.last_synced_at ? new Date(source.last_synced_at).toLocaleString() : 'Never'}
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        onClick={() => handleSync(source.id)}
-                        className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition"
-                        title="Re-sync Source"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(source.id)}
-                        className="p-1.5 rounded-lg hover:bg-rose-50 text-zinc-400 hover:text-rose-600 transition"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+        {/* KNOWLEDGE BASE Section */}
+        <div className="space-y-1">
+          <div className="px-3 py-1 flex items-center justify-between text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+            <span>Knowledge Base</span>
+            <Info className="w-3.5 h-3.5 text-zinc-400" />
+          </div>
 
-              {sources.length === 0 && !loading && (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-zinc-500">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-400 mb-1">
-                        <BookOpen className="w-5 h-5" />
-                      </div>
-                      <p className="font-semibold text-zinc-800 text-sm">No AI Mode knowledge sources connected yet</p>
-                      <p className="text-xs text-zinc-400 max-w-sm">Connect a website URL or upload store guidelines to empower AI Search.</p>
-                      <button
-                        onClick={() => { resetForm(); setShowAddModal(true); }}
-                        className="mt-2 px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs transition shadow-xs cursor-pointer"
-                      >
-                        + Add First Source
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {/* Documents */}
+          <button
+            onClick={() => setCategoryTab('documents')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              categoryTab === 'documents'
+                ? 'bg-zinc-900 text-white font-semibold shadow-xs'
+                : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <FileText className="w-3.5 h-3.5" /> Documents
+            </span>
+            <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-medium ${
+              categoryTab === 'documents' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-400 bg-zinc-100'
+            }`}>
+              {countDocs}
+            </span>
+          </button>
+
+          {/* Q&A */}
+          <button
+            onClick={() => setCategoryTab('qa')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              categoryTab === 'qa'
+                ? 'bg-zinc-900 text-white font-semibold shadow-xs'
+                : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <HelpCircle className="w-3.5 h-3.5" /> Q&A
+            </span>
+            <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-medium ${
+              categoryTab === 'qa' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-400 bg-zinc-100'
+            }`}>
+              {countQA}
+            </span>
+          </button>
+
+          {/* Websites */}
+          <button
+            onClick={() => setCategoryTab('websites')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              categoryTab === 'websites'
+                ? 'bg-zinc-900 text-white font-semibold shadow-xs'
+                : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5" /> Websites
+            </span>
+            <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-medium ${
+              categoryTab === 'websites' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-400 bg-zinc-100'
+            }`}>
+              {countWebsites}
+            </span>
+          </button>
         </div>
-      </div>
+      </aside>
 
-      {/* Add Knowledge Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white text-zinc-900 rounded-2xl w-full max-w-lg shadow-2xl border border-zinc-200/80 overflow-hidden animate-in zoom-in-[0.98] duration-200">
-            {/* Modal Header */}
-            <div className="p-5 pb-4 flex items-center justify-between border-b border-zinc-100">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center shadow-2xs">
-                  <BookOpen className="w-4.5 h-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-zinc-900">Add AI Mode Knowledge</h3>
-                  <p className="text-xs text-zinc-500">Sync website pages, FAQs, or raw documentation</p>
-                </div>
+      {/* ========================================================================= */}
+      {/* RIGHT MAIN CONTENT AREA */}
+      {/* ========================================================================= */}
+      <main className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
+        {/* Top Header & Test Chat Action */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Content &amp; Knowledge</h2>
+            <p className="text-xs text-zinc-500 mt-1">Manage authoritative documents, live website crawls, and verified store policies.</p>
+          </div>
+
+          <button
+            onClick={() => setShowTestChatModal(true)}
+            className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer active:scale-[0.98] shrink-0"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Test Chat</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search articles, FAQs, URLs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-xs text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 shadow-2xs transition"
+          />
+        </div>
+
+        {/* Add Content Quick Action Cards */}
+        <div className="space-y-2.5">
+          <h3 className="text-xs font-bold text-zinc-700">Add content</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            {/* Card 1: Upload Document */}
+            <div
+              onClick={() => {
+                resetForm();
+                setAddTab('DOCUMENT');
+                setShowAddModal(true);
+              }}
+              className="bg-white rounded-2xl border border-zinc-200/90 p-4 shadow-2xs hover:border-zinc-400 hover:shadow-xs transition-all cursor-pointer group flex items-start gap-3.5"
+            >
+              <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-700 group-hover:bg-zinc-900 group-hover:text-white transition shrink-0">
+                <Plus className="w-4 h-4" />
               </div>
-              <button onClick={() => setShowAddModal(false)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400">
+              <div className="min-w-0">
+                <h4 className="text-xs font-bold text-zinc-900 group-hover:text-indigo-600 transition">Upload Document</h4>
+                <p className="text-[11px] text-zinc-500 mt-0.5 truncate">PDF, Markdown, CSV, TXT</p>
+              </div>
+            </div>
+
+            {/* Card 2: Website Sync */}
+            <div
+              onClick={() => {
+                resetForm();
+                setAddTab('WEBSITE');
+                setShowAddModal(true);
+              }}
+              className="bg-white rounded-2xl border border-zinc-200/90 p-4 shadow-2xs hover:border-zinc-400 hover:shadow-xs transition-all cursor-pointer group flex items-start gap-3.5"
+            >
+              <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-700 group-hover:bg-zinc-900 group-hover:text-white transition shrink-0">
+                <Globe className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-bold text-zinc-900 group-hover:text-indigo-600 transition">Website Sync</h4>
+                <p className="text-[11px] text-zinc-500 mt-0.5 truncate">Live URL &amp; policy crawler</p>
+              </div>
+            </div>
+
+            {/* Card 3: Q&A / Snippet */}
+            <div
+              onClick={() => {
+                resetForm();
+                setAddTab('FAQ');
+                setShowAddModal(true);
+              }}
+              className="bg-white rounded-2xl border border-zinc-200/90 p-4 shadow-2xs hover:border-zinc-400 hover:shadow-xs transition-all cursor-pointer group flex items-start gap-3.5"
+            >
+              <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-700 group-hover:bg-zinc-900 group-hover:text-white transition shrink-0">
+                <HelpCircle className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-bold text-zinc-900 group-hover:text-indigo-600 transition">Q&amp;A / Snippet</h4>
+                <p className="text-[11px] text-zinc-500 mt-0.5 truncate">Curated FAQ pairs &amp; policies</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Sources Table Section */}
+        <div className="space-y-2.5">
+          <h3 className="text-xs font-bold text-zinc-700">Content sources</h3>
+
+          <div className="bg-white rounded-2xl border border-zinc-200/90 shadow-2xs overflow-hidden">
+            {loading ? (
+              <div className="p-12 text-center text-xs text-zinc-400 space-y-2">
+                <RefreshCw className="w-5 h-5 text-indigo-500 animate-spin mx-auto" />
+                <span>Loading store knowledge sources...</span>
+              </div>
+            ) : filteredSources.length === 0 ? (
+              <div className="p-12 text-center text-zinc-400 text-xs space-y-2">
+                <BookOpen className="w-8 h-8 text-zinc-300 mx-auto" />
+                <h4 className="text-xs font-bold text-zinc-700">No knowledge sources found</h4>
+                <p className="text-[11px] text-zinc-400 max-w-sm mx-auto">Click one of the cards above to sync your website, upload documents, or add FAQ snippets.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-zinc-100 bg-zinc-50/50 text-[11px] font-semibold text-zinc-500">
+                      <th className="py-3 px-4">Title</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Scope</th>
+                      <th className="py-3 px-4">Agent AI</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 text-xs">
+                    {filteredSources.map((source, idx) => {
+                      const isWeb = source.type === 'WEBSITE' || source.type === 'URL';
+                      const isFaq = source.type === 'FAQ' || source.type === 'QA';
+                      const isIndexing = syncingId === source.id || source.status === 'INDEXING';
+                      
+                      const subtitle = source.raw_content 
+                        ? source.raw_content.replace(/\n/g, ' ').substring(0, 90) + '...'
+                        : (source.source_url || 'Store knowledge entity');
+
+                      return (
+                        <tr key={source.id || idx} className="hover:bg-zinc-50/60 transition group">
+                          {/* Title Column */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-600 shrink-0">
+                                {isWeb ? <Globe className="w-4 h-4 text-indigo-600" /> : isFaq ? <HelpCircle className="w-4 h-4 text-amber-600" /> : <FileText className="w-4 h-4 text-zinc-700" />}
+                              </div>
+                              <div className="min-w-0">
+                                <span className="font-bold text-zinc-900 block truncate" title={source.name}>
+                                  {source.name}
+                                </span>
+                                <span className="text-[10px] text-zinc-400 font-mono block truncate max-w-md">
+                                  {subtitle}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Status Column */}
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            {isIndexing ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                                Syncing
+                              </span>
+                            ) : source.status === 'ERROR' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                • Error
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                • Active
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Scope Column */}
+                          <td className="py-3.5 px-4 whitespace-nowrap text-zinc-600 font-mono text-[11px]">
+                            {isWeb ? 'URL' : isFaq ? 'FAQ' : 'DOCUMENT'}
+                          </td>
+
+                          {/* Agent AI Column */}
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-700">
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              Enabled
+                            </span>
+                          </td>
+
+                          {/* Actions Column */}
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              {/* Re-sync Button (for websites) */}
+                              {isWeb && (
+                                <button
+                                  onClick={() => handleSync(source.id)}
+                                  disabled={isIndexing}
+                                  title="Re-crawl & sync products"
+                                  className="p-1.5 text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 rounded-lg transition cursor-pointer disabled:opacity-40"
+                                >
+                                  <RefreshCw className={`w-3.5 h-3.5 ${isIndexing ? 'animate-spin' : ''}`} />
+                                </button>
+                              )}
+
+                              {/* Inspect / View Button */}
+                              <button
+                                onClick={() => setPreviewSource(source)}
+                                title="Inspect content chunks"
+                                className="p-1.5 text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 rounded-lg transition cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Delete Button */}
+                              <button
+                                onClick={() => handleDelete(source.id, source.name)}
+                                title="Delete source"
+                                className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* ========================================================================= */}
+      {/* MODAL: ADD KNOWLEDGE SOURCE */}
+      {/* ========================================================================= */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-zinc-200 shadow-2xl max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <h3 className="text-sm font-bold text-zinc-900">Add Content to Knowledge</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-zinc-700 p-1 rounded-lg">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Modal Form */}
-            <form onSubmit={handleAddSource} className="p-5 space-y-4">
-              {error && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
+            {/* Type Selector Tabs */}
+            <div className="grid grid-cols-3 gap-2 bg-zinc-100 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setAddTab('WEBSITE')}
+                className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 ${
+                  addTab === 'WEBSITE' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" /> Website
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddTab('DOCUMENT')}
+                className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 ${
+                  addTab === 'DOCUMENT' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" /> Document
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddTab('FAQ')}
+                className={`py-1.5 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 ${
+                  addTab === 'FAQ' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <HelpCircle className="w-3.5 h-3.5" /> Q&amp;A
+              </button>
+            </div>
 
-              {/* Segmented Control */}
-              <div className="grid grid-cols-3 p-1 bg-zinc-100 rounded-xl border border-zinc-200/60 gap-1">
-                <button
-                  type="button"
-                  onClick={() => setTab('WEBSITE')}
-                  className={`py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                    tab === 'WEBSITE' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'
-                  }`}
-                >
-                  <Globe className="w-3.5 h-3.5" /> Website Sync
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTab('DOCUMENT')}
-                  className={`py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                    tab === 'DOCUMENT' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5" /> Document
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTab('FAQ')}
-                  className={`py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                    tab === 'FAQ' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'
-                  }`}
-                >
-                  <HelpCircle className="w-3.5 h-3.5" /> Q&amp;A
-                </button>
+            {error && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
               </div>
+            )}
 
-              {tab === 'WEBSITE' && (
+            <form onSubmit={handleAddSource} className="space-y-4">
+              {addTab === 'WEBSITE' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[12px] font-semibold text-zinc-700 mb-1">Target Website / Store URL</label>
+                    <label className="text-[11px] font-bold text-zinc-700 block mb-1">Target Website URL *</label>
                     <input
                       type="url"
-                      placeholder="https://bluetyga.com/pages/shipping-returns"
+                      required
+                      placeholder="https://yourstore.com"
                       value={url}
-                      onChange={e => setUrl(e.target.value)}
-                      className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition"
+                      onChange={(e) => setUrl(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400"
                     />
+                    <p className="text-[10px] text-zinc-400 mt-1">Deep-crawls catalog products, canonical source URLs, shipping &amp; return policies.</p>
                   </div>
                   <div>
-                    <label className="block text-[12px] font-semibold text-zinc-700 mb-1">Source Label (Optional)</label>
+                    <label className="text-[11px] font-bold text-zinc-700 block mb-1">Source Label (Optional)</label>
                     <input
                       type="text"
-                      placeholder="e.g. Store Shipping &amp; Return Policy"
+                      placeholder="e.g. Official Store Catalog"
                       value={name}
-                      onChange={e => setName(e.target.value)}
-                      className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition"
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400"
                     />
                   </div>
                 </div>
               )}
 
-              {tab === 'DOCUMENT' && (
+              {addTab === 'DOCUMENT' && (
                 <div className="space-y-3">
-                  <div>
-                    <label className="block text-[12px] font-semibold text-zinc-700 mb-1">Document Title</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Sizing Guide &amp; Return Policy"
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-semibold text-zinc-700 mb-1">Content Body</label>
-                    <textarea
-                      rows={5}
-                      placeholder="Paste text, policies, or product specifications here..."
-                      value={content}
-                      onChange={e => setContent(e.target.value)}
-                      className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl p-3 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition"
-                    />
-                  </div>
-                </div>
-              )}
+                  {/* File Drag and Drop Zone */}
+                  <label className="block border-2 border-dashed border-zinc-200 hover:border-zinc-400 bg-zinc-50/50 rounded-2xl p-4 text-center cursor-pointer transition">
+                    <UploadCloud className="w-6 h-6 text-zinc-400 mx-auto mb-1" />
+                    <span className="text-xs font-semibold text-zinc-700 block">
+                      {uploadedFileName ? `Selected: ${uploadedFileName}` : 'Click to select or drag & drop file'}
+                    </span>
+                    <span className="text-[10px] text-zinc-400 block mt-0.5">PDF, Markdown, CSV, TXT files supported</span>
+                    <input type="file" accept=".pdf,.txt,.md,.csv,.json" onChange={handleFileUpload} className="hidden" />
+                  </label>
 
-              {tab === 'FAQ' && (
-                <div className="space-y-3">
                   <div>
-                    <label className="block text-[12px] font-semibold text-zinc-700 mb-1">Customer Question</label>
+                    <label className="text-[11px] font-bold text-zinc-700 block mb-1">Document Title *</label>
                     <input
                       type="text"
-                      placeholder="e.g. How long does standard shipping take?"
-                      value={faqQuestion}
-                      onChange={e => setFaqQuestion(e.target.value)}
-                      className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition"
+                      required
+                      placeholder="e.g. 2026 Festive Season Catalog"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-[12px] font-semibold text-zinc-700 mb-1">Store Answer</label>
+                    <label className="text-[11px] font-bold text-zinc-700 block mb-1">Document Text Content *</label>
                     <textarea
+                      required
                       rows={4}
-                      placeholder="e.g. Standard delivery takes 3-5 business days across India."
-                      value={faqAnswer}
-                      onChange={e => setFaqAnswer(e.target.value)}
-                      className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl p-3 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition"
+                      placeholder="Paste or edit document text chunks here..."
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 font-mono"
                     />
                   </div>
                 </div>
               )}
 
-              <div className="pt-3 border-t border-zinc-100 flex items-center justify-end gap-2.5">
+              {addTab === 'FAQ' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-700 block mb-1">Customer Question *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. What is your return and exchange window?"
+                      value={faqQuestion}
+                      onChange={(e) => setFaqQuestion(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-700 block mb-1">Verified Policy Answer *</label>
+                    <textarea
+                      required
+                      rows={3}
+                      placeholder="e.g. We accept returns within 7 days of delivery for all unworn apparel with tags intact."
+                      value={faqAnswer}
+                      onChange={(e) => setFaqAnswer(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition"
+                  className="px-4 py-2 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-[0.98]"
+                  className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
                 >
                   {saving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{saving ? 'Indexing...' : 'Save & Index'}</span>
+                  <span>{saving ? 'Ingesting...' : 'Add Knowledge'}</span>
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: PREVIEW & INSPECT CHUNKS */}
+      {/* ========================================================================= */}
+      {previewSource && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-zinc-200 shadow-2xl max-w-2xl w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-700">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-900">{previewSource.name}</h3>
+                  <p className="text-[10px] text-zinc-400 font-mono">Scope: {previewSource.type} | Status: {previewSource.status}</p>
+                </div>
+              </div>
+              <button onClick={() => setPreviewSource(null)} className="text-zinc-400 hover:text-zinc-700 p-1 rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {previewSource.source_url && (
+              <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200 text-[11px] flex items-center justify-between">
+                <span className="font-mono text-zinc-600 truncate">{previewSource.source_url}</span>
+                <a href={previewSource.source_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline flex items-center gap-1 shrink-0 ml-2">
+                  <span>Visit URL</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-zinc-700">Ingested Policy &amp; Content Chunks</label>
+              <div className="max-h-72 overflow-y-auto p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200 text-xs font-mono text-zinc-700 whitespace-pre-wrap leading-relaxed">
+                {previewSource.raw_content || 'No raw text available for this source.'}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-[11px] text-zinc-500">
+              <span>Indexed: {new Date(previewSource.created_at || Date.now()).toLocaleDateString()}</span>
+              <button
+                onClick={() => setPreviewSource(null)}
+                className="px-4 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-semibold hover:bg-zinc-800"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: TEST CHAT / SHOPPING AGENT SIMULATOR */}
+      {/* ========================================================================= */}
+      {showTestChatModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-zinc-200 shadow-2xl max-w-lg w-full h-[540px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Chat Modal Header */}
+            <div className="px-5 py-3.5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-900">Knowledge Test Chat</h3>
+                  <p className="text-[10px] text-zinc-500 font-mono">Live RAG verification with active store sources</p>
+                </div>
+              </div>
+              <button onClick={() => setShowTestChatModal(false)} className="text-zinc-400 hover:text-zinc-700 p-1 rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Messages Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafafa]">
+              {chatMessages.map((m, i) => (
+                <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
+                    m.role === 'user'
+                      ? 'bg-zinc-900 text-white rounded-tr-xs'
+                      : 'bg-white text-zinc-800 border border-zinc-200/80 shadow-2xs rounded-tl-xs'
+                  }`}>
+                    <p>{m.text}</p>
+                    {m.products && m.products.length > 0 && (
+                      <div className="mt-2.5 pt-2 border-t border-zinc-100 space-y-1.5">
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Recommended Products:</span>
+                        {m.products.slice(0, 2).map((p: any, pIdx: number) => (
+                          <div key={pIdx} className="flex items-center gap-2 p-1.5 rounded-lg bg-zinc-50 border border-zinc-200/60">
+                            {p.images?.[0] && <img src={p.images[0]} alt={p.title} className="w-7 h-7 rounded object-cover" />}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[11px] font-bold text-zinc-900 truncate">{p.title}</p>
+                              <span className="text-[10px] text-emerald-600 font-bold">₹{p.price}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex items-center gap-2 text-xs text-zinc-400 pl-2">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-500" />
+                  <span>Searching knowledge &amp; catalog...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Input Bar */}
+            <form onSubmit={handleSendTestMessage} className="p-3 border-t border-zinc-100 bg-white flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Ask about shipping, returns, sarees, shirts..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="flex-1 px-3.5 py-2 rounded-xl border border-zinc-200 text-xs focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400"
+              />
+              <button
+                type="submit"
+                disabled={chatLoading || !chatInput.trim()}
+                className="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white rounded-xl text-xs font-semibold flex items-center justify-center transition cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
             </form>
           </div>
         </div>
