@@ -148,7 +148,7 @@ export default function CheckoutModal({
 
       const orderData = await res.json();
       const rzpOrder = orderData?.order || {};
-      const keyId = orderData?.key_id || 'rzp_test_1DP5mmOlF5G5ag';
+      const keyId = orderData?.key_id || '';
 
       const isLoaded = await loadRazorpayScript();
       const Razorpay = typeof window !== 'undefined' ? (window as any).Razorpay : null;

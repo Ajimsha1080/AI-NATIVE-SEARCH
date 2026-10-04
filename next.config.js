@@ -13,7 +13,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  swcMinify: true,
   experimental: {
     optimizePackageImports: ['lucide-react', 'clsx', 'tailwind-merge'],
     webpackBuildWorker: true,
