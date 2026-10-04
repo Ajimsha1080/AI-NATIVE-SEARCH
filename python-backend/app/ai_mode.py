@@ -133,7 +133,13 @@ COMMON_CATEGORIES = {
 }
 
 def parse_query(raw_query: str) -> AIModeSearchPlan:
-    query_clean = raw_query.strip()
+    # De-concatenate compound words (e.g. "womenproducts" -> "women products", "womendress" -> "women dress")
+    norm_query = raw_query.strip()
+    norm_query = re.sub(r'\b(women|woman|womens|women\'s|female|ladies|lady|girl|girls)(products?|items?|clothes|clothing|wear|dresses?|sarees?|shirts?|tops?|shoes?|tshirts?|pants?|apparel)\b', r'\1 \2', norm_query, flags=re.IGNORECASE)
+    norm_query = re.sub(r'\b(men|man|mens|men\'s|male|boys?|father)(products?|items?|clothes|clothing|wear|shirts?|tshirts?|pants?|joggers?|shoes?|apparel)\b', r'\1 \2', norm_query, flags=re.IGNORECASE)
+    norm_query = re.sub(r'\b(kids?|children|baby|toddler)(products?|items?|clothes|clothing|wear|shirts?|dresses?|shoes?|apparel)\b', r'\1 \2', norm_query, flags=re.IGNORECASE)
+
+    query_clean = norm_query.strip()
     query_lower = query_clean.lower()
 
     # 1. Intent classification

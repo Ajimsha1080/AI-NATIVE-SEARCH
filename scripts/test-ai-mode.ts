@@ -236,6 +236,29 @@ async function runTests() {
 
     const evalPureSareeInSaree = ConstraintEvaluator.evaluateProduct(testWomenProduct, planSareeSearch);
     assert(evalPureSareeInSaree.isValid === true, 'Category-Precision: Accepted authentic standalone Saree in "sarees for festive wear" search');
+
+    // Compound Word Normalization & Gender Extraction: "womenproducts" -> extracts gender 'women'
+    const planGluedWomen = AIModeSearchService.parseQuery('womenproducts', undefined, testWorkspaceId);
+    assert(planGluedWomen.extracted_filters.gender === 'women', 'Compound Normalization: Extracted gender "women" from "womenproducts"');
+
+    // Generic Printed T-Shirt (without explicit women tag) must be REJECTED in women queries
+    const testPrintedTshirt: AIModeProduct = {
+      id: 'prod_tshirt_find_a_way',
+      title: 'Find A Way Printed T-Shirt',
+      description: 'Casual printed tee with raven graphic',
+      price: 999,
+      currency: 'INR',
+      category: 'Printed T-Shirt',
+      images: [],
+      in_stock: true,
+      subcategories: ['bestseller2026', 'Exchangeable'],
+      variants: [{ id: 'var_fw1', title: 'L', price: 999, in_stock: true, attributes: {} }]
+    };
+    const evalTshirtInGlued = ConstraintEvaluator.evaluateProduct(testPrintedTshirt, planGluedWomen);
+    assert(evalTshirtInGlued.isValid === false, 'Gender-Isolation: Strictly rejected generic Printed T-Shirt in "womenproducts" search');
+
+    const evalTshirtInWomen = ConstraintEvaluator.evaluateProduct(testPrintedTshirt, planWomenSearch);
+    assert(evalTshirtInWomen.isValid === false, 'Gender-Isolation: Strictly rejected generic Printed T-Shirt in "women products" search');
   } catch (err: any) {
     assert(false, `Variant consistency test threw error: ${err.message}`);
   }

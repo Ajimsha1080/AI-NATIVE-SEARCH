@@ -149,7 +149,14 @@ export class QueryUnderstandingEngine {
     schema?: CatalogSchemaSnapshot,
     previousState?: AIModeSearchPlan
   ): AIModeSearchPlan {
-    const queryClean = rawQuery.trim();
+    // Normalize and de-concatenate glued compound words (e.g. "womenproducts" -> "women products", "menshirt" -> "men shirt")
+    let normalizedQuery = rawQuery.trim();
+    normalizedQuery = normalizedQuery
+      .replace(/\b(women|woman|womens|women's|female|ladies|lady|girl|girls)(products?|items?|clothes|clothing|wear|dresses?|sarees?|shirts?|tops?|shoes?|tshirts?|pants?|apparel)\b/gi, '$1 $2')
+      .replace(/\b(men|man|mens|men's|male|boys?|father)(products?|items?|clothes|clothing|wear|shirts?|tshirts?|pants?|joggers?|shoes?|apparel)\b/gi, '$1 $2')
+      .replace(/\b(kids?|children|baby|toddler)(products?|items?|clothes|clothing|wear|shirts?|dresses?|shoes?|apparel)\b/gi, '$1 $2');
+
+    const queryClean = normalizedQuery.trim();
     const queryLower = queryClean.toLowerCase();
 
     // -------------------------------------------------------------
