@@ -216,6 +216,26 @@ async function runTests() {
     const planMenSearch = AIModeSearchService.parseQuery('men shirts', undefined, testWorkspaceId);
     const evalWomenInMen = ConstraintEvaluator.evaluateProduct(testWomenProduct, planMenSearch);
     assert(evalWomenInMen.isValid === false, 'Gender-Isolation: Strictly rejected Women Saree in "men shirts" search');
+
+    // Standalone Category Precision: "sarees for festive wear" must NOT return Couple Combo bundles
+    const testCoupleCombo: AIModeProduct = {
+      id: 'prod_couple_combo_01',
+      title: 'Kerala Icons Shirt and Saree Combo',
+      description: 'Matching shirt and saree combo for couples',
+      price: 3499,
+      currency: 'INR',
+      category: 'Couple Combo',
+      images: [],
+      in_stock: true,
+      subcategories: ['couple', 'festive', 'combo'],
+      variants: [{ id: 'var_cc1', title: 'Combo M/Free', price: 3499, in_stock: true, attributes: {} }]
+    };
+    const planSareeSearch = AIModeSearchService.parseQuery('sarees for festive wear', undefined, testWorkspaceId);
+    const evalComboInSaree = ConstraintEvaluator.evaluateProduct(testCoupleCombo, planSareeSearch);
+    assert(evalComboInSaree.isValid === false, 'Category-Precision: Disqualified Couple Combo bundle from standalone "sarees for festive wear" search');
+
+    const evalPureSareeInSaree = ConstraintEvaluator.evaluateProduct(testWomenProduct, planSareeSearch);
+    assert(evalPureSareeInSaree.isValid === true, 'Category-Precision: Accepted authentic standalone Saree in "sarees for festive wear" search');
   } catch (err: any) {
     assert(false, `Variant consistency test threw error: ${err.message}`);
   }

@@ -77,7 +77,24 @@ export class ConstraintEvaluator {
       const isExplicitlyUnisex = /\b(unisex|all\s+genders?)\b/i.test(allProductText) ||
                                  tagsLower.includes('unisex');
 
+      const isComboQuery = /\b(couple|combo|box|bundle|matching|pair|set)\b/i.test(plan.original_query);
+      const isProductCombo = catLower.includes('combo') || 
+                             catLower.includes('box') || 
+                             catLower.includes('couple') || 
+                             titleLower.includes('couple combo') || 
+                             titleLower.includes('combo box') || 
+                             titleLower.includes('shirt and saree combo');
+
       if (targetGender === 'women') {
+        // Disqualify couple combo bundles from pure women searches unless user explicitly asked for combos
+        if (isProductCombo && !isComboQuery) {
+          return {
+            isValid: false,
+            failureReason: `Product is a couple combo bundle, user requested pure women's collection`,
+            failedConstraint: 'gender: women'
+          };
+        }
+
         // Strict affirmative filter: For women's search, product MUST be explicitly for women or unisex
         if (!isExplicitlyWomen && !isExplicitlyUnisex) {
           return {
@@ -97,6 +114,15 @@ export class ConstraintEvaluator {
       }
 
       if (targetGender === 'men') {
+        // Disqualify couple combo bundles from pure men searches unless user explicitly asked for combos
+        if (isProductCombo && !isComboQuery) {
+          return {
+            isValid: false,
+            failureReason: `Product is a couple combo bundle, user requested pure men's collection`,
+            failedConstraint: 'gender: men'
+          };
+        }
+
         // Strict affirmative filter: For men's search, product MUST NOT be exclusively for women
         if (isExplicitlyWomen && !isExplicitlyMen && !isExplicitlyUnisex) {
           return {
@@ -138,6 +164,24 @@ export class ConstraintEvaluator {
       const prodCatLower = (product.category || '').toLowerCase();
       const prodTitleLower = (product.title || '').toLowerCase();
       const prodTagsLower = (product.subcategories || []).map(t => t.toLowerCase());
+
+      const isComboQuery = /\b(couple|combo|box|bundle|matching|pair|set)\b/i.test(plan.original_query);
+      const isProductCombo = prodCatLower.includes('combo') || 
+                             prodCatLower.includes('box') || 
+                             prodCatLower.includes('couple') || 
+                             prodTitleLower.includes('couple combo') || 
+                             prodTitleLower.includes('combo box') || 
+                             prodTitleLower.includes('shirt and saree combo');
+
+      // Standalone single-category precision (e.g. "saree", "shirt", "pant"):
+      // If user did NOT ask for a combo, do NOT match combo bundles
+      if (isProductCombo && !isComboQuery && ['saree', 'shirt', 'dress', 'kurti', 'pant', 'pants', 'jogger', 'joggers', 't-shirt', 'shoe', 'shoes', 'bag', 'bags'].includes(rootCat)) {
+        return {
+          isValid: false,
+          failureReason: `Category mismatch: expected standalone "${requiredCategory}", but product is a combo bundle`,
+          failedConstraint: `category: ${requiredCategory}`
+        };
+      }
 
       // Category synonym / family dictionary
       const categorySynonyms: Record<string, string[]> = {
