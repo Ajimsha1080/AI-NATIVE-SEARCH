@@ -142,7 +142,7 @@ export default function AIModeSettingsPage() {
               </label>
               <input
                 type="password"
-                placeholder={config.model_provider === 'sarvam' ? 'sk_... or paste Sarvam API Key' : 'Paste API Key'}
+                placeholder={config.model_provider === 'sarvam' ? 'sk_... (or configured in .env)' : 'Paste API Key'}
                 value={config.api_key || ''}
                 onChange={e => setConfig({ ...config, api_key: e.target.value })}
                 className="w-full bg-zinc-50 focus:bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 transition font-mono"
