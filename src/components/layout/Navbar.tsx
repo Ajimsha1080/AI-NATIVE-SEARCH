@@ -24,6 +24,7 @@ export default function Navbar() {
   const mobileLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
     { name: 'AI Agent Studio', href: '/agents/agent_shopmate_01', icon: Bot },
+    { name: 'AI Mode', href: '/ai-mode', icon: Layers },
     { name: 'Products & Catalog', href: '/products', icon: Package },
     { name: 'Knowledge Base', href: '/knowledge', icon: BookOpen },
     { name: 'Conversations', href: '/conversations', icon: MessageSquare },
