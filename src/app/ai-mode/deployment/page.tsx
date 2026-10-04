@@ -725,15 +725,6 @@ curl -X POST ${origin}/api/ai-mode/search \\
               <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: primaryColor }} />
               <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider font-mono">Live Storefront Search Preview</span>
             </div>
-            <a
-              href={`/ai-mode/search`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-            >
-              <span>Full Screen</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
           </div>
 
           {/* Storefront Search Preview Container */}
