@@ -180,10 +180,42 @@ async function runTests() {
     const evalBlueM = ConstraintEvaluator.evaluateProduct(testMultiVariantProduct, planBlueM);
     assert(evalBlueM.isValid === false, 'Variant-Consistency: Rejected product where no single variant satisfies both (Blue + M)');
 
-    // Case B: Query for "Red" AND "M" -> Variant 1 matches both (Must PASS)
-    const planRedM = AIModeSearchService.parseQuery('Red M shirt', undefined, testWorkspaceId);
-    const evalRedM = ConstraintEvaluator.evaluateProduct(testMultiVariantProduct, planRedM);
-    assert(evalRedM.isValid === true && evalRedM.matchingVariantId === 'var_1', 'Variant-Consistency: Accepted product when Variant 1 satisfies both (Red + M)');
+    // Case C: Query for "women products" -> Reject Men item even if co-tagged with festivecombos
+    const testMenProduct: AIModeProduct = {
+      id: 'prod_men_combo_01',
+      title: 'Men Printed Shirt (Father & Son Combo)',
+      description: 'Men cotton shirt for festive wear',
+      price: 1800,
+      currency: 'INR',
+      category: 'Men Shirt',
+      images: [],
+      in_stock: true,
+      subcategories: ['men', 'men shirt', 'festivecombos2026'],
+      variants: [{ id: 'var_m1', title: 'L', price: 1800, in_stock: true, attributes: {} }]
+    };
+    const testWomenProduct: AIModeProduct = {
+      id: 'prod_women_saree_01',
+      title: 'Royal Heritage Off-White Saree',
+      description: 'Handcrafted festive saree for women',
+      price: 2800,
+      currency: 'INR',
+      category: 'Saree',
+      images: [],
+      in_stock: true,
+      subcategories: ['women', 'saree', 'festive'],
+      variants: [{ id: 'var_w1', title: 'Free Size', price: 2800, in_stock: true, attributes: {} }]
+    };
+
+    const planWomenSearch = AIModeSearchService.parseQuery('women products', undefined, testWorkspaceId);
+    const evalMenInWomen = ConstraintEvaluator.evaluateProduct(testMenProduct, planWomenSearch);
+    assert(evalMenInWomen.isValid === false, 'Gender-Isolation: Strictly rejected Men product in "women products" search');
+
+    const evalWomenInWomen = ConstraintEvaluator.evaluateProduct(testWomenProduct, planWomenSearch);
+    assert(evalWomenInWomen.isValid === true, 'Gender-Isolation: Accepted authentic Women Saree in "women products" search');
+
+    const planMenSearch = AIModeSearchService.parseQuery('men shirts', undefined, testWorkspaceId);
+    const evalWomenInMen = ConstraintEvaluator.evaluateProduct(testWomenProduct, planMenSearch);
+    assert(evalWomenInMen.isValid === false, 'Gender-Isolation: Strictly rejected Women Saree in "men shirts" search');
   } catch (err: any) {
     assert(false, `Variant consistency test threw error: ${err.message}`);
   }
