@@ -315,23 +315,20 @@ curl -X POST ${origin}/api/ai-mode/search \\
               <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-2xs flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-zinc-900">AI Search Appearance</h3>
-                  <p className="text-xs text-zinc-500 mt-0.5">Customize search themes, brand accent colors, launcher button, and screen position.</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Customize search themes and brand accent colors.</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full text-xs font-mono font-bold text-white shadow-2xs" style={{ backgroundColor: primaryColor }}>
                     {primaryColor}
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-800 border border-zinc-200 capitalize">
-                    {launcherShape}
-                  </span>
                 </div>
               </div>
 
-              {/* 1. WIDGET THEME & BRAND COLORS */}
+              {/* WIDGET THEME & BRAND COLORS */}
               <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-2xs space-y-5">
                 <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
                   <div>
-                    <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">1. Widget Theme &amp; Brand Colors</h4>
+                    <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Widget Theme &amp; Brand Colors</h4>
                     <p className="text-[11px] text-zinc-500">Select a curated theme template and fine-tune your accent and background styling.</p>
                   </div>
                 </div>
@@ -391,69 +388,6 @@ curl -X POST ${origin}/api/ai-mode/search \\
                     onChange={e => setPrimaryColor(e.target.value)}
                     className="w-24 px-3 py-1.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-mono uppercase text-zinc-900 font-bold focus:outline-none focus:border-zinc-900"
                   />
-                </div>
-              </div>
-
-              {/* 2. LAUNCHER SHAPE & SCREEN POSITION */}
-              <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-2xs space-y-5">
-                <div className="border-b border-zinc-100 pb-3">
-                  <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">2. Launcher Shape &amp; Position</h4>
-                  <p className="text-[11px] text-zinc-500">Choose how the storefront trigger bubble looks and where it appears.</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-700 mb-2">Launcher Shape</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: 'teardrop', label: 'Teardrop' },
-                        { id: 'pill', label: 'Pill Button' },
-                        { id: 'circle', label: 'Circle' },
-                        { id: 'squircle', label: 'Squircle' }
-                      ].map(s => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => setLauncherShape(s.id as LauncherShape)}
-                          className={`px-3 py-2 rounded-xl text-xs font-semibold border transition ${
-                            launcherShape === s.id
-                              ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
-                              : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-200/80'
-                          }`}
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-700 mb-2">Screen Position</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPosition('bottom-right')}
-                        className={`px-3 py-2 rounded-xl text-xs font-semibold border transition ${
-                          position === 'bottom-right'
-                            ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
-                            : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-200/80'
-                        }`}
-                      >
-                        Bottom Right (Default)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPosition('bottom-left')}
-                        className={`px-3 py-2 rounded-xl text-xs font-semibold border transition ${
-                          position === 'bottom-left'
-                            ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
-                            : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-200/80'
-                        }`}
-                      >
-                        Bottom Left
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
