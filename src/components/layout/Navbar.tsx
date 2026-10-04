@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
   Bot, Shield, LogOut, ChevronDown, User, Plus, 
   Building, Search, ExternalLink, ArrowRight,
@@ -14,6 +14,7 @@ import { fetchWithCache, getClientCachedData } from '@/lib/client-cache';
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const cachedUser = getClientCachedData<{ user: any }>('/api/auth/me');
   const [user, setUser] = useState<any>(() => cachedUser?.user || null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -22,17 +23,17 @@ export default function Navbar() {
   const userMenuRef = React.useRef<HTMLDivElement>(null);
 
   const mobileLinks = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-    { name: 'AI Agent Studio', href: '/agents/agent_shopmate_01', icon: Bot },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid, exact: true },
+    { name: 'AI Agent', href: '/agents/agent_shopmate_01', icon: Bot },
     { name: 'AI Mode', href: '/ai-mode', icon: Layers },
-    { name: 'Products & Catalog', href: '/products', icon: Package },
-    { name: 'Knowledge Base', href: '/knowledge', icon: BookOpen },
+    { name: 'Knowledge', href: '/knowledge', icon: BookOpen },
+    { name: 'Products', href: '/products', icon: Package },
     { name: 'Conversations', href: '/conversations', icon: MessageSquare },
-    { name: 'Integrations Hub', href: '/integrations', icon: Layers },
+    { name: 'Integrations', href: '/integrations', icon: Layers },
     { name: 'Widget & Deploy', href: '/deployments', icon: Globe },
-    { name: 'Security Console', href: '/security', icon: ShieldCheck },
-    { name: 'Team Members', href: '/team', icon: Users },
-    { name: 'Billing & Plans', href: '/billing', icon: CreditCard },
+    { name: 'Security', href: '/security', icon: ShieldCheck },
+    { name: 'Team', href: '/team', icon: Users },
+    { name: 'Billing', href: '/billing', icon: CreditCard },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
@@ -191,14 +192,21 @@ export default function Navbar() {
               <nav className="p-3 space-y-1 overflow-y-auto flex-1">
                 {mobileLinks.map((link) => {
                   const Icon = link.icon;
+                  const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
                   return (
                     <Link
                       key={link.name}
                       href={link.href}
                       onClick={() => setMobileNavOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100 transition"
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
+                        active
+                          ? 'bg-zinc-100 text-zinc-950 font-semibold shadow-2xs'
+                          : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50'
+                      }`}
                     >
-                      <Icon className="w-4 h-4 text-zinc-500 shrink-0" />
+                      <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                        active ? 'text-zinc-950 stroke-[2.2]' : 'text-zinc-500'
+                      }`} />
                       <span>{link.name}</span>
                     </Link>
                   );
