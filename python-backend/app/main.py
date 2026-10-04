@@ -30,10 +30,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Restrict CORS to explicit allowed origins list (Never wildcard with credentials)
-raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://frontend:3000")
-allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip() and o.strip() != "*"]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -41,6 +37,10 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Workspace-Id", "X-Request-Id"],
 )
+
+from .ai_mode import router as ai_mode_router
+
+app.include_router(ai_mode_router)
 
 @app.get("/health")
 def health_check():
