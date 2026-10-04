@@ -4,6 +4,7 @@ export interface AIModeConfig {
   enabled: boolean;
   model_provider: 'sarvam' | 'openai' | 'anthropic' | 'ollama';
   model_name: string;
+  api_key?: string;
   temperature: number;
   retrieval_threshold: number;
   max_search_results: number;

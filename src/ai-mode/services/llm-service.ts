@@ -103,7 +103,7 @@ export class AIModeLLMService {
    * Sarvam AI API Gateway
    */
   private static async callSarvam(messages: any[], config?: AIModeConfig): Promise<string | null> {
-    const apiKey = process.env.SARVAM_API_KEY;
+    const apiKey = config?.api_key || process.env.SARVAM_API_KEY;
     if (!apiKey) return null;
 
     const model = config?.model_name || process.env.SARVAM_MODEL || 'sarvam-105b-conversations';
@@ -135,7 +135,7 @@ export class AIModeLLMService {
    * OpenAI API Gateway
    */
   private static async callOpenAI(messages: any[], config?: AIModeConfig): Promise<string | null> {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = config?.api_key || process.env.OPENAI_API_KEY;
     if (!apiKey) return null;
 
     const model = config?.model_name || process.env.OPENAI_MODEL || 'gpt-4o-mini';
@@ -167,7 +167,7 @@ export class AIModeLLMService {
    * Groq High-Speed LLM API Gateway
    */
   private static async callGroq(messages: any[], config?: AIModeConfig): Promise<string | null> {
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = config?.api_key || process.env.GROQ_API_KEY;
     if (!apiKey) return null;
 
     const model = config?.model_name || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
