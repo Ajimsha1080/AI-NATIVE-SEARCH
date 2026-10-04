@@ -23,18 +23,12 @@ export default function Navbar() {
   const userMenuRef = React.useRef<HTMLDivElement>(null);
 
   const mobileLinks = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid, exact: true },
-    { name: 'AI Agent', href: '/agents/agent_shopmate_01', icon: Bot },
-    { name: 'AI Mode', href: '/ai-mode', icon: Layers },
-    { name: 'Knowledge', href: '/knowledge', icon: BookOpen },
-    { name: 'Products', href: '/products', icon: Package },
-    { name: 'Conversations', href: '/conversations', icon: MessageSquare },
-    { name: 'Integrations', href: '/integrations', icon: Layers },
-    { name: 'Widget & Deploy', href: '/deployments', icon: Globe },
-    { name: 'Security', href: '/security', icon: ShieldCheck },
-    { name: 'Team', href: '/team', icon: Users },
-    { name: 'Billing', href: '/billing', icon: CreditCard },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'AI Mode', href: '/ai-mode', icon: Layers, exact: true },
+    { name: 'AI Search', href: '/ai-mode/search', icon: Search },
+    { name: 'Products (Catalog)', href: '/products', icon: Package },
+    { name: 'Knowledge Base', href: '/ai-mode/knowledge', icon: BookOpen },
+    { name: 'Deployments', href: '/ai-mode/deployment', icon: Globe },
+    { name: 'Settings', href: '/ai-mode/settings', icon: Settings },
   ];
 
   useEffect(() => {
@@ -129,21 +123,12 @@ export default function Navbar() {
 
                 <div className="py-1">
                   <Link
-                    href="/settings"
+                    href="/ai-mode/settings"
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-1.5 text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 transition"
                   >
-                    <User className="w-3.5 h-3.5 text-zinc-400" /> Settings
+                    <User className="w-3.5 h-3.5 text-zinc-400" /> AI Settings
                   </Link>
-                  {user?.is_super_admin && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 transition font-medium"
-                    >
-                      <Shield className="w-3.5 h-3.5 text-red-500" /> SuperAdmin
-                    </Link>
-                  )}
                 </div>
 
                 <div className="pt-1">

@@ -3,9 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  Search, Bot, LayoutDashboard, MessageSquare, Database, 
-  Layers, Key, CreditCard, Settings, Shield, Plus,
-  Play, CheckCircle2, ArrowRight, ExternalLink, Globe
+  Search, Layers, Package, BookOpen, Globe, Settings, ArrowRight
 } from 'lucide-react';
 
 interface CommandMenuProps {
@@ -16,20 +14,13 @@ interface CommandMenuProps {
 export default function CommandMenu({ isOpen, onClose }: CommandMenuProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [agents, setAgents] = useState<any[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
-      fetch('/api/agents')
-        .then(res => res.json())
-        .then(data => setAgents(data.agents || []))
-        .catch(() => {});
     } else {
       setQuery('');
-      setSelectedIndex(0);
     }
   }, [isOpen]);
 
@@ -48,33 +39,15 @@ export default function CommandMenu({ isOpen, onClose }: CommandMenuProps) {
   }, [isOpen, onClose]);
 
   const navItems = [
-    { label: 'Dashboard Overview', path: '/dashboard', icon: LayoutDashboard, category: 'Navigation' },
-    { label: 'AI Agents Fleet', path: '/agents', icon: Bot, category: 'Navigation' },
-    { label: 'Products & Store Inventory', path: '/products', icon: Layers, category: 'Navigation' },
-    { label: 'Knowledge Base & RAG Index', path: '/knowledge', icon: Database, category: 'Navigation' },
-    { label: 'Store Integrations & Connectors', path: '/integrations', icon: Layers, category: 'Navigation' },
-    { label: 'Agent Action Permissions & Tools', path: '/actions', icon: Shield, category: 'Navigation' },
-    { label: 'Conversations & Live Inbox', path: '/conversations', icon: MessageSquare, category: 'Navigation' },
-    { label: 'Deployments & Embed Snippets', path: '/deployments', icon: Globe, category: 'Navigation' },
-    { label: 'Security & Tenant Governance', path: '/security', icon: Shield, category: 'Navigation' },
-    { label: 'Team Members & Roles', path: '/team', icon: Plus, category: 'Navigation' },
-    { label: 'Billing & Quotas', path: '/billing', icon: CreditCard, category: 'Navigation' },
-    { label: 'SuperAdmin System Portal', path: '/admin', icon: Shield, category: 'Navigation' },
+    { label: 'AI Mode Overview', path: '/ai-mode', icon: Layers, category: 'AI Mode' },
+    { label: 'AI Search & Discovery', path: '/ai-mode/search', icon: Search, category: 'AI Mode' },
+    { label: 'Product Catalog (247 Items)', path: '/products', icon: Package, category: 'Catalog' },
+    { label: 'Store Knowledge & Crawler', path: '/ai-mode/knowledge', icon: BookOpen, category: 'AI Mode' },
+    { label: 'Storefront Widget Deployment', path: '/ai-mode/deployment', icon: Globe, category: 'Deploy' },
+    { label: 'AI Model & System Settings', path: '/ai-mode/settings', icon: Settings, category: 'Settings' },
   ];
 
-  const actionItems = [
-    { label: 'Create New AI Agent', path: '/agents/new', icon: Plus, category: 'Actions' },
-    { label: 'Storefront Live Deployment', path: '/deployments', icon: Globe, category: 'Actions' },
-  ];
-
-  const agentItems = agents.map(a => ({
-    label: `${a.name} (v${a.version || '1.0'}) — Studio`,
-    path: `/agents/${a.id}`,
-    icon: Bot,
-    category: 'Agents',
-  }));
-
-  const allItems = [...actionItems, ...agentItems, ...navItems].filter(item => 
+  const allItems = navItems.filter(item => 
     item.label.toLowerCase().includes(query.toLowerCase()) ||
     item.category.toLowerCase().includes(query.toLowerCase())
   );
@@ -98,7 +71,7 @@ export default function CommandMenu({ isOpen, onClose }: CommandMenuProps) {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Type a command, agent name, or destination..."
+            placeholder="Search AI Mode, Catalog, Knowledge..."
             value={query}
             onChange={e => setQuery(e.target.value)}
             className="w-full bg-transparent text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none font-medium"
@@ -122,7 +95,7 @@ export default function CommandMenu({ isOpen, onClose }: CommandMenuProps) {
                   <button
                     key={`${item.path}-${idx}`}
                     onClick={() => handleSelect(item.path)}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 border border-transparent transition group"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 border border-transparent transition group cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-lg bg-zinc-100 text-zinc-600 group-hover:text-zinc-900 group-hover:bg-zinc-200 flex items-center justify-center transition">
@@ -144,7 +117,7 @@ export default function CommandMenu({ isOpen, onClose }: CommandMenuProps) {
         {/* Footer info */}
         <div className="px-4 py-2 bg-zinc-50 flex items-center justify-between text-[11px] text-zinc-500 font-mono border-t border-zinc-100">
           <span>Navigate with ⌘K</span>
-          <span>Enterprise Agent-as-a-Service</span>
+          <span>AI Native Search</span>
         </div>
       </div>
     </div>

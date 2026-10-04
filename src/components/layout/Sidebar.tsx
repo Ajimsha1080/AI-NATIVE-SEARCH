@@ -4,10 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutGrid, Bot, Package, BookOpen, Layers, 
-  Wrench, MessageSquare, Search, BarChart3, 
-  Globe, ShieldCheck, Users, CreditCard, Settings, UserPlus,
-  Menu
+  Package, BookOpen, Layers, 
+  Search, Globe, Settings, Menu
 } from 'lucide-react';
 import { fetchWithCache } from '@/lib/client-cache';
 
@@ -29,15 +27,12 @@ export default function Sidebar() {
 
     window.addEventListener('shopmate_sidebar_toggle', handleToggle);
 
-    // Background pre-warm core endpoints on idle for instant 0ms feature switching
+    // Background pre-warm core endpoints on idle
     const prewarm = () => {
       fetchWithCache('/api/commerce/products');
-      fetchWithCache('/api/conversations');
-      fetchWithCache('/api/analytics');
-      fetchWithCache('/api/knowledge');
-      fetchWithCache('/api/deployments');
-      fetchWithCache('/api/agents');
-      fetchWithCache('/api/settings');
+      fetchWithCache('/api/ai-mode/config');
+      fetchWithCache('/api/ai-mode/knowledge');
+      fetchWithCache('/api/ai-mode/deployments');
     };
 
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
@@ -62,70 +57,40 @@ export default function Sidebar() {
 
   const navigation = [
     { 
-      name: 'Dashboard', 
-      href: '/dashboard', 
-      icon: LayoutGrid,
-      isActive: (path: string) => path === '/dashboard' || path === '/'
-    },
-    { 
-      name: 'AI Agent', 
-      href: '/agents/agent_shopmate_01', 
-      icon: Bot,
-      isActive: (path: string) => path.startsWith('/agents') && !path.includes('/playground')
-    },
-    { 
       name: 'AI Mode', 
       href: '/ai-mode', 
       icon: Layers,
-      isActive: (path: string) => path.startsWith('/ai-mode')
+      isActive: (path: string) => path === '/ai-mode'
     },
     { 
-      name: 'Knowledge', 
-      href: '/knowledge', 
-      icon: BookOpen,
-      isActive: (path: string) => path.startsWith('/knowledge')
+      name: 'AI Search', 
+      href: '/ai-mode/search', 
+      icon: Search,
+      isActive: (path: string) => path.startsWith('/ai-mode/search')
     },
     { 
-      name: 'Products', 
+      name: 'Product Catalog', 
       href: '/products', 
       icon: Package,
-      isActive: (path: string) => path.startsWith('/products') || path.includes('/commerce')
+      isActive: (path: string) => path.startsWith('/products')
     },
     { 
-      name: 'Conversations', 
-      href: '/conversations', 
-      icon: MessageSquare,
-      isActive: (path: string) => path.startsWith('/conversations')
-    },
-    { 
-      name: 'Integrations', 
-      href: '/integrations', 
-      icon: Layers,
-      isActive: (path: string) => path.startsWith('/integrations')
+      name: 'Knowledge Base', 
+      href: '/ai-mode/knowledge', 
+      icon: BookOpen,
+      isActive: (path: string) => path.startsWith('/ai-mode/knowledge')
     },
     { 
       name: 'Widget & Deploy', 
-      href: '/deployments', 
+      href: '/ai-mode/deployment', 
       icon: Globe,
-      isActive: (path: string) => path.startsWith('/deployments') || path.includes('/deploy')
+      isActive: (path: string) => path.startsWith('/ai-mode/deployment')
     },
     { 
-      name: 'Security', 
-      href: '/security', 
-      icon: ShieldCheck,
-      isActive: (path: string) => path.startsWith('/security') || path.startsWith('/api-keys')
-    },
-    { 
-      name: 'Team', 
-      href: '/team', 
-      icon: Users,
-      isActive: (path: string) => path.startsWith('/team') || path.includes('/members')
-    },
-    { 
-      name: 'Billing', 
-      href: '/billing', 
-      icon: CreditCard,
-      isActive: (path: string) => path.startsWith('/billing')
+      name: 'Settings', 
+      href: '/ai-mode/settings', 
+      icon: Settings,
+      isActive: (path: string) => path.startsWith('/ai-mode/settings')
     },
   ];
 
@@ -141,12 +106,12 @@ export default function Sidebar() {
           isCollapsed ? 'px-2 justify-center' : 'px-4 justify-between'
         }`}>
           {!isCollapsed && (
-            <Link href="/dashboard" className="flex items-center gap-2 group truncate">
+            <Link href="/ai-mode" className="flex items-center gap-2 group truncate">
               <span className="font-bold text-sm text-zinc-900 tracking-tight">
-                ShopMate
+                AI Native
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 font-medium">
-                AI
+                SEARCH
               </span>
             </Link>
           )}
@@ -170,14 +135,10 @@ export default function Sidebar() {
             const active = item.isActive(pathname);
 
             const handleHover = () => {
-              // Pre-warm data endpoint into client cache on link hover
               if (item.href === '/products') fetchWithCache('/api/commerce/products');
-              else if (item.href === '/conversations') fetchWithCache('/api/conversations');
-              else if (item.href === '/analytics') fetchWithCache('/api/analytics');
-              else if (item.href === '/actions') fetchWithCache('/api/actions/permissions');
-              else if (item.href === '/knowledge') fetchWithCache('/api/knowledge');
-              else if (item.href === '/deployments') fetchWithCache('/api/deployments');
-              else if (item.href.startsWith('/agents')) fetchWithCache('/api/agents');
+              else if (item.href === '/ai-mode/knowledge') fetchWithCache('/api/ai-mode/knowledge');
+              else if (item.href === '/ai-mode/deployment') fetchWithCache('/api/ai-mode/deployments');
+              else if (item.href === '/ai-mode/settings') fetchWithCache('/api/ai-mode/config');
             };
 
             return (
@@ -214,7 +175,7 @@ export default function Sidebar() {
         isCollapsed ? 'flex justify-center' : ''
       }`}>
         <Link
-          href="/settings"
+          href="/ai-mode/settings"
           className={`flex items-center rounded-xl text-xs font-medium text-zinc-600 hover:text-zinc-950 hover:bg-zinc-50 transition group ${
             isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2'
           }`}

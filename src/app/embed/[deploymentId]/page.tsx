@@ -5,7 +5,6 @@ import {
   Send, Bot, User, ShoppingBag, Truck, CheckCircle2, RotateCcw, 
   AlertCircle, Image as ImageIcon, X, ZoomIn, ZoomOut, Eye, ExternalLink
 } from 'lucide-react';
-import PortalSwitcher from '@/components/layout/PortalSwitcher';
 import { sanitizeImageUrl, getProductFallbackImage } from '@/lib/utils';
 import MarkdownContent from '@/components/chat/MarkdownContent';
 import CheckoutModal from '@/components/chat/CheckoutModal';
@@ -346,13 +345,12 @@ export default function EmbedChatPage({ params }: { params: Promise<{ deployment
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <PortalSwitcher />
           <span 
             className={`hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full border font-semibold ${
               isDark ? 'bg-zinc-800 border-zinc-700 text-zinc-300' : 'bg-white/80 border-zinc-200 text-zinc-600'
             }`}
           >
-            ShopMate AaaS
+            AI Shopping
           </span>
         </div>
       </div>
