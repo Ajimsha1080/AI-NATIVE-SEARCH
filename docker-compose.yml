@@ -18,7 +18,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     volumes:
-      - ./python-backend/data:/app/data
+      - ./data:/app/data
 
   # 2. Next.js Frontend & Storefront
   frontend:
