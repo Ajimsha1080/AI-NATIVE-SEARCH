@@ -442,19 +442,40 @@ async def ai_chat_endpoint(req: ChatRequest):
     search_res = await ai_search_endpoint(SearchRequest(query=req.user_message, workspace_id=req.workspace_id))
     products = search_res.products
 
-    # LLM Synthesis using Sarvam AI / OpenAI Client
+    # 1. RAG Knowledge Retrieval (Policies, FAQs, Store Guides)
+    rag_context = ""
+    try:
+        from .rag import fetch_tenant_chunks_from_db, execute_rag_pipeline
+        chunks = await fetch_tenant_chunks_from_db(req.workspace_id)
+        if chunks:
+            rag_res = execute_rag_pipeline(req.user_message, workspace_id=req.workspace_id, tenant_chunks=chunks, top_k=3)
+            if rag_res.get("citations"):
+                rag_context = "\n\n".join([f"[Source: {c['source']}]: {c['text']}" for c in rag_res["citations"]])
+    except Exception as e:
+        print(f"RAG retrieval notice: {e}")
+
+    # 2. LLM Synthesis using Sarvam AI / OpenAI Client
     llm = LLMClient()
     assistant_text = f"Found {search_res.total_matches} matching product(s) in our collection:"
     
-    if len(products) == 0:
+    if len(products) == 0 and not rag_context:
         assistant_text = f"I couldn't find any products matching \"{req.user_message}\". Try exploring our featured categories."
     elif plan.intent == "RECOMMENDATION":
         assistant_text = "Based on your preferences, here are handpicked recommendations from our catalog:"
 
-    if products and llm.is_configured():
+    if llm.is_configured():
         try:
             prod_summary = "\n".join([f"- {p.title} (₹{p.price}): {p.description[:80]}" for p in products[:4]])
-            prompt = f"User is shopping on our store and asked: '{req.user_message}'.\nVerified catalog products matching their request:\n{prod_summary}\n\nProvide a warm, concise 1-2 sentence recommendation guiding them to these items."
+            prompt_parts = [f"User is shopping on our store and asked: '{req.user_message}'."]
+            
+            if prod_summary:
+                prompt_parts.append(f"Verified catalog products:\n{prod_summary}")
+            if rag_context:
+                prompt_parts.append(f"Relevant store policy and FAQ context:\n{rag_context}")
+                
+            prompt_parts.append("Provide a warm, concise 1-2 sentence response guiding the customer accurately.")
+            
+            prompt = "\n\n".join(prompt_parts)
             res = llm.call_model(
                 messages=[{"role": "user", "content": prompt}],
                 tools=[]
