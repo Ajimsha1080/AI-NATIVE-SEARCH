@@ -61,35 +61,33 @@ export class ConstraintEvaluator {
       const tagsLower = (product.subcategories || []).map(t => t.toLowerCase());
       const allProductText = `${titleLower} ${descLower} ${catLower} ${tagsLower.join(' ')}`;
 
-      // Explicit Unisex indicator (ONLY if truly unisex or couple combo)
-      const isExplicitlyUnisex = /\b(unisex|couple\s+combo|all\s+genders?)\b/i.test(allProductText) ||
-                                 tagsLower.includes('unisex') || 
-                                 tagsLower.includes('couple combo') ||
-                                 tagsLower.includes('festivecombos2026') ||
-                                 catLower.includes('couple combo');
-
       // Explicit Women indicators
       const isExplicitlyWomen = /\b(women|woman|womens|women's|female|ladies|lady|girl|girls|saree|sarees|bow|bows|scrunchie|scrunchies|dress|dresses|kurti|kurtis|skirt|skirts|blouse)\b/i.test(allProductText) ||
                                 tagsLower.some(t => /\b(women|womens|women's|saree|sarees|kurti|kurtis|scrunchie|bow)\b/i.test(t)) ||
-                                catLower.includes('saree');
+                                catLower.includes('saree') || catLower.includes('women');
 
       // Explicit Men indicators
-      const isExplicitlyMen = /\b(men|mens|men's|male|man|guys|boy|boys)\b/i.test(allProductText) || 
-                              tagsLower.some(t => /\b(men|mens|men's)\b/i.test(t)) || 
-                              /\b(for men|men's collection)\b/i.test(descLower) || 
-                              /\b(for men|men's)\b/i.test(titleLower);
+      const isExplicitlyMen = /\b(men|mens|men's|male|man|guys|boy|boys|father)\b/i.test(allProductText) || 
+                              tagsLower.some(t => /\b(men|mens|men's|men shirt)\b/i.test(t)) || 
+                              /\b(for men|men's collection|men shirt)\b/i.test(descLower) || 
+                              /\b(for men|men's|men shirt)\b/i.test(titleLower) ||
+                              catLower.includes('men');
+
+      // Strict Unisex indicator (ONLY if explicitly designated unisex apparel, never just a combo tag)
+      const isExplicitlyUnisex = /\b(unisex|all\s+genders?)\b/i.test(allProductText) ||
+                                 tagsLower.includes('unisex');
 
       if (targetGender === 'women') {
-        // Strict affirmative filter: For women's search, product MUST be in women's or couple/unisex catalog
+        // Strict affirmative filter: For women's search, product MUST be explicitly for women or unisex
         if (!isExplicitlyWomen && !isExplicitlyUnisex) {
           return {
             isValid: false,
-            failureReason: `Product is not part of the women's or unisex collection`,
+            failureReason: `Product is not part of the women's collection`,
             failedConstraint: 'gender: women'
           };
         }
-        // If explicitly for men and NOT co-tagged for women or unisex -> REJECT
-        if (isExplicitlyMen && !isExplicitlyWomen && !isExplicitlyUnisex) {
+        // If it is explicitly for men and NOT explicitly for women -> REJECT
+        if (isExplicitlyMen && !isExplicitlyWomen) {
           return {
             isValid: false,
             failureReason: `Product is for men, user requested women's collection`,
@@ -99,7 +97,7 @@ export class ConstraintEvaluator {
       }
 
       if (targetGender === 'men') {
-        // If product is explicitly for women and NOT explicitly unisex -> REJECT
+        // Strict affirmative filter: For men's search, product MUST NOT be exclusively for women
         if (isExplicitlyWomen && !isExplicitlyMen && !isExplicitlyUnisex) {
           return {
             isValid: false,
