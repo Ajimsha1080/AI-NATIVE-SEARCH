@@ -42,11 +42,10 @@ async function runBenchmark() {
   // 3. Next.js API Endpoints Benchmark
   console.log('\n--- 3. API Latency Benchmark (HTTP Roundtrip) ---');
   const endpoints = [
-    { name: 'RAG Query Endpoint', url: 'http://localhost:3000/api/rag/query', method: 'POST', body: { question: 'What is the return window for shoes?' } },
-    { name: 'Agent Chat Endpoint', url: 'http://localhost:3000/api/agents/agent_shopmate_01/chat', method: 'POST', body: { message: 'Track order #10482' } },
+    { name: 'AI Search Endpoint', url: 'http://localhost:3000/api/ai-mode/search', method: 'POST', body: { query: 'blue linen shirt', page_size: 10 } },
+    { name: 'AI Mode Chat Endpoint', url: 'http://localhost:3000/api/ai-mode/chat', method: 'POST', body: { message: 'Recommend summer shirts under 2000' } },
     { name: 'Commerce Products API', url: 'http://localhost:3000/api/commerce/products', method: 'GET' },
-    { name: 'Conversations API', url: 'http://localhost:3000/api/conversations', method: 'GET' },
-    { name: 'SuperAdmin Metrics API', url: 'http://localhost:3000/api/admin', method: 'GET' }
+    { name: 'AI Mode Config API', url: 'http://localhost:3000/api/ai-mode/config', method: 'GET' }
   ];
 
   for (const ep of endpoints) {

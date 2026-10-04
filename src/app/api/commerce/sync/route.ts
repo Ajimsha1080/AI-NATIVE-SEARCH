@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getAuthSession, requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { generateId } from '@/lib/utils';
-import { dispatchWebhookEvent } from '@/lib/webhooks';
 
 export async function GET(req: Request) {
   const session = await getAuthSession(req);
