@@ -194,6 +194,21 @@ export class AIModeKnowledgeService {
   }
 
   public static deleteSource(id: string): boolean {
+    const source = aiModeStorage.getKnowledgeSourceById(id);
+    if (source && source.source_url) {
+      try {
+        const domainKey = source.source_url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].toLowerCase();
+        if (domainKey) {
+          for (let i = db.commerce_products.length - 1; i >= 0; i--) {
+            const p = db.commerce_products[i];
+            if (p.workspace_id === source.workspace_id && p.source_url && p.source_url.toLowerCase().includes(domainKey)) {
+              db.commerce_products.splice(i, 1);
+            }
+          }
+          db.saveImmediate();
+        }
+      } catch {}
+    }
     return aiModeStorage.deleteKnowledgeSource(id);
   }
 }

@@ -109,8 +109,14 @@ export async function DELETE(req: Request) {
         db.knowledge_chunks.splice(i, 1);
       }
     }
+    // Purge commerce products for this workspace
+    for (let i = db.commerce_products.length - 1; i >= 0; i--) {
+      if (db.commerce_products[i].workspace_id === session.workspaceId) {
+        db.commerce_products.splice(i, 1);
+      }
+    }
     db.saveImmediate();
-    return NextResponse.json({ success: true, message: 'All knowledge documents removed' });
+    return NextResponse.json({ success: true, message: 'All knowledge documents and products removed' });
   }
 
   const id = url.searchParams.get('id');
@@ -118,10 +124,22 @@ export async function DELETE(req: Request) {
 
   const docIdx = db.knowledge_documents.findIndex(d => d.id === id && d.workspace_id === session.workspaceId);
   if (docIdx >= 0) {
+    const doc = db.knowledge_documents[docIdx];
     db.knowledge_documents.splice(docIdx, 1);
     for (let i = db.knowledge_chunks.length - 1; i >= 0; i--) {
       if (db.knowledge_chunks[i].document_id === id && db.knowledge_chunks[i].workspace_id === session.workspaceId) {
         db.knowledge_chunks.splice(i, 1);
+      }
+    }
+
+    // Clean up products associated with this knowledge source domain
+    const domainKey = doc.name.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].split(' ')[0].toLowerCase();
+    if (domainKey) {
+      for (let i = db.commerce_products.length - 1; i >= 0; i--) {
+        const p = db.commerce_products[i];
+        if (p.workspace_id === session.workspaceId && p.source_url && p.source_url.toLowerCase().includes(domainKey)) {
+          db.commerce_products.splice(i, 1);
+        }
       }
     }
 
