@@ -56,6 +56,20 @@ jobs:
   python-backend-quality:
     name: Python Lint, Typecheck & Pytest Suites
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: shopmate_user
+          POSTGRES_PASSWORD: shopmate_password
+          POSTGRES_DB: shopmate_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -72,6 +86,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r python-backend/requirements-dev.txt
 
+      - name: Verify Clean Production Import
+        working-directory: python-backend
+        run: python -c "import app.main; print('app.main imported cleanly without missing dependencies')"
+
       - name: Ruff Linting
         run: ruff check python-backend/app
         continue-on-error: true
@@ -84,3 +102,4 @@ jobs:
           INTERNAL_SERVICE_SECRET: super_secure_ci_test_service_secret_32bytes_long!
           SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
           JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
+

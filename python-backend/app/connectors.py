@@ -83,7 +83,7 @@ class WebCrawlerConnector:
 
         desc = desc_match.group(1) if desc_match else ""
         img = img_match.group(1) if img_match else None
-        price = float(price_match.group(1)) if price_match else 1999.0
+        price = float(price_match.group(1)) if price_match else None
 
         return {
             "title": title,
@@ -116,6 +116,7 @@ async def execute_sync_job(job_id: str, workspace_id: str, connector_type: str) 
 
             cfg = integration.config_json
             synced_count = 0
+            job_errors: list[str] = []
 
             if connector_type.lower() == "shopify":
                 connector = ShopifyConnector(
@@ -183,24 +184,31 @@ async def execute_sync_job(job_id: str, workspace_id: str, connector_type: str) 
             elif connector_type.lower() == "web_crawler":
                 crawler = WebCrawlerConnector(target_url=cfg.get("url", ""))
                 crawled = await crawler.crawl_product()
-                prod = ProductModel(
-                    id=f"prod_crawl_{uuid.uuid4().hex[:10]}",
-                    workspace_id=workspace_id,
-                    title=crawled["title"],
-                    description=crawled["description"],
-                    price=crawled["price"],
-                    image_url=crawled["image_url"],
-                    source_url=crawled["source_url"],
-                    stock=50,
-                    in_stock=True,
-                )
-                session.add(prod)
-                synced_count = 1
+                if crawled.get("price") is None:
+                    err_msg = f"Skipping crawled product '{crawled.get('title')}' from {crawled.get('source_url')}: price not found"
+                    logger.warning(err_msg)
+                    job_errors.append(err_msg)
+                else:
+                    prod = ProductModel(
+                        id=f"prod_crawl_{uuid.uuid4().hex[:10]}",
+                        workspace_id=workspace_id,
+                        title=crawled["title"],
+                        description=crawled["description"],
+                        price=crawled["price"],
+                        image_url=crawled["image_url"],
+                        source_url=crawled["source_url"],
+                        stock=50,
+                        in_stock=True,
+                    )
+                    session.add(prod)
+                    synced_count = 1
             else:
                 raise ValueError(f"Unsupported connector type: {connector_type}")
 
-            job.status = "COMPLETED"
+            job.status = "COMPLETED" if not job_errors or synced_count > 0 else "FAILED"
             job.synced_items_count = synced_count
+            if job_errors:
+                job.error_message = "; ".join(job_errors)
             job.completed_at = datetime.datetime.now(datetime.UTC)
             await session.commit()
 

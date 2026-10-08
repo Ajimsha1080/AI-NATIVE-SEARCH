@@ -188,7 +188,7 @@ async def get_auth_context(
 
     role = payload.get("role") or ("SUPERADMIN" if is_super_admin else "VIEWER")
 
-    return AuthContext(
+    ctx = AuthContext(
         user_id=str(user_id),
         email=payload.get("email", ""),
         workspace_id=workspace_id or "system",
@@ -196,6 +196,9 @@ async def get_auth_context(
         is_super_admin=is_super_admin,
         token=token
     )
+    request.state.auth = ctx
+    request.state.workspace_id = ctx.workspace_id
+    return ctx
 
 
 def verify_jwt_auth(
@@ -326,11 +329,13 @@ async def resolve_storefront_context(
                 if not domain_allowed:
                     raise HTTPException(status_code=403, detail="Request origin not allowed for this deployment")
 
-            return StorefrontContext(
+            ctx = StorefrontContext(
                 workspace_id=dep.workspace_id,
                 deployment_id=dep.id,
                 deployment_name=dep.name
             )
+            request.state.workspace_id = ctx.workspace_id
+            return ctx
 
     # Fallback to authenticated dashboard user token
     token = None
@@ -344,7 +349,9 @@ async def resolve_storefront_context(
             payload = decode_token(token, expected_type="access")
             ws_id = payload.get("workspace_id") or payload.get("workspaceId")
             if ws_id:
-                return StorefrontContext(workspace_id=ws_id)
+                ctx = StorefrontContext(workspace_id=ws_id)
+                request.state.workspace_id = ctx.workspace_id
+                return ctx
         except Exception:
             pass
 

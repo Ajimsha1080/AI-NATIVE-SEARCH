@@ -29,10 +29,6 @@ export default function LoginPage() {
         throw new Error(data.error?.message || data.error || 'Invalid credentials');
       }
 
-      if (data.token) {
-        localStorage.setItem('aaas_token', data.token);
-      }
-
       const searchParams = new URLSearchParams(window.location.search);
       const redirectParam = searchParams.get('redirect');
       const redirectUrl = redirectParam || (data.user?.is_super_admin ? '/admin' : '/dashboard');

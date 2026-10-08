@@ -23,6 +23,7 @@ from .compliance import record_audit_event
 from .config import settings
 from .connectors import execute_sync_job
 from .db.database import async_session_factory
+from .redis_service import check_rate_limit
 from .db.models import (
     AIModeConfigModel,
     DeploymentModel,
@@ -304,17 +305,41 @@ async def get_orders(
     x_deployment_key: str | None = Header(None, alias="X-Deployment-Key"),
 ):
     """Retrieve orders from the database.
-    Requires authenticated merchant role or a valid storefront deployment key for customer tracking.
+    - Authenticated merchant role (JWT): Full order access including customer PII.
+    - Storefront (Deployment Key): Requires order_number AND customer_email, returns 404 on mismatch,
+      redacts customer PII (only status, items, tracking fields returned), and enforces rate limiting.
     """
+    is_storefront = False
+    storefront_key = None
     target_workspace = None
+
     if authorization or "access_token" in request.cookies:
         auth = await get_auth_context(request, authorization)
         target_workspace = validate_workspace_access(auth, workspace_id)
     elif x_deployment_key or request.query_params.get("deployment_key") or request.query_params.get("deployment_id"):
         storefront = await resolve_storefront_context(request, x_deployment_key, authorization)
         target_workspace = storefront.workspace_id
+        is_storefront = True
+        storefront_key = x_deployment_key or request.query_params.get("deployment_key") or request.query_params.get("deployment_id")
     else:
         raise HTTPException(status_code=401, detail="Authentication required to view orders")
+
+    if is_storefront:
+        # Rate limit storefront order lookups per IP and deployment key (max 10 requests per minute)
+        client_ip = request.client.host if request.client else "unknown_ip"
+        rate_key = f"order_lookup:{storefront_key}:{client_ip}"
+        allowed, retry_after = await check_rate_limit(rate_key, max_requests=10, window_seconds=60)
+        if not allowed:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Rate limit exceeded for order tracking. Please retry in {retry_after} seconds."
+            )
+
+        if not order_number or not customer_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Storefront order lookups require both order_number and customer_email"
+            )
 
     async with async_session_factory() as session:
         stmt = select(OrderModel).where(OrderModel.workspace_id == target_workspace)
@@ -330,8 +355,28 @@ async def get_orders(
             if not order:
                 raise HTTPException(status_code=404, detail="Order not found with the provided details.")
             if customer_email and order.customer_email.lower().strip() != customer_email.lower().strip():
-                raise HTTPException(status_code=404, detail="Order not found with the provided email address.")
+                raise HTTPException(status_code=404, detail="Order not found with the provided details.")
 
+            if is_storefront:
+                # Storefront redaction: exclude customer_name, customer_email, shipping_address
+                return {
+                    "order": {
+                        "id": order.id,
+                        "workspace_id": order.workspace_id,
+                        "order_number": order.order_number,
+                        "total_amount": float(order.total_amount),
+                        "currency": order.currency,
+                        "status": order.status,
+                        "payment_status": order.payment_status,
+                        "fulfillment_status": order.fulfillment_status,
+                        "tracking_number": order.tracking_number,
+                        "carrier": order.carrier,
+                        "items": order.items_json or [],
+                        "created_at": order.created_at.isoformat() if order.created_at else None,
+                    }
+                }
+
+            # Merchant view: full details
             return {
                 "order": {
                     "id": order.id,
@@ -352,6 +397,10 @@ async def get_orders(
                     "created_at": order.created_at.isoformat() if order.created_at else None,
                 }
             }
+
+        if is_storefront:
+            # Storefront callers cannot browse all orders
+            raise HTTPException(status_code=400, detail="Storefront lookup requires order_number and customer_email")
 
         res = await session.execute(stmt)
         orders = res.scalars().all()

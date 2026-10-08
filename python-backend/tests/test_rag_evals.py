@@ -93,3 +93,93 @@ def test_rag_tenant_isolation_boundary():
     )
     all_hit_ids = [h["chunk_id"] for h in dense_hits + sparse_hits]
     assert "chunk_secret_999" not in all_hit_ids
+
+
+import uuid
+from unittest.mock import patch
+from fastapi.testclient import TestClient
+from app.db.database import async_session_factory
+from app.db.models import DeploymentModel, KnowledgeChunkModel, KnowledgeDocModel, KnowledgeSourceModel
+from app.main import app
+
+client = TestClient(app)
+
+
+@pytest.mark.asyncio
+async def test_chat_retrieves_store_policy_context_and_includes_in_prompt():
+    """Verify Issue 2: Knowledge doc 'Returns accepted within 7 days' is retrieved,
+
+    included in the LLM prompt, returned in citations, and handled when LLM is unconfigured.
+    """
+    ws = f"ws_policy_{uuid.uuid4().hex[:8]}"
+    dep_key = f"dep_policy_{uuid.uuid4().hex[:8]}"
+    source_id = f"src_{uuid.uuid4().hex[:8]}"
+    doc_id = f"doc_{uuid.uuid4().hex[:8]}"
+    chunk_id = f"chunk_{uuid.uuid4().hex[:8]}"
+
+    async with async_session_factory() as session:
+        dep = DeploymentModel(
+            id=f"dep_{uuid.uuid4().hex[:8]}",
+            workspace_id=ws,
+            name="Policy Chat Test",
+            status="LIVE",
+            public_key=dep_key
+        )
+        source = KnowledgeSourceModel(
+            id=source_id,
+            workspace_id=ws,
+            name="Store Policies",
+            type="MANUAL"
+        )
+        doc = KnowledgeDocModel(
+            id=doc_id,
+            source_id=source_id,
+            title="Return Policy Document",
+            content="Returns accepted within 7 days of delivery in original condition."
+        )
+        chunk = KnowledgeChunkModel(
+            id=chunk_id,
+            doc_id=doc_id,
+            workspace_id=ws,
+            text="Returns accepted within 7 days of delivery in original condition."
+        )
+        session.add_all([dep, source, doc, chunk])
+        await session.commit()
+
+    captured_prompt = None
+
+    def mock_call_model(self, messages, tools=None):
+        nonlocal captured_prompt
+        captured_prompt = messages[0]["content"]
+        return {"response": "Our return policy accepts returns within 7 days of delivery."}
+
+    # 1. Test with LLM configured & mocked
+    with patch("app.llm.LLMClient.is_configured", return_value=True), \
+         patch("app.llm.LLMClient.call_model", side_effect=mock_call_model, autospec=True):
+
+        res = client.post(
+            "/api/v1/ai-mode/chat",
+            headers={"X-Deployment-Key": dep_key},
+            json={"user_message": "what is your return policy?"}
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert len(data["citations"]) > 0
+        assert data["citations"][0]["document_name"] == "Return Policy Document"
+        assert "Returns accepted within 7 days" in data["citations"][0]["chunk_text"]
+        assert captured_prompt is not None
+        assert "Returns accepted within 7 days" in captured_prompt
+
+    # 2. Test when LLM key is NOT configured -> returns clear message + policy text
+    with patch("app.llm.LLMClient.is_configured", return_value=False):
+        res_unconf = client.post(
+            "/api/v1/ai-mode/chat",
+            headers={"X-Deployment-Key": dep_key},
+            json={"user_message": "what is your return policy?"}
+        )
+        assert res_unconf.status_code == 200
+        data_unconf = res_unconf.json()
+        assert "AI answers are not configured" in data_unconf["content"]
+        assert "Returns accepted within 7 days" in data_unconf["content"]
+        assert len(data_unconf["citations"]) > 0
+

@@ -29,8 +29,18 @@ async def test_record_audit_event_direct():
     assert entry.actor_id == "admin_user_99"
     assert entry.details_json["new"] == "INR"
 
-def test_get_audit_logs_endpoint():
+@pytest.mark.asyncio
+async def test_get_audit_logs_endpoint():
     """Verify retrieving audit logs via API."""
+    await record_audit_event(
+        workspace_id="ws_test_compliance",
+        action="TEST_ADMIN_MUTATION",
+        actor_id="admin_user_99",
+        resource_type="config",
+        resource_id="cfg_001",
+        ip_address="192.168.1.10",
+        details={"setting": "currency", "old": "USD", "new": "INR"}
+    )
     res = client.get("/api/v1/compliance/audit-logs", headers=admin_header("ws_test_compliance"))
     assert res.status_code == 200
     data = res.json()
@@ -38,6 +48,7 @@ def test_get_audit_logs_endpoint():
     assert data["workspace_id"] == "ws_test_compliance"
     # The record created above should be in the list
     assert any(log["action"] == "TEST_ADMIN_MUTATION" for log in data["audit_logs"])
+
 
 def test_dpdp_customer_data_export():
     """Verify customer data export under DPDP Act 2023."""

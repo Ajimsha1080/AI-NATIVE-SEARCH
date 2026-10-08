@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import time
@@ -6,9 +7,14 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 
 from .auth import StorefrontContext, resolve_storefront_context
+from .db.database import async_session_factory
+from .db.models import ProductModel
 from .llm import LLMClient
+
+logger = logging.getLogger("shopmate_ai_mode")
 
 router = APIRouter(prefix="/api/v1/ai-mode", tags=["AI Mode"])
 
@@ -88,6 +94,12 @@ class ChatRequest(BaseModel):
     workspace_id: str | None = None
     conversation_id: str | None = None
 
+class CitationModel(BaseModel):
+    document_name: str
+    chunk_text: str
+    relevance_score: float
+    is_verified: bool
+
 class ChatResponse(BaseModel):
     conversation_id: str
     workspace_id: str
@@ -97,6 +109,7 @@ class ChatResponse(BaseModel):
     recommendations: list[AIModeProduct] | None = None
     comparison: dict[str, Any] | None = None
     cart_action_performed: dict[str, Any] | None = None
+    citations: list[CitationModel] = Field(default_factory=list)
     created_at: str
 
 # -------------------------------------------------------------
@@ -331,60 +344,77 @@ def evaluate_product(product: AIModeProduct, plan: AIModeSearchPlan) -> bool:
     return True
 
 # -------------------------------------------------------------
-# Database Product Loader (Shared JSON Store)
+# Database Product Loader (SQLAlchemy Async strictly filtered by workspace)
 # -------------------------------------------------------------
-def load_catalog_products(workspace_id: str | None = None) -> list[AIModeProduct]:
-    import sqlite3
-
-    from .db.database import DEFAULT_DB_PATH
-
+async def load_catalog_products(workspace_id: str | None = None) -> list[AIModeProduct]:
     db_products = []
-    # Fast synchronous SQLite/database reader for high-performance AI Mode search queries
-    if os.path.exists(DEFAULT_DB_PATH):
-        try:
-            conn = sqlite3.connect(DEFAULT_DB_PATH)
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            query = "SELECT * FROM commerce_products"
-            params = []
-            if workspace_id:
-                query += " WHERE workspace_id = ?"
-                params.append(workspace_id)
-            cur.execute(query, params)
-            rows = cur.fetchall()
-            for r in rows:
-                variants_raw = json.loads(r["variants_json"] or "[]")
-                variants = [
-                    AIModeProductVariant(
-                        id=v.get("id", ""),
-                        title=v.get("title", ""),
-                        price=float(v.get("price", 0)),
-                        in_stock=(v.get("inventory_quantity", 1) or 1) > 0,
-                        attributes=v.get("attributes", {})
-                    )
-                    for v in variants_raw
-                ]
-                db_products.append(AIModeProduct(
-                    id=r["id"],
-                    title=r["title"],
-                    handle=r["id"],
-                    description=r["description"] or "",
-                    price=float(r["price"] or 0),
-                    sale_price=float(r["compare_at_price"]) if r["compare_at_price"] else None,
-                    currency="INR",
-                    category=r["category"] or "General",
-                    subcategories=json.loads(r["tags_json"] or "[]"),
-                    brand=json.loads(r["attributes_json"] or "{}").get("brand", "Merchant"),
-                    images=json.loads(r["images_json"] or "[]") or ([r["image_url"]] if r["image_url"] else []),
-                    in_stock=bool(r["in_stock"]),
-                    variants=variants,
-                    attributes=json.loads(r["attributes_json"] or "{}"),
-                    source_url=r["source_url"]
-                ))
-            conn.close()
-            return db_products
-        except Exception as e:
-            print("AI Mode DB fetch notice:", e)
+    if not workspace_id:
+        return db_products
+
+    async with async_session_factory() as session:
+        stmt = select(ProductModel).where(ProductModel.workspace_id == workspace_id)
+        res = await session.execute(stmt)
+        models = res.scalars().all()
+
+        for m in models:
+            variants_raw = m.variants_json or []
+            if isinstance(variants_raw, str):
+                try:
+                    variants_raw = json.loads(variants_raw)
+                except Exception:
+                    variants_raw = []
+
+            variants = [
+                AIModeProductVariant(
+                    id=str(v.get("id", "")),
+                    title=v.get("title", "Default"),
+                    price=float(v.get("price", 0)),
+                    in_stock=(v.get("inventory_quantity", 1) or 1) > 0,
+                    attributes=v.get("attributes", {})
+                )
+                for v in variants_raw
+            ]
+
+            images_list = m.images_json or []
+            if isinstance(images_list, str):
+                try:
+                    images_list = json.loads(images_list)
+                except Exception:
+                    images_list = []
+            if not images_list and m.image_url:
+                images_list = [m.image_url]
+
+            tags_list = m.tags_json or []
+            if isinstance(tags_list, str):
+                try:
+                    tags_list = json.loads(tags_list)
+                except Exception:
+                    tags_list = []
+
+            attrs = m.attributes_json or {}
+            if isinstance(attrs, str):
+                try:
+                    attrs = json.loads(attrs)
+                except Exception:
+                    attrs = {}
+
+            db_products.append(AIModeProduct(
+                id=m.id,
+                title=m.title,
+                handle=m.id,
+                description=m.description or "",
+                price=float(m.price or 0),
+                sale_price=float(m.compare_at_price) if m.compare_at_price else None,
+                currency="INR",
+                category=m.category or "General",
+                subcategories=tags_list,
+                brand=attrs.get("brand", "Merchant"),
+                images=images_list,
+                in_stock=bool(m.in_stock),
+                variants=variants,
+                attributes=attrs,
+                source_url=m.source_url
+            ))
 
     return db_products
 
@@ -406,7 +436,7 @@ async def ai_search_endpoint(
     effective_workspace = storefront.workspace_id
     start_time = time.time()
     plan = parse_query(req.query)
-    all_products = load_catalog_products(effective_workspace)
+    all_products = await load_catalog_products(effective_workspace)
 
     valid_candidates = []
     lexical_tokens = plan.lexical_query.lower().split() if plan.lexical_query else []
@@ -480,17 +510,28 @@ async def ai_chat_endpoint(
 
     # 1. RAG Knowledge Retrieval (Policies, FAQs, Store Guides)
     rag_context = ""
+    citations_list: list[CitationModel] = []
     try:
         from .rag import execute_rag_pipeline, fetch_tenant_chunks_from_db
         chunks = await fetch_tenant_chunks_from_db(effective_workspace)
         if chunks:
             rag_res = execute_rag_pipeline(req.user_message, workspace_id=effective_workspace, tenant_chunks=chunks, top_k=3)
-            if rag_res.get("citations"):
-                rag_context = "\n\n".join([f"[Source: {c['source']}]: {c['text']}" for c in rag_res["citations"]])
+            raw_citations = rag_res.get("citations") or []
+            if raw_citations:
+                rag_context = "\n\n".join([f"[Document: {c['document_name']}]: {c['chunk_text']}" for c in raw_citations])
+                citations_list = [
+                    CitationModel(
+                        document_name=c["document_name"],
+                        chunk_text=c["chunk_text"],
+                        relevance_score=float(c.get("relevance_score", 1.0)),
+                        is_verified=bool(c.get("is_verified", True))
+                    )
+                    for c in raw_citations
+                ]
     except Exception as e:
-        print(f"RAG retrieval notice: {e}")
+        logger.exception("RAG retrieval failed for workspace '%s': %s", effective_workspace, e)
 
-    # 2. LLM Synthesis using Sarvam AI / OpenAI Client
+    # 2. LLM Synthesis using configured LLM Client
     llm = LLMClient()
     assistant_text = f"Found {search_res.total_matches} matching product(s) in our collection:"
 
@@ -519,7 +560,13 @@ async def ai_chat_endpoint(
             if res.get("response"):
                 assistant_text = res["response"]
         except Exception as e:
-            print(f"LLM generation notice: {e}")
+            logger.exception("LLM generation failed: %s", e)
+    else:
+        # LLM not configured
+        if rag_context:
+            assistant_text = f"AI answers are not configured. Retrieved policy information:\n\n{rag_context}"
+        elif len(products) == 0:
+            assistant_text = "AI answers are not configured, and no matching products or policies were found."
 
     return ChatResponse(
         conversation_id=req.conversation_id or f"conv_{int(time.time()*1000)}",
@@ -528,5 +575,7 @@ async def ai_chat_endpoint(
         content=assistant_text,
         products=products,
         recommendations=products[:3] if plan.intent == "RECOMMENDATION" else None,
+        citations=citations_list,
         created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     )
+

@@ -1,25 +1,25 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Geist, JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-display',
-  weight: ['400', '500', '600', '700', '800'],
-  display: 'swap',
-});
-
-const geistSans = Geist({
-  subsets: ['latin'],
+const geistSans = localFont({
+  src: './fonts/Geist-Regular.woff2',
   variable: '--font-sans',
   display: 'swap',
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
+const plusJakartaSans = localFont({
+  src: './fonts/Geist-Regular.woff2',
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const jetbrainsMono = localFont({
+  src: './fonts/GeistMono-Regular.woff2',
   variable: '--font-mono',
   display: 'swap',
 });
+
 
 export const metadata: Metadata = {
   title: 'ShopMate AaaS — Enterprise E-Commerce AI Agent-as-a-Service Platform',

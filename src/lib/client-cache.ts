@@ -17,13 +17,7 @@ export async function fetchWithCache<T = any>(
   // Fetch from network
   try {
     const headers = new Headers(options?.headers || {});
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('aaas_token');
-      if (token && !headers.has('Authorization')) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-    }
-    const res = await fetch(url, { ...options, headers });
+    const res = await fetch(url, { ...options, headers, credentials: options?.credentials || 'include' });
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
         // Gracefully handle unauthenticated/guest session queries without throwing fatal client errors

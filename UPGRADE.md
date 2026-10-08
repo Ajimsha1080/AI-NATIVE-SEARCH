@@ -108,9 +108,39 @@ ShopMate AaaS enforces tenant isolation at both the application layer and the Po
    - Every database query filters by `workspace_id == tenant_id`.
 2. **PostgreSQL Row-Level Security (RLS):**
    - Migration `c3d4e5f6a1b2` enables `ROW LEVEL SECURITY` on all tenant-specific tables.
-   - Sets tenant session context on connection checkout via `SET LOCAL app.current_workspace_id = 'ws_...'`.
+   - Sets tenant session context on connection checkout via parameterized execution:
+     `SELECT set_config('app.workspace_id', :ws, true)` and `SELECT set_config('app.current_workspace_id', :ws, true)`.
+   - If `set_config` fails on a PostgreSQL connection, an explicit `RuntimeError` is raised (no silent swallows).
    - Cross-tenant queries are blocked at the PostgreSQL engine level, even if an application filter is omitted.
    - Comprehensive test suite in `tests/test_tenant_isolation.py` validates that Tenant A cannot access Tenant B's catalog or orders.
+
+### Non-Superuser Database Role Configuration
+> [!IMPORTANT]
+> PostgreSQL superusers bypass Row-Level Security by default. For production RLS enforcement, the backend connection user must be created as a **non-superuser** with permissions granted only to the application schema:
+
+```sql
+-- 1. Create dedicated application role
+CREATE ROLE shopmate_app WITH LOGIN PASSWORD 'your_strong_app_password' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+
+-- 2. Grant table permissions
+GRANT CONNECT ON DATABASE shopmate_prod TO shopmate_app;
+GRANT USAGE ON SCHEMA public TO shopmate_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO shopmate_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO shopmate_app;
+
+-- 3. Ensure future tables maintain permissions
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO shopmate_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO shopmate_app;
+
+-- 4. Enable FORCE ROW LEVEL SECURITY (applies to table owners too)
+ALTER TABLE commerce_products FORCE ROW LEVEL SECURITY;
+ALTER TABLE commerce_orders FORCE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_documents FORCE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_chunks FORCE ROW LEVEL SECURITY;
+ALTER TABLE sync_jobs FORCE ROW LEVEL SECURITY;
+ALTER TABLE idempotency_keys FORCE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs FORCE ROW LEVEL SECURITY;
+```
 
 ---
 
@@ -126,8 +156,9 @@ Rate limiting, token revocation, and tenant usage metering are managed by `app/r
   - Revoked tokens are immediately rejected across all distributed instances.
 - **Tenant Usage Metering:**
   - Tenant API requests and AI consumption are tracked in daily counters (`usage:<workspace_id>:<metric>:<date>`).
-- **Resilience:**
-  - Automatically falls back to in-memory sliding windows and revocation sets if Redis is temporarily unreachable during local testing.
+- **Production Startup Hardening:**
+  - When `APP_ENV=production`, if Redis is unreachable or fails to connect, application startup or Redis initialization fails with a fatal `RuntimeError("Redis is required in production environment but failed to connect")`.
+  - In-memory fallback is restricted strictly to local development and testing (`APP_ENV=development`).
 
 ---
 
@@ -136,77 +167,59 @@ Rate limiting, token revocation, and tenant usage metering are managed by `app/r
 ### Razorpay Payments
 - **Live Order Creation:** Calls the Razorpay REST API (`/v1/orders`) to generate authentic Razorpay orders.
 - **Cryptographic Signature Verification:** Verifies payment authenticity using HMAC-SHA256 (`X-Razorpay-Signature`) against `RAZORPAY_KEY_SECRET`.
-- **Webhook Processing:** Rejects unsigned or forged webhooks. Updates order status upon verified `order.paid` or `payment.captured` events.
+- **Webhook Processing:** Rejects unsigned or forged webhooks with HTTP 400. Updates order status upon verified `order.paid` or `payment.captured` events.
 - **Persistent Idempotency:** Tracks incoming payment keys in the `idempotency_keys` table to prevent double-charging.
 
 ### Catalog Connectors & Sync Workers
 - **Shopify:** Authenticates via Shopify Admin REST API (`/admin/api/2024-01/products.json`) using `X-Shopify-Access-Token`.
 - **WooCommerce:** Authenticates via WooCommerce REST API (`/wp-json/wc/v3/products`) with Consumer Key and Secret.
-- **Web Crawler:** Uses structured schema scraper (`schema.org/Product` JSON-LD) with robots.txt compliance.
+- **Web Crawler:** Uses structured schema scraper (`schema.org/Product` JSON-LD) with robots.txt compliance. When a product has no price listed, the product is **skipped** and an error logged in the sync job instead of falling back to arbitrary numbers.
 - **Job Status Tracking:** Every sync job runs asynchronously and writes progress and status into `sync_jobs`.
 
-### Order Tracking
-- Retrieves live carrier status from the database.
-- If an order has not been assigned a tracking number or carrier, returns `"tracking unavailable"` and `"carrier unavailable"`. Never fabricates fake carrier statuses.
+### Order Tracking & Data Privacy
+- **Storefront (Deployment Key) Lookups:**
+  - Calls to `GET /api/v1/commerce/orders` using `X-Deployment-Key` require **both** `order_number` AND `customer_email`.
+  - Mismatch or unknown order returns **404 Not Found**.
+  - Customer PII (`customer_name`, `customer_email`, `shipping_address`) is completely redacted for public storefront requests. Only `status`, `fulfillment_status`, `items`, and `tracking_number` are returned.
+  - Public order lookups are rate-limited to 10 requests per minute per IP.
+- **Merchant Lookups:**
+  - Authenticated merchant sessions (with valid JWT) can query all orders and view full order details including customer info.
 
 ---
 
-## 7. CI Production Integrity & Verification
+## 7. Frontend Offline Readiness & Authentication Security
 
-A continuous integration check (`tests/test_production_integrity.py`) scans all non-test production source files:
-- Fails if the words `demo`, `mock`, `fake`, `example.com`, `password123`, or `acme` appear anywhere in production code.
-- Tested and verified: **0 occurrences** across all Python and TypeScript production files.
-
-### Running Test Verification:
-```bash
-# Python Backend Test Suite (32 tests)
-cd python-backend
-pytest tests/ -v
-
-# Frontend Production Build (Zero build error suppressions)
-cd ..
-npm run build
-```
+1. **Zero External Font Network Requests:**
+   - Google Fonts network requests (`next/font/google`) have been completely replaced with local `next/font/local` using bundled fonts (`Geist-Regular.woff2`, `GeistMono-Regular.woff2`).
+   - Frontend compiles and builds cleanly in air-gapped or offline CI environments.
+2. **Elimination of `localStorage` Token Storage:**
+   - `localStorage.setItem('aaas_token')` and `localStorage.getItem('aaas_token')` have been completely removed.
+   - Authentication relies purely on secure, `httpOnly`, `SameSite=Lax` cookies with `credentials: 'include'` on all client requests, eliminating XSS token theft vectors.
 
 ---
 
----
+## 8. Verification & Test Suite Summary
 
-## 8. Third-Party Credentials Checklist for Production Launch
+- **Pytest Suite:** 39 tests passing cleanly in an isolated test database (`pytest -v`).
+  - Account signup, login, incorrect password, account lockout after 5 attempts.
+  - Storefront order lookup privacy & redaction.
+  - Cross-tenant AI search and catalog boundary isolation.
+  - RAG store policy retrieval, prompt injection, and citations.
+  - Razorpay webhook HMAC signature verification & rejection.
+  - PostgreSQL RLS session context binding.
+- **Frontend Quality:**
+  - `npx tsc --noEmit`: 0 errors.
+  - `npm run build`: 16/16 routes built and statically optimized.
 
-Before opening public traffic, configure real production credentials for your external partners:
+### Verified vs. Not Verified Live
+- **Verified via automated tests:**
+  - RAG policy chunk retrieval, relevance ranking, and prompt inclusion.
+  - Handling when LLM API keys are unconfigured (gracefully surfaces policy context and clear message).
+  - Cross-tenant isolation at both application and session-context levels.
+  - Storefront order tracking PII redaction and rate limiting.
+  - Offline font loading and build pipeline.
+- **Not Verified Live (Requires external production accounts):**
+  - Live third-party LLM completions (requires active paid Sarvam AI, OpenAI, or Anthropic API keys).
+  - Live Razorpay settlement webhook deliveries from the public internet (requires live Razorpay merchant webhook URL).
+  - Live Shopify / WooCommerce store synchronization (requires live store API credentials).
 
-- [ ] **PostgreSQL Database:** Provision a production PostgreSQL instance (version 15+ recommended for pgvector) and run `alembic upgrade head`.
-- [ ] **Redis Instance:** Provision a high-availability Redis instance (version 6.2+) and configure `REDIS_URL`.
-- [ ] **Email Provider:** Configure SMTP credentials or Resend API key so verification and password reset emails are delivered to users.
-- [ ] **Razorpay Account:** Add live `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in environment variables and set the Webhook URL in Razorpay Dashboard to `https://api.yourdomain.com/api/commerce/razorpay/webhook`.
-- [ ] **AI Provider:** Provide valid API keys for Sarvam AI, OpenAI, or Anthropic depending on chosen provider.
-- [ ] **Admin Account:** Run `python -m app.db.bootstrap_admin` to create your initial administrator account.
-
----
-
-## 9. Breaking API Changes & Security Enhancements
-
-### Breaking API Changes
-1. **Tenant Authority strictly from Token:**
-   - Client requests can no longer supply `workspace_id` in request bodies or query parameters to assert authority.
-   - If a client supplies a `workspace_id` that differs from the token's authenticated workspace, the server immediately returns **403 Forbidden**.
-   - Public storefront endpoints (`/api/v1/ai-mode/search`, `/api/v1/ai-mode/chat`, `/api/v1/ai-mode/track`, `/api/v1/ai-mode/widget/*`) must supply a valid `X-Deployment-Key` header matching an active `LIVE` deployment with origin domain checks, or an authenticated merchant session.
-2. **Standardized Frontend API Prefix:**
-   - Frontend components now strictly call `/api/<path>`.
-   - Broken endpoints `/api/knowledge` and `/api/knowledge/sync` have been removed in favor of `/api/ai-mode/knowledge` and `/api/ai-mode/knowledge/sync`.
-   - Next.js rewrites proxy `/api/:path*` directly to the FastAPI backend `/api/v1/:path*`.
-3. **Cookie-Based Sessions & Central API Client:**
-   - `localStorage` token storage has been phased out in favor of `httpOnly`, `Secure`, `SameSite=Lax` cookies set directly by `/api/v1/auth/login`.
-   - Centralized `apiClient` (`src/lib/api-client.ts`) handles credentials automatically, intercepts 401 Unauthorized responses to attempt token refresh, and redirects unauthenticated users to `/auth/login`.
-4. **Dashboard Route Protection:**
-   - Next.js middleware (`src/middleware.ts`) protects all internal pages (`/ai-mode`, `/products`, etc.) while allowing public storefront traffic and auth routes.
-5. **Role-Based Access Control (RBAC):**
-   - Writing products, editing configs, running catalog syncs, and managing deployments requires `OWNER` or `ADMIN` roles.
-   - `VIEWER` roles are strictly read-only and receive **403 Forbidden** on mutation attempts.
-6. **API Contract Verification:**
-   - CI contract test (`tests/test_api_contract.py`) compares the frontend API surface against FastAPI's registered OpenAPI route table.
-
-### Remaining Production Hardening Checklist
-- Ensure PostgreSQL runs under a dedicated, non-superuser role so that PostgreSQL Row-Level Security (`FORCE ROW LEVEL SECURITY`) is strictly enforced against all database queries.
-- In multi-region deployments, configure Redis replication and verify that SSL termination preserves original client IP (`X-Forwarded-For`) for rate limiting.

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
@@ -56,29 +57,87 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
         pass
 
 engine = create_async_engine(DATABASE_URL, **engine_kwargs)
-async_session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+_session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
+
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Returns the active sessionmaker factory, supporting dynamic test engine overrides."""
+    global _session_factory
+    return _session_factory
+
+
+def set_session_factory(factory: async_sessionmaker[AsyncSession]) -> None:
+    """Sets the active sessionmaker factory (e.g. for isolated test suites)."""
+    global _session_factory, engine
+    _session_factory = factory
+    engine = factory.kw.get("bind") or getattr(factory, "bind", engine)
+
+
+class _LazySessionFactory:
+    """Proxy object so legacy calls to async_session_factory() resolve dynamically."""
+    def __call__(self, *args, **kwargs):
+        return get_session_factory()(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(get_session_factory(), name)
+
+
+async_session_factory = _LazySessionFactory()
 
 from sqlalchemy import text
 
 
 async def set_tenant_session_context(session: AsyncSession, workspace_id: str):
-    """Sets PostgreSQL session variables app.workspace_id and app.current_workspace_id for Row-Level Security."""
+    """Sets PostgreSQL session variables app.workspace_id and app.current_workspace_id for Row-Level Security.
+
+    Uses bound parameters (no string interpolation) to guarantee safe parameter binding.
+    Raises RuntimeError if setting fails on PostgreSQL.
+    """
     if not workspace_id:
         return
-    try:
-        bind = session.bind
-        if bind and getattr(bind.dialect, "name", "") == "postgresql":
-            clean_id = workspace_id.replace("'", "''")
-            await session.execute(text(f"SET LOCAL app.workspace_id = '{clean_id}'"))
-            await session.execute(text(f"SET LOCAL app.current_workspace_id = '{clean_id}'"))
-    except Exception:
-        pass
+    bind = session.bind
+    dialect_name = getattr(bind.dialect, "name", "") if bind else ""
+    if dialect_name == "postgresql":
+        try:
+            # PostgreSQL set_config(setting_name, new_value, is_local)
+            await session.execute(
+                text("SELECT set_config('app.workspace_id', :ws, true)"),
+                {"ws": str(workspace_id)}
+            )
+            await session.execute(
+                text("SELECT set_config('app.current_workspace_id', :ws, true)"),
+                {"ws": str(workspace_id)}
+            )
+        except Exception as exc:
+            raise RuntimeError(f"Failed to set PostgreSQL RLS session context for workspace '{workspace_id}': {exc}") from exc
 
 
 async def get_db_session() -> AsyncSession:
-    """Dependency injector for FastAPI endpoints"""
-    async with async_session_factory() as session:
+    """Dependency injector for general FastAPI endpoints."""
+    async with get_session_factory()() as session:
         yield session
+
+
+async def get_tenant_db_session(
+    request: Request,
+    workspace_id: str | None = None
+) -> AsyncSession:
+    """FastAPI dependency that opens an async DB session and sets PostgreSQL RLS workspace context."""
+    # Resolve workspace_id from request state, auth context, or header if available
+    ws_id = workspace_id
+    if not ws_id:
+        # Check if auth context was resolved on request.state
+        auth = getattr(request.state, "auth", None)
+        if auth and hasattr(auth, "workspace_id"):
+            ws_id = auth.workspace_id
+        elif hasattr(request.state, "workspace_id"):
+            ws_id = request.state.workspace_id
+
+    async with get_session_factory()() as session:
+        if ws_id:
+            await set_tenant_session_context(session, ws_id)
+        yield session
+
 
 async def init_db():
     """Initializes database schema and tables asynchronously"""

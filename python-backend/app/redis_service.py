@@ -46,6 +46,9 @@ async def get_redis_client():
         logger.info("Connected to Redis at %s", redis_url)
         return _redis_client
     except Exception as e:
+        if settings.APP_ENV.lower() == "production":
+            logger.critical("Fatal: Redis is required in production environment but failed to connect at %s: %s", redis_url, e)
+            raise RuntimeError(f"Redis is required in production environment but failed to connect: {e}") from e
         logger.warning("Redis unavailable (%s). Falling back to local in-memory storage.", e)
         _redis_available = False
         return None
@@ -68,7 +71,10 @@ def get_sync_redis_client():
         _sync_redis_client = client
         _sync_redis_available = True
         return _sync_redis_client
-    except Exception:
+    except Exception as e:
+        if settings.APP_ENV.lower() == "production":
+            logger.critical("Fatal: Redis is required in production environment but failed to connect at %s: %s", redis_url, e)
+            raise RuntimeError(f"Redis is required in production environment but failed to connect: {e}") from e
         _sync_redis_available = False
         return None
 
