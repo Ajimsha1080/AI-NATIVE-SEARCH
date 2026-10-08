@@ -1,10 +1,11 @@
-import re
 import asyncio
-from typing import Dict, Any, Optional, List
+import re
+from typing import Any
+
 from sqlalchemy import select
 
 from .db.database import async_session_factory
-from .db.models import ProductModel, OrderModel
+from .db.models import OrderModel, ProductModel
 
 # Valid Discount Codes configured per workspace
 DISCOUNT_RULES = {
@@ -110,7 +111,7 @@ TOOL_DEFINITIONS = [
 # ASYNC / SYNC DATABASE HELPERS
 # ============================================================================
 
-async def _fetch_products_db(workspace_id: str) -> List[Dict[str, Any]]:
+async def _fetch_products_db(workspace_id: str) -> list[dict[str, Any]]:
     async with async_session_factory() as session:
         stmt = select(ProductModel).where(ProductModel.workspace_id == workspace_id)
         res = await session.execute(stmt)
@@ -129,7 +130,7 @@ async def _fetch_products_db(workspace_id: str) -> List[Dict[str, Any]]:
             for p in prods
         ]
 
-async def _fetch_order_db(workspace_id: str, order_number: str, customer_email: Optional[str] = None) -> Optional[Dict[str, Any]]:
+async def _fetch_order_db(workspace_id: str, order_number: str, customer_email: str | None = None) -> dict[str, Any] | None:
     if not customer_email or not customer_email.strip():
         return None
     clean_num = order_number.strip()
@@ -171,7 +172,7 @@ async def _fetch_order_db(workspace_id: str, order_number: str, customer_email: 
                     }
         return None
 
-def get_tenant_products_sync(workspace_id: str) -> List[Dict[str, Any]]:
+def get_tenant_products_sync(workspace_id: str) -> list[dict[str, Any]]:
     if not workspace_id:
         raise ValueError("workspace_id is mandatory")
     try:
@@ -189,7 +190,7 @@ def get_tenant_products_sync(workspace_id: str) -> List[Dict[str, Any]]:
     except Exception:
         return []
 
-def get_tenant_order_sync(workspace_id: str, order_number: str, customer_email: Optional[str] = None) -> Optional[Dict[str, Any]]:
+def get_tenant_order_sync(workspace_id: str, order_number: str, customer_email: str | None = None) -> dict[str, Any] | None:
     if not workspace_id:
         raise ValueError("workspace_id is mandatory")
     try:
@@ -211,7 +212,7 @@ def get_tenant_order_sync(workspace_id: str, order_number: str, customer_email: 
 # SERVER-SIDE DETERMINISTIC TOOL EXECUTIONS
 # ============================================================================
 
-def search_products(workspace_id: str, query: str, category: Optional[str] = None) -> Dict[str, Any]:
+def search_products(workspace_id: str, query: str, category: str | None = None) -> dict[str, Any]:
     if not workspace_id:
         raise ValueError("workspace_id is mandatory for search_products")
 
@@ -228,7 +229,7 @@ def search_products(workspace_id: str, query: str, category: Optional[str] = Non
         score = sum(1 for w in q_words if w in title_desc) if q_words else 1
         if score > 0 or not q_words:
             scored_matches.append((score, p))
-            
+
     scored_matches.sort(key=lambda x: x[0], reverse=True)
     matches = [p for _, p in scored_matches]
 
@@ -240,7 +241,7 @@ def search_products(workspace_id: str, query: str, category: Optional[str] = Non
         "products": matches
     }
 
-def get_product_details(workspace_id: str, product_id: str) -> Dict[str, Any]:
+def get_product_details(workspace_id: str, product_id: str) -> dict[str, Any]:
     if not workspace_id:
         raise ValueError("workspace_id is mandatory for get_product_details")
 
@@ -250,7 +251,7 @@ def get_product_details(workspace_id: str, product_id: str) -> Dict[str, Any]:
             return {"found": True, "product": p}
     return {"found": False, "error": f"Product '{product_id}' not found in catalog"}
 
-def check_inventory(workspace_id: str, product_id: str) -> Dict[str, Any]:
+def check_inventory(workspace_id: str, product_id: str) -> dict[str, Any]:
     if not workspace_id:
         raise ValueError("workspace_id is mandatory for check_inventory")
 
@@ -266,7 +267,7 @@ def check_inventory(workspace_id: str, product_id: str) -> Dict[str, Any]:
             }
     return {"found": False, "error": f"Product '{product_id}' not found"}
 
-def apply_discount(workspace_id: str, code: str, subtotal: float) -> Dict[str, Any]:
+def apply_discount(workspace_id: str, code: str, subtotal: float) -> dict[str, Any]:
     if not workspace_id:
         raise ValueError("workspace_id is mandatory for apply_discount")
 
@@ -307,7 +308,7 @@ def apply_discount(workspace_id: str, code: str, subtotal: float) -> Dict[str, A
         "message": f"Successfully applied promo code '{clean_code}' saving ${capped_discount:.2f}."
     }
 
-def calculate_cart(workspace_id: str, items: List[Dict[str, Any]], discount_code: Optional[str] = None) -> Dict[str, Any]:
+def calculate_cart(workspace_id: str, items: list[dict[str, Any]], discount_code: str | None = None) -> dict[str, Any]:
     if not workspace_id:
         raise ValueError("workspace_id is mandatory for calculate_cart")
 
@@ -365,7 +366,7 @@ def calculate_cart(workspace_id: str, items: List[Dict[str, Any]], discount_code
         "grand_total": grand_total
     }
 
-def lookup_order(workspace_id: str, order_number: str, customer_email: Optional[str] = None) -> Dict[str, Any]:
+def lookup_order(workspace_id: str, order_number: str, customer_email: str | None = None) -> dict[str, Any]:
     if not workspace_id:
         raise ValueError("workspace_id is mandatory for lookup_order")
 
@@ -390,7 +391,7 @@ def lookup_order(workspace_id: str, order_number: str, customer_email: Optional[
         "error": f"Order '{clean_num}' not found or customer email mismatch."
     }
 
-def execute_typed_tool(tool_name: str, arguments: Dict[str, Any], workspace_id: str) -> Dict[str, Any]:
+def execute_typed_tool(tool_name: str, arguments: dict[str, Any], workspace_id: str) -> dict[str, Any]:
     if not workspace_id:
         raise ValueError("workspace_id is required for tool execution")
 

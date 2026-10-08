@@ -1,9 +1,10 @@
 import time
 from collections import defaultdict
-from typing import Dict, List
-from fastapi import Request, HTTPException, status
+
+from fastapi import Request, status
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
+
 
 class EnterpriseRateLimiterMiddleware(BaseHTTPMiddleware):
     """
@@ -12,7 +13,7 @@ class EnterpriseRateLimiterMiddleware(BaseHTTPMiddleware):
     """
     def __init__(self, app):
         super().__init__(app)
-        self.request_records: Dict[str, List[float]] = defaultdict(list)
+        self.request_records: dict[str, list[float]] = defaultdict(list)
         # Endpoint path prefix -> (requests_allowed, window_seconds)
         self.limits = {
             "/api/v1/auth/": (20, 60),         # 20 requests per minute for auth
@@ -22,7 +23,7 @@ class EnterpriseRateLimiterMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        
+
         # Check if route matches rate-limited prefix
         matched_limit = None
         for prefix, limit_tuple in self.limits.items():
@@ -39,7 +40,7 @@ class EnterpriseRateLimiterMiddleware(BaseHTTPMiddleware):
             now = time.time()
             # Prune older entries outside the window
             timestamps = [t for t in self.request_records[key] if now - t < window_sec]
-            
+
             if len(timestamps) >= max_reqs:
                 retry_after = int(window_sec - (now - timestamps[0])) + 1
                 return JSONResponse(

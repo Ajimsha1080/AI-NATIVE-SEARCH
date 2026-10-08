@@ -1,5 +1,5 @@
 import os
-from typing import Optional, List
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -27,31 +27,31 @@ class AppSettings(BaseSettings):
     PORT: int = Field(default=8000)
 
     # Database
-    DATABASE_URL: Optional[str] = Field(default=None)
-    REDIS_URL: Optional[str] = Field(default="redis://localhost:6379/0")
+    DATABASE_URL: str | None = Field(default=None)
+    REDIS_URL: str | None = Field(default="redis://localhost:6379/0")
 
     # Security Keys
     JWT_SECRET: str = Field(default="development_only_jwt_secret_32bytes_long!")
     SERVICE_JWT_SECRET: str = Field(default="development_only_service_secret_32bytes_long!")
-    INTERNAL_SERVICE_SECRET: Optional[str] = Field(default=None)
+    INTERNAL_SERVICE_SECRET: str | None = Field(default=None)
     ENCRYPTION_KEY: str = Field(default="development_only_enc_secret_32bytes_long!")
 
     # LLM Configuration
     LLM_PROVIDER: str = Field(default="sarvam")
     LLM_MODEL: str = Field(default="sarvam-105b-conversations")
-    SARVAM_API_KEY: Optional[str] = Field(default="")
-    OPENAI_API_KEY: Optional[str] = Field(default="")
-    ANTHROPIC_API_KEY: Optional[str] = Field(default="")
+    SARVAM_API_KEY: str | None = Field(default="")
+    OPENAI_API_KEY: str | None = Field(default="")
+    ANTHROPIC_API_KEY: str | None = Field(default="")
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434")
 
     # Payment Gateways (Razorpay)
-    RAZORPAY_KEY_ID: Optional[str] = Field(default="")
-    RAZORPAY_KEY_SECRET: Optional[str] = Field(default="")
+    RAZORPAY_KEY_ID: str | None = Field(default="")
+    RAZORPAY_KEY_SECRET: str | None = Field(default="")
     RAZORPAY_ME_URL: str = Field(default="https://razorpay.me/@ajimshamuhammad2112")
-    RAZORPAY_WEBHOOK_SECRET: Optional[str] = Field(default="")
+    RAZORPAY_WEBHOOK_SECRET: str | None = Field(default="")
 
     # CORS
-    ALLOWED_ORIGINS: List[str] = Field(default_factory=lambda: [
+    ALLOWED_ORIGINS: list[str] = Field(default_factory=lambda: [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://bluetyga.com"
@@ -62,7 +62,7 @@ class AppSettings(BaseSettings):
     def validate_secret_strength(cls, v: str, info) -> str:
         clean = v.strip()
         field_name = info.field_name
-        
+
         # Check known weak defaults
         if clean.lower() in DISALLOWED_WEAK_SECRETS:
             raise ValueError(f"Security Error: {field_name} is using a known insecure default password.")

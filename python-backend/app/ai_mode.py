@@ -1,13 +1,13 @@
+import json
 import os
 import re
-import json
 import time
-import math
-from typing import List, Dict, Any, Optional
+from typing import Any
+
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from fastapi import APIRouter, HTTPException, Depends, Header
+
 from .llm import LLMClient
-from .auth import verify_service_jwt
 
 router = APIRouter(prefix="/api/v1/ai-mode", tags=["AI Mode"])
 
@@ -18,28 +18,28 @@ class AIModeProductVariant(BaseModel):
     id: str
     title: str
     price: float
-    sale_price: Optional[float] = None
+    sale_price: float | None = None
     in_stock: bool = True
-    sku: Optional[str] = None
-    attributes: Dict[str, Any] = Field(default_factory=dict)
+    sku: str | None = None
+    attributes: dict[str, Any] = Field(default_factory=dict)
 
 class AIModeProduct(BaseModel):
     id: str
     title: str
-    handle: Optional[str] = None
-    description: Optional[str] = ""
+    handle: str | None = None
+    description: str | None = ""
     price: float
-    sale_price: Optional[float] = None
+    sale_price: float | None = None
     currency: str = "INR"
     category: str = "General"
-    subcategories: List[str] = Field(default_factory=list)
-    brand: Optional[str] = "Merchant"
-    images: List[str] = Field(default_factory=list)
+    subcategories: list[str] = Field(default_factory=list)
+    brand: str | None = "Merchant"
+    images: list[str] = Field(default_factory=list)
     in_stock: bool = True
-    variants: List[AIModeProductVariant] = Field(default_factory=list)
-    attributes: Dict[str, Any] = Field(default_factory=dict)
-    source_url: Optional[str] = None
-    score: Optional[float] = None
+    variants: list[AIModeProductVariant] = Field(default_factory=list)
+    attributes: dict[str, Any] = Field(default_factory=dict)
+    source_url: str | None = None
+    score: float | None = None
 
 class SearchConstraint(BaseModel):
     field: str
@@ -48,54 +48,54 @@ class SearchConstraint(BaseModel):
     is_hard: bool = True
     is_variant_level: bool = False
     confidence: float = 0.95
-    raw_token: Optional[str] = None
+    raw_token: str | None = None
 
 class AIModeSearchPlan(BaseModel):
     original_query: str
     intent: str = "DISCOVERY"
-    product_concepts: List[str] = Field(default_factory=list)
-    hard_constraints: List[SearchConstraint] = Field(default_factory=list)
-    soft_preferences: List[str] = Field(default_factory=list)
+    product_concepts: list[str] = Field(default_factory=list)
+    hard_constraints: list[SearchConstraint] = Field(default_factory=list)
+    soft_preferences: list[str] = Field(default_factory=list)
     semantic_query: str
     lexical_query: str
-    exclusions: List[str] = Field(default_factory=list)
+    exclusions: list[str] = Field(default_factory=list)
     sorting: str = "relevance"
     sort: str = "relevance"
     confidence: float = 0.95
-    extracted_filters: Dict[str, Any] = Field(default_factory=dict)
-    pagination: Dict[str, int] = Field(default_factory=lambda: {"page": 1, "page_size": 48})
+    extracted_filters: dict[str, Any] = Field(default_factory=dict)
+    pagination: dict[str, int] = Field(default_factory=lambda: {"page": 1, "page_size": 48})
 
 class SearchRequest(BaseModel):
     query: str
-    workspace_id: Optional[str] = None
-    previous_state: Optional[AIModeSearchPlan] = None
-    page: Optional[int] = 1
-    page_size: Optional[int] = 48
+    workspace_id: str | None = None
+    previous_state: AIModeSearchPlan | None = None
+    page: int | None = 1
+    page_size: int | None = 48
 
 class SearchResponse(BaseModel):
-    products: List[AIModeProduct]
+    products: list[AIModeProduct]
     total_matches: int
     page: int
     page_size: int
     has_more: bool
-    applied_filters: Dict[str, Any]
+    applied_filters: dict[str, Any]
     search_plan: AIModeSearchPlan
     latency_ms: float
 
 class ChatRequest(BaseModel):
     workspace_id: str
     user_message: str
-    conversation_id: Optional[str] = None
+    conversation_id: str | None = None
 
 class ChatResponse(BaseModel):
     conversation_id: str
     workspace_id: str
     role: str = "assistant"
     content: str
-    products: List[AIModeProduct] = Field(default_factory=list)
-    recommendations: Optional[List[AIModeProduct]] = None
-    comparison: Optional[Dict[str, Any]] = None
-    cart_action_performed: Optional[Dict[str, Any]] = None
+    products: list[AIModeProduct] = Field(default_factory=list)
+    recommendations: list[AIModeProduct] | None = None
+    comparison: dict[str, Any] | None = None
+    cart_action_performed: dict[str, Any] | None = None
     created_at: str
 
 # -------------------------------------------------------------
@@ -153,7 +153,7 @@ def parse_query(raw_query: str) -> AIModeSearchPlan:
     soft_preferences = []
     exclusions = []
     product_concepts = []
-    extracted_filters: Dict[str, Any] = {}
+    extracted_filters: dict[str, Any] = {}
 
     # 2. Exclusions ("not red", "without sleeves")
     for match in re.finditer(r'\b(?:not|without|no|exclude|except|non-?)\s+([a-z0-9\-_]+)\b', query_lower):
@@ -253,7 +253,7 @@ def evaluate_product(product: AIModeProduct, plan: AIModeSearchPlan) -> bool:
     # 2. Demographic Isolation & Couple Combo Handling
     target_gender = plan.extracted_filters.get("gender")
     is_combo_query = bool(re.search(r'\b(couple|combo|box|bundle|matching|pair|set)\b', plan.original_query.lower()))
-    is_product_combo = ('combo' in cat_lower or 'box' in cat_lower or 'couple' in cat_lower or 
+    is_product_combo = ('combo' in cat_lower or 'box' in cat_lower or 'couple' in cat_lower or
                          'couple combo' in title_lower or 'combo box' in title_lower or 'shirt and saree combo' in title_lower)
 
     if target_gender:
@@ -283,7 +283,7 @@ def evaluate_product(product: AIModeProduct, plan: AIModeSearchPlan) -> bool:
     req_cat = plan.extracted_filters.get("category")
     if req_cat:
         root_cat = re.sub(r'(es|s)$', '', req_cat.lower().strip())
-        
+
         # Disqualify combos from standalone single-item searches (e.g. "saree", "shirt")
         if is_product_combo and not is_combo_query and root_cat in ['saree', 'shirt', 'dress', 'kurti', 'pant', 'jogger', 't-shirt', 'shoe', 'bag']:
             return False
@@ -299,7 +299,7 @@ def evaluate_product(product: AIModeProduct, plan: AIModeSearchPlan) -> bool:
         }
         syn_list = cat_synonyms.get(req_cat.lower(), cat_synonyms.get(root_cat, [req_cat.lower()]))
         syn_pattern = rf'\b({"|".join([re.escape(s) for s in syn_list])})\b'
-        
+
         matches_cat = bool(re.search(syn_pattern, cat_lower) or re.search(syn_pattern, title_lower) or any(re.search(syn_pattern, t) for t in tags_lower))
         if not matches_cat:
             return False
@@ -332,9 +332,10 @@ def evaluate_product(product: AIModeProduct, plan: AIModeSearchPlan) -> bool:
 # -------------------------------------------------------------
 # Database Product Loader (Shared JSON Store)
 # -------------------------------------------------------------
-def load_catalog_products(workspace_id: Optional[str] = None) -> List[AIModeProduct]:
-    from .db.database import DEFAULT_DB_PATH
+def load_catalog_products(workspace_id: str | None = None) -> list[AIModeProduct]:
     import sqlite3
+
+    from .db.database import DEFAULT_DB_PATH
 
     db_products = []
     # Fast synchronous SQLite/database reader for high-performance AI Mode search queries
@@ -394,7 +395,7 @@ def load_catalog_products(workspace_id: Optional[str] = None) -> List[AIModeProd
     for path in db_paths:
         if os.path.exists(path):
             try:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     data = json.load(f)
                     raw_products = data.get("commerce_products", [])
                     break
@@ -503,7 +504,7 @@ async def ai_chat_endpoint(req: ChatRequest):
     # 1. RAG Knowledge Retrieval (Policies, FAQs, Store Guides)
     rag_context = ""
     try:
-        from .rag import fetch_tenant_chunks_from_db, execute_rag_pipeline
+        from .rag import execute_rag_pipeline, fetch_tenant_chunks_from_db
         chunks = await fetch_tenant_chunks_from_db(req.workspace_id)
         if chunks:
             rag_res = execute_rag_pipeline(req.user_message, workspace_id=req.workspace_id, tenant_chunks=chunks, top_k=3)
@@ -515,7 +516,7 @@ async def ai_chat_endpoint(req: ChatRequest):
     # 2. LLM Synthesis using Sarvam AI / OpenAI Client
     llm = LLMClient()
     assistant_text = f"Found {search_res.total_matches} matching product(s) in our collection:"
-    
+
     if len(products) == 0 and not rag_context:
         assistant_text = f"I couldn't find any products matching \"{req.user_message}\". Try exploring our featured categories."
     elif plan.intent == "RECOMMENDATION":
@@ -525,14 +526,14 @@ async def ai_chat_endpoint(req: ChatRequest):
         try:
             prod_summary = "\n".join([f"- {p.title} (₹{p.price}): {p.description[:80]}" for p in products[:4]])
             prompt_parts = [f"User is shopping on our store and asked: '{req.user_message}'."]
-            
+
             if prod_summary:
                 prompt_parts.append(f"Verified catalog products:\n{prod_summary}")
             if rag_context:
                 prompt_parts.append(f"Relevant store policy and FAQ context:\n{rag_context}")
-                
+
             prompt_parts.append("Provide a warm, concise 1-2 sentence response guiding the customer accurately.")
-            
+
             prompt = "\n\n".join(prompt_parts)
             res = llm.call_model(
                 messages=[{"role": "user", "content": prompt}],

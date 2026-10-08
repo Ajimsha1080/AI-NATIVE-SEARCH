@@ -1,23 +1,23 @@
-import os
-import json
 import asyncio
+import json
+import os
 from contextlib import asynccontextmanager
-from typing import Optional, List, Dict, Any
-from fastapi import FastAPI, HTTPException, Header, Depends, Query
+from typing import Any
+
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import ChatRequest, ChatResponse, RAGQueryRequest, KnowledgeIngestRequest
 from .agent_runtime import run_agent_cycle
-from .rag import execute_rag_pipeline
-from .tools import lookup_order
-from .db.database import init_db, get_db_session
+from .auth import require_admin_auth, verify_service_jwt
+from .db.database import get_db_session, init_db
 from .db.repository import DatabaseRepository
-from .auth import verify_service_jwt, require_admin_auth
 from .llm import LLMClient
+from .models import ChatRequest, ChatResponse, KnowledgeIngestRequest, RAGQueryRequest
+from .rag import execute_rag_pipeline
 
-from dotenv import load_dotenv
 load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
@@ -52,8 +52,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from .middleware.rate_limiter import EnterpriseRateLimiterMiddleware
 from .middleware.logging_middleware import StructuredLoggingMiddleware
+from .middleware.rate_limiter import EnterpriseRateLimiterMiddleware
 
 app.add_middleware(EnterpriseRateLimiterMiddleware)
 app.add_middleware(StructuredLoggingMiddleware)
@@ -82,7 +82,7 @@ async def readiness_check(session: AsyncSession = Depends(get_db_session)):
         from sqlalchemy import text
         await session.execute(text("SELECT 1"))
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Database probe failed: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"Database probe failed: {e!s}")
 
     # 2. Check LLM Runtime
     client = LLMClient()
@@ -103,7 +103,7 @@ async def readiness_check(session: AsyncSession = Depends(get_db_session)):
 
 @app.get("/api/v1/db/status")
 async def get_db_status(
-    admin_claims: Dict[str, Any] = Depends(require_admin_auth),
+    admin_claims: dict[str, Any] = Depends(require_admin_auth),
     session: AsyncSession = Depends(get_db_session)
 ):
     """Returns the live status of the Enterprise Database (Protected: Admin/Service Token Required)."""
@@ -122,7 +122,7 @@ async def get_db_status(
 async def chat_agent(
     agent_id: str,
     req: ChatRequest,
-    claims: Dict[str, Any] = Depends(verify_service_jwt)
+    claims: dict[str, Any] = Depends(verify_service_jwt)
 ):
     """
     Executes a full multi-step agent reasoning cycle with 12-stage RAG and tools.
@@ -147,7 +147,7 @@ async def chat_agent(
 async def chat_agent_stream(
     agent_id: str,
     req: ChatRequest,
-    claims: Dict[str, Any] = Depends(verify_service_jwt)
+    claims: dict[str, Any] = Depends(verify_service_jwt)
 ):
     token_workspace_id = claims["workspace_id"]
     if req.workspace_id and req.workspace_id != token_workspace_id and claims.get("role") != "SUPER_ADMIN":
@@ -182,7 +182,7 @@ async def chat_agent_stream(
 @app.post("/api/v1/rag/query")
 async def query_rag_pipeline(
     req: RAGQueryRequest,
-    claims: Dict[str, Any] = Depends(verify_service_jwt)
+    claims: dict[str, Any] = Depends(verify_service_jwt)
 ):
     token_workspace_id = claims["workspace_id"]
     if req.workspace_id and req.workspace_id != token_workspace_id and claims.get("role") != "SUPER_ADMIN":
@@ -198,7 +198,7 @@ async def query_rag_pipeline(
 @app.post("/api/v1/knowledge/ingest")
 async def ingest_knowledge_endpoint(
     req: KnowledgeIngestRequest,
-    claims: Dict[str, Any] = Depends(verify_service_jwt),
+    claims: dict[str, Any] = Depends(verify_service_jwt),
     session: AsyncSession = Depends(get_db_session)
 ):
     token_workspace_id = claims["workspace_id"]
@@ -206,12 +206,12 @@ async def ingest_knowledge_endpoint(
         raise HTTPException(status_code=403, detail="Forbidden: Cross-tenant workspace mismatch")
 
     target_ws = req.workspace_id or token_workspace_id
-    
+
     # Split content into distinct paragraphs/chunks
     raw_chunks = [c.strip() for c in req.content.split("\n\n") if c.strip()]
     if not raw_chunks:
         raw_chunks = [req.content]
-    
+
     chunks_data = []
     for rc in raw_chunks:
         chunks_data.append({
@@ -237,6 +237,7 @@ async def ingest_knowledge_endpoint(
 
 import time
 from collections import defaultdict
+
 from fastapi import Request
 
 _order_rate_limit_store = defaultdict(list)
@@ -258,7 +259,7 @@ async def get_order_endpoint(
     order_number: str,
     request: Request,
     customer_email: str = Query(..., description="Customer email for verification"),
-    claims: Dict[str, Any] = Depends(verify_service_jwt)
+    claims: dict[str, Any] = Depends(verify_service_jwt)
 ):
     workspace_id = claims["workspace_id"]
     client_ip = request.client.host if request.client else "unknown_ip"

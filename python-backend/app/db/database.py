@@ -1,7 +1,7 @@
 import os
-import sys
 from pathlib import Path
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
 # Base declarative class
@@ -40,6 +40,7 @@ else:
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
+
 # SQLite high performance PRAGMAs (WAL mode, large cache, memory temp store, mmap)
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -64,7 +65,6 @@ async def get_db_session() -> AsyncSession:
 
 async def init_db():
     """Initializes database schema and tables asynchronously"""
-    from . import models  # Ensure all models are imported
     from .seed import seed_database_if_empty
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -84,7 +84,7 @@ async def init_db():
             await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN ip_address VARCHAR(64)"))
         except Exception:
             pass
-    
+
     # Run seeding
     async with async_session_factory() as session:
         await seed_database_if_empty(session)

@@ -1,14 +1,18 @@
-import os
-import json
 import asyncio
+import json
 from pathlib import Path
-from sqlalchemy import select, text
-from app.db.database import init_db, async_session_factory, Base, engine
+
+from sqlalchemy import select
+
+from app.db.database import Base, async_session_factory, engine
 from app.db.models import (
-    WorkspaceModel, UserModel, WorkspaceMemberModel,
-    ProductModel, OrderModel, KnowledgeSourceModel,
-    KnowledgeDocModel, KnowledgeChunkModel,
-    AIModeConfigModel, DeploymentModel
+    AIModeConfigModel,
+    DeploymentModel,
+    OrderModel,
+    ProductModel,
+    UserModel,
+    WorkspaceMemberModel,
+    WorkspaceModel,
 )
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
@@ -17,7 +21,7 @@ AI_MODE_DATA_PATH = DATA_DIR / "ai_mode_data.json"
 
 async def run_data_migration():
     print("=== Starting Enterprise Database Seeding & Migration ===")
-    
+
     # 1. Initialize schema
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -29,11 +33,11 @@ async def run_data_migration():
         ai_data = {}
 
         if AAAS_DB_PATH.exists():
-            with open(AAAS_DB_PATH, "r", encoding="utf-8") as f:
+            with open(AAAS_DB_PATH, encoding="utf-8") as f:
                 aaas_data = json.load(f)
 
         if AI_MODE_DATA_PATH.exists():
-            with open(AI_MODE_DATA_PATH, "r", encoding="utf-8") as f:
+            with open(AI_MODE_DATA_PATH, encoding="utf-8") as f:
                 ai_data = json.load(f)
 
         # 1. Migrate Workspaces

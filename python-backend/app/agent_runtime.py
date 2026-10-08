@@ -1,10 +1,11 @@
+import re
 import time
 import uuid
-import re
-from typing import Dict, Any, Optional, List
+from typing import Any
+
+from .llm import SYSTEM_INJECTION_DEFENSE_PROMPT, LLMClient
 from .rag import execute_rag_pipeline
 from .tools import TOOL_DEFINITIONS, execute_typed_tool
-from .llm import LLMClient, SYSTEM_INJECTION_DEFENSE_PROMPT
 
 llm_client = LLMClient()
 
@@ -12,8 +13,8 @@ def run_agent_cycle(
     agent_id: str,
     message: str,
     workspace_id: str,
-    conversation_id: Optional[str] = None
-) -> Dict[str, Any]:
+    conversation_id: str | None = None
+) -> dict[str, Any]:
     """
     Executes a hardened multi-step AI reasoning cycle:
     1. Intent classification & prompt-injection defense check.
@@ -45,7 +46,7 @@ def run_agent_cycle(
     messages = [
         {"role": "user", "content": message}
     ]
-    
+
     model_output = llm_client.call_model(
         messages=messages,
         tools=TOOL_DEFINITIONS,
@@ -112,7 +113,7 @@ def run_agent_cycle(
                     response_text = f"Could not calculate cart: {tool_result['error']}"
                 else:
                     lines = tool_result["line_items"]
-                    response_text = f"**Order Summary & Calculation:**\n\n"
+                    response_text = "**Order Summary & Calculation:**\n\n"
                     for li in lines:
                         response_text += f"* {li['quantity']}x **{li['title']}** @ ${li['unit_price']:.2f} = **${li['total_price']:.2f}**\n"
                     response_text += f"\n**Subtotal:** ${tool_result['subtotal']:.2f}\n"
@@ -136,14 +137,14 @@ def run_agent_cycle(
         response_text = model_output["content"]
     else:
         # Fallback to policy / general query
-        if re.search(r'return|refund|exchange|warranty|policy', message, re.I):
+        if re.search(r'return|refund|exchange|warranty|policy', message, re.IGNORECASE):
             detected_intent = "RETURN_OR_POLICY_INQUIRY"
             response_text = rag_result["natural_answer"]
             interactive_payload = {
                 "type": "QUICK_REPLIES",
                 "data": ["Start Return Request", "Speak with Operator", "Check Sizing Chart"]
             }
-        elif re.search(r'human|operator|live agent|representative', message, re.I):
+        elif re.search(r'human|operator|live agent|representative', message, re.IGNORECASE):
             detected_intent = "HUMAN_HANDOFF"
             response_text = "I have flagged this session for our customer support team. A representative will join this chat momentarily."
             interactive_payload = {
@@ -181,8 +182,8 @@ def run_agent_cycle(
     }
 
     if interactive_payload is None and (
-        re.search(r'product|women|woman|men|saree|kurta|shirt|dress|item|collection|stock|recommend', message, re.I) or
-        re.search(r'₹|Rs\.?|\$|saree|kurta|shirt|pant|combo', response_text, re.I)
+        re.search(r'product|women|woman|men|saree|kurta|shirt|dress|item|collection|stock|recommend', message, re.IGNORECASE) or
+        re.search(r'₹|Rs\.?|\$|saree|kurta|shirt|pant|combo', response_text, re.IGNORECASE)
     ):
         from .db.seed import get_seed_products
         all_prods = get_seed_products(workspace_id)
@@ -190,36 +191,36 @@ def run_agent_cycle(
         for p in all_prods:
             if p["title"].lower() in response_text.lower() or any(w.lower() in p["title"].lower() for w in message.split() if len(w) > 3):
                 matched.append(p)
-        
+
         if not matched:
-            lines = re.findall(r'(?:^|[\r\n]|•|\*|-)\s*([A-Za-z0-9\s&\'()/-]{3,50}?)\s*(?:—|-|:)\s*(?:₹|Rs\.?|\$)\s*([\d,]+)', response_text, re.M)
+            lines = re.findall(r'(?:^|[\r\n]|•|\*|-)\s*([A-Za-z0-9\s&\'()/-]{3,50}?)\s*(?:—|-|:)\s*(?:₹|Rs\.?|\$)\s*([\d,]+)', response_text, re.MULTILINE)
             for title_match, price_match in lines:
                 clean_t = title_match.strip()
                 try:
                     price_val = float(price_match.replace(',', ''))
                 except Exception:
                     price_val = 1499.0
-                
+
                 cat_img = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80'
-                if re.search(r'kurta', clean_t, re.I):
+                if re.search(r'kurta', clean_t, re.IGNORECASE):
                     cat_img = 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80'
-                elif re.search(r'shirt|tee', clean_t, re.I):
+                elif re.search(r'shirt|tee', clean_t, re.IGNORECASE):
                     cat_img = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80'
 
                 matched.append({
                     "id": f"prod_dyn_{uuid.uuid4().hex[:8]}",
                     "title": clean_t,
                     "description": f"{clean_t} crafted from premium quality fabric.",
-                    "category": "Sarees" if re.search(r'saree', clean_t, re.I) else ("Kurtas" if re.search(r'kurta', clean_t, re.I) else "Apparel"),
+                    "category": "Sarees" if re.search(r'saree', clean_t, re.IGNORECASE) else ("Kurtas" if re.search(r'kurta', clean_t, re.IGNORECASE) else "Apparel"),
                     "price": price_val,
                     "images": [cat_img],
                     "in_stock": True,
                     "total_inventory": 40
                 })
-        
+
         if not matched and all_prods:
             matched = all_prods[:4]
-            
+
         if matched:
             interactive_payload = {"type": "PRODUCTS", "data": matched[:6]}
 

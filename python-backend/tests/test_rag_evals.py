@@ -1,11 +1,12 @@
 import pytest
+
 from app.rag import (
     execute_rag_pipeline,
-    understand_query,
-    rewrite_query,
-    verify_grounding,
+    generate_embedding,
     hybrid_retrieve,
-    generate_embedding
+    rewrite_query,
+    understand_query,
+    verify_grounding,
 )
 
 MOCK_CHUNKS_WORKSPACE_A = [
@@ -47,7 +48,7 @@ def test_rag_intent_understanding_and_rewriting():
     understanding = understand_query(question)
     assert understanding["detected_intent"] == "RETURN_OR_POLICY_INQUIRY"
     assert understanding["extracted_entities"].get("product_category") == "apparel"
-    
+
     rewrite = rewrite_query(question, understanding)
     assert "return" in rewrite["rewritten_query"].lower()
     assert len(rewrite["expansion_terms"]) > 0
@@ -68,7 +69,7 @@ def test_rag_retrieval_accuracy():
 def test_rag_grounding_and_hallucination_detection():
     """Verify grounding check approves factual answers and rejects hallucinations."""
     context = "Customers can return unused items within 30 days of delivery for a full refund."
-    
+
     grounded_answer = "According to our store policy, customers can return unused items within 30 days of delivery."
     grounded_eval = verify_grounding(grounded_answer, context, has_retrieved_chunks=True)
     assert grounded_eval["is_grounded"] is True

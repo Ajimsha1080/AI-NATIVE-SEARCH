@@ -1,21 +1,18 @@
-import os
-import math
-import re
-import json
 import asyncio
-import urllib.request
-import urllib.error
-from typing import List, Dict, Any, Optional
+import math
+import os
+import re
 from functools import lru_cache
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-
-from .db.database import async_session_factory
-from .db.models import KnowledgeSourceModel, KnowledgeDocModel, KnowledgeChunkModel
+from typing import Any
 
 import httpx
+from sqlalchemy import select
 
-def get_openai_embedding(text: str, api_key: str) -> Optional[List[float]]:
+from .db.database import async_session_factory
+from .db.models import KnowledgeChunkModel, KnowledgeDocModel, KnowledgeSourceModel
+
+
+def get_openai_embedding(text: str, api_key: str) -> list[float] | None:
     """Generates embedding using OpenAI text-embedding-3-small via async/sync httpx."""
     try:
         url = "https://api.openai.com/v1/embeddings"
@@ -65,7 +62,7 @@ def _cached_embedding_tuple(text: str, dim: int = 128) -> tuple:
         embedding = [x / norm for x in embedding]
     return tuple(embedding)
 
-def generate_embedding(text: str, dim: int = 128) -> List[float]:
+def generate_embedding(text: str, dim: int = 128) -> list[float]:
     openai_key = os.getenv("OPENAI_API_KEY")
     if openai_key:
         emb = get_openai_embedding(text, openai_key)
@@ -73,7 +70,7 @@ def generate_embedding(text: str, dim: int = 128) -> List[float]:
             return emb
     return list(_cached_embedding_tuple(text, dim))
 
-def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
+def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     if len(vec_a) != len(vec_b) or not vec_a or not vec_b:
         return 0.0
     dot = sum(a * b for a, b in zip(vec_a, vec_b))
@@ -86,7 +83,7 @@ def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
 # DYNAMIC DATABASE-BACKED KNOWLEDGE RETRIEVAL (STRICT TENANT ISOLATION)
 # ============================================================================
 
-async def fetch_tenant_chunks_from_db(workspace_id: str) -> List[Dict[str, Any]]:
+async def fetch_tenant_chunks_from_db(workspace_id: str) -> list[dict[str, Any]]:
     """Reads knowledge chunks and parent document titles directly from the SQL database."""
     if not workspace_id:
         raise ValueError("workspace_id is mandatory and cannot be empty")
@@ -112,7 +109,7 @@ async def fetch_tenant_chunks_from_db(workspace_id: str) -> List[Dict[str, Any]]
             })
         return chunks
 
-def understand_query(question: str) -> Dict[str, Any]:
+def understand_query(question: str) -> dict[str, Any]:
     q = question.lower()
     detected_intent = "GENERAL_FAQ"
     entities = {}
@@ -135,7 +132,7 @@ def understand_query(question: str) -> Dict[str, Any]:
         "confidence": 0.95
     }
 
-def rewrite_query(question: str, understanding: Dict[str, Any]) -> Dict[str, Any]:
+def rewrite_query(question: str, understanding: dict[str, Any]) -> dict[str, Any]:
     intent = understanding["detected_intent"]
     expansion_terms = []
 
@@ -156,7 +153,7 @@ def rewrite_query(question: str, understanding: Dict[str, Any]) -> Dict[str, Any
         "expansion_terms": expansion_terms
     }
 
-def hybrid_retrieve(query: str, workspace_id: str, tenant_chunks: List[Dict[str, Any]], top_k: int = 5):
+def hybrid_retrieve(query: str, workspace_id: str, tenant_chunks: list[dict[str, Any]], top_k: int = 5):
     """Hybrid dense vector and sparse token retrieval strictly scoped to tenant_chunks."""
     if not workspace_id:
         raise ValueError("workspace_id is mandatory and cannot be empty for hybrid_retrieve")
@@ -215,7 +212,7 @@ def reciprocal_rank_fusion(dense_hits, sparse_hits, k=60):
     fused.sort(key=lambda x: x["rrf_score"], reverse=True)
     return fused
 
-def rerank_candidates(fused_candidates, query: str, understanding: Dict[str, Any]):
+def rerank_candidates(fused_candidates, query: str, understanding: dict[str, Any]):
     query_words = [w for w in query.lower().split() if len(w) > 2]
     reranked = []
 
@@ -261,7 +258,7 @@ def assemble_context(reranked_chunks, top_k=3):
         "chunks_included": len(selected)
     }
 
-def verify_grounding(natural_answer: str, context: str, has_retrieved_chunks: bool) -> Dict[str, Any]:
+def verify_grounding(natural_answer: str, context: str, has_retrieved_chunks: bool) -> dict[str, Any]:
     """
     Real Entailment / Citation Grounding Check:
     Requires factual statements to be supported by retrieved chunks.
@@ -300,7 +297,7 @@ def verify_grounding(natural_answer: str, context: str, has_retrieved_chunks: bo
         "verified_facts_count": verified
     }
 
-def execute_rag_pipeline(question: str, workspace_id: str, tenant_chunks: Optional[List[Dict[str, Any]]] = None, top_k: int = 3) -> Dict[str, Any]:
+def execute_rag_pipeline(question: str, workspace_id: str, tenant_chunks: list[dict[str, Any]] | None = None, top_k: int = 3) -> dict[str, Any]:
     if not workspace_id:
         raise ValueError("workspace_id is mandatory and cannot be empty for RAG execution")
 
@@ -318,7 +315,7 @@ def execute_rag_pipeline(question: str, workspace_id: str, tenant_chunks: Option
                     tenant_chunks = pool.submit(asyncio.run, fetch_tenant_chunks_from_db(workspace_id)).result()
             else:
                 tenant_chunks = asyncio.run(fetch_tenant_chunks_from_db(workspace_id))
-        except Exception as e:
+        except Exception:
             tenant_chunks = []
 
     # 1. Understanding

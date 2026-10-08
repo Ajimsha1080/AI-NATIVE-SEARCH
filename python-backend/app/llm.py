@@ -1,11 +1,11 @@
-import os
 import json
+import logging
+import os
 import re
 import time
-import logging
+from typing import Any
+
 import httpx
-from typing import List, Dict, Any, Optional
-from .tools import TOOL_DEFINITIONS, execute_typed_tool
 
 logger = logging.getLogger("shopmate_llm")
 logging.basicConfig(level=logging.INFO)
@@ -25,7 +25,7 @@ SYSTEM_INJECTION_DEFENSE_PROMPT = (
 )
 
 # In-memory per-tenant token usage tracker (Redis-ready)
-_tenant_token_usage: Dict[str, Dict[str, Any]] = {}
+_tenant_token_usage: dict[str, dict[str, Any]] = {}
 
 class LLMClient:
     def __init__(self):
@@ -64,11 +64,11 @@ class LLMClient:
 
     def call_model(
         self,
-        messages: List[Dict[str, str]],
-        tools: List[Dict[str, Any]],
+        messages: list[dict[str, str]],
+        tools: list[dict[str, Any]],
         system_prompt: str = SYSTEM_INJECTION_DEFENSE_PROMPT,
         workspace_id: str = "ws_acme_corp"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Executes a resilient model call with provider fallbacks:
         Sarvam AI -> OpenAI -> Anthropic -> Ollama -> Deterministic Fallback.
@@ -113,7 +113,7 @@ class LLMClient:
         logger.info("Falling back to deterministic reasoning engine.")
         return self._deterministic_fallback(messages, tools)
 
-    def _call_sarvam(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]], system_prompt: str) -> Dict[str, Any]:
+    def _call_sarvam(self, messages: list[dict[str, str]], tools: list[dict[str, Any]], system_prompt: str) -> dict[str, Any]:
         model = self.default_model or "sarvam-105b-conversations"
         formatted_messages = [{"role": "system", "content": system_prompt}] + messages
         payload = {
@@ -140,7 +140,7 @@ class LLMClient:
                 "provider": "sarvam"
             }
 
-    def _call_openai(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]], system_prompt: str) -> Dict[str, Any]:
+    def _call_openai(self, messages: list[dict[str, str]], tools: list[dict[str, Any]], system_prompt: str) -> dict[str, Any]:
         formatted_tools = [
             {
                 "type": "function",
@@ -190,7 +190,7 @@ class LLMClient:
                 "provider": "openai"
             }
 
-    def _call_anthropic(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]], system_prompt: str) -> Dict[str, Any]:
+    def _call_anthropic(self, messages: list[dict[str, str]], tools: list[dict[str, Any]], system_prompt: str) -> dict[str, Any]:
         formatted_tools = [
             {
                 "name": t["name"],
@@ -240,7 +240,7 @@ class LLMClient:
                 "provider": "anthropic"
             }
 
-    def _call_ollama(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]], system_prompt: str) -> Dict[str, Any]:
+    def _call_ollama(self, messages: list[dict[str, str]], tools: list[dict[str, Any]], system_prompt: str) -> dict[str, Any]:
         model = self.default_model or "llama3.2"
         payload = {
             "model": model,
@@ -263,7 +263,7 @@ class LLMClient:
                 "provider": "ollama"
             }
 
-    def _deterministic_fallback(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _deterministic_fallback(self, messages: list[dict[str, str]], tools: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Deterministic intent and tool router when remote LLM is absent or in local development.
         """

@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
+
 from app.compliance import record_audit_event
-from app.auth import create_access_token
+from app.main import app
 
 client = TestClient(app)
 

@@ -1,17 +1,24 @@
 import math
 import uuid
-from typing import List, Optional, Dict, Any
-from sqlalchemy import select, update, delete
+from typing import Any
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from .models import (
-    WorkspaceModel, UserModel, AgentModel, AgentConfigModel, AgentPolicyModel,
-    KnowledgeSourceModel, KnowledgeDocModel, KnowledgeChunkModel, ProductModel, OrderModel,
-    ConversationModel, MessageModel, ExecutionTraceModel
+    AgentModel,
+    ExecutionTraceModel,
+    KnowledgeChunkModel,
+    KnowledgeDocModel,
+    KnowledgeSourceModel,
+    OrderModel,
+    ProductModel,
+    WorkspaceModel,
 )
 
-def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
+
+def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     if not vec_a or not vec_b or len(vec_a) != len(vec_b):
         return 0.0
     dot = sum(a * b for a, b in zip(vec_a, vec_b))
@@ -38,13 +45,13 @@ class DatabaseRepository:
         await self.session.commit()
         return ws
 
-    async def get_workspace(self, workspace_id: str) -> Optional[WorkspaceModel]:
+    async def get_workspace(self, workspace_id: str) -> WorkspaceModel | None:
         stmt = select(WorkspaceModel).where(WorkspaceModel.id == workspace_id)
         res = await self.session.execute(stmt)
         return res.scalars().first()
 
     # --- Agent Queries (Scoped by Workspace) ---
-    async def get_agent_with_config(self, agent_id: str, workspace_id: Optional[str] = None) -> Optional[AgentModel]:
+    async def get_agent_with_config(self, agent_id: str, workspace_id: str | None = None) -> AgentModel | None:
         stmt = (
             select(AgentModel)
             .options(selectinload(AgentModel.config), selectinload(AgentModel.policies))
@@ -64,7 +71,7 @@ class DatabaseRepository:
         stock: int = 50,
         category: str = "General",
         description: str = "",
-        product_id: Optional[str] = None
+        product_id: str | None = None
     ) -> ProductModel:
         prod = ProductModel(
             id=product_id or f"prod_{uuid.uuid4().hex[:10]}",
@@ -79,7 +86,7 @@ class DatabaseRepository:
         await self.session.commit()
         return prod
 
-    async def get_all_products(self, workspace_id: Optional[str] = None, limit: int = 50) -> List[ProductModel]:
+    async def get_all_products(self, workspace_id: str | None = None, limit: int = 50) -> list[ProductModel]:
         stmt = select(ProductModel)
         if workspace_id:
             stmt = stmt.where(ProductModel.workspace_id == workspace_id)
@@ -87,7 +94,7 @@ class DatabaseRepository:
         res = await self.session.execute(stmt)
         return list(res.scalars().all())
 
-    async def search_products(self, workspace_id: str, query_term: str) -> List[ProductModel]:
+    async def search_products(self, workspace_id: str, query_term: str) -> list[ProductModel]:
         """Searches products strictly within the tenant's workspace boundary."""
         stmt = select(ProductModel).where(
             ProductModel.workspace_id == workspace_id,
@@ -101,7 +108,7 @@ class DatabaseRepository:
         self,
         workspace_id: str,
         customer_email: str,
-        items: List[Dict[str, Any]],
+        items: list[dict[str, Any]],
         total_amount: float
     ) -> OrderModel:
         """ACID Transaction: Deducts inventory and creates order within tenant boundary."""
@@ -130,7 +137,7 @@ class DatabaseRepository:
             await self.session.flush()
             return order
 
-    async def get_product_by_id(self, workspace_id: str, product_id: str) -> Optional[ProductModel]:
+    async def get_product_by_id(self, workspace_id: str, product_id: str) -> ProductModel | None:
         stmt = select(ProductModel).where(
             ProductModel.workspace_id == workspace_id,
             ProductModel.id == product_id
@@ -138,12 +145,12 @@ class DatabaseRepository:
         res = await self.session.execute(stmt)
         return res.scalars().first()
 
-    async def get_tenant_orders(self, workspace_id: str) -> List[OrderModel]:
+    async def get_tenant_orders(self, workspace_id: str) -> list[OrderModel]:
         stmt = select(OrderModel).where(OrderModel.workspace_id == workspace_id)
         res = await self.session.execute(stmt)
         return list(res.scalars().all())
 
-    async def get_order_by_number(self, workspace_id: str, order_number: str) -> Optional[OrderModel]:
+    async def get_order_by_number(self, workspace_id: str, order_number: str) -> OrderModel | None:
         clean_num = order_number.strip()
         orders = await self.get_tenant_orders(workspace_id)
         for ord in orders:
@@ -161,7 +168,7 @@ class DatabaseRepository:
         workspace_id: str,
         title: str,
         content: str,
-        chunks: List[Dict[str, Any]]
+        chunks: list[dict[str, Any]]
     ) -> KnowledgeDocModel:
         """Adds a tenant knowledge document and indexed vector chunks."""
         # Find or create knowledge source for tenant
@@ -200,13 +207,13 @@ class DatabaseRepository:
         await self.session.commit()
         return doc
 
-    async def get_all_chunks(self) -> List[KnowledgeChunkModel]:
+    async def get_all_chunks(self) -> list[KnowledgeChunkModel]:
         """Retrieves all knowledge chunks across the database."""
         stmt = select(KnowledgeChunkModel)
         res = await self.session.execute(stmt)
         return list(res.scalars().all())
 
-    async def get_tenant_chunks(self, workspace_id: str) -> List[KnowledgeChunkModel]:
+    async def get_tenant_chunks(self, workspace_id: str) -> list[KnowledgeChunkModel]:
         """Retrieves chunks filtered strictly by tenant workspace_id."""
         stmt = (
             select(KnowledgeChunkModel)
@@ -220,9 +227,9 @@ class DatabaseRepository:
     async def vector_similarity_search(
         self,
         workspace_id: str,
-        query_vector: List[float],
+        query_vector: list[float],
         top_k: int = 3
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Performs vector similarity ranking strictly within tenant chunks."""
         chunks = await self.get_tenant_chunks(workspace_id)
         scored = []
@@ -241,11 +248,11 @@ class DatabaseRepository:
     async def record_execution_trace(
         self,
         agent_id: str,
-        conversation_id: Optional[str],
+        conversation_id: str | None,
         duration_ms: float,
-        tools_called: List[str],
+        tools_called: list[str],
         status: str,
-        trace_log: Dict[str, Any]
+        trace_log: dict[str, Any]
     ) -> ExecutionTraceModel:
         trace = ExecutionTraceModel(
             id=f"trc_{uuid.uuid4().hex[:12]}",

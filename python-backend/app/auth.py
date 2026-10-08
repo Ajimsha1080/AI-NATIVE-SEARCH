@@ -1,7 +1,9 @@
 import time
+from typing import Any
+
 import jwt
-from typing import Optional, Dict, Any, Tuple
-from fastapi import Header, HTTPException, Depends
+from fastapi import Depends, Header, HTTPException
+
 from .config import settings
 
 ALLOWED_ALGORITHMS = ["HS256"]
@@ -58,7 +60,7 @@ def create_refresh_token(
     }
     return jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
 
-def decode_token(token: str, expected_type: str = "access") -> Dict[str, Any]:
+def decode_token(token: str, expected_type: str = "access") -> dict[str, Any]:
     if is_token_revoked(token):
         raise HTTPException(status_code=401, detail="Token has been revoked")
 
@@ -79,7 +81,7 @@ def decode_token(token: str, expected_type: str = "access") -> Dict[str, Any]:
                         "verify_iss": False
                     }
                 )
-                
+
                 # Check revocation by subject or JTI if present
                 if payload.get("jti") and is_token_revoked(payload["jti"]):
                     raise HTTPException(status_code=401, detail="Token has been revoked")
@@ -93,13 +95,13 @@ def decode_token(token: str, expected_type: str = "access") -> Dict[str, Any]:
             except Exception as e:
                 last_err = e
 
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(last_err)}")
+        raise HTTPException(status_code=401, detail=f"Invalid token: {last_err!s}")
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e!s}")
 
-def verify_jwt_auth(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
+def verify_jwt_auth(authorization: str | None = Header(None)) -> dict[str, Any]:
     """Verifies access token from Authorization: Bearer <token>."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
@@ -123,11 +125,11 @@ def verify_jwt_auth(authorization: Optional[str] = Header(None)) -> Dict[str, An
         "token": token
     }
 
-def verify_service_jwt(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
+def verify_service_jwt(authorization: str | None = Header(None)) -> dict[str, Any]:
     """Compatibility wrapper for service calls."""
     return verify_jwt_auth(authorization)
 
-def require_admin_auth(claims: Dict[str, Any] = Depends(verify_jwt_auth)) -> Dict[str, Any]:
+def require_admin_auth(claims: dict[str, Any] = Depends(verify_jwt_auth)) -> dict[str, Any]:
     if not claims.get("is_super_admin") and claims.get("role") not in ["OWNER", "ADMIN", "SUPERADMIN"]:
         raise HTTPException(
             status_code=403,

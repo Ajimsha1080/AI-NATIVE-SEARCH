@@ -1,11 +1,13 @@
 import pytest
+
 from app.auth import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    is_token_revoked,
     revoke_token,
-    is_token_revoked
 )
+
 
 def test_access_token_creation_and_decoding():
     token = create_access_token(
@@ -34,7 +36,7 @@ def test_refresh_token_lifecycle():
 def test_token_revocation_denylist():
     token = create_access_token("usr_revoked", "r@test.com", "ws_1")
     assert not is_token_revoked(token)
-    
+
     # Revoke token
     revoke_token(token)
     assert is_token_revoked(token)

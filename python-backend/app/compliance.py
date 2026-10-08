@@ -1,15 +1,15 @@
-import uuid
 import hashlib
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+import uuid
+from datetime import UTC, datetime
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Request, Query
+from fastapi import APIRouter, Header, Query, Request
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import select, update, desc
+from sqlalchemy import desc, select, update
 
-from .db.database import async_session_factory
-from .db.models import AuditLogModel, OrderModel, ConversationModel, MessageModel
 from .auth import decode_token
+from .db.database import async_session_factory
+from .db.models import AuditLogModel, ConversationModel, OrderModel
 
 router = APIRouter(prefix="/api/v1/compliance", tags=["Compliance & DPDP"])
 
@@ -22,11 +22,11 @@ async def record_audit_event(
     workspace_id: str,
     action: str,
     actor_id: str,
-    resource_type: Optional[str] = None,
-    resource_id: Optional[str] = None,
-    ip_address: Optional[str] = None,
-    details: Optional[Dict[str, Any]] = None,
-) -> Optional[AuditLogModel]:
+    resource_type: str | None = None,
+    resource_id: str | None = None,
+    ip_address: str | None = None,
+    details: dict[str, Any] | None = None,
+) -> AuditLogModel | None:
     """Records an immutable audit log entry for administrative or data-mutation actions."""
     if not workspace_id:
         workspace_id = "ws_acme_corp"
@@ -42,7 +42,7 @@ async def record_audit_event(
                 resource_id=resource_id,
                 ip_address=ip_address,
                 details_json=details or {},
-                timestamp=datetime.now(timezone.utc).replace(tzinfo=None)
+                timestamp=datetime.now(UTC).replace(tzinfo=None)
             )
             session.add(entry)
             await session.commit()
@@ -60,14 +60,14 @@ async def record_audit_event(
 
 class DPDPExportRequest(BaseModel):
     customer_email: EmailStr
-    customer_id: Optional[str] = None
-    workspace_id: Optional[str] = "ws_acme_corp"
+    customer_id: str | None = None
+    workspace_id: str | None = "ws_acme_corp"
 
 class DPDPErasureRequest(BaseModel):
     customer_email: EmailStr
-    customer_id: Optional[str] = None
-    workspace_id: Optional[str] = "ws_acme_corp"
-    reason: Optional[str] = "Customer DPDP Act Right to Erasure"
+    customer_id: str | None = None
+    workspace_id: str | None = "ws_acme_corp"
+    reason: str | None = "Customer DPDP Act Right to Erasure"
 
 
 # ============================================================================
@@ -77,11 +77,11 @@ class DPDPErasureRequest(BaseModel):
 @router.get("/audit-logs")
 async def get_audit_logs(
     request: Request,
-    workspace_id: Optional[str] = Query(None),
-    action: Optional[str] = Query(None),
+    workspace_id: str | None = Query(None),
+    action: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """Retrieves immutable audit logs for a tenant workspace."""
     target_workspace = workspace_id or "ws_acme_corp"
@@ -105,7 +105,7 @@ async def get_audit_logs(
         )
         if action:
             query = query.where(AuditLogModel.action == action)
-        
+
         query = query.offset(offset).limit(limit)
         result = await session.execute(query)
         logs = result.scalars().all()
@@ -117,16 +117,16 @@ async def get_audit_logs(
             "offset": offset,
             "audit_logs": [
                 {
-                    "id": l.id,
-                    "action": l.action,
-                    "actor_id": l.actor_id,
-                    "resource_type": l.resource_type,
-                    "resource_id": l.resource_id,
-                    "ip_address": l.ip_address,
-                    "details": l.details_json,
-                    "timestamp": l.timestamp.isoformat() if l.timestamp else None
+                    "id": entry.id,
+                    "action": entry.action,
+                    "actor_id": entry.actor_id,
+                    "resource_type": entry.resource_type,
+                    "resource_id": entry.resource_id,
+                    "ip_address": entry.ip_address,
+                    "details": entry.details_json,
+                    "timestamp": entry.timestamp.isoformat() if entry.timestamp else None
                 }
-                for l in logs
+                for entry in logs
             ]
         }
 
@@ -135,7 +135,7 @@ async def get_audit_logs(
 async def export_customer_data(
     req: DPDPExportRequest,
     request: Request,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     DPDP Act / GDPR Data Portability:
@@ -222,7 +222,7 @@ async def export_customer_data(
             "compliance_standard": "Digital Personal Data Protection Act 2023",
             "workspace_id": req.workspace_id,
             "customer_email": req.customer_email,
-            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "exported_at": datetime.now(UTC).isoformat(),
             "data": {
                 "orders": exported_orders,
                 "conversations": exported_conversations
@@ -234,7 +234,7 @@ async def export_customer_data(
 async def erase_customer_data(
     req: DPDPErasureRequest,
     request: Request,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     DPDP Act / GDPR Right to be Forgotten:
@@ -313,5 +313,5 @@ async def erase_customer_data(
             "orders_anonymized": orders_redacted,
             "conversations_anonymized": convs_redacted,
             "anonymized_identifier": anonymized_email,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }

@@ -1,10 +1,11 @@
-import os
 import json
+import os
 import time
 import uuid
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, HTTPException, Depends, Header, Request, Query
-from pydantic import BaseModel, Field
+from typing import Any
+
+from fastapi import APIRouter, HTTPException, Query, Request
+
 from .config import settings
 
 router = APIRouter(prefix="/api/v1", tags=["Backend Core"])
@@ -17,7 +18,7 @@ AI_MODE_DATA_PATH = os.path.join(DATA_DIR, "ai_mode_data.json")
 def load_json_file(file_path: str, default: Any = None) -> Any:
     if os.path.exists(file_path):
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             print(f"Error loading {file_path}: {e}")
@@ -39,7 +40,6 @@ async def get_current_user():
     db = load_json_file(AAAS_DB_PATH)
     users = db.get("users", [])
     workspaces = db.get("workspaces", [])
-    workspace_members = db.get("workspace_members", [])
 
     user = users[0] if users else {
         "id": "usr_merchant_01",
@@ -69,22 +69,17 @@ async def get_current_user():
         "workspaces": [ws]
     }
 
-from .auth import (
-    create_access_token,
-    create_refresh_token,
-    decode_token,
-    revoke_token,
-    verify_jwt_auth
-)
+from .auth import create_access_token, create_refresh_token, decode_token, revoke_token
+
 
 @router.post("/auth/login")
 async def login(request: Request):
     body = await request.json() if hasattr(request, "json") else {}
     email = body.get("email", "").strip().lower()
-    
+
     db = load_json_file(AAAS_DB_PATH)
     users = db.get("users", [])
-    
+
     matched_user = next((u for u in users if u.get("email", "").lower() == email), None)
     if not matched_user and users:
         matched_user = users[0]
@@ -189,14 +184,15 @@ async def verify_email():
 
 @router.get("/commerce/products")
 async def get_products(
-    workspace_id: Optional[str] = None,
-    category: Optional[str] = None,
-    query: Optional[str] = None,
-    in_stock: Optional[bool] = None
+    workspace_id: str | None = None,
+    category: str | None = None,
+    query: str | None = None,
+    in_stock: bool | None = None
 ):
+    from sqlalchemy import select
+
     from .db.database import async_session_factory
     from .db.models import ProductModel
-    from sqlalchemy import select
 
     db_products = []
     try:
@@ -277,7 +273,7 @@ async def create_product(request: Request):
         "variants": body.get("variants") or [
             {
                 "id": f"var_{int(time.time()*1000)}",
-                "sku": f"BT-ITEM-M",
+                "sku": "BT-ITEM-M",
                 "title": "Standard / Free Size",
                 "inventory_quantity": inv_qty,
                 "price": price_val,
@@ -305,17 +301,22 @@ async def update_product(request: Request):
 
     for p in products:
         if p.get("id") == prod_id:
-            if "title" in body: p["title"] = body["title"]
-            if "description" in body: p["description"] = body["description"]
-            if "category" in body: p["category"] = body["category"]
-            if "price" in body: p["price"] = float(body["price"])
+            if "title" in body:
+                p["title"] = body["title"]
+            if "description" in body:
+                p["description"] = body["description"]
+            if "category" in body:
+                p["category"] = body["category"]
+            if "price" in body:
+                p["price"] = float(body["price"])
             if "total_inventory" in body or "inventory" in body:
                 inv = int(body.get("total_inventory") or body.get("inventory") or 0)
                 p["total_inventory"] = inv
                 p["in_stock"] = inv > 0
                 if p.get("variants"):
                     p["variants"][0]["inventory_quantity"] = inv
-            if "in_stock" in body: p["in_stock"] = bool(body["in_stock"])
+            if "in_stock" in body:
+                p["in_stock"] = bool(body["in_stock"])
             p["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             save_json_file(AAAS_DB_PATH, db)
             return {"success": True, "product": p}
@@ -323,7 +324,7 @@ async def update_product(request: Request):
     raise HTTPException(status_code=404, detail="Product not found")
 
 @router.delete("/commerce/products")
-async def delete_product(id: Optional[str] = Query(None), all: Optional[str] = Query(None)):
+async def delete_product(id: str | None = Query(None), all: str | None = Query(None)):
     db = load_json_file(AAAS_DB_PATH)
     products = db.get("commerce_products", [])
 
@@ -350,9 +351,9 @@ async def delete_product(id: Optional[str] = Query(None), all: Optional[str] = Q
 
 @router.get("/commerce/orders")
 async def get_orders(
-    order_number: Optional[str] = None,
-    customer_email: Optional[str] = None,
-    workspace_id: Optional[str] = "ws_acme_corp"
+    order_number: str | None = None,
+    customer_email: str | None = None,
+    workspace_id: str | None = "ws_acme_corp"
 ):
     db = load_json_file(AAAS_DB_PATH)
     orders = db.get("commerce_orders", [])
@@ -440,8 +441,8 @@ async def checkout_commit(request: Request):
 # RAZORPAY INTEGRATION (/api/v1/commerce/razorpay/...)
 # ============================================================================
 
-import hmac
 import hashlib
+import hmac
 
 # Idempotency key store
 _processed_idempotency_keys = {}
@@ -547,7 +548,7 @@ async def razorpay_verify(request: Request):
     if secret and rzp_signature:
         generated_sig = hmac.new(
             secret.encode("utf-8"),
-            f"{rzp_order_id}|{rzp_payment_id}".encode("utf-8"),
+            f"{rzp_order_id}|{rzp_payment_id}".encode(),
             hashlib.sha256
         ).hexdigest()
 
@@ -638,7 +639,6 @@ async def run_sync(request: Request):
     db = load_json_file(AAAS_DB_PATH)
     prods = db.get("commerce_products", [])
     orders = db.get("commerce_orders", [])
-    chunks = db.get("knowledge_chunks", [])
     return {
         "success": True,
         "integrationId": "local_catalog",
@@ -656,7 +656,7 @@ async def run_sync(request: Request):
 # ============================================================================
 
 @router.get("/ai-mode/config")
-async def get_ai_mode_config(workspace_id: Optional[str] = "ws_acme_corp"):
+async def get_ai_mode_config(workspace_id: str | None = "ws_acme_corp"):
     data = load_json_file(AI_MODE_DATA_PATH)
     configs = data.get("configs", [])
     cfg = next((c for c in configs if c.get("workspace_id") == workspace_id), None)
@@ -698,7 +698,7 @@ async def update_ai_mode_config(request: Request):
     return {"success": True, "config": cfg}
 
 @router.get("/ai-mode/knowledge")
-async def get_ai_mode_knowledge(workspace_id: Optional[str] = "ws_acme_corp"):
+async def get_ai_mode_knowledge(workspace_id: str | None = "ws_acme_corp"):
     data = load_json_file(AI_MODE_DATA_PATH)
     sources = data.get("knowledge_sources", [])
     if workspace_id:
@@ -744,7 +744,7 @@ async def delete_ai_mode_knowledge(source_id: str):
     return {"success": True}
 
 @router.get("/ai-mode/deployments")
-async def get_ai_mode_deployments(workspace_id: Optional[str] = "ws_acme_corp"):
+async def get_ai_mode_deployments(workspace_id: str | None = "ws_acme_corp"):
     data = load_json_file(AI_MODE_DATA_PATH)
     deps = data.get("deployments", [])
     if not deps:
@@ -838,6 +838,7 @@ async def get_widget_config(deployment_id: str):
     return {"success": True, "deployment": dep}
 
 from fastapi.responses import Response
+
 
 @router.get("/ai-mode/widget/{deployment_id}/script.js")
 async def get_widget_script(deployment_id: str, request: Request):

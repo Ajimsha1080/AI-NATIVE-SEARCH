@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Dict, Any, Callable, List
+from collections.abc import Callable
 
 logger = logging.getLogger("shopmate_worker")
 logging.basicConfig(level=logging.INFO)
