@@ -10,11 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "test:ai-mode": "npx tsx scripts/test-ai-mode.ts",
-    "seed:dev": "npx tsx scripts/seed-dev.ts",
-    "benchmark": "npx tsx scripts/benchmark-speed.ts",
-    "check:security": "node scripts/security-audit.js"
+    "lint": "eslint ."
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

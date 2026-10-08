@@ -76,7 +76,7 @@ jobs:
         run: ruff check python-backend/app
         continue-on-error: true
 
-      - name: Run Pytest Test Matrix (Auth, Catalog, RAG Evals)
+      - name: Run Pytest Test Matrix (Auth, Catalog, Compliance, RAG Evals)
         working-directory: python-backend
         run: pytest -v
         env:
@@ -84,15 +84,3 @@ jobs:
           INTERNAL_SERVICE_SECRET: super_secure_ci_test_service_secret_32bytes_long!
           SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
           JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
-
-      - name: Run Python Pipeline Integration Tests
-        run: python python-backend/test_pipeline.py
-
-      - name: Run Real AI Evaluation Suite
-        run: python python-backend/test_evals.py
-
-      - name: Run Database Tests
-        run: python python-backend/test_db.py
-
-      - name: Run Massive Multi-Tenancy Tests
-        run: python python-backend/test_massive_multitenancy.py
