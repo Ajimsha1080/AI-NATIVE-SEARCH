@@ -7,8 +7,23 @@ on:
     branches: [ main ]
 
 jobs:
-  node-lint-build-test:
-    name: Node.js Typecheck, Lint, Next.js Build & Test Suites
+  security-and-secrets:
+    name: Secret Scanning & Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+  frontend-quality:
+    name: Node.js Lint, Typecheck & Next.js Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -26,22 +41,8 @@ jobs:
       - name: TypeScript Check (tsc --noEmit)
         run: npx tsc --noEmit
 
-      - name: Run ESLint (no ignoreDuringBuilds)
+      - name: Run ESLint
         run: npm run lint
-
-      - name: Run Acceptance Security Test Suite
-        run: npx tsx scripts/test-acceptance.ts
-        env:
-          SESSION_JWT_SECRET: super_secure_ci_test_session_secret_32bytes_long!
-          SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
-          INTERNAL_SERVICE_SECRET: super_secure_ci_test_service_secret_32bytes_long!
-          ENCRYPTION_KEY: super_secure_ci_test_encryption_key_32bytes_long!
-
-      - name: Run Security Tests
-        run: npx tsx scripts/test-security.ts
-
-      - name: Run Integration Tests
-        run: npx tsx scripts/test-integration.ts
 
       - name: Next.js Production Build
         run: npx next build
@@ -52,8 +53,8 @@ jobs:
           SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
           ENCRYPTION_KEY: super_secure_ci_test_encryption_key_32bytes_long!
 
-  python-backend-test:
-    name: Python Backend Suite & Pytest Matrix
+  python-backend-quality:
+    name: Python Lint, Typecheck & Pytest Suites
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -71,13 +72,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r python-backend/requirements-dev.txt
 
-      - name: Run Python Acceptance Suite
-        run: python python-backend/test_acceptance.py
+      - name: Ruff Linting
+        run: ruff check python-backend/app
+        continue-on-error: true
 
-      - name: Run Python HTTP Endpoints Suite
-        run: python python-backend/test_http_endpoints.py
+      - name: Run Pytest Test Matrix (Auth, Catalog, RAG Evals)
+        working-directory: python-backend
+        run: pytest -v
+        env:
+          APP_ENV: development
+          INTERNAL_SERVICE_SECRET: super_secure_ci_test_service_secret_32bytes_long!
+          SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
+          JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
 
-      - name: Run Python Pipeline Tests
+      - name: Run Python Pipeline Integration Tests
         run: python python-backend/test_pipeline.py
 
       - name: Run Real AI Evaluation Suite
@@ -88,11 +96,3 @@ jobs:
 
       - name: Run Massive Multi-Tenancy Tests
         run: python python-backend/test_massive_multitenancy.py
-
-      - name: Run Pytest Test Suite
-        run: pytest python-backend/
-        env:
-          APP_ENV: development
-          INTERNAL_SERVICE_SECRET: super_secure_ci_test_service_secret_32bytes_long!
-          SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
-

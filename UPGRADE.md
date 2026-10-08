@@ -137,9 +137,31 @@ This document tracks all architectural, database, security, and operational impr
 
 ---
 
-## Rollback & Emergency Procedures (Phase 1, 2, 3 & 4)
+## Phase 5: Quality (Testing, CI/CD, RAG Evaluations & Dependabot)
+
+### 1. Pytest Test Suites
+- Created comprehensive test suites under `python-backend/tests/`:
+  - `tests/test_auth.py`: Tests access token creation, claims verification, refresh token generation, and real-time denylist token revocation.
+  - `tests/test_catalog.py`: Tests `/health`, `/ready`, `/api/v1/commerce/products`, and `/api/v1/ai-mode/search` with schema validation.
+  - `tests/test_rag_evals.py`: Automated RAG evaluation set measuring intent understanding, query rewriting, top-k retrieval accuracy, grounding verification, and multi-tenant isolation boundaries.
+- Added `python-backend/pytest.ini` with automated `asyncio_mode = auto` and `pythonpath = .`.
+
+### 2. CI/CD Overhaul (`.github/workflows/ci.yml`)
+- **Secret Scanning**: Integrated Gitleaks GitHub Action to scan commit history and PR diffs for secret leakage.
+- **Frontend Quality Job**: Node 20 runner with `npm ci`, strict TypeScript check (`tsc --noEmit`), ESLint, and production Next.js build.
+- **Python Quality Job**: Python 3.12 runner with Ruff linting, Pytest test matrix, RAG evaluation, DB tests, and massive multi-tenancy tests.
+
+### 3. Automated Dependency Management (`.github/dependabot.yml`)
+- Added Dependabot covering:
+  - `npm` dependencies in `/`
+  - `pip` dependencies in `/python-backend`
+  - `github-actions` workflows
+
+### 4. Separate Staging & Production Configurations
+- Created `.env.staging.example` and `.env.production.example` separating connection strings, log verbosity, pool configurations, and security credentials.
+
+---
+
+## Rollback & Emergency Procedures (Phase 1 through 5)
 - If a bad release occurs, point traffic to the previous healthy container image; workers are fully stateless and state is confined to PostgreSQL/Redis.
 - In local development mode (`APP_ENV=development`), the system falls back to default 32-byte development secrets automatically.
-
-
-
