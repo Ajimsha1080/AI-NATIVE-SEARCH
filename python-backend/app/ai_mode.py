@@ -333,6 +333,58 @@ def evaluate_product(product: AIModeProduct, plan: AIModeSearchPlan) -> bool:
 # Database Product Loader (Shared JSON Store)
 # -------------------------------------------------------------
 def load_catalog_products(workspace_id: Optional[str] = None) -> List[AIModeProduct]:
+    from .db.database import DEFAULT_DB_PATH
+    import sqlite3
+
+    db_products = []
+    # Fast synchronous SQLite/database reader for high-performance AI Mode search queries
+    if os.path.exists(DEFAULT_DB_PATH):
+        try:
+            conn = sqlite3.connect(DEFAULT_DB_PATH)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            query = "SELECT * FROM commerce_products"
+            params = []
+            if workspace_id:
+                query += " WHERE workspace_id = ?"
+                params.append(workspace_id)
+            cur.execute(query, params)
+            rows = cur.fetchall()
+            for r in rows:
+                variants_raw = json.loads(r["variants_json"] or "[]")
+                variants = [
+                    AIModeProductVariant(
+                        id=v.get("id", ""),
+                        title=v.get("title", ""),
+                        price=float(v.get("price", 0)),
+                        in_stock=(v.get("inventory_quantity", 1) or 1) > 0,
+                        attributes=v.get("attributes", {})
+                    )
+                    for v in variants_raw
+                ]
+                db_products.append(AIModeProduct(
+                    id=r["id"],
+                    title=r["title"],
+                    handle=r["id"],
+                    description=r["description"] or "",
+                    price=float(r["price"] or 0),
+                    sale_price=float(r["compare_at_price"]) if r["compare_at_price"] else None,
+                    currency="INR",
+                    category=r["category"] or "General",
+                    subcategories=json.loads(r["tags_json"] or "[]"),
+                    brand=json.loads(r["attributes_json"] or "{}").get("brand", "Merchant"),
+                    images=json.loads(r["images_json"] or "[]") or ([r["image_url"]] if r["image_url"] else []),
+                    in_stock=bool(r["in_stock"]),
+                    variants=variants,
+                    attributes=json.loads(r["attributes_json"] or "{}"),
+                    source_url=r["source_url"]
+                ))
+            conn.close()
+            if db_products:
+                return db_products
+        except Exception as e:
+            print("AI Mode DB fetch notice:", e)
+
     db_paths = [
         os.path.join(os.getcwd(), "data", "aaas.db.json"),
         os.path.join(os.getcwd(), "..", "data", "aaas.db.json"),

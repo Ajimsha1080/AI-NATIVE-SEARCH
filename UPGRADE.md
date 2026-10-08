@@ -47,6 +47,38 @@ This document tracks all architectural, database, security, and operational impr
 
 ---
 
-## Rollback & Emergency Procedures (Phase 1)
-- If token validation errors occur due to custom secrets, ensure that `JWT_SECRET` and `SERVICE_JWT_SECRET` in `.env` are at least 32 characters long.
-- In local development mode (`APP_ENV=development`), the system falls back to default 32-byte development secrets automatically.
+## Phase 2: Database Upgrades
+
+### 1. Dual-Driver Enterprise Database Engine
+- **Engine Configuration**: Configured in [`python-backend/app/db/database.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/db/database.py).
+  - Production: `postgresql+asyncpg://...` with connection pooling (20 base connections, max overflow 10, connection recycling at 3600s).
+  - Development / CI: `sqlite+aiosqlite://...` with high-performance PRAGMAs (WAL mode, memory temp store, 64MB cache).
+- **Driver Packages**: Added `asyncpg`, `alembic`, and `pgvector` to requirements.
+
+### 2. Multi-Tenant Schema & High-Performance Indexes
+- Updated [`models.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/db/models.py) with explicit `workspace_id` foreign keys and tenant-level compound indexes:
+  - `idx_prod_tenant_id` on `(workspace_id, id)`
+  - `idx_prod_tenant_cat` on `(workspace_id, category)`
+  - `idx_prod_tenant_sku` on `(workspace_id, sku)`
+  - `idx_order_tenant_number` on `(workspace_id, order_number)`
+  - `idx_order_tenant_email` on `(workspace_id, customer_email)`
+  - `idx_chunk_tenant` on `(workspace_id, id)`
+
+### 3. Alembic Database Migrations
+- Initialized asynchronous Alembic migration framework in `python-backend/migrations/`.
+- Generated initial migration [`ced8fcdd6f45_initial_schema_with_tenancy_and_indexes.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/migrations/versions/ced8fcdd6f45_initial_schema_with_tenancy_and_indexes.py) covering all 21 models, indexes, and foreign keys.
+
+### 4. PostgreSQL Row-Level Security (RLS) Isolation
+- Added [`python-backend/scripts/tenant_isolation_rls.sql`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/scripts/tenant_isolation_rls.sql).
+- Enforces strict tenant separation on PostgreSQL using `current_setting('app.current_workspace_id', true)` across all tables.
+
+### 5. Flat-File Data Migration
+- Implemented [`scripts/migrate_json_to_db.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/scripts/migrate_json_to_db.py) and successfully seeded all 247 catalog products and orders into the relational database.
+- Transitioned `/api/v1/commerce/products` and `/api/v1/ai-mode/search` to query the relational database engine directly.
+
+---
+
+## Rollback & Emergency Procedures (Phase 1 & 2)
+- If PostgreSQL is unreachable in production, set `DATABASE_URL` to fallback SQLite `sqlite+aiosqlite:///./data/aaas_enterprise.db`.
+- Database schema revisions can be downgraded via `alembic downgrade base`.
+

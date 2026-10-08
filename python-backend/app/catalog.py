@@ -194,21 +194,56 @@ async def get_products(
     query: Optional[str] = None,
     in_stock: Optional[bool] = None
 ):
-    db = load_json_file(AAAS_DB_PATH)
-    products = db.get("commerce_products", [])
+    from .db.database import async_session_factory
+    from .db.models import ProductModel
+    from sqlalchemy import select
 
-    filtered = products
-    if workspace_id:
+    db_products = []
+    try:
+        async with async_session_factory() as session:
+            stmt = select(ProductModel)
+            if workspace_id:
+                stmt = stmt.where(ProductModel.workspace_id == workspace_id)
+            if category and category != "all":
+                stmt = stmt.where(ProductModel.category.ilike(category))
+            if in_stock is not None:
+                stmt = stmt.where(ProductModel.in_stock == in_stock)
+
+            res = await session.execute(stmt)
+            models = res.scalars().all()
+            for m in models:
+                db_products.append({
+                    "id": m.id,
+                    "workspace_id": m.workspace_id,
+                    "title": m.title,
+                    "description": m.description,
+                    "price": m.price,
+                    "compare_at_price": m.compare_at_price,
+                    "category": m.category,
+                    "sku": m.sku,
+                    "images": m.images_json or ([m.image_url] if m.image_url else []),
+                    "variants": m.variants_json or [],
+                    "tags": m.tags_json or [],
+                    "attributes": m.attributes_json or {},
+                    "in_stock": m.in_stock,
+                    "total_inventory": m.stock,
+                    "source_url": m.source_url
+                })
+    except Exception as e:
+        print("DB query fallback:", e)
+
+    if not db_products:
+        db = load_json_file(AAAS_DB_PATH)
+        db_products = db.get("commerce_products", [])
+
+    filtered = db_products
+    if workspace_id and not db_products:
         filtered = [p for p in filtered if p.get("workspace_id") == workspace_id]
-    if category and category != "all":
-        filtered = [p for p in filtered if p.get("category", "").lower() == category.lower()]
-    if in_stock is not None:
-        filtered = [p for p in filtered if p.get("in_stock") == in_stock]
     if query:
         q_lower = query.lower().strip()
         filtered = [p for p in filtered if q_lower in p.get("title", "").lower() or q_lower in p.get("description", "").lower()]
 
-    categories = sorted(list(set(p.get("category", "General") for p in products if p.get("category"))))
+    categories = sorted(list(set(p.get("category", "General") for p in db_products if p.get("category"))))
 
     return {
         "products": filtered,
