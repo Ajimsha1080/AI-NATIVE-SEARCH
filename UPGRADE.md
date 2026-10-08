@@ -162,6 +162,43 @@ This document tracks all architectural, database, security, and operational impr
 
 ---
 
-## Rollback & Emergency Procedures (Phase 1 through 5)
-- If a bad release occurs, point traffic to the previous healthy container image; workers are fully stateless and state is confined to PostgreSQL/Redis.
+## Phase 6: Compliance (Audit Logging & DPDP Act Data Privacy)
+
+### 1. Immutable Audit Logging
+- **Database Schema**: [`AuditLogModel`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/db/models.py) with compound indices (`workspace_id + timestamp` and `workspace_id + action`) tracking:
+  - `id`: Unique audit event ID (`aud_<hex>`).
+  - `workspace_id`: Tenant boundary identifier.
+  - `actor_id`: User, admin, or background worker actor.
+  - `action`: Specific data-mutation or security action (`PAYMENT_VERIFIED`, `CUSTOMER_DATA_EXPORT`, `CUSTOMER_DATA_ERASURE`, `CATALOG_UPDATE`).
+  - `resource_type` & `resource_id`: Targeted domain entity.
+  - `ip_address`: Inbound client IP.
+  - `details_json`: Contextual payload diffs or verification hashes.
+- **Audit Logging Utility**: [`record_audit_event`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/compliance.py) asynchronously records audit trails without blocking critical business request paths.
+- **Audit Query API**: `GET /api/v1/compliance/audit-logs` returns paginated, workspace-scoped audit logs with action filters and token authentication.
+
+### 2. DPDP Act 2023 & GDPR Data Portability & Erasure
+- **Data Export (`POST /api/v1/compliance/export`)**:
+  - Implements the statutory Right to Data Portability under India's Digital Personal Data Protection Act (DPDP Act 2023) and GDPR Article 20.
+  - Extracts customer orders, item details, conversation transcripts, and message history into a structured, machine-readable JSON package.
+  - Automatically emits a `CUSTOMER_DATA_EXPORT` audit event.
+- **Right to be Forgotten / Erasure (`POST /api/v1/compliance/erase`)**:
+  - Implements DPDP Act Section 12 (Right to Erasure) and GDPR Article 17.
+  - Sanitizes and redacts all PII across orders:
+    - Customer Name -> `"DPDP Redacted Subject"`
+    - Customer Email -> `"erased_<hash>@dpdp-purged.local"`
+    - Shipping Address -> `"[REDACTED PURSUANT TO DPDP ACT 2023]"`
+  - Anonymizes conversation transcripts and session metadata.
+  - Complies with statutory accounting and GST/tax requirements by preserving immutable monetary totals, payment statuses, and transaction order IDs.
+  - Automatically emits a `CUSTOMER_DATA_ERASURE` audit event.
+
+### 3. Frontend Typed SDK Client
+- Updated [`src/lib/api-client.ts`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/src/lib/api-client.ts) and [`python-backend/openapi.json`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/openapi.json) with typed compliance helper methods:
+  - `apiClient.getAuditLogs(workspaceId, limit)`
+  - `apiClient.exportCustomerData(customerEmail, workspaceId)`
+  - `apiClient.eraseCustomerData(customerEmail, workspaceId, reason)`
+
+---
+
+## Rollback & Emergency Procedures (All Phases)
+- If a bad release occurs, revert traffic to the previous healthy container image; workers are fully stateless and state is confined to PostgreSQL/Redis.
 - In local development mode (`APP_ENV=development`), the system falls back to default 32-byte development secrets automatically.

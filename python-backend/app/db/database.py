@@ -68,6 +68,22 @@ async def init_db():
     from .seed import seed_database_if_empty
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Migrate existing audit_logs columns if needed (SQLite compatibility)
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN resource_type VARCHAR(64)"))
+        except Exception:
+            pass
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN resource_id VARCHAR(128)"))
+        except Exception:
+            pass
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN ip_address VARCHAR(64)"))
+        except Exception:
+            pass
     
     # Run seeding
     async with async_session_factory() as session:

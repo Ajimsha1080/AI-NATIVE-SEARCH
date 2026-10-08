@@ -338,5 +338,13 @@ class AuditLogModel(Base):
     workspace_id = Column(String(64), nullable=False, default="ws_acme_corp", index=True)
     action = Column(String(100), nullable=False, index=True)
     actor_id = Column(String(64), nullable=False)
+    resource_type = Column(String(64), nullable=True)
+    resource_id = Column(String(128), nullable=True)
+    ip_address = Column(String(64), nullable=True)
     details_json = Column(JSON, default=dict)
     timestamp = Column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        Index("idx_audit_tenant_time", "workspace_id", "timestamp"),
+        Index("idx_audit_tenant_action", "workspace_id", "action"),
+    )

@@ -557,13 +557,31 @@ async def razorpay_verify(request: Request):
     order_res = await create_order(request)
     new_order = order_res.get("order")
 
+    # Record immutable audit log event
+    try:
+        from .compliance import record_audit_event
+        await record_audit_event(
+            workspace_id=body.get("workspace_id") or "ws_acme_corp",
+            action="PAYMENT_VERIFIED",
+            actor_id=body.get("customer_email") or "checkout_user",
+            resource_type="order",
+            resource_id=new_order.get("id") if new_order else rzp_order_id,
+            details={
+                "rzp_order_id": rzp_order_id,
+                "rzp_payment_id": rzp_payment_id,
+                "order_number": new_order.get("order_number") if new_order else None
+            }
+        )
+    except Exception:
+        pass
+
     return {
         "success": True,
         "verified": True,
         "payment_id": rzp_payment_id,
         "order_id": rzp_order_id,
         "order": new_order,
-        "message": f"Payment verified successfully via Razorpay. Order {new_order.get('order_number')} is confirmed."
+        "message": f"Payment verified successfully via Razorpay. Order {new_order.get('order_number') if new_order else ''} is confirmed."
     }
 
 @router.post("/webhooks/razorpay")

@@ -136,6 +136,25 @@ class ShopMateApiClient {
   public async logout(): Promise<any> {
     return this.fetch('/api/auth/logout', { method: 'POST' });
   }
+
+  // --- DPDP Act Compliance & Auditing ---
+  public async getAuditLogs(workspaceId: string = 'ws_acme_corp', limit: number = 50): Promise<any> {
+    return this.fetch(`/api/v1/compliance/audit-logs?workspace_id=${encodeURIComponent(workspaceId)}&limit=${limit}`);
+  }
+
+  public async exportCustomerData(customerEmail: string, workspaceId: string = 'ws_acme_corp', customerId?: string): Promise<any> {
+    return this.fetch('/api/v1/compliance/export', {
+      method: 'POST',
+      body: JSON.stringify({ customer_email: customerEmail, workspace_id: workspaceId, customer_id: customerId })
+    });
+  }
+
+  public async eraseCustomerData(customerEmail: string, workspaceId: string = 'ws_acme_corp', reason?: string): Promise<any> {
+    return this.fetch('/api/v1/compliance/erase', {
+      method: 'POST',
+      body: JSON.stringify({ customer_email: customerEmail, workspace_id: workspaceId, reason })
+    });
+  }
 }
 
 export const apiClient = new ShopMateApiClient();
