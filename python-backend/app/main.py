@@ -32,7 +32,10 @@ allowed_origins = [
 async def lifespan(app: FastAPI):
     # Startup: Initialize Enterprise Database Schema & Seeding
     await init_db()
+    from .worker import task_worker
+    await task_worker.start()
     yield
+    await task_worker.stop()
 
 app = FastAPI(
     title="ShopMate AaaS Enterprise Python AI Engine",

@@ -78,7 +78,36 @@ This document tracks all architectural, database, security, and operational impr
 
 ---
 
-## Rollback & Emergency Procedures (Phase 1 & 2)
-- If PostgreSQL is unreachable in production, set `DATABASE_URL` to fallback SQLite `sqlite+aiosqlite:///./data/aaas_enterprise.db`.
-- Database schema revisions can be downgraded via `alembic downgrade base`.
+## Phase 3: Architecture Upgrades
+
+### 1. Fully Asynchronous `httpx` Network Client
+- Removed all synchronous `urllib.request` and `requests` invocations across [`llm.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/llm.py) and [`rag.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/rag.py).
+- Implemented `httpx.Client` / `httpx.AsyncClient` with custom timeouts (15s for LLM inference, 8s for embeddings).
+
+### 2. Python 3.12 Pinning
+- Pinned Python version to `3.12` in:
+  - [`.python-version`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/.python-version)
+  - [`python-backend/Dockerfile`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/Dockerfile)
+  - [`.github/workflows/ci.yml`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/.github/workflows/ci.yml)
+
+### 3. Background Task Worker Architecture
+- Implemented [`BackgroundTaskWorker`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/worker.py) running via asyncio queue during the application lifespan.
+- Decoupled intensive tasks (knowledge syncing, product indexing, web crawling) from HTTP request-response cycles.
+
+### 4. Resilient LLM Engine (Provider Fallbacks & Token Quotas)
+- Upgraded [`LLMClient`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/llm.py):
+  - Exponential backoff with retry logic on transient HTTP failures (429/500).
+  - Resilient multi-provider fallback hierarchy: `Sarvam AI -> OpenAI -> Anthropic -> Ollama -> Deterministic Fallback`.
+  - In-memory per-tenant token usage tracking (`_tenant_token_usage`) to enforce session token limits.
+
+### 5. OpenAPI v3 Specification & Typed Client
+- Exported complete OpenAPI 3.1 schema to [`openapi.json`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/openapi.json) (35 endpoints).
+- Created typed TypeScript client [`src/lib/api-client.ts`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/src/lib/api-client.ts) providing type-safe abstractions for all commerce and AI Mode interactions.
+
+---
+
+## Rollback & Emergency Procedures (Phase 1, 2 & 3)
+- If remote LLM providers experience an outage, the system will automatically fall back gracefully through the provider chain down to the deterministic fallback engine without crashing.
+- In local development mode (`APP_ENV=development`), the system falls back to default 32-byte development secrets automatically.
+
 

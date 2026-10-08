@@ -13,28 +13,28 @@ from sqlalchemy.orm import selectinload
 from .db.database import async_session_factory
 from .db.models import KnowledgeSourceModel, KnowledgeDocModel, KnowledgeChunkModel
 
+import httpx
+
 def get_openai_embedding(text: str, api_key: str) -> Optional[List[float]]:
-    """Generates embedding using OpenAI text-embedding-3-small."""
+    """Generates embedding using OpenAI text-embedding-3-small via async/sync httpx."""
     try:
         url = "https://api.openai.com/v1/embeddings"
         payload = {
             "model": "text-embedding-3-small",
             "input": text[:8000]
         }
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}"
-            },
-            method="POST"
-        )
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data["data"][0]["embedding"]
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+        with httpx.Client(timeout=8.0) as client:
+            resp = client.post(url, json=payload, headers=headers)
+            if resp.is_success:
+                data = resp.json()
+                return data["data"][0]["embedding"]
     except Exception:
-        return None
+        pass
+    return None
 
 @lru_cache(maxsize=8192)
 def _cached_embedding_tuple(text: str, dim: int = 128) -> tuple:
