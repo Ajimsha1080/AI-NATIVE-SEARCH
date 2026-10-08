@@ -84,6 +84,27 @@ async def init_db():
             await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN ip_address VARCHAR(64)"))
         except Exception:
             pass
+        # Migrate users columns if needed (SQLite compatibility)
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+        except Exception:
+            pass
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0"))
+        except Exception:
+            pass
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0"))
+        except Exception:
+            pass
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN locked_until DATETIME"))
+        except Exception:
+            pass
 
     # Run seeding
     async with async_session_factory() as session:

@@ -5,6 +5,7 @@ from .models import (
     AgentPolicyModel,
     AgentVersionModel,
     AuditLogModel,
+    AuthTokenModel,
     CartModel,
     ConversationModel,
     ExecutionTraceModel,

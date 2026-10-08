@@ -50,6 +50,16 @@ class AppSettings(BaseSettings):
     RAZORPAY_ME_URL: str = Field(default="https://razorpay.me/@ajimshamuhammad2112")
     RAZORPAY_WEBHOOK_SECRET: str | None = Field(default="")
 
+    # Email Provider (SMTP / Resend)
+    SMTP_HOST: str | None = Field(default=None)
+    SMTP_PORT: int = Field(default=587)
+    SMTP_USER: str | None = Field(default=None)
+    SMTP_PASSWORD: str | None = Field(default=None)
+    SMTP_FROM_EMAIL: str = Field(default="noreply@shopmate.ai")
+    SMTP_USE_TLS: bool = Field(default=True)
+    RESEND_API_KEY: str | None = Field(default=None)
+    FRONTEND_URL: str = Field(default="http://localhost:3000")
+
     # CORS
     ALLOWED_ORIGINS: list[str] = Field(default_factory=lambda: [
         "http://localhost:3000",

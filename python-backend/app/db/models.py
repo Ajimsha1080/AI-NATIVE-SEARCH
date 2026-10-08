@@ -42,6 +42,10 @@ class UserModel(Base):
     id = Column(String(64), primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     name = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=True)
+    is_verified = Column(Boolean, default=False)
+    failed_login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime, nullable=True)
     role = Column(String(50), default="ADMIN")
     created_at = Column(DateTime, default=utcnow)
 
@@ -57,6 +61,22 @@ class WorkspaceMemberModel(Base):
 
     __table_args__ = (
         Index("idx_ws_member_tenant_user", "workspace_id", "user_id"),
+    )
+
+
+class AuthTokenModel(Base):
+    __tablename__ = "auth_tokens"
+
+    id = Column(String(64), primary_key=True, index=True)
+    user_id = Column(String(64), ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String(128), unique=True, index=True, nullable=False)
+    token_type = Column(String(32), nullable=False, index=True)  # VERIFY_EMAIL, RESET_PASSWORD
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        Index("idx_auth_token_lookup", "token_hash", "token_type"),
     )
 
 

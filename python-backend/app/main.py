@@ -59,9 +59,11 @@ app.add_middleware(EnterpriseRateLimiterMiddleware)
 app.add_middleware(StructuredLoggingMiddleware)
 
 from .ai_mode import router as ai_mode_router
+from .auth import router as auth_router
 from .catalog import router as catalog_router
 from .compliance import router as compliance_router
 
+app.include_router(auth_router)
 app.include_router(ai_mode_router)
 app.include_router(catalog_router)
 app.include_router(compliance_router)
