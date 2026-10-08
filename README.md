@@ -148,7 +148,7 @@ APP_ENV=development
 NODE_ENV=development
 
 # LLM Configuration (Sarvam AI / OpenAI / Anthropic / Ollama)
-SARVAM_API_KEY=sk_wgtub61j_eyGlu73IXjWpozVC6e4JG5N5
+SARVAM_API_KEY=your_sarvam_api_key_here
 LLM_PROVIDER=sarvam
 LLM_MODEL=sarvam-105b-conversations
 

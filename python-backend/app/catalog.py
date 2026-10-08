@@ -5,6 +5,7 @@ import uuid
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends, Header, Request, Query
 from pydantic import BaseModel, Field
+from .config import settings
 
 router = APIRouter(prefix="/api/v1", tags=["Backend Core"])
 
@@ -68,26 +69,103 @@ async def get_current_user():
         "workspaces": [ws]
     }
 
+from .auth import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    revoke_token,
+    verify_jwt_auth
+)
+
 @router.post("/auth/login")
 async def login(request: Request):
-    body = await request.json().catch(lambda: {}) if hasattr(request, "json") else {}
+    body = await request.json() if hasattr(request, "json") else {}
+    email = body.get("email", "").strip().lower()
+    
     db = load_json_file(AAAS_DB_PATH)
     users = db.get("users", [])
-    user = users[0] if users else {
-        "id": "usr_merchant_01",
-        "email": "merchant@shopmate.com",
-        "name": "Alex Vance (Store Owner)"
-    }
+    
+    matched_user = next((u for u in users if u.get("email", "").lower() == email), None)
+    if not matched_user and users:
+        matched_user = users[0]
+    elif not matched_user:
+        matched_user = {
+            "id": "usr_merchant_01",
+            "email": email or "merchant@shopmate.com",
+            "name": "Alex Vance (Store Owner)"
+        }
+
+    workspace_id = "ws_acme_corp"
+    user_id = matched_user.get("id")
+    role = "OWNER"
+    is_super_admin = bool(matched_user.get("is_super_admin", False))
+
+    access_token = create_access_token(
+        user_id=user_id,
+        email=matched_user.get("email"),
+        workspace_id=workspace_id,
+        role=role,
+        is_super_admin=is_super_admin
+    )
+    refresh_token = create_refresh_token(user_id=user_id, workspace_id=workspace_id)
+
     return {
         "success": True,
-        "token": "py_jwt_session_" + str(uuid.uuid4()),
-        "user": user,
-        "workspace_id": "ws_acme_corp"
+        "token": access_token,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "expires_in": 15 * 60,
+        "user": matched_user,
+        "workspace_id": workspace_id
+    }
+
+@router.post("/auth/refresh")
+async def refresh_access_token(request: Request):
+    body = await request.json()
+    refresh_tok = body.get("refresh_token")
+    if not refresh_tok:
+        raise HTTPException(status_code=400, detail="refresh_token is required")
+
+    decoded = decode_token(refresh_tok, expected_type="refresh")
+    user_id = decoded.get("userId")
+    workspace_id = decoded.get("workspace_id", "ws_acme_corp")
+
+    db = load_json_file(AAAS_DB_PATH)
+    users = db.get("users", [])
+    matched_user = next((u for u in users if u.get("id") == user_id), None)
+    email = matched_user.get("email", "merchant@shopmate.com") if matched_user else "merchant@shopmate.com"
+
+    new_access_token = create_access_token(
+        user_id=user_id,
+        email=email,
+        workspace_id=workspace_id
+    )
+
+    return {
+        "success": True,
+        "access_token": new_access_token,
+        "token": new_access_token,
+        "expires_in": 15 * 60
     }
 
 @router.post("/auth/logout")
-async def logout():
-    return {"success": True, "message": "Logged out successfully"}
+async def logout(request: Request):
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+        revoke_token(token)
+
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+
+    ref_tok = body.get("refresh_token")
+    if ref_tok:
+        revoke_token(ref_tok)
+
+    return {"success": True, "message": "Logged out successfully and token revoked"}
 
 @router.post("/auth/signup")
 async def signup(request: Request):
@@ -327,26 +405,43 @@ async def checkout_commit(request: Request):
 # RAZORPAY INTEGRATION (/api/v1/commerce/razorpay/...)
 # ============================================================================
 
+import hmac
+import hashlib
+
+# Idempotency key store
+_processed_idempotency_keys = {}
+
 @router.post("/commerce/razorpay/create-order")
 async def razorpay_create_order(request: Request):
     body = await request.json()
-    amount = float(body.get("amount", 999.0))
+    idempotency_key = request.headers.get("Idempotency-Key") or body.get("idempotency_key")
+    if idempotency_key and idempotency_key in _processed_idempotency_keys:
+        return _processed_idempotency_keys[idempotency_key]
+
     product_id = body.get("productId")
-    quantity = int(body.get("quantity", 1))
+    variant_id = body.get("variantId")
+    quantity = max(1, int(body.get("quantity", 1)))
 
-    if not amount and product_id:
-        db = load_json_file(AAAS_DB_PATH)
-        prods = db.get("commerce_products", [])
-        p = next((x for x in prods if x.get("id") == product_id), None)
-        if p:
-            amount = float(p.get("price", 999.0)) * quantity
+    db = load_json_file(AAAS_DB_PATH)
+    prods = db.get("commerce_products", [])
+    product = next((x for x in prods if x.get("id") == product_id), None)
 
-    amount_in_paise = int(amount * 100)
-    order_id = f"order_{uuid.uuid4().hex[:10]}"
-    merchant_handle = os.getenv("RAZORPAY_ME_URL", "https://razorpay.me/@ajimshamuhammad2112")
-    key_id = os.getenv("RAZORPAY_KEY_ID", "rzp_test_shopmate")
+    # Server-side authoritative price resolution (NEVER trust client-supplied amounts)
+    unit_price = float(product.get("price", 999.0)) if product else 999.0
+    if product and product.get("variants"):
+        for v in product["variants"]:
+            if v.get("id") == variant_id or v.get("attributes", {}).get("size") == variant_id:
+                unit_price = float(v.get("price", unit_price))
+                break
 
-    return {
+    server_calculated_amount = round(unit_price * quantity, 2)
+    amount_in_paise = int(server_calculated_amount * 100)
+
+    order_id = f"order_{uuid.uuid4().hex[:14]}"
+    merchant_handle = settings.RAZORPAY_ME_URL
+    key_id = settings.RAZORPAY_KEY_ID or "rzp_test_shopmate"
+
+    res_data = {
         "success": True,
         "order": {
             "id": order_id,
@@ -361,51 +456,98 @@ async def razorpay_create_order(request: Request):
             "notes": body.get("notes", {}),
             "created_at": int(time.time()),
             "key_id": key_id,
-            "is_mock": True
+            "is_mock": not bool(settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET)
         },
         "payment_url": merchant_handle,
         "key_id": key_id,
-        "is_sandbox": True
+        "is_sandbox": not bool(settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET)
     }
+
+    if idempotency_key:
+        _processed_idempotency_keys[idempotency_key] = res_data
+
+    return res_data
 
 @router.post("/commerce/razorpay/payment-link")
 async def razorpay_payment_link(request: Request):
     body = await request.json()
-    amount = float(body.get("amount", 999.0))
-    merchant_handle = os.getenv("RAZORPAY_ME_URL", "https://razorpay.me/@ajimshamuhammad2112")
+    product_id = body.get("productId")
+    quantity = max(1, int(body.get("quantity", 1)))
+
+    db = load_json_file(AAAS_DB_PATH)
+    prods = db.get("commerce_products", [])
+    product = next((x for x in prods if x.get("id") == product_id), None)
+    unit_price = float(product.get("price", 999.0)) if product else float(body.get("amount", 999.0))
+    final_amount = round(unit_price * quantity, 2)
+
+    merchant_handle = settings.RAZORPAY_ME_URL
     return {
         "success": True,
         "payment_link": {
             "id": f"plink_{uuid.uuid4().hex[:8]}",
             "short_url": merchant_handle,
-            "amount": int(amount * 100),
+            "amount": int(final_amount * 100),
             "currency": "INR",
             "status": "created",
             "description": body.get("description", "ShopMate AI Order Payment"),
             "customer": body.get("customer", {}),
             "created_at": int(time.time()),
-            "is_mock": True
+            "is_mock": not bool(settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET)
         },
-        "message": f"Razorpay payment link generated for ₹{int(amount)}"
+        "message": f"Razorpay payment link generated for ₹{int(final_amount)}"
     }
 
 @router.post("/commerce/razorpay/verify")
 async def razorpay_verify(request: Request):
     body = await request.json()
+    rzp_order_id = body.get("razorpay_order_id")
+    rzp_payment_id = body.get("razorpay_payment_id")
+    rzp_signature = body.get("razorpay_signature")
+
+    if not rzp_order_id or not rzp_payment_id:
+        raise HTTPException(status_code=400, detail="Missing razorpay_order_id or razorpay_payment_id")
+
+    # Cryptographic verification if secret configured
+    secret = settings.RAZORPAY_KEY_SECRET
+    if secret and rzp_signature:
+        generated_sig = hmac.new(
+            secret.encode("utf-8"),
+            f"{rzp_order_id}|{rzp_payment_id}".encode("utf-8"),
+            hashlib.sha256
+        ).hexdigest()
+
+        if not hmac.compare_digest(generated_sig, rzp_signature):
+            raise HTTPException(status_code=400, detail="Invalid payment signature. Verification failed.")
+
     order_res = await create_order(request)
     new_order = order_res.get("order")
+
     return {
         "success": True,
         "verified": True,
-        "payment_id": body.get("razorpay_payment_id", f"pay_{uuid.uuid4().hex[:10]}"),
-        "order_id": body.get("razorpay_order_id", f"order_{uuid.uuid4().hex[:10]}"),
+        "payment_id": rzp_payment_id,
+        "order_id": rzp_order_id,
         "order": new_order,
         "message": f"Payment verified successfully via Razorpay. Order {new_order.get('order_number')} is confirmed."
     }
 
 @router.post("/webhooks/razorpay")
 async def razorpay_webhook(request: Request):
-    return {"status": "ok", "message": "Webhook received"}
+    raw_body = await request.body()
+    webhook_signature = request.headers.get("X-Razorpay-Signature")
+
+    webhook_secret = settings.RAZORPAY_WEBHOOK_SECRET or settings.RAZORPAY_KEY_SECRET
+    if webhook_secret and webhook_signature:
+        expected_sig = hmac.new(
+            webhook_secret.encode("utf-8"),
+            raw_body,
+            hashlib.sha256
+        ).hexdigest()
+
+        if not hmac.compare_digest(expected_sig, webhook_signature):
+            raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    return {"status": "ok", "message": "Webhook verified and processed successfully"}
 
 # ============================================================================
 # COMMERCE SYNC (/api/v1/commerce/sync)

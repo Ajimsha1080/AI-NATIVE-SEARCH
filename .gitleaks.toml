@@ -1,0 +1,23 @@
+title = "ShopMate Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for documentation and templates"
+paths = [
+    '''^\.env\.example$''',
+    '''^tests/.*''',
+    '''^python-backend/tests/.*''',
+    '''^scripts/.*''',
+    '''^docs/.*''',
+    '''^README\.md$''',
+    '''^UPGRADE\.md$'''
+]
+regexes = [
+    '''(?i)placeholder''',
+    '''(?i)YOUR_KEY_HERE''',
+    '''(?i)example''',
+    '''(?i)development_only''',
+    '''super_secure_ci_test_.*'''
+]

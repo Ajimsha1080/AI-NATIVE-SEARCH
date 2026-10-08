@@ -13,7 +13,7 @@ An API key for Sarvam AI (`REDACTED_SECRET`) was committed to the repository in 
 
 ### 2. Root Cause Analysis
 1. **Missing `.gitignore` Rule**: `.gitignore` contained only `.env*.local`, omitting the bare `.env` file.
-2. **Insecure Code Fallback**: `src/lib/agent-runtime/index.ts` contained `process.env.SARVAM_API_KEY || 'sk_wgtub...'`, which bypassed environment variable isolation.
+2. **Insecure Code Fallback**: Legacy code previously contained hardcoded key fallbacks, which bypassed environment variable isolation.
 
 ### 3. Immediate Remediation Actions Taken
 - **Revocation & Invalidation**: The exposed API key has been revoked and marked as compromised. All developers/deployments must generate a new API key from the [Sarvam AI Console](https://dashboard.sarvam.ai).

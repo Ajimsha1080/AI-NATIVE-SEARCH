@@ -49,6 +49,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from .middleware.rate_limiter import EnterpriseRateLimiterMiddleware
+app.add_middleware(EnterpriseRateLimiterMiddleware)
+
 from .ai_mode import router as ai_mode_router
 from .catalog import router as catalog_router
 
