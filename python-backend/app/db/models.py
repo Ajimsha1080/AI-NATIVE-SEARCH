@@ -296,6 +296,7 @@ class DeploymentModel(Base):
     theme_json = Column(JSON, default=dict)
     branding_json = Column(JSON, default=dict)
     embed_code = Column(Text, nullable=True)
+    public_key = Column(String(128), unique=True, index=True, nullable=True)
     total_conversations = Column(Integer, default=0)
     total_product_clicks = Column(Integer, default=0)
     created_at = Column(DateTime, default=utcnow)
@@ -407,8 +408,13 @@ class IdempotencyKeyModel(Base):
     __tablename__ = "idempotency_keys"
 
     id = Column(String(128), primary_key=True, index=True)
+    workspace_id = Column(String(64), nullable=False, index=True)
     response_json = Column(JSON, nullable=False)
     created_at = Column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        Index("idx_idempotency_tenant_id", "workspace_id", "id"),
+    )
 
 
 class SyncJobModel(Base):

@@ -6,10 +6,20 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import Response
 from sqlalchemy import func, select
 
+from .auth import (
+    AuthContext,
+    get_auth_context,
+    require_admin_role,
+    require_editor_role,
+    require_viewer_role,
+    validate_workspace_access,
+    StorefrontContext,
+    resolve_storefront_context,
+)
 from .compliance import record_audit_event
 from .config import settings
 from .connectors import execute_sync_job
@@ -45,12 +55,13 @@ async def get_products(
     category: str | None = None,
     query: str | None = None,
     in_stock: bool | None = None,
+    auth: AuthContext = Depends(require_viewer_role),
 ):
-    """Retrieve products from PostgreSQL/SQLite database with optional filters."""
+    """Retrieve products from PostgreSQL database strictly filtered by tenant workspace."""
+    target_workspace = validate_workspace_access(auth, workspace_id)
+
     async with async_session_factory() as session:
-        stmt = select(ProductModel)
-        if workspace_id:
-            stmt = stmt.where(ProductModel.workspace_id == workspace_id)
+        stmt = select(ProductModel).where(ProductModel.workspace_id == target_workspace)
         if category and category.lower() != "all":
             stmt = stmt.where(ProductModel.category.ilike(f"%{category}%"))
         if in_stock is not None:
@@ -96,16 +107,17 @@ async def get_products(
 
 
 @router.post("/commerce/products")
-async def create_product(request: Request):
-    """Create a new product in the database. Requires title, valid price, and workspace_id."""
+async def create_product(
+    request: Request,
+    auth: AuthContext = Depends(require_admin_role)
+):
+    """Create a new product in the database. Requires title, valid price, and verified workspace."""
     body = await request.json()
     title = body.get("title")
-    workspace_id = body.get("workspace_id")
+    target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
 
     if not title or not title.strip():
         raise HTTPException(status_code=400, detail="Product title is required")
-    if not workspace_id or not workspace_id.strip():
-        raise HTTPException(status_code=400, detail="workspace_id is required")
 
     raw_price = body.get("price")
     if raw_price is None:
@@ -134,7 +146,7 @@ async def create_product(request: Request):
 
     new_prod = ProductModel(
         id=prod_id,
-        workspace_id=workspace_id.strip(),
+        workspace_id=target_workspace,
         title=title.strip(),
         description=body.get("description", ""),
         price=price_val,
@@ -180,15 +192,23 @@ async def create_product(request: Request):
 
 @router.put("/commerce/products")
 @router.patch("/commerce/products")
-async def update_product(request: Request):
-    """Update existing product record."""
+async def update_product(
+    request: Request,
+    auth: AuthContext = Depends(require_editor_role)
+):
+    """Update existing product record strictly scoped to tenant."""
     body = await request.json()
     prod_id = body.get("id")
     if not prod_id:
         raise HTTPException(status_code=400, detail="Product ID is required")
 
+    target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
+
     async with async_session_factory() as session:
-        stmt = select(ProductModel).where(ProductModel.id == prod_id)
+        stmt = select(ProductModel).where(
+            ProductModel.id == prod_id,
+            ProductModel.workspace_id == target_workspace
+        )
         res = await session.execute(stmt)
         prod = res.scalars().first()
         if not prod:
@@ -244,15 +264,22 @@ async def update_product(request: Request):
 
 
 @router.delete("/commerce/products")
-async def delete_product(id: str | None = Query(None), workspace_id: str | None = Query(None)):
-    """Delete a product from the database."""
+async def delete_product(
+    id: str | None = Query(None),
+    workspace_id: str | None = Query(None),
+    auth: AuthContext = Depends(require_admin_role)
+):
+    """Delete a product from the database strictly scoped to tenant."""
     if not id:
         raise HTTPException(status_code=400, detail="Product ID is required")
 
+    target_workspace = validate_workspace_access(auth, workspace_id)
+
     async with async_session_factory() as session:
-        stmt = select(ProductModel).where(ProductModel.id == id)
-        if workspace_id:
-            stmt = stmt.where(ProductModel.workspace_id == workspace_id)
+        stmt = select(ProductModel).where(
+            ProductModel.id == id,
+            ProductModel.workspace_id == target_workspace
+        )
         res = await session.execute(stmt)
         prod = res.scalars().first()
         if not prod:
@@ -270,15 +297,28 @@ async def delete_product(id: str | None = Query(None), workspace_id: str | None 
 
 @router.get("/commerce/orders")
 async def get_orders(
+    request: Request,
     order_number: str | None = None,
     customer_email: str | None = None,
     workspace_id: str | None = None,
+    authorization: str | None = Header(None),
+    x_deployment_key: str | None = Header(None, alias="X-Deployment-Key"),
 ):
-    """Retrieve orders from the database. Strictly validates email match when order_number is queried."""
+    """Retrieve orders from the database.
+    Requires authenticated merchant role or a valid storefront deployment key for customer tracking.
+    """
+    target_workspace = None
+    if authorization or "access_token" in request.cookies:
+        auth = await get_auth_context(request, authorization)
+        target_workspace = validate_workspace_access(auth, workspace_id)
+    elif x_deployment_key or request.query_params.get("deployment_key") or request.query_params.get("deployment_id"):
+        storefront = await resolve_storefront_context(request, x_deployment_key, authorization)
+        target_workspace = storefront.workspace_id
+    else:
+        raise HTTPException(status_code=401, detail="Authentication required to view orders")
+
     async with async_session_factory() as session:
-        stmt = select(OrderModel)
-        if workspace_id:
-            stmt = stmt.where(OrderModel.workspace_id == workspace_id)
+        stmt = select(OrderModel).where(OrderModel.workspace_id == target_workspace)
 
         if order_number:
             clean_num = order_number.strip()
@@ -342,12 +382,15 @@ async def get_orders(
 
 
 @router.post("/commerce/orders")
-async def create_order(request: Request):
-    """Create an order. Looks up real product in the database. Returns HTTP 404 on unknown products."""
+async def create_order(
+    request: Request,
+    authorization: str | None = Header(None),
+    x_deployment_key: str | None = Header(None, alias="X-Deployment-Key")
+):
+    """Create an order strictly within tenant workspace (via authenticated session or storefront key)."""
     body = await request.json()
     product_id = body.get("productId") or body.get("product_id")
     variant_id = body.get("variantId") or body.get("variant_id")
-    workspace_id = body.get("workspace_id")
     quantity = max(1, int(body.get("quantity", 1)))
     customer_email = body.get("customerEmail") or body.get("customer_email")
 
@@ -356,11 +399,22 @@ async def create_order(request: Request):
     if not customer_email:
         raise HTTPException(status_code=400, detail="customerEmail is required")
 
+    target_ws = None
+    if authorization or "access_token" in request.cookies:
+        auth = await get_auth_context(request, authorization)
+        target_ws = validate_workspace_access(auth, body.get("workspace_id"))
+    elif x_deployment_key or request.query_params.get("deployment_key") or request.query_params.get("deployment_id"):
+        storefront = await resolve_storefront_context(request, x_deployment_key, authorization)
+        target_ws = storefront.workspace_id
+    else:
+        raise HTTPException(status_code=401, detail="Authentication or X-Deployment-Key required to create order")
+
     async with async_session_factory() as session:
-        # Server-side authoritative product lookup
-        stmt = select(ProductModel).where(ProductModel.id == product_id)
-        if workspace_id:
-            stmt = stmt.where(ProductModel.workspace_id == workspace_id)
+        # Server-side authoritative product lookup scoped to tenant
+        stmt = select(ProductModel).where(
+            ProductModel.id == product_id,
+            ProductModel.workspace_id == target_ws
+        )
         res = await session.execute(stmt)
         product = res.scalars().first()
 
@@ -376,7 +430,6 @@ async def create_order(request: Request):
                     break
 
         total_amount = round(unit_price * quantity, 2)
-        target_ws = product.workspace_id
         order_number = f"#ORD-{int(time.time() * 1000) % 90000 + 10000}"
         order_id = f"ord_{uuid.uuid4().hex[:12]}"
         payment_method = body.get("paymentMethod", "UPI")
@@ -430,8 +483,12 @@ async def create_order(request: Request):
 
 
 @router.post("/commerce/checkout/commit")
-async def checkout_commit(request: Request):
-    return await create_order(request)
+async def checkout_commit(
+    request: Request,
+    authorization: str | None = Header(None),
+    x_deployment_key: str | None = Header(None, alias="X-Deployment-Key")
+):
+    return await create_order(request, authorization, x_deployment_key)
 
 
 # ============================================================================
@@ -453,13 +510,30 @@ def _validate_razorpay_configuration():
 
 
 @router.post("/commerce/razorpay/create-order")
-async def razorpay_create_order(request: Request):
+async def razorpay_create_order(
+    request: Request,
+    authorization: str | None = Header(None),
+    x_deployment_key: str | None = Header(None, alias="X-Deployment-Key")
+):
     """Creates a real Razorpay order with authoritative pricing from ProductModel."""
     body = await request.json()
+    target_ws = None
+    if authorization or "access_token" in request.cookies:
+        auth = await get_auth_context(request, authorization)
+        target_ws = validate_workspace_access(auth, body.get("workspace_id"))
+    elif x_deployment_key or request.query_params.get("deployment_key") or request.query_params.get("deployment_id"):
+        storefront = await resolve_storefront_context(request, x_deployment_key, authorization)
+        target_ws = storefront.workspace_id
+    else:
+        raise HTTPException(status_code=401, detail="Authentication or X-Deployment-Key required")
+
     idempotency_key = request.headers.get("Idempotency-Key") or body.get("idempotency_key")
     if idempotency_key:
         async with async_session_factory() as session:
-            ik_stmt = select(IdempotencyKeyModel).where(IdempotencyKeyModel.id == idempotency_key)
+            ik_stmt = select(IdempotencyKeyModel).where(
+                IdempotencyKeyModel.id == idempotency_key,
+                IdempotencyKeyModel.workspace_id == target_ws
+            )
             existing_key = (await session.execute(ik_stmt)).scalars().first()
             if existing_key:
                 return existing_key.response_json
@@ -472,7 +546,10 @@ async def razorpay_create_order(request: Request):
         raise HTTPException(status_code=400, detail="productId is required")
 
     async with async_session_factory() as session:
-        stmt = select(ProductModel).where(ProductModel.id == product_id)
+        stmt = select(ProductModel).where(
+            ProductModel.id == product_id,
+            ProductModel.workspace_id == target_ws
+        )
         res = await session.execute(stmt)
         product = res.scalars().first()
 
@@ -527,16 +604,30 @@ async def razorpay_create_order(request: Request):
 
     if idempotency_key:
         async with async_session_factory() as session:
-            session.add(IdempotencyKeyModel(id=idempotency_key, response_json=res_data))
+            session.add(IdempotencyKeyModel(id=idempotency_key, workspace_id=target_ws, response_json=res_data))
             await session.commit()
 
     return res_data
 
 
 @router.post("/commerce/razorpay/payment-link")
-async def razorpay_payment_link(request: Request):
+async def razorpay_payment_link(
+    request: Request,
+    authorization: str | None = Header(None),
+    x_deployment_key: str | None = Header(None, alias="X-Deployment-Key")
+):
     """Generates payment link through real Razorpay API with authoritative pricing."""
     body = await request.json()
+    target_ws = None
+    if authorization or "access_token" in request.cookies:
+        auth = await get_auth_context(request, authorization)
+        target_ws = validate_workspace_access(auth, body.get("workspace_id"))
+    elif x_deployment_key or request.query_params.get("deployment_key") or request.query_params.get("deployment_id"):
+        storefront = await resolve_storefront_context(request, x_deployment_key, authorization)
+        target_ws = storefront.workspace_id
+    else:
+        raise HTTPException(status_code=401, detail="Authentication or X-Deployment-Key required")
+
     product_id = body.get("productId") or body.get("product_id")
     quantity = max(1, int(body.get("quantity", 1)))
 
@@ -544,7 +635,10 @@ async def razorpay_payment_link(request: Request):
         raise HTTPException(status_code=400, detail="productId is required")
 
     async with async_session_factory() as session:
-        stmt = select(ProductModel).where(ProductModel.id == product_id)
+        stmt = select(ProductModel).where(
+            ProductModel.id == product_id,
+            ProductModel.workspace_id == target_ws
+        )
         res = await session.execute(stmt)
         product = res.scalars().first()
 
@@ -589,7 +683,11 @@ async def razorpay_payment_link(request: Request):
 
 
 @router.post("/commerce/razorpay/verify")
-async def razorpay_verify(request: Request):
+async def razorpay_verify(
+    request: Request,
+    authorization: str | None = Header(None),
+    x_deployment_key: str | None = Header(None, alias="X-Deployment-Key")
+):
     """Verifies HMAC SHA-256 signature and records audit log. Rejects invalid signatures."""
     body = await request.json()
     rzp_order_id = body.get("razorpay_order_id")
@@ -616,20 +714,21 @@ async def razorpay_verify(request: Request):
     elif settings.APP_ENV.lower() == "production":
         raise HTTPException(status_code=400, detail="Missing payment signature")
 
-    order_res = await create_order(request)
+    order_res = await create_order(request, authorization, x_deployment_key)
     new_order = order_res.get("order")
+    order_ws = new_order.get("workspace_id") if new_order else "unknown"
 
     await record_audit_event(
-        workspace_id=body.get("workspace_id") or (new_order.get("workspace_id") if new_order else "unknown"),
-        action="PAYMENT_VERIFIED",
-        actor_id=body.get("customer_email") or "checkout_user",
-        resource_type="order",
-        resource_id=new_order.get("id") if new_order else rzp_order_id,
+        workspace_id=order_ws,
+        action="RAZORPAY_PAYMENT_CAPTURED",
+        actor_id=body.get("customerEmail") or "payment_customer",
+        resource_type="payment",
+        resource_id=rzp_payment_id,
         details={
-            "rzp_order_id": rzp_order_id,
-            "rzp_payment_id": rzp_payment_id,
+            "razorpay_order_id": rzp_order_id,
+            "razorpay_payment_id": rzp_payment_id,
             "order_number": new_order.get("order_number") if new_order else None,
-        },
+        }
     )
 
     return {
@@ -693,29 +792,27 @@ async def razorpay_webhook(request: Request):
 # ============================================================================
 
 @router.get("/commerce/sync")
-async def get_sync_status(workspace_id: str | None = None):
+async def get_sync_status(
+    workspace_id: str | None = None,
+    auth: AuthContext = Depends(require_viewer_role)
+):
     """Real status data: counts directly from the database and real connector status.
     Returns 'not configured' for connectors that are not set up.
     """
-    async with async_session_factory() as session:
-        # 1. Real database counts
-        prod_q = select(func.count(ProductModel.id))
-        order_q = select(func.count(OrderModel.id))
-        chunk_q = select(func.count(KnowledgeChunkModel.id))
+    target_workspace = validate_workspace_access(auth, workspace_id)
 
-        if workspace_id:
-            prod_q = prod_q.where(ProductModel.workspace_id == workspace_id)
-            order_q = order_q.where(OrderModel.workspace_id == workspace_id)
-            chunk_q = chunk_q.where(KnowledgeChunkModel.workspace_id == workspace_id)
+    async with async_session_factory() as session:
+        # 1. Real database counts strictly scoped to tenant
+        prod_q = select(func.count(ProductModel.id)).where(ProductModel.workspace_id == target_workspace)
+        order_q = select(func.count(OrderModel.id)).where(OrderModel.workspace_id == target_workspace)
+        chunk_q = select(func.count(KnowledgeChunkModel.id)).where(KnowledgeChunkModel.workspace_id == target_workspace)
 
         prods_count = (await session.execute(prod_q)).scalar() or 0
         orders_count = (await session.execute(order_q)).scalar() or 0
         chunks_count = (await session.execute(chunk_q)).scalar() or 0
 
-        # 2. Query configured connectors
-        int_q = select(IntegrationModel)
-        if workspace_id:
-            int_q = int_q.where(IntegrationModel.workspace_id == workspace_id)
+        # 2. Query configured connectors for tenant
+        int_q = select(IntegrationModel).where(IntegrationModel.workspace_id == target_workspace)
         integrations = (await session.execute(int_q)).scalars().all()
         configured_map = {i.provider.lower(): i.status for i in integrations}
 
@@ -753,7 +850,10 @@ async def get_sync_status(workspace_id: str | None = None):
 
 
 @router.post("/commerce/sync")
-async def run_sync(request: Request):
+async def run_sync(
+    request: Request,
+    auth: AuthContext = Depends(require_admin_role)
+):
     """Executes catalog synchronization from real database and records execution time."""
     start = time.time()
     body = {}
@@ -761,14 +861,11 @@ async def run_sync(request: Request):
         body = await request.json()
     except Exception:
         pass
-    workspace_id = body.get("workspace_id")
+    target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
 
     async with async_session_factory() as session:
-        prod_q = select(func.count(ProductModel.id))
-        order_q = select(func.count(OrderModel.id))
-        if workspace_id:
-            prod_q = prod_q.where(ProductModel.workspace_id == workspace_id)
-            order_q = order_q.where(OrderModel.workspace_id == workspace_id)
+        prod_q = select(func.count(ProductModel.id)).where(ProductModel.workspace_id == target_workspace)
+        order_q = select(func.count(OrderModel.id)).where(OrderModel.workspace_id == target_workspace)
         prods_count = (await session.execute(prod_q)).scalar() or 0
         orders_count = (await session.execute(order_q)).scalar() or 0
 
@@ -787,19 +884,23 @@ async def run_sync(request: Request):
 
 
 @router.post("/commerce/sync/trigger")
-async def trigger_catalog_sync(request: Request, background_tasks: BackgroundTasks):
+async def trigger_catalog_sync(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    auth: AuthContext = Depends(require_admin_role)
+):
     """Triggers background catalog sync for a real connector and tracks job state."""
     body = await request.json()
-    workspace_id = body.get("workspace_id")
+    target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
     connector_type = body.get("connector_type")
 
-    if not workspace_id or not connector_type:
-        raise HTTPException(status_code=400, detail="workspace_id and connector_type are required")
+    if not connector_type:
+        raise HTTPException(status_code=400, detail="connector_type is required")
 
     job_id = f"job_{uuid.uuid4().hex[:12]}"
     job = SyncJobModel(
         id=job_id,
-        workspace_id=workspace_id,
+        workspace_id=target_workspace,
         connector_type=connector_type.lower(),
         status="PENDING",
     )
@@ -807,7 +908,7 @@ async def trigger_catalog_sync(request: Request, background_tasks: BackgroundTas
         session.add(job)
         await session.commit()
 
-    background_tasks.add_task(execute_sync_job, job_id, workspace_id, connector_type.lower())
+    background_tasks.add_task(execute_sync_job, job_id, target_workspace, connector_type.lower())
 
     return {
         "success": True,
@@ -818,10 +919,16 @@ async def trigger_catalog_sync(request: Request, background_tasks: BackgroundTas
 
 
 @router.get("/commerce/sync/jobs/{job_id}")
-async def get_sync_job_status(job_id: str):
-    """Fetches real-time status of a background catalog sync job."""
+async def get_sync_job_status(
+    job_id: str,
+    auth: AuthContext = Depends(require_viewer_role)
+):
+    """Fetches real-time status of a background catalog sync job strictly scoped to tenant."""
     async with async_session_factory() as session:
-        stmt = select(SyncJobModel).where(SyncJobModel.id == job_id)
+        stmt = select(SyncJobModel).where(
+            SyncJobModel.id == job_id,
+            SyncJobModel.workspace_id == auth.workspace_id
+        )
         job = (await session.execute(stmt)).scalars().first()
         if not job:
             raise HTTPException(status_code=404, detail="Sync job not found")
@@ -841,26 +948,27 @@ async def get_sync_job_status(job_id: str):
         }
 
 
-
 # ============================================================================
 # AI MODE CONFIG, KNOWLEDGE, DEPLOYMENTS & WIDGET (SQLAlchemy Backed)
 # ============================================================================
 
 @router.get("/ai-mode/config")
-async def get_ai_mode_config(workspace_id: str | None = None):
-    """Retrieves AI mode configuration from the database."""
-    if not workspace_id:
-        raise HTTPException(status_code=400, detail="workspace_id parameter is required")
+async def get_ai_mode_config(
+    workspace_id: str | None = None,
+    auth: AuthContext = Depends(require_viewer_role)
+):
+    """Retrieves AI mode configuration strictly for authorized tenant."""
+    target_workspace = validate_workspace_access(auth, workspace_id)
 
     async with async_session_factory() as session:
-        stmt = select(AIModeConfigModel).where(AIModeConfigModel.workspace_id == workspace_id)
+        stmt = select(AIModeConfigModel).where(AIModeConfigModel.workspace_id == target_workspace)
         res = await session.execute(stmt)
         cfg = res.scalars().first()
 
         if not cfg:
             cfg = AIModeConfigModel(
                 id=f"cfg_{uuid.uuid4().hex[:12]}",
-                workspace_id=workspace_id,
+                workspace_id=target_workspace,
                 enabled=True,
                 model_provider=settings.LLM_PROVIDER,
                 model_name=settings.LLM_MODEL,
@@ -898,22 +1006,24 @@ async def get_ai_mode_config(workspace_id: str | None = None):
 
 
 @router.patch("/ai-mode/config")
-async def update_ai_mode_config(request: Request):
-    """Updates AI mode configuration in the database."""
+@router.post("/ai-mode/config")
+async def update_ai_mode_config(
+    request: Request,
+    auth: AuthContext = Depends(require_admin_role)
+):
+    """Updates AI mode configuration strictly scoped to tenant."""
     body = await request.json()
-    ws_id = body.get("workspace_id")
-    if not ws_id:
-        raise HTTPException(status_code=400, detail="workspace_id is required")
+    target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
 
     async with async_session_factory() as session:
-        stmt = select(AIModeConfigModel).where(AIModeConfigModel.workspace_id == ws_id)
+        stmt = select(AIModeConfigModel).where(AIModeConfigModel.workspace_id == target_workspace)
         res = await session.execute(stmt)
         cfg = res.scalars().first()
 
         if not cfg:
             cfg = AIModeConfigModel(
                 id=f"cfg_{uuid.uuid4().hex[:12]}",
-                workspace_id=ws_id,
+                workspace_id=target_workspace,
             )
             session.add(cfg)
 
@@ -948,12 +1058,15 @@ async def update_ai_mode_config(request: Request):
 
 
 @router.get("/ai-mode/knowledge")
-async def get_ai_mode_knowledge(workspace_id: str | None = None):
-    """Retrieves knowledge sources from the database."""
+async def get_ai_mode_knowledge(
+    workspace_id: str | None = None,
+    auth: AuthContext = Depends(require_viewer_role)
+):
+    """Retrieves knowledge sources strictly for tenant workspace."""
+    target_workspace = validate_workspace_access(auth, workspace_id)
+
     async with async_session_factory() as session:
-        stmt = select(KnowledgeSourceModel)
-        if workspace_id:
-            stmt = stmt.where(KnowledgeSourceModel.workspace_id == workspace_id)
+        stmt = select(KnowledgeSourceModel).where(KnowledgeSourceModel.workspace_id == target_workspace)
         res = await session.execute(stmt)
         sources = res.scalars().all()
 
@@ -973,12 +1086,13 @@ async def get_ai_mode_knowledge(workspace_id: str | None = None):
 
 
 @router.post("/ai-mode/knowledge")
-async def add_ai_mode_knowledge(request: Request):
-    """Creates a real knowledge source and document in the database."""
+async def add_ai_mode_knowledge(
+    request: Request,
+    auth: AuthContext = Depends(require_admin_role)
+):
+    """Creates a real knowledge source and document strictly scoped to tenant."""
     body = await request.json()
-    ws_id = body.get("workspace_id")
-    if not ws_id:
-        raise HTTPException(status_code=400, detail="workspace_id is required")
+    target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
 
     name = body.get("name") or body.get("url") or "Knowledge Document"
     source_id = f"ks_{uuid.uuid4().hex[:12]}"
@@ -987,7 +1101,7 @@ async def add_ai_mode_knowledge(request: Request):
     async with async_session_factory() as session:
         new_source = KnowledgeSourceModel(
             id=source_id,
-            workspace_id=ws_id,
+            workspace_id=target_workspace,
             name=name,
             type=body.get("type", "DOCUMENTS"),
         )
@@ -1007,7 +1121,7 @@ async def add_ai_mode_knowledge(request: Request):
             chunk = KnowledgeChunkModel(
                 id=f"chk_{uuid.uuid4().hex[:12]}",
                 doc_id=doc_id,
-                workspace_id=ws_id,
+                workspace_id=target_workspace,
                 chunk_index=0,
                 text=content[:2000],
                 embedding=generate_embedding(content[:2000]),
@@ -1020,7 +1134,7 @@ async def add_ai_mode_knowledge(request: Request):
         "success": True,
         "source": {
             "id": source_id,
-            "workspace_id": ws_id,
+            "workspace_id": target_workspace,
             "name": name,
             "type": body.get("type", "DOCUMENTS"),
         },
@@ -1028,15 +1142,23 @@ async def add_ai_mode_knowledge(request: Request):
 
 
 @router.post("/ai-mode/knowledge/sync")
-async def sync_ai_mode_knowledge():
+async def sync_ai_mode_knowledge(
+    auth: AuthContext = Depends(require_admin_role)
+):
     return {"success": True, "message": "Knowledge sync completed"}
 
 
 @router.delete("/ai-mode/knowledge/{source_id}")
-async def delete_ai_mode_knowledge(source_id: str):
-    """Deletes a knowledge source and associated documents/chunks."""
+async def delete_ai_mode_knowledge(
+    source_id: str,
+    auth: AuthContext = Depends(require_admin_role)
+):
+    """Deletes a knowledge source strictly scoped to tenant."""
     async with async_session_factory() as session:
-        stmt = select(KnowledgeSourceModel).where(KnowledgeSourceModel.id == source_id)
+        stmt = select(KnowledgeSourceModel).where(
+            KnowledgeSourceModel.id == source_id,
+            KnowledgeSourceModel.workspace_id == auth.workspace_id
+        )
         res = await session.execute(stmt)
         source = res.scalars().first()
         if not source:
@@ -1049,12 +1171,15 @@ async def delete_ai_mode_knowledge(source_id: str):
 
 
 @router.get("/ai-mode/deployments")
-async def get_ai_mode_deployments(workspace_id: str | None = None):
-    """Retrieves storefront deployments from the database."""
+async def get_ai_mode_deployments(
+    workspace_id: str | None = None,
+    auth: AuthContext = Depends(require_viewer_role)
+):
+    """Retrieves storefront deployments strictly for tenant."""
+    target_workspace = validate_workspace_access(auth, workspace_id)
+
     async with async_session_factory() as session:
-        stmt = select(DeploymentModel)
-        if workspace_id:
-            stmt = stmt.where(DeploymentModel.workspace_id == workspace_id)
+        stmt = select(DeploymentModel).where(DeploymentModel.workspace_id == target_workspace)
         res = await session.execute(stmt)
         deps = res.scalars().all()
 
@@ -1067,6 +1192,7 @@ async def get_ai_mode_deployments(workspace_id: str | None = None):
                     "name": d.name,
                     "status": d.status,
                     "allowed_domains": d.allowed_domains or ["*"],
+                    "public_key": d.public_key,
                     "theme": d.theme_json or {},
                     "branding": d.branding_json or {},
                     "embed_code": d.embed_code or f"<script src=\"/api/v1/ai-mode/widget/{d.id}/script.js\" async defer></script>",
@@ -1080,19 +1206,23 @@ async def get_ai_mode_deployments(workspace_id: str | None = None):
 
 
 @router.post("/ai-mode/deployments")
-async def create_ai_mode_deployment(request: Request):
-    """Creates a new storefront widget deployment in the database."""
+async def create_ai_mode_deployment(
+    request: Request,
+    auth: AuthContext = Depends(require_admin_role)
+):
+    """Creates a new storefront widget deployment strictly within tenant workspace."""
     body = await request.json()
-    ws_id = body.get("workspace_id")
-    if not ws_id:
-        raise HTTPException(status_code=400, detail="workspace_id is required")
+    target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
 
     dep_id = f"dep_{uuid.uuid4().hex[:12]}"
+    public_key = f"pk_live_{uuid.uuid4().hex}"
+
     new_dep = DeploymentModel(
         id=dep_id,
-        workspace_id=ws_id,
+        workspace_id=target_workspace,
         name=body.get("name", "Storefront Widget"),
         status="LIVE",
+        public_key=public_key,
         allowed_domains=body.get("allowed_domains", ["*"]),
         theme_json=body.get("theme", {
             "primary_color": "#09090b",
@@ -1119,15 +1249,23 @@ async def create_ai_mode_deployment(request: Request):
             "workspace_id": new_dep.workspace_id,
             "name": new_dep.name,
             "status": new_dep.status,
+            "public_key": new_dep.public_key,
             "embed_code": new_dep.embed_code,
         },
     }
 
 
 @router.get("/ai-mode/deployments/{dep_id}")
-async def get_ai_mode_deployment_by_id(dep_id: str):
+async def get_ai_mode_deployment_by_id(
+    dep_id: str,
+    auth: AuthContext = Depends(require_viewer_role)
+):
+    """Retrieves deployment strictly scoped to authenticated tenant."""
     async with async_session_factory() as session:
-        stmt = select(DeploymentModel).where(DeploymentModel.id == dep_id)
+        stmt = select(DeploymentModel).where(
+            DeploymentModel.id == dep_id,
+            DeploymentModel.workspace_id == auth.workspace_id
+        )
         res = await session.execute(stmt)
         dep = res.scalars().first()
         if not dep:
@@ -1140,6 +1278,7 @@ async def get_ai_mode_deployment_by_id(dep_id: str):
                 "workspace_id": dep.workspace_id,
                 "name": dep.name,
                 "status": dep.status,
+                "public_key": dep.public_key,
                 "allowed_domains": dep.allowed_domains,
                 "theme": dep.theme_json,
                 "branding": dep.branding_json,

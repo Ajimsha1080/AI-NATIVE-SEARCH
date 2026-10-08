@@ -63,57 +63,13 @@ export default function AIModeKnowledgePage() {
   async function loadSources() {
     setLoading(true);
     try {
-      const [aiRes, coreRes] = await Promise.allSettled([
-        fetch('/api/ai-mode/knowledge'),
-        fetch('/api/knowledge')
-      ]);
-
-      const mergedMap = new Map<string, any>();
-
-      // 1. Primary AI Mode native sources
-      if (aiRes.status === 'fulfilled' && aiRes.value.ok) {
-        const aiData = await aiRes.value.json();
-        (aiData.sources || []).forEach((s: any) => {
-          const key = extractDomainKey(s.source_url || s.name) || s.id;
-          mergedMap.set(key, s);
-        });
+      const res = await fetch('/api/ai-mode/knowledge');
+      if (res.ok) {
+        const aiData = await res.json();
+        setSources(aiData.sources || []);
       }
-
-      // 2. Core knowledge documents (merge or add only if not already represented)
-      if (coreRes.status === 'fulfilled' && coreRes.value.ok) {
-        const coreData = await coreRes.value.json();
-        const coreDocs = coreData.documents || coreData.sources || [];
-        coreDocs.forEach((d: any) => {
-          const key = extractDomainKey(d.metadata?.url || d.source_url || d.name) || d.id;
-          if (mergedMap.has(key)) {
-            // Enhance existing AI Mode record with raw content if richer
-            const existing = mergedMap.get(key);
-            if (!existing.raw_content && (d.raw_content || d.content)) {
-              existing.raw_content = d.raw_content || d.content;
-            }
-            if (!existing.source_url && (d.source_url || d.metadata?.url)) {
-              existing.source_url = d.source_url || d.metadata?.url;
-            }
-          } else {
-            mergedMap.set(key, {
-              id: d.id,
-              name: d.name,
-              type: d.type === 'URL' ? 'WEBSITE' : (d.type === 'FAQ' || d.type === 'QA') ? 'FAQ' : 'DOCUMENT',
-              source_url: d.source_url || (d.metadata?.url),
-              status: d.status || 'INDEXED',
-              document_count: d.chunks_count || d.document_count || 1,
-              product_count: d.metadata?.extracted_products_count || 0,
-              raw_content: d.raw_content || d.content || '',
-              last_synced_at: d.updated_at || d.created_at,
-              created_at: d.created_at || new Date().toISOString()
-            });
-          }
-        });
-      }
-
-      setSources(Array.from(mergedMap.values()));
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error('Failed to load knowledge sources:', err);
     } finally {
       setLoading(false);
     }
@@ -161,8 +117,8 @@ export default function AIModeKnowledgePage() {
         body.url = url.trim();
         body.name = name.trim() || url.trim();
 
-        // Also trigger core knowledge sync crawler for full catalog extraction
-        await fetch('/api/knowledge/sync', {
+        // Trigger AI Mode knowledge sync crawler for full catalog extraction
+        await fetch('/api/ai-mode/knowledge/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: url.trim(), name: name.trim() || undefined })
@@ -217,10 +173,7 @@ export default function AIModeKnowledgePage() {
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Are you sure you want to remove "${name || 'this source'}"?`)) return;
     try {
-      await Promise.allSettled([
-        fetch(`/api/ai-mode/knowledge/${id}`, { method: 'DELETE' }),
-        fetch(`/api/knowledge?id=${id}`, { method: 'DELETE' })
-      ]);
+      await fetch(`/api/ai-mode/knowledge/${id}`, { method: 'DELETE' });
       await loadSources();
     } catch (e) {
       console.error(e);

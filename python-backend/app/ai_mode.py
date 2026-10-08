@@ -4,9 +4,10 @@ import re
 import time
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from .auth import StorefrontContext, resolve_storefront_context
 from .llm import LLMClient
 
 router = APIRouter(prefix="/api/v1/ai-mode", tags=["AI Mode"])
@@ -83,8 +84,8 @@ class SearchResponse(BaseModel):
     latency_ms: float
 
 class ChatRequest(BaseModel):
-    workspace_id: str
     user_message: str
+    workspace_id: str | None = None
     conversation_id: str | None = None
 
 class ChatResponse(BaseModel):
@@ -391,10 +392,21 @@ def load_catalog_products(workspace_id: str | None = None) -> list[AIModeProduct
 # API Endpoints
 # -------------------------------------------------------------
 @router.post("/search", response_model=SearchResponse)
-async def ai_search_endpoint(req: SearchRequest):
+async def ai_search_endpoint(
+    req: SearchRequest,
+    storefront: StorefrontContext = Depends(resolve_storefront_context)
+):
+    # Reject cross-tenant attempts if client explicitly requested a different workspace
+    if req.workspace_id and req.workspace_id != storefront.workspace_id:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: Requested workspace '{req.workspace_id}' does not match deployment workspace '{storefront.workspace_id}'"
+        )
+
+    effective_workspace = storefront.workspace_id
     start_time = time.time()
     plan = parse_query(req.query)
-    all_products = load_catalog_products(req.workspace_id)
+    all_products = load_catalog_products(effective_workspace)
 
     valid_candidates = []
     lexical_tokens = plan.lexical_query.lower().split() if plan.lexical_query else []
@@ -448,18 +460,31 @@ async def ai_search_endpoint(req: SearchRequest):
     )
 
 @router.post("/chat", response_model=ChatResponse)
-async def ai_chat_endpoint(req: ChatRequest):
+async def ai_chat_endpoint(
+    req: ChatRequest,
+    storefront: StorefrontContext = Depends(resolve_storefront_context)
+):
+    if req.workspace_id and req.workspace_id != storefront.workspace_id:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: Requested workspace '{req.workspace_id}' does not match deployment workspace '{storefront.workspace_id}'"
+        )
+
+    effective_workspace = storefront.workspace_id
     plan = parse_query(req.user_message)
-    search_res = await ai_search_endpoint(SearchRequest(query=req.user_message, workspace_id=req.workspace_id))
+    search_res = await ai_search_endpoint(
+        SearchRequest(query=req.user_message, workspace_id=effective_workspace),
+        storefront=storefront
+    )
     products = search_res.products
 
     # 1. RAG Knowledge Retrieval (Policies, FAQs, Store Guides)
     rag_context = ""
     try:
         from .rag import execute_rag_pipeline, fetch_tenant_chunks_from_db
-        chunks = await fetch_tenant_chunks_from_db(req.workspace_id)
+        chunks = await fetch_tenant_chunks_from_db(effective_workspace)
         if chunks:
-            rag_res = execute_rag_pipeline(req.user_message, workspace_id=req.workspace_id, tenant_chunks=chunks, top_k=3)
+            rag_res = execute_rag_pipeline(req.user_message, workspace_id=effective_workspace, tenant_chunks=chunks, top_k=3)
             if rag_res.get("citations"):
                 rag_context = "\n\n".join([f"[Source: {c['source']}]: {c['text']}" for c in rag_res["citations"]])
     except Exception as e:
@@ -498,7 +523,7 @@ async def ai_chat_endpoint(req: ChatRequest):
 
     return ChatResponse(
         conversation_id=req.conversation_id or f"conv_{int(time.time()*1000)}",
-        workspace_id=req.workspace_id,
+        workspace_id=effective_workspace,
         role="assistant",
         content=assistant_text,
         products=products,

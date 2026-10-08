@@ -170,6 +170,8 @@ npm run build
 
 ---
 
+---
+
 ## 8. Third-Party Credentials Checklist for Production Launch
 
 Before opening public traffic, configure real production credentials for your external partners:
@@ -180,3 +182,31 @@ Before opening public traffic, configure real production credentials for your ex
 - [ ] **Razorpay Account:** Add live `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in environment variables and set the Webhook URL in Razorpay Dashboard to `https://api.yourdomain.com/api/commerce/razorpay/webhook`.
 - [ ] **AI Provider:** Provide valid API keys for Sarvam AI, OpenAI, or Anthropic depending on chosen provider.
 - [ ] **Admin Account:** Run `python -m app.db.bootstrap_admin` to create your initial administrator account.
+
+---
+
+## 9. Breaking API Changes & Security Enhancements
+
+### Breaking API Changes
+1. **Tenant Authority strictly from Token:**
+   - Client requests can no longer supply `workspace_id` in request bodies or query parameters to assert authority.
+   - If a client supplies a `workspace_id` that differs from the token's authenticated workspace, the server immediately returns **403 Forbidden**.
+   - Public storefront endpoints (`/api/v1/ai-mode/search`, `/api/v1/ai-mode/chat`, `/api/v1/ai-mode/track`, `/api/v1/ai-mode/widget/*`) must supply a valid `X-Deployment-Key` header matching an active `LIVE` deployment with origin domain checks, or an authenticated merchant session.
+2. **Standardized Frontend API Prefix:**
+   - Frontend components now strictly call `/api/<path>`.
+   - Broken endpoints `/api/knowledge` and `/api/knowledge/sync` have been removed in favor of `/api/ai-mode/knowledge` and `/api/ai-mode/knowledge/sync`.
+   - Next.js rewrites proxy `/api/:path*` directly to the FastAPI backend `/api/v1/:path*`.
+3. **Cookie-Based Sessions & Central API Client:**
+   - `localStorage` token storage has been phased out in favor of `httpOnly`, `Secure`, `SameSite=Lax` cookies set directly by `/api/v1/auth/login`.
+   - Centralized `apiClient` (`src/lib/api-client.ts`) handles credentials automatically, intercepts 401 Unauthorized responses to attempt token refresh, and redirects unauthenticated users to `/auth/login`.
+4. **Dashboard Route Protection:**
+   - Next.js middleware (`src/middleware.ts`) protects all internal pages (`/ai-mode`, `/products`, etc.) while allowing public storefront traffic and auth routes.
+5. **Role-Based Access Control (RBAC):**
+   - Writing products, editing configs, running catalog syncs, and managing deployments requires `OWNER` or `ADMIN` roles.
+   - `VIEWER` roles are strictly read-only and receive **403 Forbidden** on mutation attempts.
+6. **API Contract Verification:**
+   - CI contract test (`tests/test_api_contract.py`) compares the frontend API surface against FastAPI's registered OpenAPI route table.
+
+### Remaining Production Hardening Checklist
+- Ensure PostgreSQL runs under a dedicated, non-superuser role so that PostgreSQL Row-Level Security (`FORCE ROW LEVEL SECURITY`) is strictly enforced against all database queries.
+- In multi-region deployments, configure Redis replication and verify that SSL termination preserves original client IP (`X-Forwarded-For`) for rate limiting.

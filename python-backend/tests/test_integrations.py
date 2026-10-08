@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+from app.auth import create_access_token
 from app.config import settings
 from app.db.database import async_session_factory
 from app.db.models import OrderModel
@@ -14,6 +15,16 @@ from app.main import app
 from app.tools import lookup_order
 
 client = TestClient(app)
+
+
+def auth_header(workspace_id: str, role: str = "ADMIN") -> dict[str, str]:
+    token = create_access_token(
+        user_id=f"usr_{workspace_id}",
+        email=f"merchant@{workspace_id}.org",
+        workspace_id=workspace_id,
+        role=role
+    )
+    return {"Authorization": f"Bearer {token}"}
 
 
 def test_razorpay_webhook_signature_rejection():
@@ -103,12 +114,15 @@ def test_persistent_idempotency_keys():
     """Verify that Razorpay order creation persists idempotency key and returns idempotent cached response."""
     ws_id = f"ws_idemp_{uuid.uuid4().hex[:8]}"
     # 1. Create a product first
-    prod_res = client.post("/api/v1/commerce/products", json={
-        "workspace_id": ws_id,
-        "title": "Idempotent Test Item",
-        "price": 899.0,
-        "inventory": 10
-    })
+    prod_res = client.post(
+        "/api/v1/commerce/products",
+        headers=auth_header(ws_id),
+        json={
+            "title": "Idempotent Test Item",
+            "price": 899.0,
+            "inventory": 10
+        }
+    )
     prod_id = prod_res.json()["product"]["id"]
 
     idemp_key = f"idemp_{uuid.uuid4().hex}"
@@ -118,19 +132,23 @@ def test_persistent_idempotency_keys():
     }
 
     # First request
+    h1 = auth_header(ws_id)
+    h1["Idempotency-Key"] = idemp_key
     res1 = client.post(
         "/api/v1/commerce/razorpay/create-order",
         json=req_body,
-        headers={"Idempotency-Key": idemp_key}
+        headers=h1
     )
     assert res1.status_code == 200
     data1 = res1.json()
 
     # Second request with identical idempotency key -> must return exact cached response
+    h2 = auth_header(ws_id)
+    h2["Idempotency-Key"] = idemp_key
     res2 = client.post(
         "/api/v1/commerce/razorpay/create-order",
         json=req_body,
-        headers={"Idempotency-Key": idemp_key}
+        headers=h2
     )
     assert res2.status_code == 200
     data2 = res2.json()
@@ -142,10 +160,13 @@ def test_persistent_idempotency_keys():
 def test_background_sync_trigger_and_job_status():
     """Verify triggering background catalog sync and querying job state."""
     ws_id = f"ws_sync_{uuid.uuid4().hex[:8]}"
-    trigger_res = client.post("/api/v1/commerce/sync/trigger", json={
-        "workspace_id": ws_id,
-        "connector_type": "shopify"
-    })
+    trigger_res = client.post(
+        "/api/v1/commerce/sync/trigger",
+        headers=auth_header(ws_id),
+        json={
+            "connector_type": "shopify"
+        }
+    )
     assert trigger_res.status_code == 200
     data = trigger_res.json()
     assert data["success"] is True
@@ -153,7 +174,7 @@ def test_background_sync_trigger_and_job_status():
     assert job_id.startswith("job_")
 
     # Fetch job status
-    job_res = client.get(f"/api/v1/commerce/sync/jobs/{job_id}")
+    job_res = client.get(f"/api/v1/commerce/sync/jobs/{job_id}", headers=auth_header(ws_id, "VIEWER"))
     assert job_res.status_code == 200
     job_data = job_res.json()["job"]
     assert job_data["workspace_id"] == ws_id

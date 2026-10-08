@@ -23,12 +23,16 @@ TENANT_TABLES = [
     'knowledge_chunks',
     'conversations',
     'audit_logs',
+    'sync_jobs',
+    'ai_mode_configs',
+    'idempotency_keys',
+    'agents',
 ]
 
 
 def upgrade() -> None:
     """Enables PostgreSQL Row-Level Security on multi-tenant tables.
-    Policies ensure queries are strictly bounded to `app.current_workspace_id`.
+    Policies ensure queries are strictly bounded to `app.workspace_id` or `app.current_workspace_id`.
     """
     bind = op.get_bind()
     if bind.dialect.name != 'postgresql':
@@ -41,8 +45,14 @@ def upgrade() -> None:
             op.execute(
                 f"""
                 CREATE POLICY {table}_tenant_isolation_policy ON {table}
-                USING (workspace_id = NULLIF(current_setting('app.current_workspace_id', true), ''))
-                WITH CHECK (workspace_id = NULLIF(current_setting('app.current_workspace_id', true), ''));
+                USING (workspace_id = COALESCE(
+                    NULLIF(current_setting('app.workspace_id', true), ''),
+                    NULLIF(current_setting('app.current_workspace_id', true), '')
+                ))
+                WITH CHECK (workspace_id = COALESCE(
+                    NULLIF(current_setting('app.workspace_id', true), ''),
+                    NULLIF(current_setting('app.current_workspace_id', true), '')
+                ));
                 """
             )
         except Exception:

@@ -193,3 +193,50 @@ def test_forgot_and_reset_password_flow():
         "new_password": "NewSecurePassword123!"
     })
     assert invalid_reset.status_code == 400
+
+
+def test_token_auth_error_states_and_rbac_rejections():
+    """Verify missing, expired, revoked, tampered tokens get 401, and wrong roles get 403."""
+    fresh_client = TestClient(app)
+    # 1. Missing token -> 401
+    res_no_token = fresh_client.get("/api/v1/auth/me")
+    assert res_no_token.status_code == 401
+
+    # 2. Tampered token -> 401
+    valid_token = create_access_token("usr_test", "t@test.com", "ws_test", "ADMIN")
+    tampered_token = valid_token[:-6] + "xxxxxx"
+    res_tampered = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {tampered_token}"})
+    assert res_tampered.status_code == 401
+
+    # 3. Revoked token -> 401
+    rev_token = create_access_token("usr_rev", "rev@test.com", "ws_rev", "ADMIN")
+    revoke_token(rev_token)
+    res_revoked = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {rev_token}"})
+    assert res_revoked.status_code == 401
+
+    # 4. Expired token -> 401
+    import time
+    from jose import jwt
+    from app.config import settings
+    expired_payload = {
+        "sub": "usr_exp",
+        "email": "exp@test.com",
+        "workspace_id": "ws_exp",
+        "role": "ADMIN",
+        "type": "access",
+        "exp": int(time.time()) - 3600,
+        "iat": int(time.time()) - 7200,
+    }
+    expired_token = jwt.encode(expired_payload, settings.JWT_SECRET, algorithm="HS256")
+    res_expired = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {expired_token}"})
+    assert res_expired.status_code == 401
+
+    # 5. Wrong Role: VIEWER trying to delete or write a product -> 403 Forbidden
+    viewer_token = create_access_token("usr_viewer", "v@test.com", "ws_test", "VIEWER")
+    res_forbidden = client.post(
+        "/api/v1/commerce/products",
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        json={"title": "Viewer Prohibited Item", "price": 100.0}
+    )
+    assert res_forbidden.status_code == 403
+    assert "forbidden" in res_forbidden.json()["detail"].lower()

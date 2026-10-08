@@ -62,13 +62,14 @@ from sqlalchemy import text
 
 
 async def set_tenant_session_context(session: AsyncSession, workspace_id: str):
-    """Sets PostgreSQL session variable app.current_workspace_id for Row-Level Security."""
+    """Sets PostgreSQL session variables app.workspace_id and app.current_workspace_id for Row-Level Security."""
     if not workspace_id:
         return
     try:
         bind = session.bind
         if bind and getattr(bind.dialect, "name", "") == "postgresql":
             clean_id = workspace_id.replace("'", "''")
+            await session.execute(text(f"SET LOCAL app.workspace_id = '{clean_id}'"))
             await session.execute(text(f"SET LOCAL app.current_workspace_id = '{clean_id}'"))
     except Exception:
         pass
@@ -118,6 +119,18 @@ async def init_db():
         try:
             from sqlalchemy import text
             await conn.execute(text("ALTER TABLE users ADD COLUMN locked_until DATETIME"))
+        except Exception:
+            pass
+        # Migrate deployments columns if needed (SQLite compatibility)
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE deployments ADD COLUMN public_key VARCHAR(128)"))
+        except Exception:
+            pass
+        # Migrate idempotency_keys columns if needed (SQLite compatibility)
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE idempotency_keys ADD COLUMN workspace_id VARCHAR(64)"))
         except Exception:
             pass
 

@@ -8,7 +8,7 @@ from typing import Any
 
 import bcrypt
 import jwt
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 
@@ -139,46 +139,219 @@ def decode_token(token: str, expected_type: str = "access") -> dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {e!s}")
 
-def verify_jwt_auth(authorization: str | None = Header(None)) -> dict[str, Any]:
-    """Verifies access token from Authorization: Bearer <token>."""
-    if not authorization or not authorization.startswith("Bearer "):
+class AuthContext(BaseModel):
+    user_id: str
+    email: str
+    workspace_id: str
+    role: str
+    is_super_admin: bool = False
+    token: str
+
+    def __getitem__(self, item: str):
+        return getattr(self, item)
+
+    def get(self, item: str, default=None):
+        return getattr(self, item, default)
+
+
+async def get_auth_context(
+    request: Request,
+    authorization: str | None = Header(None)
+) -> AuthContext:
+    """Verifies JWT (signature, expiry, revocation) and returns user_id, workspace_id, and role.
+    Checks Authorization: Bearer <token> first, then falls back to 'access_token' cookie.
+    Returns 401 if missing, expired, revoked, or invalid.
+    """
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+    elif "access_token" in request.cookies:
+        token = request.cookies.get("access_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required: Bearer token or access cookie missing"
+        )
+
+    payload = decode_token(token, expected_type="access")
+
+    user_id = payload.get("userId") or payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Token missing subject identity")
+
+    workspace_id = payload.get("workspace_id") or payload.get("workspaceId")
+    is_super_admin = bool(payload.get("is_super_admin") or payload.get("role") in ["SUPERADMIN", "SUPER_ADMIN"])
+
+    if not workspace_id and not is_super_admin:
+        raise HTTPException(status_code=401, detail="Token missing workspace context")
+
+    role = payload.get("role") or ("SUPERADMIN" if is_super_admin else "VIEWER")
+
+    return AuthContext(
+        user_id=str(user_id),
+        email=payload.get("email", ""),
+        workspace_id=workspace_id or "system",
+        role=role,
+        is_super_admin=is_super_admin,
+        token=token
+    )
+
+
+def verify_jwt_auth(
+    request: Request,
+    authorization: str | None = Header(None)
+) -> AuthContext:
+    """Synchronous/asynchronous compatibility wrapper for get_auth_context."""
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+    elif "access_token" in request.cookies:
+        token = request.cookies.get("access_token")
+
+    if not token:
         raise HTTPException(
             status_code=401,
             detail="Authorization header with Bearer token is required"
         )
 
-    token = authorization.split(" ", 1)[1].strip()
     payload = decode_token(token, expected_type="access")
 
+    user_id = payload.get("userId") or payload.get("sub")
     workspace_id = payload.get("workspace_id") or payload.get("workspaceId")
     is_super_admin = bool(payload.get("is_super_admin") or payload.get("role") in ["SUPERADMIN", "SUPER_ADMIN"])
+
     if not workspace_id and not is_super_admin:
         raise HTTPException(
             status_code=401,
             detail="Token missing workspace context"
         )
-    role = payload.get("role") or ("SUPERADMIN" if is_super_admin else "MEMBER")
+    role = payload.get("role") or ("SUPERADMIN" if is_super_admin else "VIEWER")
 
-    return {
-        "user_id": payload.get("userId") or payload.get("sub"),
-        "email": payload.get("email"),
-        "workspace_id": workspace_id or "system",
-        "role": role,
-        "is_super_admin": is_super_admin,
-        "token": token
-    }
+    return AuthContext(
+        user_id=str(user_id),
+        email=payload.get("email", ""),
+        workspace_id=workspace_id or "system",
+        role=role,
+        is_super_admin=is_super_admin,
+        token=token
+    )
 
-def verify_service_jwt(authorization: str | None = Header(None)) -> dict[str, Any]:
+
+def verify_service_jwt(request: Request, authorization: str | None = Header(None)) -> AuthContext:
     """Compatibility wrapper for service calls."""
-    return verify_jwt_auth(authorization)
+    return verify_jwt_auth(request, authorization)
 
-def require_admin_auth(claims: dict[str, Any] = Depends(verify_jwt_auth)) -> dict[str, Any]:
-    if not claims.get("is_super_admin") and claims.get("role") not in ["OWNER", "ADMIN", "SUPERADMIN"]:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Admin or Owner role required"
-        )
-    return claims
+
+def require_role(allowed_roles: list[str]):
+    """FastAPI dependency factory enforcing strict RBAC role membership."""
+    async def _role_checker(auth: AuthContext = Depends(get_auth_context)) -> AuthContext:
+        if auth.is_super_admin:
+            return auth
+        if auth.role not in allowed_roles:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Forbidden: Action requires one of {allowed_roles} roles. Your role is '{auth.role}'."
+            )
+        return auth
+    return _role_checker
+
+
+require_admin_role = require_role(["OWNER", "ADMIN", "SUPERADMIN"])
+require_editor_role = require_role(["OWNER", "ADMIN", "EDITOR", "SUPERADMIN"])
+require_viewer_role = require_role(["OWNER", "ADMIN", "EDITOR", "VIEWER", "SUPERADMIN"])
+
+# Backward compatibility alias
+require_admin_auth = require_admin_role
+
+
+def validate_workspace_access(auth: AuthContext, requested_workspace_id: str | None = None) -> str:
+    """Ensures request does not attempt cross-tenant access.
+    Returns 403 if client explicitly asks for a different workspace, unless role is SUPER_ADMIN.
+    """
+    if requested_workspace_id and requested_workspace_id != auth.workspace_id:
+        if not auth.is_super_admin:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Forbidden: Cannot access workspace '{requested_workspace_id}'. Token is restricted to '{auth.workspace_id}'."
+            )
+        return requested_workspace_id
+    return auth.workspace_id
+
+
+class StorefrontContext(BaseModel):
+    workspace_id: str
+    deployment_id: str | None = None
+    deployment_name: str | None = None
+
+
+async def resolve_storefront_context(
+    request: Request,
+    x_deployment_key: str | None = Header(None, alias="X-Deployment-Key"),
+    authorization: str | None = Header(None)
+) -> StorefrontContext:
+    """Resolves tenant for public storefront endpoints (search, chat, widget, tracking).
+    Prioritizes X-Deployment-Key / public key in database.
+    Verifies allowed origins if configured.
+    Falls back to authenticated dashboard user session if present.
+    NEVER relies on client-supplied workspace_id.
+    """
+    deployment_key = (
+        x_deployment_key
+        or request.query_params.get("deployment_key")
+        or request.query_params.get("deployment_id")
+    )
+
+    if deployment_key:
+        from .db.models import DeploymentModel
+        async with async_session_factory() as session:
+            stmt = select(DeploymentModel).where(
+                (DeploymentModel.id == deployment_key) |
+                (DeploymentModel.public_key == deployment_key)
+            )
+            res = await session.execute(stmt)
+            dep = res.scalars().first()
+            if not dep:
+                raise HTTPException(status_code=401, detail="Invalid deployment key or identifier")
+            if dep.status != "LIVE":
+                raise HTTPException(status_code=403, detail=f"Deployment is {dep.status}, not LIVE")
+
+            origin = request.headers.get("origin") or request.headers.get("referer")
+            if dep.allowed_domains and origin:
+                domain_allowed = False
+                for allowed in dep.allowed_domains:
+                    if allowed in origin or allowed == "*":
+                        domain_allowed = True
+                        break
+                if not domain_allowed:
+                    raise HTTPException(status_code=403, detail="Request origin not allowed for this deployment")
+
+            return StorefrontContext(
+                workspace_id=dep.workspace_id,
+                deployment_id=dep.id,
+                deployment_name=dep.name
+            )
+
+    # Fallback to authenticated dashboard user token
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+    elif "access_token" in request.cookies:
+        token = request.cookies.get("access_token")
+
+    if token:
+        try:
+            payload = decode_token(token, expected_type="access")
+            ws_id = payload.get("workspace_id") or payload.get("workspaceId")
+            if ws_id:
+                return StorefrontContext(workspace_id=ws_id)
+        except Exception:
+            pass
+
+    raise HTTPException(
+        status_code=401,
+        detail="Public storefront requests require a valid 'X-Deployment-Key' header or active session."
+    )
 
 
 # ============================================================================
@@ -188,6 +361,10 @@ def require_admin_auth(claims: dict[str, Any] = Depends(verify_jwt_auth)) -> dic
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    workspace_id: str | None = None
+
+class SelectWorkspaceRequest(BaseModel):
+    workspace_id: str
 
 class SignupRequest(BaseModel):
     email: EmailStr
@@ -197,7 +374,8 @@ class SignupRequest(BaseModel):
     workspaceName: str | None = None
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str | None = None
+    workspace_id: str | None = None
 
 class VerifyEmailRequest(BaseModel):
     token: str
@@ -218,13 +396,15 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
 
 @router.post("/login")
-async def login_endpoint(req: LoginRequest):
+async def login_endpoint(req: LoginRequest, response: Response):
     """
     Production Login:
     - Queries user strictly from database.
     - Rejects with HTTP 401 on unknown email or wrong password.
     - Enforces account lockout after 5 consecutive failures.
     - Resolves real workspace_id and role from WorkspaceMemberModel (never hardcoded).
+    - If user belongs to multiple workspaces, allows specifying workspace_id or defaults to primary.
+    - Sets httpOnly cookies for secure browser sessions.
     - Never logs passwords or sensitive credentials.
     """
     clean_email = req.email.strip().lower()
@@ -267,22 +447,36 @@ async def login_endpoint(req: LoginRequest):
         user.failed_login_attempts = 0
         user.locked_until = None
 
-        # 5. Look up real workspace membership
+        # 5. Look up real workspace memberships
         member_stmt = (
             select(WorkspaceMemberModel, WorkspaceModel)
             .join(WorkspaceModel, WorkspaceMemberModel.workspace_id == WorkspaceModel.id)
             .where(WorkspaceMemberModel.user_id == user.id)
         )
         member_res = await session.execute(member_stmt)
-        membership_row = member_res.first()
+        all_memberships = member_res.all()
 
-        if not membership_row:
+        if not all_memberships:
             raise HTTPException(
                 status_code=403,
                 detail="User account does not belong to any active store workspace."
             )
 
-        member, workspace = membership_row
+        chosen = None
+        if req.workspace_id:
+            for m, w in all_memberships:
+                if w.id == req.workspace_id:
+                    chosen = (m, w)
+                    break
+            if not chosen:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"User is not a member of workspace '{req.workspace_id}'."
+                )
+        else:
+            chosen = all_memberships[0]
+
+        member, workspace = chosen
         workspace_id = workspace.id
         role = member.role or "OWNER"
 
@@ -297,6 +491,27 @@ async def login_endpoint(req: LoginRequest):
             is_super_admin=(role in ["SUPERADMIN", "SUPER_ADMIN"])
         )
         refresh_token = create_refresh_token(user_id=user.id, workspace_id=workspace_id)
+
+        # Set secure httpOnly cookies
+        is_prod = (settings.APP_ENV == "production")
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            samesite="lax",
+            secure=is_prod,
+            max_age=ACCESS_TOKEN_EXPIRE_SECONDS,
+            path="/"
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            samesite="lax",
+            secure=is_prod,
+            max_age=REFRESH_TOKEN_EXPIRE_SECONDS,
+            path="/"
+        )
 
         return {
             "success": True,
@@ -318,7 +533,84 @@ async def login_endpoint(req: LoginRequest):
                 "name": workspace.name,
                 "slug": workspace.slug
             },
+            "available_workspaces": [
+                {"id": w.id, "name": w.name, "role": m.role} for m, w in all_memberships
+            ],
             "workspace_id": workspace_id,
+            "role": role
+        }
+
+
+@router.post("/select-workspace")
+async def select_workspace_endpoint(
+    req: SelectWorkspaceRequest,
+    response: Response,
+    auth: AuthContext = Depends(get_auth_context)
+):
+    """Allows a user to choose or switch their active tenant workspace."""
+    async with async_session_factory() as session:
+        stmt = (
+            select(WorkspaceMemberModel, WorkspaceModel)
+            .join(WorkspaceModel, WorkspaceMemberModel.workspace_id == WorkspaceModel.id)
+            .where(
+                WorkspaceMemberModel.user_id == auth.user_id,
+                WorkspaceMemberModel.workspace_id == req.workspace_id
+            )
+        )
+        res = await session.execute(stmt)
+        row = res.first()
+        if not row and not auth.is_super_admin:
+            raise HTTPException(
+                status_code=403,
+                detail=f"User is not a member of workspace '{req.workspace_id}'."
+            )
+
+        if row:
+            member, workspace = row
+            role = member.role or "OWNER"
+        else:
+            ws_res = await session.execute(select(WorkspaceModel).where(WorkspaceModel.id == req.workspace_id))
+            workspace = ws_res.scalars().first()
+            if not workspace:
+                raise HTTPException(status_code=404, detail="Workspace not found")
+            role = "SUPERADMIN"
+
+        access_token = create_access_token(
+            user_id=auth.user_id,
+            email=auth.email,
+            workspace_id=workspace.id,
+            role=role,
+            is_super_admin=auth.is_super_admin
+        )
+        refresh_token = create_refresh_token(user_id=auth.user_id, workspace_id=workspace.id)
+
+        is_prod = (settings.APP_ENV == "production")
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            samesite="lax",
+            secure=is_prod,
+            max_age=ACCESS_TOKEN_EXPIRE_SECONDS,
+            path="/"
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            samesite="lax",
+            secure=is_prod,
+            max_age=REFRESH_TOKEN_EXPIRE_SECONDS,
+            path="/"
+        )
+
+        return {
+            "success": True,
+            "token": access_token,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "workspace_id": workspace.id,
+            "workspace_name": workspace.name,
             "role": role
         }
 
@@ -568,11 +860,24 @@ async def reset_password_endpoint(req: ResetPasswordRequest):
 
 
 @router.post("/refresh")
-async def refresh_endpoint(req: RefreshTokenRequest):
-    """Refreshes an expired access token using a valid refresh token."""
-    decoded = decode_token(req.refresh_token, expected_type="refresh")
+async def refresh_endpoint(
+    request: Request,
+    response: Response,
+    req: RefreshTokenRequest | None = None
+):
+    """Refreshes an expired access token using a valid refresh token from body or cookie."""
+    raw_token = None
+    if req and req.refresh_token:
+        raw_token = req.refresh_token
+    elif "refresh_token" in request.cookies:
+        raw_token = request.cookies.get("refresh_token")
+
+    if not raw_token:
+        raise HTTPException(status_code=401, detail="Refresh token is required")
+
+    decoded = decode_token(raw_token, expected_type="refresh")
     user_id = decoded.get("userId") or decoded.get("sub")
-    workspace_id = decoded.get("workspace_id")
+    target_workspace_id = (req.workspace_id if req and req.workspace_id else None) or decoded.get("workspace_id")
 
     async with async_session_factory() as session:
         stmt = select(UserModel).where(UserModel.id == user_id)
@@ -582,48 +887,86 @@ async def refresh_endpoint(req: RefreshTokenRequest):
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
 
-        # Resolve role
-        role = "ADMIN"
+        # Resolve role strictly from WorkspaceMemberModel
         member_stmt = (
-            select(WorkspaceMemberModel)
-            .where(WorkspaceMemberModel.user_id == user.id)
-            .where(WorkspaceMemberModel.workspace_id == workspace_id)
+            select(WorkspaceMemberModel, WorkspaceModel)
+            .join(WorkspaceModel, WorkspaceMemberModel.workspace_id == WorkspaceModel.id)
+            .where(
+                WorkspaceMemberModel.user_id == user.id,
+                WorkspaceMemberModel.workspace_id == target_workspace_id
+            )
         )
         member_res = await session.execute(member_stmt)
-        member = member_res.scalars().first()
-        if member:
-            role = member.role
+        row = member_res.first()
+        if not row:
+            raise HTTPException(status_code=403, detail="User is not a member of target workspace")
+
+        member, workspace = row
+        role = member.role or "MEMBER"
 
         new_access_token = create_access_token(
             user_id=user.id,
             email=user.email,
-            workspace_id=workspace_id,
-            role=role
+            workspace_id=workspace.id,
+            role=role,
+            is_super_admin=(role in ["SUPERADMIN", "SUPER_ADMIN"])
+        )
+        new_refresh_token = create_refresh_token(user_id=user.id, workspace_id=workspace.id)
+
+        is_prod = (settings.APP_ENV == "production")
+        response.set_cookie(
+            key="access_token",
+            value=new_access_token,
+            httponly=True,
+            samesite="lax",
+            secure=is_prod,
+            max_age=ACCESS_TOKEN_EXPIRE_SECONDS,
+            path="/"
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token,
+            httponly=True,
+            samesite="lax",
+            secure=is_prod,
+            max_age=REFRESH_TOKEN_EXPIRE_SECONDS,
+            path="/"
         )
 
         return {
             "success": True,
             "access_token": new_access_token,
             "token": new_access_token,
+            "refresh_token": new_refresh_token,
+            "workspace_id": workspace.id,
+            "role": role,
             "expires_in": ACCESS_TOKEN_EXPIRE_SECONDS
         }
 
 
 @router.post("/logout")
-async def logout_endpoint(request: Request):
-    """Revokes access and refresh tokens."""
+async def logout_endpoint(request: Request, response: Response):
+    """Revokes access and refresh tokens and deletes cookies."""
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ", 1)[1].strip()
-        revoke_token(token)
+        await redis_service.revoke_token(token)
+    elif "access_token" in request.cookies:
+        await redis_service.revoke_token(request.cookies["access_token"])
+
+    if "refresh_token" in request.cookies:
+        await redis_service.revoke_token(request.cookies["refresh_token"])
 
     try:
         body = await request.json()
         ref_tok = body.get("refresh_token")
         if ref_tok:
-            revoke_token(ref_tok)
+            await redis_service.revoke_token(ref_tok)
     except Exception:
         pass
+
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
 
     return {"success": True, "message": "Logged out successfully and tokens revoked."}
 

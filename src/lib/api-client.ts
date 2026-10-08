@@ -1,6 +1,11 @@
 /**
- * Typed API Client for ShopMate AaaS Python FastAPI Backend
- * Auto-configured for proxy rewrites and typed client integration
+ * Centralized, Typed API Client for ShopMate AaaS
+ * Features:
+ * - Credentials included ('include') for httpOnly, Secure, SameSite cookies
+ * - Central request wrapping
+ * - Automatic token refresh on 401 and redirect to /auth/login
+ * - CSRF token propagation
+ * - Strictly calls standardized /api/<path> endpoints
  */
 
 export interface ProductVariant {
@@ -70,23 +75,83 @@ export interface AuthMeResponse {
   role?: string;
 }
 
+export interface Deployment {
+  id: string;
+  workspace_id?: string;
+  name: string;
+  status: string;
+  public_key?: string;
+  allowed_domains?: string[];
+  theme?: Record<string, any>;
+  branding?: Record<string, any>;
+  embed_code?: string;
+}
+
 class ShopMateApiClient {
   private baseUrl: string;
+  private isRefreshing: boolean = false;
 
   constructor(baseUrl: string = '') {
     this.baseUrl = baseUrl;
   }
 
-  private async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const headers = {
+  private getCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+    return null;
+  }
+
+  public async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(options.headers || {})
+      ...((options.headers as Record<string, string>) || {})
     };
 
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    // Propagate CSRF token if cookie is present
+    const csrfToken = this.getCookie('csrf_token');
+    if (csrfToken && !headers['X-CSRF-Token']) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
+
+    const requestOptions: RequestInit = {
       ...options,
+      credentials: 'include', // Automatically send httpOnly cookies
       headers
-    });
+    };
+
+    let res = await fetch(`${this.baseUrl}${path}`, requestOptions);
+
+    // If 401 Unauthorized and not already attempting refresh or calling auth endpoints
+    if (res.status === 401 && !path.startsWith('/api/auth/login') && !path.startsWith('/api/auth/refresh')) {
+      if (!this.isRefreshing) {
+        this.isRefreshing = true;
+        try {
+          const refreshRes = await fetch(`${this.baseUrl}/api/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          if (refreshRes.ok) {
+            this.isRefreshing = false;
+            // Retry the original request
+            res = await fetch(`${this.baseUrl}${path}`, requestOptions);
+          } else {
+            this.isRefreshing = false;
+            if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
+              window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            }
+          }
+        } catch {
+          this.isRefreshing = false;
+          if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
+            window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+          }
+        }
+      }
+    }
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
@@ -107,17 +172,72 @@ class ShopMateApiClient {
   }
 
   // --- AI Mode Search & Chat ---
-  public async searchAI(query: string, workspaceId: string = ''): Promise<AISearchResponse> {
+  public async searchAI(query: string, deploymentKey?: string): Promise<AISearchResponse> {
+    const headers: Record<string, string> = {};
+    if (deploymentKey) headers['X-Deployment-Key'] = deploymentKey;
     return this.fetch<AISearchResponse>('/api/ai-mode/search', {
       method: 'POST',
-      body: JSON.stringify({ query, workspace_id: workspaceId })
+      headers,
+      body: JSON.stringify({ query })
     });
   }
 
-  public async chatAI(message: string, conversationId?: string, workspaceId: string = ''): Promise<AIChatResponse> {
+  public async chatAI(message: string, conversationId?: string, deploymentKey?: string): Promise<AIChatResponse> {
+    const headers: Record<string, string> = {};
+    if (deploymentKey) headers['X-Deployment-Key'] = deploymentKey;
     return this.fetch<AIChatResponse>('/api/ai-mode/chat', {
       method: 'POST',
-      body: JSON.stringify({ user_message: message, conversation_id: conversationId, workspace_id: workspaceId })
+      headers,
+      body: JSON.stringify({ user_message: message, conversation_id: conversationId })
+    });
+  }
+
+  // --- Knowledge Management ---
+  public async getKnowledgeSources(): Promise<{ sources: any[] }> {
+    return this.fetch<{ sources: any[] }>('/api/ai-mode/knowledge');
+  }
+
+  public async addKnowledgeSource(data: { name: string; type?: string; url?: string; content?: string }): Promise<any> {
+    return this.fetch('/api/ai-mode/knowledge', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  public async syncKnowledgeSource(data: { id?: string; url?: string; name?: string }): Promise<any> {
+    return this.fetch('/api/ai-mode/knowledge/sync', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  public async deleteKnowledgeSource(id: string): Promise<any> {
+    return this.fetch(`/api/ai-mode/knowledge/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // --- Deployments ---
+  public async getDeployments(): Promise<{ deployments: Deployment[] }> {
+    return this.fetch<{ deployments: Deployment[] }>('/api/ai-mode/deployments');
+  }
+
+  public async createDeployment(data: { name: string; allowed_domains?: string[]; theme?: any; branding?: any }): Promise<any> {
+    return this.fetch('/api/ai-mode/deployments', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  // --- AI Mode Config ---
+  public async getAIModeConfig(): Promise<any> {
+    return this.fetch('/api/ai-mode/config');
+  }
+
+  public async updateAIModeConfig(config: any): Promise<any> {
+    return this.fetch('/api/ai-mode/config', {
+      method: 'POST',
+      body: JSON.stringify(config)
     });
   }
 
@@ -126,10 +246,17 @@ class ShopMateApiClient {
     return this.fetch<AuthMeResponse>('/api/auth/me');
   }
 
-  public async login(email: string): Promise<any> {
+  public async login(email: string, password?: string, workspaceId?: string): Promise<any> {
     return this.fetch('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, password, workspace_id: workspaceId })
+    });
+  }
+
+  public async signup(data: { name: string; email: string; password?: string; workspace_name?: string }): Promise<any> {
+    return this.fetch('/api/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(data)
     });
   }
 
@@ -138,22 +265,21 @@ class ShopMateApiClient {
   }
 
   // --- DPDP Act Compliance & Auditing ---
-  public async getAuditLogs(workspaceId: string = '', limit: number = 50): Promise<any> {
-    const qs = workspaceId ? `workspace_id=${encodeURIComponent(workspaceId)}&` : '';
-    return this.fetch(`/api/v1/compliance/audit-logs?${qs}limit=${limit}`);
+  public async getAuditLogs(limit: number = 50): Promise<any> {
+    return this.fetch(`/api/compliance/audit-logs?limit=${limit}`);
   }
 
-  public async exportCustomerData(customerEmail: string, workspaceId: string = '', customerId?: string): Promise<any> {
-    return this.fetch('/api/v1/compliance/export', {
+  public async exportCustomerData(customerEmail: string, customerId?: string): Promise<any> {
+    return this.fetch('/api/compliance/export', {
       method: 'POST',
-      body: JSON.stringify({ customer_email: customerEmail, workspace_id: workspaceId, customer_id: customerId })
+      body: JSON.stringify({ customer_email: customerEmail, customer_id: customerId })
     });
   }
 
-  public async eraseCustomerData(customerEmail: string, workspaceId: string = '', reason?: string): Promise<any> {
-    return this.fetch('/api/v1/compliance/erase', {
+  public async eraseCustomerData(customerEmail: string, reason?: string): Promise<any> {
+    return this.fetch('/api/compliance/erase', {
       method: 'POST',
-      body: JSON.stringify({ customer_email: customerEmail, workspace_id: workspaceId, reason })
+      body: JSON.stringify({ customer_email: customerEmail, reason })
     });
   }
 }

@@ -3,11 +3,11 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Header, Query, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import desc, select, update
 
-from .auth import decode_token
+from .auth import AuthContext, require_admin_role, validate_workspace_access
 from .db.database import async_session_factory
 from .db.models import AuditLogModel, ConversationModel, OrderModel
 
@@ -61,12 +61,12 @@ async def record_audit_event(
 class DPDPExportRequest(BaseModel):
     customer_email: EmailStr
     customer_id: str | None = None
-    workspace_id: str
+    workspace_id: str | None = None
 
 class DPDPErasureRequest(BaseModel):
     customer_email: EmailStr
     customer_id: str | None = None
-    workspace_id: str
+    workspace_id: str | None = None
     reason: str | None = "Customer DPDP Act Right to Erasure"
 
 
@@ -81,25 +81,11 @@ async def get_audit_logs(
     action: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    authorization: str | None = Header(None)
+    auth: AuthContext = Depends(require_admin_role)
 ):
     """Retrieves immutable audit logs for a tenant workspace."""
-    target_workspace = workspace_id
-    actor_id = "system_operator"
-
-    # Validate auth token if supplied
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        try:
-            payload = decode_token(token)
-            actor_id = payload.get("userId") or payload.get("sub") or actor_id
-            target_workspace = payload.get("workspace_id") or target_workspace
-        except Exception:
-            pass
-
-    if not target_workspace:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="workspace_id is required")
+    target_workspace = validate_workspace_access(auth, workspace_id)
+    actor_id = auth.user_id
 
     async with async_session_factory() as session:
         query = (
@@ -139,28 +125,21 @@ async def get_audit_logs(
 async def export_customer_data(
     req: DPDPExportRequest,
     request: Request,
-    authorization: str | None = Header(None)
+    auth: AuthContext = Depends(require_admin_role)
 ):
     """
     DPDP Act / GDPR Data Portability:
     Exports all personal identifying information and interaction logs for a given customer.
     """
-    actor_id = "customer_self"
+    target_workspace = validate_workspace_access(auth, req.workspace_id)
+    actor_id = auth.user_id
     client_ip = request.client.host if request.client else "127.0.0.1"
-
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        try:
-            payload = decode_token(token)
-            actor_id = payload.get("userId") or payload.get("sub") or actor_id
-        except Exception:
-            pass
 
     async with async_session_factory() as session:
         # 1. Fetch Orders
         order_query = (
             select(OrderModel)
-            .where(OrderModel.workspace_id == req.workspace_id)
+            .where(OrderModel.workspace_id == target_workspace)
             .where(OrderModel.customer_email == req.customer_email)
         )
         orders_result = await session.execute(order_query)
@@ -190,7 +169,7 @@ async def export_customer_data(
         if req.customer_id:
             conv_query = (
                 select(ConversationModel)
-                .where(ConversationModel.workspace_id == req.workspace_id)
+                .where(ConversationModel.workspace_id == target_workspace)
                 .where(ConversationModel.user_id == req.customer_id)
             )
             conv_res = await session.execute(conv_query)
@@ -206,7 +185,7 @@ async def export_customer_data(
         # 3. Log Audit Event
         export_id = f"exp_{uuid.uuid4().hex[:12]}"
         await record_audit_event(
-            workspace_id=req.workspace_id,
+            workspace_id=target_workspace,
             action="CUSTOMER_DATA_EXPORT",
             actor_id=actor_id,
             resource_type="customer_data",
@@ -224,7 +203,7 @@ async def export_customer_data(
             "status": "COMPLETED",
             "dpdp_export_id": export_id,
             "compliance_standard": "Digital Personal Data Protection Act 2023",
-            "workspace_id": req.workspace_id,
+            "workspace_id": target_workspace,
             "customer_email": req.customer_email,
             "exported_at": datetime.now(UTC).isoformat(),
             "data": {
@@ -238,23 +217,16 @@ async def export_customer_data(
 async def erase_customer_data(
     req: DPDPErasureRequest,
     request: Request,
-    authorization: str | None = Header(None)
+    auth: AuthContext = Depends(require_admin_role)
 ):
     """
     DPDP Act / GDPR Right to be Forgotten:
     Anonymizes and redacts all personal identifying data while maintaining immutable
     financial accounting records required under statutory tax regulations.
     """
-    actor_id = "compliance_officer"
+    target_workspace = validate_workspace_access(auth, req.workspace_id)
+    actor_id = auth.user_id
     client_ip = request.client.host if request.client else "127.0.0.1"
-
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        try:
-            payload = decode_token(token)
-            actor_id = payload.get("userId") or payload.get("sub") or actor_id
-        except Exception:
-            pass
 
     email_hash = hashlib.sha256(req.customer_email.encode()).hexdigest()[:12]
     anonymized_email = f"erased_{email_hash}@dpdp-purged.local"
@@ -265,7 +237,7 @@ async def erase_customer_data(
         # Redact PII in Orders
         order_stmt = (
             update(OrderModel)
-            .where(OrderModel.workspace_id == req.workspace_id)
+            .where(OrderModel.workspace_id == target_workspace)
             .where(OrderModel.customer_email == req.customer_email)
             .values(
                 customer_name=anonymized_name,
@@ -281,7 +253,7 @@ async def erase_customer_data(
         if req.customer_id:
             conv_stmt = (
                 update(ConversationModel)
-                .where(ConversationModel.workspace_id == req.workspace_id)
+                .where(ConversationModel.workspace_id == target_workspace)
                 .where(ConversationModel.user_id == req.customer_id)
                 .values(user_id=f"anon_{email_hash}")
             )
@@ -293,7 +265,7 @@ async def erase_customer_data(
         # Record Audit Event
         erasure_id = f"del_{uuid.uuid4().hex[:12]}"
         await record_audit_event(
-            workspace_id=req.workspace_id,
+            workspace_id=target_workspace,
             action="CUSTOMER_DATA_ERASURE",
             actor_id=actor_id,
             resource_type="customer_data",
@@ -313,7 +285,7 @@ async def erase_customer_data(
             "status": "COMPLETED",
             "erasure_id": erasure_id,
             "compliance_standard": "Digital Personal Data Protection Act 2023",
-            "workspace_id": req.workspace_id,
+            "workspace_id": target_workspace,
             "orders_anonymized": orders_redacted,
             "conversations_anonymized": convs_redacted,
             "anonymized_identifier": anonymized_email,
