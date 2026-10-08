@@ -45,10 +45,15 @@ class AppSettings(BaseSettings):
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434")
 
     # Payment Gateways (Razorpay)
-    RAZORPAY_KEY_ID: str | None = Field(default="")
-    RAZORPAY_KEY_SECRET: str | None = Field(default="")
-    RAZORPAY_ME_URL: str = Field(default="https://razorpay.me/@ajimshamuhammad2112")
-    RAZORPAY_WEBHOOK_SECRET: str | None = Field(default="")
+    RAZORPAY_KEY_ID: str | None = Field(default=None)
+    RAZORPAY_KEY_SECRET: str | None = Field(default=None)
+    RAZORPAY_ME_URL: str | None = Field(default=None)
+    RAZORPAY_WEBHOOK_SECRET: str | None = Field(default=None)
+
+    # Embeddings Configuration
+    EMBEDDING_PROVIDER: str = Field(default="openai")
+    EMBEDDING_MODEL: str = Field(default="text-embedding-3-small")
+    EMBEDDING_DIMENSION: int = Field(default=1536)
 
     # Email Provider (SMTP / Resend)
     SMTP_HOST: str | None = Field(default=None)
@@ -64,7 +69,6 @@ class AppSettings(BaseSettings):
     ALLOWED_ORIGINS: list[str] = Field(default_factory=lambda: [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://bluetyga.com"
     ])
 
     @field_validator("JWT_SECRET", "SERVICE_JWT_SECRET", "ENCRYPTION_KEY", mode="after")
@@ -86,5 +90,14 @@ class AppSettings(BaseSettings):
                 raise ValueError(f"Security Error: {field_name} must be at least 32 characters long.")
 
         return clean
+
+    from pydantic import model_validator
+
+    @model_validator(mode="after")
+    def validate_production_payment_keys(self) -> "AppSettings":
+        if self.APP_ENV.lower() == "production":
+            if not self.RAZORPAY_KEY_ID or not self.RAZORPAY_KEY_SECRET:
+                raise ValueError("Startup Error: Missing payment keys. RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be configured in production.")
+        return self
 
 settings = AppSettings()

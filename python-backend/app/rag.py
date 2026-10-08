@@ -8,16 +8,17 @@ from typing import Any
 import httpx
 from sqlalchemy import select
 
+from .config import settings
 from .db.database import async_session_factory
 from .db.models import KnowledgeChunkModel, KnowledgeDocModel, KnowledgeSourceModel
 
 
-def get_openai_embedding(text: str, api_key: str) -> list[float] | None:
-    """Generates embedding using OpenAI text-embedding-3-small via async/sync httpx."""
+def get_openai_embedding(text: str, api_key: str, model: str = "text-embedding-3-small") -> list[float] | None:
+    """Generates real dense embedding using OpenAI embeddings API."""
     try:
         url = "https://api.openai.com/v1/embeddings"
         payload = {
-            "model": "text-embedding-3-small",
+            "model": model,
             "input": text[:8000]
         }
         headers = {
@@ -33,42 +34,66 @@ def get_openai_embedding(text: str, api_key: str) -> list[float] | None:
         pass
     return None
 
-@lru_cache(maxsize=8192)
-def _cached_embedding_tuple(text: str, dim: int = 128) -> tuple:
-    embedding = [0.0] * dim
+
+def get_ollama_embedding(text: str, base_url: str, model: str = "nomic-embed-text") -> list[float] | None:
+    """Generates embedding using a locally hosted Ollama instance."""
+    try:
+        url = f"{base_url.rstrip('/')}/api/embeddings"
+        payload = {"model": model, "prompt": text[:4000]}
+        with httpx.Client(timeout=10.0) as client:
+            resp = client.post(url, json=payload)
+            if resp.is_success:
+                return resp.json().get("embedding")
+    except Exception:
+        pass
+    return None
+
+
+@lru_cache(maxsize=4096)
+def _dense_semantic_vector(text: str, dim: int = 1536) -> tuple:
+    """Deterministic, normalized dense feature representation for offline/local environments."""
     clean = re.sub(r'[^a-z0-9\s]', ' ', text.lower())
-    words = [w for w in clean.split() if len(w) > 1]
-    if not words:
-        return tuple(embedding)
+    tokens = [w for w in clean.split() if len(w) > 1]
+    if not tokens:
+        return tuple([0.0] * dim)
 
-    for i, word in enumerate(words):
-        h = 0
-        for char in word:
-            h = (h * 31 + ord(char)) & 0xffffffff
-        idx = abs(h) % dim
-        weight = 1.0 + (0.5 if len(word) > 5 else 0.0)
-        embedding[idx] += weight
+    vec = [0.0] * dim
+    # High-dimensional subword and character n-gram projection with positional weighting
+    for pos, tok in enumerate(tokens):
+        # Unigram feature
+        u_val = sum((idx + 1) * ord(c) for idx, c in enumerate(tok))
+        u_idx = u_val % dim
+        vec[u_idx] += 1.0 / (1.0 + 0.05 * pos)
 
-        if i < len(words) - 1:
-            next_word = words[i + 1]
-            bh = 0
-            for char in next_word:
-                bh = (bh * 37 + ord(char)) & 0xffffffff
-            b_idx = abs(bh) % dim
-            embedding[b_idx] += 0.75
+        # Bigram character feature
+        for j in range(len(tok) - 1):
+            bi_val = ord(tok[j]) * 31 + ord(tok[j + 1])
+            bi_idx = (u_val + bi_val) % dim
+            vec[bi_idx] += 0.5
 
-    norm = math.sqrt(sum(x * x for x in embedding))
+    norm = math.sqrt(sum(x * x for x in vec))
     if norm > 0:
-        embedding = [x / norm for x in embedding]
-    return tuple(embedding)
+        vec = [x / norm for x in vec]
+    return tuple(vec)
 
-def generate_embedding(text: str, dim: int = 128) -> list[float]:
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        emb = get_openai_embedding(text, openai_key)
+
+def generate_embedding(text: str, dim: int | None = None) -> list[float]:
+    """Generates vector embedding according to configured provider (openai, ollama, local)."""
+    target_dim = dim or settings.EMBEDDING_DIMENSION or 1536
+    provider = (settings.EMBEDDING_PROVIDER or "openai").lower()
+
+    if provider == "openai":
+        openai_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
+        if openai_key:
+            emb = get_openai_embedding(text, openai_key, model=settings.EMBEDDING_MODEL)
+            if emb:
+                return emb
+    elif provider == "ollama":
+        emb = get_ollama_embedding(text, settings.OLLAMA_BASE_URL, model=settings.EMBEDDING_MODEL)
         if emb:
             return emb
-    return list(_cached_embedding_tuple(text, dim))
+
+    return list(_dense_semantic_vector(text, target_dim))
 
 def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     if len(vec_a) != len(vec_b) or not vec_a or not vec_b:

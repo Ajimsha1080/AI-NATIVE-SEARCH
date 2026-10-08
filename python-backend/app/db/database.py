@@ -65,7 +65,6 @@ async def get_db_session() -> AsyncSession:
 
 async def init_db():
     """Initializes database schema and tables asynchronously"""
-    from .seed import seed_database_if_empty
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # Migrate existing audit_logs columns if needed (SQLite compatibility)
@@ -106,6 +105,3 @@ async def init_db():
         except Exception:
             pass
 
-    # Run seeding
-    async with async_session_factory() as session:
-        await seed_database_if_empty(session)

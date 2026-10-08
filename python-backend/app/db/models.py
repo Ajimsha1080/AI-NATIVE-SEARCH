@@ -174,16 +174,37 @@ class KnowledgeDocModel(Base):
     chunks = relationship("KnowledgeChunkModel", back_populates="document", cascade="all, delete-orphan")
 
 
+from pgvector.sqlalchemy import Vector
+from sqlalchemy.types import TypeDecorator
+
+
+class PgVectorEmbedding(TypeDecorator):
+    """Stores high-dimensional embedding vectors.
+    Uses pgvector Vector in PostgreSQL; falls back to JSON float list in SQLite/other dialects.
+    """
+    impl = JSON
+    cache_ok = True
+
+    def __init__(self, dim: int = 1536, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dim = dim
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(Vector(self.dim))
+        return dialect.type_descriptor(JSON())
+
+
 class KnowledgeChunkModel(Base):
     __tablename__ = "knowledge_chunks"
 
     id = Column(String(64), primary_key=True, index=True)
     doc_id = Column(String(64), ForeignKey("knowledge_documents.id"), nullable=False, index=True)
-    workspace_id = Column(String(64), nullable=False, default="ws_acme_corp", index=True)
+    workspace_id = Column(String(64), nullable=False, index=True)
     chunk_index = Column(Integer, default=0)
     text = Column(Text, nullable=False)
-    # Storing embedding as JSON float array (compatible with both SQLite and pgvector)
-    embedding = Column(JSON, nullable=True)
+    # Stored via pgvector Vector(1536) in PostgreSQL, JSON in SQLite
+    embedding = Column(PgVectorEmbedding(1536), nullable=True)
     metadata_json = Column(JSON, default=dict)
     created_at = Column(DateTime, default=utcnow)
 
@@ -258,7 +279,7 @@ class CartModel(Base):
     __tablename__ = "commerce_carts"
 
     id = Column(String(64), primary_key=True, index=True)
-    workspace_id = Column(String(64), default="ws_acme_corp", index=True)
+    workspace_id = Column(String(64), nullable=False, index=True)
     session_id = Column(String(128), unique=True, index=True, nullable=False)
     items_json = Column(JSON, default=list)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
@@ -305,7 +326,7 @@ class ConversationModel(Base):
 
     id = Column(String(64), primary_key=True, index=True)
     agent_id = Column(String(64), ForeignKey("agents.id"), nullable=False, index=True)
-    workspace_id = Column(String(64), nullable=False, default="ws_acme_corp", index=True)
+    workspace_id = Column(String(64), nullable=False, index=True)
     user_id = Column(String(64), nullable=True)
     title = Column(String(255), default="New Session")
     status = Column(String(50), default="ACTIVE")
@@ -367,7 +388,7 @@ class AuditLogModel(Base):
     __tablename__ = "audit_logs"
 
     id = Column(String(64), primary_key=True, index=True)
-    workspace_id = Column(String(64), nullable=False, default="ws_acme_corp", index=True)
+    workspace_id = Column(String(64), nullable=False, index=True)
     action = Column(String(100), nullable=False, index=True)
     actor_id = Column(String(64), nullable=False)
     resource_type = Column(String(64), nullable=True)

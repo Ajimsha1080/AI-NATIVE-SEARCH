@@ -381,59 +381,11 @@ def load_catalog_products(workspace_id: str | None = None) -> list[AIModeProduct
                     source_url=r["source_url"]
                 ))
             conn.close()
-            if db_products:
-                return db_products
+            return db_products
         except Exception as e:
             print("AI Mode DB fetch notice:", e)
 
-    db_paths = [
-        os.path.join(os.getcwd(), "data", "aaas.db.json"),
-        os.path.join(os.getcwd(), "..", "data", "aaas.db.json"),
-        "/app/data/aaas.db.json"
-    ]
-    raw_products = []
-    for path in db_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, encoding="utf-8") as f:
-                    data = json.load(f)
-                    raw_products = data.get("commerce_products", [])
-                    break
-            except Exception as e:
-                print(f"Error loading {path}: {e}")
-
-    result = []
-    for p in raw_products:
-        if workspace_id and p.get("workspace_id") != workspace_id:
-            continue
-        variants = [
-            AIModeProductVariant(
-                id=v.get("id", ""),
-                title=v.get("title", ""),
-                price=float(v.get("price", 0)),
-                in_stock=(v.get("inventory_quantity", 1) or 1) > 0,
-                attributes=v.get("attributes", {})
-            )
-            for v in p.get("variants", [])
-        ]
-        result.append(AIModeProduct(
-            id=p.get("id", ""),
-            title=p.get("title", ""),
-            handle=p.get("id", ""),
-            description=p.get("description", ""),
-            price=float(p.get("price", 0)),
-            sale_price=float(p.get("compare_at_price")) if p.get("compare_at_price") else None,
-            currency=p.get("currency", "INR"),
-            category=p.get("category", "General"),
-            subcategories=p.get("tags", []),
-            brand=p.get("attributes", {}).get("brand", "Merchant"),
-            images=p.get("images", []),
-            in_stock=p.get("in_stock", True),
-            variants=variants,
-            attributes=p.get("attributes", {}),
-            source_url=p.get("source_url")
-        ))
-    return result
+    return db_products
 
 # -------------------------------------------------------------
 # API Endpoints
