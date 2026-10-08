@@ -11,7 +11,6 @@ import hashlib
 import logging
 import time
 from collections import defaultdict
-from typing import Any
 
 from .config import settings
 
@@ -69,7 +68,7 @@ def get_sync_redis_client():
         _sync_redis_client = client
         _sync_redis_available = True
         return _sync_redis_client
-    except Exception as e:
+    except Exception:
         _sync_redis_available = False
         return None
 

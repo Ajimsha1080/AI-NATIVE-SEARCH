@@ -216,7 +216,9 @@ def test_token_auth_error_states_and_rbac_rejections():
 
     # 4. Expired token -> 401
     import time
+
     from jose import jwt
+
     from app.config import settings
     expired_payload = {
         "sub": "usr_exp",

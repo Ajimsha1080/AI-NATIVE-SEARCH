@@ -4,8 +4,8 @@ Loads FastAPI's registered route table and verifies that every frontend
 API client endpoint and method matches a backend route and method.
 """
 
-import pytest
 from app.main import app
+
 
 def test_frontend_backend_api_contract():
     """Validates that all frontend client endpoints match backend FastAPI routes."""

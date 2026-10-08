@@ -7,8 +7,10 @@ Enforces that:
 
 import os
 import re
+
 import pytest
 from sqlalchemy import select
+
 from app.db.models import ProductModel
 
 
@@ -36,7 +38,6 @@ def test_no_banned_fake_or_demo_tokens_in_production_source():
     """CI Check: Fails if 'demo', 'mock', 'fake', 'example.com', 'password123', or 'acme'
     appear in non-test production source code.
     """
-    banned_terms = ["demo", "mock", "fake", "example.com", "password123", "acme"]
     pattern = re.compile(r'(\bacme\b|acme|\b(?:demo|mock|fake|example\.com|password123)\b)', re.IGNORECASE)
 
     root_dirs = [
@@ -55,7 +56,7 @@ def test_no_banned_fake_or_demo_tokens_in_production_source():
             for f in filenames:
                 if f.endswith((".py", ".ts", ".tsx", ".js", ".jsx", ".json")):
                     filepath = os.path.join(dirpath, f)
-                    with open(filepath, "r", encoding="utf-8", errors="ignore") as fp:
+                    with open(filepath, encoding="utf-8", errors="ignore") as fp:
                         for line_num, line in enumerate(fp, 1):
                             match = pattern.search(line)
                             if match:

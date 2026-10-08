@@ -3,7 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import desc, select, update
 
@@ -85,7 +85,6 @@ async def get_audit_logs(
 ):
     """Retrieves immutable audit logs for a tenant workspace."""
     target_workspace = validate_workspace_access(auth, workspace_id)
-    actor_id = auth.user_id
 
     async with async_session_factory() as session:
         query = (

@@ -16,9 +16,8 @@ from .auth import (
     require_admin_role,
     require_editor_role,
     require_viewer_role,
-    validate_workspace_access,
-    StorefrontContext,
     resolve_storefront_context,
+    validate_workspace_access,
 )
 from .compliance import record_audit_event
 from .config import settings

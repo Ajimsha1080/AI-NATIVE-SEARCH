@@ -7,6 +7,7 @@ Proves for every tenant-owned table and endpoint that:
 """
 
 import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 

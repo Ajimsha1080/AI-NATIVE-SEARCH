@@ -12,11 +12,11 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 
+from . import redis_service
 from .config import settings
 from .db.database import async_session_factory
 from .db.models import AuthTokenModel, UserModel, WorkspaceMemberModel, WorkspaceModel
 from .email_service import send_password_reset_email, send_verification_email
-from . import redis_service
 
 ALLOWED_ALGORITHMS = ["HS256"]
 ACCESS_TOKEN_EXPIRE_SECONDS = 15 * 60  # 15 minutes

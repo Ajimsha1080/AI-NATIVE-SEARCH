@@ -1,10 +1,7 @@
-import time
-from collections import defaultdict
 
 from fastapi import Request, status
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-
 
 from ..redis_service import check_rate_limit, track_workspace_usage
 
