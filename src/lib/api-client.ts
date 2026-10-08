@@ -107,14 +107,14 @@ class ShopMateApiClient {
   }
 
   // --- AI Mode Search & Chat ---
-  public async searchAI(query: string, workspaceId: string = 'ws_acme_corp'): Promise<AISearchResponse> {
+  public async searchAI(query: string, workspaceId: string = ''): Promise<AISearchResponse> {
     return this.fetch<AISearchResponse>('/api/ai-mode/search', {
       method: 'POST',
       body: JSON.stringify({ query, workspace_id: workspaceId })
     });
   }
 
-  public async chatAI(message: string, conversationId?: string, workspaceId: string = 'ws_acme_corp'): Promise<AIChatResponse> {
+  public async chatAI(message: string, conversationId?: string, workspaceId: string = ''): Promise<AIChatResponse> {
     return this.fetch<AIChatResponse>('/api/ai-mode/chat', {
       method: 'POST',
       body: JSON.stringify({ user_message: message, conversation_id: conversationId, workspace_id: workspaceId })
@@ -138,18 +138,19 @@ class ShopMateApiClient {
   }
 
   // --- DPDP Act Compliance & Auditing ---
-  public async getAuditLogs(workspaceId: string = 'ws_acme_corp', limit: number = 50): Promise<any> {
-    return this.fetch(`/api/v1/compliance/audit-logs?workspace_id=${encodeURIComponent(workspaceId)}&limit=${limit}`);
+  public async getAuditLogs(workspaceId: string = '', limit: number = 50): Promise<any> {
+    const qs = workspaceId ? `workspace_id=${encodeURIComponent(workspaceId)}&` : '';
+    return this.fetch(`/api/v1/compliance/audit-logs?${qs}limit=${limit}`);
   }
 
-  public async exportCustomerData(customerEmail: string, workspaceId: string = 'ws_acme_corp', customerId?: string): Promise<any> {
+  public async exportCustomerData(customerEmail: string, workspaceId: string = '', customerId?: string): Promise<any> {
     return this.fetch('/api/v1/compliance/export', {
       method: 'POST',
       body: JSON.stringify({ customer_email: customerEmail, workspace_id: workspaceId, customer_id: customerId })
     });
   }
 
-  public async eraseCustomerData(customerEmail: string, workspaceId: string = 'ws_acme_corp', reason?: string): Promise<any> {
+  public async eraseCustomerData(customerEmail: string, workspaceId: string = '', reason?: string): Promise<any> {
     return this.fetch('/api/v1/compliance/erase', {
       method: 'POST',
       body: JSON.stringify({ customer_email: customerEmail, workspace_id: workspaceId, reason })

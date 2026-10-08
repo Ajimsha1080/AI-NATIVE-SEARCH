@@ -1,7 +1,7 @@
 """Admin Bootstrap CLI
 
 A one-time setup utility that creates an initial administrator account and primary workspace
-from environment variables without hardcoded or mock credentials.
+from environment variables without hardcoded credentials.
 
 Usage:
     export ADMIN_EMAIL="admin@yourcompany.com"

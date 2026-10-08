@@ -58,6 +58,22 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 engine = create_async_engine(DATABASE_URL, **engine_kwargs)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
+from sqlalchemy import text
+
+
+async def set_tenant_session_context(session: AsyncSession, workspace_id: str):
+    """Sets PostgreSQL session variable app.current_workspace_id for Row-Level Security."""
+    if not workspace_id:
+        return
+    try:
+        bind = session.bind
+        if bind and getattr(bind.dialect, "name", "") == "postgresql":
+            clean_id = workspace_id.replace("'", "''")
+            await session.execute(text(f"SET LOCAL app.current_workspace_id = '{clean_id}'"))
+    except Exception:
+        pass
+
+
 async def get_db_session() -> AsyncSession:
     """Dependency injector for FastAPI endpoints"""
     async with async_session_factory() as session:

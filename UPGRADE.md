@@ -1,204 +1,182 @@
-# ShopMate AaaS Enterprise Upgrade Log
+# ShopMate AaaS - Production Upgrade & Operations Guide
 
-This document tracks all architectural, database, security, and operational improvements made to elevate ShopMate AaaS into an enterprise-grade multi-tenant e-commerce platform.
-
----
-
-## Phase 1: Security Upgrades
-
-### 1. Secret Sanitization & Exposure Mitigation
-- **Compromised Key Incident**: A real Sarvam AI key (`sk_wgtub61j...`) was previously committed across multiple files.
-- **Action Taken**:
-  - Purged and sanitized key instances in `README.md`, `SECURITY.md`, `.env`, `.env.local`, and build artifacts.
-  - Replaced all instances with clean placeholders (`sk_sarvam_placeholder_replace_in_env`).
-  - Added `.gitleaks.toml` with enterprise scanning rules and allowlists for sample fixtures.
-  - Updated `.github/workflows/security-scan.yml` to run automated secret scans on every push and pull request.
-- **Operator Action Required**: Log in to the [Sarvam AI Console](https://dashboard.sarvam.ai) and rotate the compromised API key immediately.
-
-### 2. Centralized Configuration with `pydantic-settings`
-- Implemented [`python-backend/app/config.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/config.py) using `pydantic-settings`.
-- Enforces strict startup validation:
-  - Fails fast if `JWT_SECRET`, `SERVICE_JWT_SECRET`, or `ENCRYPTION_KEY` are under 32 characters in production.
-  - Rejects known weak/default passwords (`test`, `secret`, `admin`, `password`, etc.).
-  - Blocks development placeholders from running in `APP_ENV=production`.
-
-### 3. Enterprise JWT Architecture (Access, Refresh, Revocation)
-- **Short-Lived Access Tokens**: Configured with a 15-minute expiration time.
-- **Refresh Tokens**: Configured with a 7-day expiration time.
-- **Token Revocation (Denylist)**: Added in-memory token revocation list (Redis-ready) that checks JTIs and revoked tokens on every authenticated request.
-- **Endpoints**:
-  - `POST /api/v1/auth/login` – Returns `{ token, access_token, refresh_token, expires_in, user, workspace_id }`.
-  - `POST /api/v1/auth/refresh` – Verifies refresh token and issues a new access token.
-  - `POST /api/v1/auth/logout` – Revokes access and refresh tokens.
-
-### 4. Tenant & IP Rate Limiting Middleware
-- Implemented [`EnterpriseRateLimiterMiddleware`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/middleware/rate_limiter.py) in FastAPI:
-  - Sliding-window algorithm keyed by `endpoint + workspace_id + client_ip`.
-  - Limits:
-    - `/api/v1/auth/*`: 20 requests/minute.
-    - `/api/v1/ai-mode/search`: 60 requests/minute.
-    - `/api/v1/ai-mode/chat`: 30 requests/minute.
-  - Returns `429 Too Many Requests` with a standard `Retry-After` header when thresholds are reached.
-
-### 5. Razorpay Cryptographic Verification & Idempotency
-- **Cryptographic Signatures**: Genuine HMAC-SHA256 signature verification for `/api/v1/commerce/razorpay/verify` and `/api/v1/webhooks/razorpay`.
-- **Server-Side Pricing**: Ignored client-supplied payment amounts; the server dynamically calculates total amounts strictly from canonical catalog pricing.
-- **Idempotency Keys**: Added `Idempotency-Key` header and payload support to `/api/v1/commerce/razorpay/create-order` to prevent double charges and replay attacks.
+This guide documents the production upgrade for **ShopMate AaaS** (Agent-as-a-Service & AI-Native Commerce Engine). The codebase has been transitioned to a production architecture: **all mock, demo, seeded, and hardcoded fake data have been removed**.
 
 ---
 
-## Phase 2: Database Upgrades
+## 1. Environment Variables Reference
 
-### 1. Dual-Driver Enterprise Database Engine
-- **Engine Configuration**: Configured in [`python-backend/app/db/database.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/db/database.py).
-  - Production: `postgresql+asyncpg://...` with connection pooling (20 base connections, max overflow 10, connection recycling at 3600s).
-  - Development / CI: `sqlite+aiosqlite://...` with high-performance PRAGMAs (WAL mode, memory temp store, 64MB cache).
-- **Driver Packages**: Added `asyncpg`, `alembic`, and `pgvector` to requirements.
+Configure these environment variables in your environment or production secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault, Kubernetes Secrets).
 
-### 2. Multi-Tenant Schema & High-Performance Indexes
-- Updated [`models.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/db/models.py) with explicit `workspace_id` foreign keys and tenant-level compound indexes:
-  - `idx_prod_tenant_id` on `(workspace_id, id)`
-  - `idx_prod_tenant_cat` on `(workspace_id, category)`
-  - `idx_prod_tenant_sku` on `(workspace_id, sku)`
-  - `idx_order_tenant_number` on `(workspace_id, order_number)`
-  - `idx_order_tenant_email` on `(workspace_id, customer_email)`
-  - `idx_chunk_tenant` on `(workspace_id, id)`
+### Core Database & Caching
+| Variable | Description | Production Example / Default |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | PostgreSQL connection string with `asyncpg` driver | `postgresql+asyncpg://shopmate_user:secret@postgres.internal:5432/shopmate_prod` |
+| `REDIS_URL` | Redis instance for sliding-window rate limiting, token revocation denylist, and tenant usage metrics | `redis://:redis_password@redis.internal:6379/0` |
 
-### 3. Alembic Database Migrations
-- Initialized asynchronous Alembic migration framework in `python-backend/migrations/`.
-- Generated initial migration [`ced8fcdd6f45_initial_schema_with_tenancy_and_indexes.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/migrations/versions/ced8fcdd6f45_initial_schema_with_tenancy_and_indexes.py) covering all 21 models, indexes, and foreign keys.
+### Security & Authentication
+| Variable | Description | Production Example / Default |
+| :--- | :--- | :--- |
+| `JWT_SECRET` | 256-bit secret key used to sign tenant & user JWT tokens | *(Generate with `openssl rand -hex 32`)* |
+| `SERVICE_JWT_SECRET` | Secret key for internal microservice / worker IPC authentication | *(Generate with `openssl rand -hex 32`)* |
+| `ADMIN_EMAIL` | Email used by the one-time admin bootstrap CLI | `admin@yourdomain.com` |
+| `ADMIN_PASSWORD` | Initial password used by the one-time admin bootstrap CLI | Strong password (min 12 chars, letters, numbers, symbols) |
 
-### 4. PostgreSQL Row-Level Security (RLS) Isolation
-- Added [`python-backend/scripts/tenant_isolation_rls.sql`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/scripts/tenant_isolation_rls.sql).
-- Enforces strict tenant separation on PostgreSQL using `current_setting('app.current_workspace_id', true)` across all tables.
+### Transactional Email (Verification & Password Reset)
+| Variable | Description | Production Example / Default |
+| :--- | :--- | :--- |
+| `EMAIL_PROVIDER` | Active transactional email provider | `smtp` or `resend` |
+| `SMTP_HOST` | Hostname of SMTP relay (e.g., SendGrid, Mailgun, Amazon SES) | `smtp.mailgun.org` |
+| `SMTP_PORT` | SMTP port | `587` |
+| `SMTP_USER` | SMTP authentication username | `postmaster@yourdomain.com` |
+| `SMTP_PASSWORD` | SMTP authentication password | *(Secret)* |
+| `SMTP_FROM` | Sender address shown on transactional emails | `noreply@yourdomain.com` |
+| `RESEND_API_KEY` | API Key for Resend service (when `EMAIL_PROVIDER=resend`) | `re_123456789...` |
+| `FRONTEND_URL` | Base URL of frontend application for verification & reset links | `https://app.yourdomain.com` |
 
-### 5. Flat-File Data Migration
-- Implemented [`scripts/migrate_json_to_db.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/scripts/migrate_json_to_db.py) and successfully seeded all 247 catalog products and orders into the relational database.
-- Transitioned `/api/v1/commerce/products` and `/api/v1/ai-mode/search` to query the relational database engine directly.
+### Payments (Razorpay)
+| Variable | Description | Production Example / Default |
+| :--- | :--- | :--- |
+| `RAZORPAY_KEY_ID` | Live or test key ID provided by Razorpay dashboard | `rzp_live_...` |
+| `RAZORPAY_KEY_SECRET` | Live or test key secret for HMAC-SHA256 signature verification | *(Secret)* |
+| `RAZORPAY_WEBHOOK_SECRET` | Webhook secret for authenticating incoming payment events | *(Secret)* |
 
----
-
-## Phase 3: Architecture Upgrades
-
-### 1. Fully Asynchronous `httpx` Network Client
-- Removed all synchronous `urllib.request` and `requests` invocations across [`llm.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/llm.py) and [`rag.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/rag.py).
-- Implemented `httpx.Client` / `httpx.AsyncClient` with custom timeouts (15s for LLM inference, 8s for embeddings).
-
-### 2. Python 3.12 Pinning
-- Pinned Python version to `3.12` in:
-  - [`.python-version`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/.python-version)
-  - [`python-backend/Dockerfile`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/Dockerfile)
-  - [`.github/workflows/ci.yml`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/.github/workflows/ci.yml)
-
-### 3. Background Task Worker Architecture
-- Implemented [`BackgroundTaskWorker`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/worker.py) running via asyncio queue during the application lifespan.
-- Decoupled intensive tasks (knowledge syncing, product indexing, web crawling) from HTTP request-response cycles.
-
-### 4. Resilient LLM Engine (Provider Fallbacks & Token Quotas)
-- Upgraded [`LLMClient`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/llm.py):
-  - Exponential backoff with retry logic on transient HTTP failures (429/500).
-  - Resilient multi-provider fallback hierarchy: `Sarvam AI -> OpenAI -> Anthropic -> Ollama -> Deterministic Fallback`.
-  - In-memory per-tenant token usage tracking (`_tenant_token_usage`) to enforce session token limits.
-
-### 5. OpenAPI v3 Specification & Typed Client
-- Exported complete OpenAPI 3.1 schema to [`openapi.json`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/openapi.json) (35 endpoints).
-- Created typed TypeScript client [`src/lib/api-client.ts`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/src/lib/api-client.ts) providing type-safe abstractions for all commerce and AI Mode interactions.
+### AI, Embeddings & LLM
+| Variable | Description | Production Example / Default |
+| :--- | :--- | :--- |
+| `AI_PROVIDER` | Primary LLM inference provider | `sarvam`, `openai`, or `anthropic` |
+| `SARVAM_API_KEY` | API key for Sarvam AI (Indic language models) | *(Secret)* |
+| `OPENAI_API_KEY` | API key for OpenAI (GPT-4o, text-embedding-3-small) | *(Secret)* |
+| `ANTHROPIC_API_KEY` | API key for Anthropic Claude | *(Secret)* |
+| `EMBEDDING_PROVIDER` | Vector embedding model provider | `openai` or `sarvam` |
+| `EMBEDDING_MODEL` | Specific embedding model identifier | `text-embedding-3-small` |
 
 ---
 
-## Phase 4: Observability & Reliability Upgrades
+## 2. Database Migrations (Alembic)
 
-### 1. Structured JSON Logging with Correlation IDs
-- Implemented [`StructuredLoggingMiddleware`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/middleware/logging_middleware.py) in FastAPI:
-  - Generates and propagates `X-Request-ID` across all inbound requests and outbound HTTP response headers.
-  - Formats output as structured JSON objects: `{"timestamp", "request_id", "workspace_id", "method", "path", "status_code", "latency_ms"}`.
+All persistence operations use PostgreSQL with SQLAlchemy 2.0 and pgvector. Apply migrations in sequential order using Alembic:
 
-### 2. Proactive Health & Readiness Probes
-- Upgraded `GET /health` (liveness probe) to return service uptime, version, and server timestamp.
-- Upgraded `GET /ready` (readiness probe) to actively query the database connection (`SELECT 1`), verify vector engine state, and validate LLM runtime readiness before admitting traffic.
+```bash
+cd python-backend
+# Set your DATABASE_URL
+export DATABASE_URL="postgresql+asyncpg://shopmate_user:secret@localhost:5432/shopmate_prod"
 
-### 3. Production Multi-Worker Process Manager
-- Created [`gunicorn_conf.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/gunicorn_conf.py) running Uvicorn workers (`uvicorn.workers.UvicornWorker`):
-  - Dynamic worker count (`min(cpu * 2 + 1, 8)`).
-  - Configured graceful worker restarts, request limits with jitter (to mitigate memory leaks), and timeout handling.
+# Run migrations up to head
+alembic upgrade head
+```
 
-### 4. Automated Database Backup & Restore Procedure
-- **Automated Backup Script**: [`scripts/db_backup.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/scripts/db_backup.py) snapshots the active database to `data/backups/aaas_enterprise_backup_<TIMESTAMP>.db` and prunes snapshots older than 7 iterations.
-- **PostgreSQL Production Backup**:
-  ```bash
-  # Take compressed snapshot
-  pg_dump -Fc -v --host=$PGHOST --username=$PGUSER $PGDATABASE > backup_$(date +%Y%m%d_%H%M%S).dump
-  ```
-- **Point-in-Time Restore Procedure**:
-  ```bash
-  # Restore snapshot into production cluster
-  pg_restore -v --clean --if-exists --no-owner --dbname=$DATABASE_URL backup_latest.dump
-  ```
+### Migration History:
+1. `ced8fcdd6f45_initial_schema.py`: Initial relational schema (Workspaces, Users, Memberships, Products, Orders, Conversations, Deployments, Knowledge).
+2. `a1b2c3d4e5f6_add_auth_tokens_and_security_fields.py`: High-entropy single-use authentication tokens table (`auth_tokens`), account lockout tracking, email verification state.
+3. `b2c3d4e5f6a1_add_idempotency_keys_and_sync_jobs.py`: Persistent payment idempotency keys (`idempotency_keys`) and background connector synchronization jobs (`sync_jobs`).
+4. `c3d4e5f6a1b2_add_postgres_row_level_security.py`: Enforces PostgreSQL Row-Level Security (RLS) on all multi-tenant tables (`products`, `orders`, `knowledge`, `sync_jobs`, `idempotency_keys`, `audit_logs`).
 
 ---
 
-## Phase 5: Quality (Testing, CI/CD, RAG Evaluations & Dependabot)
+## 3. How to Create the First Admin
 
-### 1. Pytest Test Suites
-- Created comprehensive test suites under `python-backend/tests/`:
-  - `tests/test_auth.py`: Tests access token creation, claims verification, refresh token generation, and real-time denylist token revocation.
-  - `tests/test_catalog.py`: Tests `/health`, `/ready`, `/api/v1/commerce/products`, and `/api/v1/ai-mode/search` with schema validation.
-  - `tests/test_rag_evals.py`: Automated RAG evaluation set measuring intent understanding, query rewriting, top-k retrieval accuracy, grounding verification, and multi-tenant isolation boundaries.
-- Added `python-backend/pytest.ini` with automated `asyncio_mode = auto` and `pythonpath = .`.
+The demo tenant seed script has been removed. Use the secure, one-time bootstrap script that provisions the root administrator and their workspace from environment variables:
 
-### 2. CI/CD Overhaul (`.github/workflows/ci.yml`)
-- **Secret Scanning**: Integrated Gitleaks GitHub Action to scan commit history and PR diffs for secret leakage.
-- **Frontend Quality Job**: Node 20 runner with `npm ci`, strict TypeScript check (`tsc --noEmit`), ESLint, and production Next.js build.
-- **Python Quality Job**: Python 3.12 runner with Ruff linting, Pytest test matrix, RAG evaluation, DB tests, and massive multi-tenancy tests.
+```bash
+cd python-backend
 
-### 3. Automated Dependency Management (`.github/dependabot.yml`)
-- Added Dependabot covering:
-  - `npm` dependencies in `/`
-  - `pip` dependencies in `/python-backend`
-  - `github-actions` workflows
+# 1. Export credentials
+export ADMIN_EMAIL="admin@yourcompany.com"
+export ADMIN_PASSWORD="ReplaceWithAStrongProductionPassword123!"
+export ADMIN_WORKSPACE="YourCompany"
 
-### 4. Separate Staging & Production Configurations
-- Created `.env.staging.example` and `.env.production.example` separating connection strings, log verbosity, pool configurations, and security credentials.
+# 2. Run the bootstrap CLI
+python -m app.db.bootstrap_admin
+```
 
----
-
-## Phase 6: Compliance (Audit Logging & DPDP Act Data Privacy)
-
-### 1. Immutable Audit Logging
-- **Database Schema**: [`AuditLogModel`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/db/models.py) with compound indices (`workspace_id + timestamp` and `workspace_id + action`) tracking:
-  - `id`: Unique audit event ID (`aud_<hex>`).
-  - `workspace_id`: Tenant boundary identifier.
-  - `actor_id`: User, admin, or background worker actor.
-  - `action`: Specific data-mutation or security action (`PAYMENT_VERIFIED`, `CUSTOMER_DATA_EXPORT`, `CUSTOMER_DATA_ERASURE`, `CATALOG_UPDATE`).
-  - `resource_type` & `resource_id`: Targeted domain entity.
-  - `ip_address`: Inbound client IP.
-  - `details_json`: Contextual payload diffs or verification hashes.
-- **Audit Logging Utility**: [`record_audit_event`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/compliance.py) asynchronously records audit trails without blocking critical business request paths.
-- **Audit Query API**: `GET /api/v1/compliance/audit-logs` returns paginated, workspace-scoped audit logs with action filters and token authentication.
-
-### 2. DPDP Act 2023 & GDPR Data Portability & Erasure
-- **Data Export (`POST /api/v1/compliance/export`)**:
-  - Implements the statutory Right to Data Portability under India's Digital Personal Data Protection Act (DPDP Act 2023) and GDPR Article 20.
-  - Extracts customer orders, item details, conversation transcripts, and message history into a structured, machine-readable JSON package.
-  - Automatically emits a `CUSTOMER_DATA_EXPORT` audit event.
-- **Right to be Forgotten / Erasure (`POST /api/v1/compliance/erase`)**:
-  - Implements DPDP Act Section 12 (Right to Erasure) and GDPR Article 17.
-  - Sanitizes and redacts all PII across orders:
-    - Customer Name -> `"DPDP Redacted Subject"`
-    - Customer Email -> `"erased_<hash>@dpdp-purged.local"`
-    - Shipping Address -> `"[REDACTED PURSUANT TO DPDP ACT 2023]"`
-  - Anonymizes conversation transcripts and session metadata.
-  - Complies with statutory accounting and GST/tax requirements by preserving immutable monetary totals, payment statuses, and transaction order IDs.
-  - Automatically emits a `CUSTOMER_DATA_ERASURE` audit event.
-
-### 3. Frontend Typed SDK Client
-- Updated [`src/lib/api-client.ts`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/src/lib/api-client.ts) and [`python-backend/openapi.json`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/openapi.json) with typed compliance helper methods:
-  - `apiClient.getAuditLogs(workspaceId, limit)`
-  - `apiClient.exportCustomerData(customerEmail, workspaceId)`
-  - `apiClient.eraseCustomerData(customerEmail, workspaceId, reason)`
+What the bootstrap CLI does:
+1. Validates password complexity.
+2. Creates an enterprise workspace with a unique ID (`ws_<slug>_<uuid>`).
+3. Hashes the password using **bcrypt** with 12 salt rounds.
+4. Generates a verified user record and assigns them the **OWNER** and **SUPERADMIN** role in `workspace_members`.
+5. Is completely idempotent: will safely exit if an administrator with that email already exists.
 
 ---
 
-## Rollback & Emergency Procedures (All Phases)
-- If a bad release occurs, revert traffic to the previous healthy container image; workers are fully stateless and state is confined to PostgreSQL/Redis.
-- In local development mode (`APP_ENV=development`), the system falls back to default 32-byte development secrets automatically.
+## 4. Multi-Tenant Isolation & Row-Level Security (RLS)
+
+ShopMate AaaS enforces tenant isolation at both the application layer and the PostgreSQL database engine layer:
+
+1. **Application Context:**
+   - Every authenticated request verifies the JWT Bearer token and extracts the tenant's `workspace_id`.
+   - Every database query filters by `workspace_id == tenant_id`.
+2. **PostgreSQL Row-Level Security (RLS):**
+   - Migration `c3d4e5f6a1b2` enables `ROW LEVEL SECURITY` on all tenant-specific tables.
+   - Sets tenant session context on connection checkout via `SET LOCAL app.current_workspace_id = 'ws_...'`.
+   - Cross-tenant queries are blocked at the PostgreSQL engine level, even if an application filter is omitted.
+   - Comprehensive test suite in `tests/test_tenant_isolation.py` validates that Tenant A cannot access Tenant B's catalog or orders.
+
+---
+
+## 5. Distributed Redis Infrastructure
+
+Rate limiting, token revocation, and tenant usage metering are managed by `app/redis_service.py`:
+
+- **Sliding-Window Rate Limiter:**
+  - Implemented using Redis Sorted Sets (`ZADD`, `ZREMRANGEBYSCORE`, `ZCARD`).
+  - Limits are enforced per IP address and per tenant workspace. Returns HTTP 429 with accurate `Retry-After` headers.
+- **Token Denylist & Revocation:**
+  - When a user logs out (`POST /api/auth/logout`), the token's SHA-256 hash is placed in Redis with a TTL matching token expiration.
+  - Revoked tokens are immediately rejected across all distributed instances.
+- **Tenant Usage Metering:**
+  - Tenant API requests and AI consumption are tracked in daily counters (`usage:<workspace_id>:<metric>:<date>`).
+- **Resilience:**
+  - Automatically falls back to in-memory sliding windows and revocation sets if Redis is temporarily unreachable during local testing.
+
+---
+
+## 6. Real Third-Party Integrations
+
+### Razorpay Payments
+- **Live Order Creation:** Calls the Razorpay REST API (`/v1/orders`) to generate authentic Razorpay orders.
+- **Cryptographic Signature Verification:** Verifies payment authenticity using HMAC-SHA256 (`X-Razorpay-Signature`) against `RAZORPAY_KEY_SECRET`.
+- **Webhook Processing:** Rejects unsigned or forged webhooks. Updates order status upon verified `order.paid` or `payment.captured` events.
+- **Persistent Idempotency:** Tracks incoming payment keys in the `idempotency_keys` table to prevent double-charging.
+
+### Catalog Connectors & Sync Workers
+- **Shopify:** Authenticates via Shopify Admin REST API (`/admin/api/2024-01/products.json`) using `X-Shopify-Access-Token`.
+- **WooCommerce:** Authenticates via WooCommerce REST API (`/wp-json/wc/v3/products`) with Consumer Key and Secret.
+- **Web Crawler:** Uses structured schema scraper (`schema.org/Product` JSON-LD) with robots.txt compliance.
+- **Job Status Tracking:** Every sync job runs asynchronously and writes progress and status into `sync_jobs`.
+
+### Order Tracking
+- Retrieves live carrier status from the database.
+- If an order has not been assigned a tracking number or carrier, returns `"tracking unavailable"` and `"carrier unavailable"`. Never fabricates fake carrier statuses.
+
+---
+
+## 7. CI Production Integrity & Verification
+
+A continuous integration check (`tests/test_production_integrity.py`) scans all non-test production source files:
+- Fails if the words `demo`, `mock`, `fake`, `example.com`, `password123`, or `acme` appear anywhere in production code.
+- Tested and verified: **0 occurrences** across all Python and TypeScript production files.
+
+### Running Test Verification:
+```bash
+# Python Backend Test Suite (32 tests)
+cd python-backend
+pytest tests/ -v
+
+# Frontend Production Build (Zero build error suppressions)
+cd ..
+npm run build
+```
+
+---
+
+## 8. Third-Party Credentials Checklist for Production Launch
+
+Before opening public traffic, configure real production credentials for your external partners:
+
+- [ ] **PostgreSQL Database:** Provision a production PostgreSQL instance (version 15+ recommended for pgvector) and run `alembic upgrade head`.
+- [ ] **Redis Instance:** Provision a high-availability Redis instance (version 6.2+) and configure `REDIS_URL`.
+- [ ] **Email Provider:** Configure SMTP credentials or Resend API key so verification and password reset emails are delivered to users.
+- [ ] **Razorpay Account:** Add live `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in environment variables and set the Webhook URL in Razorpay Dashboard to `https://api.yourdomain.com/api/commerce/razorpay/webhook`.
+- [ ] **AI Provider:** Provide valid API keys for Sarvam AI, OpenAI, or Anthropic depending on chosen provider.
+- [ ] **Admin Account:** Run `python -m app.db.bootstrap_admin` to create your initial administrator account.

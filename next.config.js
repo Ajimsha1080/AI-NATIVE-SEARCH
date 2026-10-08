@@ -7,12 +7,7 @@ const nextConfig = {
   poweredByHeader: false,
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname),
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+
   experimental: {
     optimizePackageImports: ['lucide-react', 'clsx', 'tailwind-merge'],
     webpackBuildWorker: true,

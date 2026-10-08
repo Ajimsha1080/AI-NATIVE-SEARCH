@@ -29,7 +29,7 @@ async def record_audit_event(
 ) -> AuditLogModel | None:
     """Records an immutable audit log entry for administrative or data-mutation actions."""
     if not workspace_id:
-        workspace_id = "ws_acme_corp"
+        return None
 
     try:
         async with async_session_factory() as session:
@@ -61,12 +61,12 @@ async def record_audit_event(
 class DPDPExportRequest(BaseModel):
     customer_email: EmailStr
     customer_id: str | None = None
-    workspace_id: str | None = "ws_acme_corp"
+    workspace_id: str
 
 class DPDPErasureRequest(BaseModel):
     customer_email: EmailStr
     customer_id: str | None = None
-    workspace_id: str | None = "ws_acme_corp"
+    workspace_id: str
     reason: str | None = "Customer DPDP Act Right to Erasure"
 
 
@@ -84,7 +84,7 @@ async def get_audit_logs(
     authorization: str | None = Header(None)
 ):
     """Retrieves immutable audit logs for a tenant workspace."""
-    target_workspace = workspace_id or "ws_acme_corp"
+    target_workspace = workspace_id
     actor_id = "system_operator"
 
     # Validate auth token if supplied
@@ -96,6 +96,10 @@ async def get_audit_logs(
             target_workspace = payload.get("workspace_id") or target_workspace
         except Exception:
             pass
+
+    if not target_workspace:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="workspace_id is required")
 
     async with async_session_factory() as session:
         query = (

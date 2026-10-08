@@ -67,7 +67,7 @@ class LLMClient:
         messages: list[dict[str, str]],
         tools: list[dict[str, Any]],
         system_prompt: str = SYSTEM_INJECTION_DEFENSE_PROMPT,
-        workspace_id: str = "ws_acme_corp"
+        workspace_id: str = "default_workspace"
     ) -> dict[str, Any]:
         """
         Executes a resilient model call with provider fallbacks:
@@ -290,7 +290,7 @@ class LLMClient:
                         "tool_name": "lookup_order",
                         "arguments": {
                             "order_number": order_num,
-                            "customer_email": email_match.group(0) if email_match else "customer@example.com"
+                            "customer_email": email_match.group(0) if email_match else ""
                         }
                     }
                 ],

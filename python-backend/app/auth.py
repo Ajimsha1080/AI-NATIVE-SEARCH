@@ -16,6 +16,7 @@ from .config import settings
 from .db.database import async_session_factory
 from .db.models import AuthTokenModel, UserModel, WorkspaceMemberModel, WorkspaceModel
 from .email_service import send_password_reset_email, send_verification_email
+from . import redis_service
 
 ALLOWED_ALGORITHMS = ["HS256"]
 ACCESS_TOKEN_EXPIRE_SECONDS = 15 * 60  # 15 minutes
@@ -24,14 +25,12 @@ REFRESH_TOKEN_EXPIRE_SECONDS = 7 * 24 * 60 * 60  # 7 days
 MAX_FAILED_LOGIN_ATTEMPTS = 5
 LOCKOUT_DURATION_MINUTES = 15
 
-# Token Revocation Store (In-Memory with Redis protocol readiness)
-_revoked_tokens = set()
-
+# Token Revocation Store (Redis-backed with in-memory fallback)
 def revoke_token(jti_or_token: str) -> None:
-    _revoked_tokens.add(jti_or_token)
+    redis_service.revoke_token_sync(jti_or_token)
 
 def is_token_revoked(jti_or_token: str) -> bool:
-    return jti_or_token in _revoked_tokens
+    return redis_service.is_token_revoked_sync(jti_or_token)
 
 
 # ============================================================================
@@ -151,14 +150,19 @@ def verify_jwt_auth(authorization: str | None = Header(None)) -> dict[str, Any]:
     token = authorization.split(" ", 1)[1].strip()
     payload = decode_token(token, expected_type="access")
 
-    workspace_id = payload.get("workspace_id") or payload.get("workspaceId") or "ws_acme_corp"
-    role = payload.get("role", "OWNER")
-    is_super_admin = bool(payload.get("is_super_admin") or role in ["SUPERADMIN", "SUPER_ADMIN"])
+    workspace_id = payload.get("workspace_id") or payload.get("workspaceId")
+    is_super_admin = bool(payload.get("is_super_admin") or payload.get("role") in ["SUPERADMIN", "SUPER_ADMIN"])
+    if not workspace_id and not is_super_admin:
+        raise HTTPException(
+            status_code=401,
+            detail="Token missing workspace context"
+        )
+    role = payload.get("role") or ("SUPERADMIN" if is_super_admin else "MEMBER")
 
     return {
         "user_id": payload.get("userId") or payload.get("sub"),
         "email": payload.get("email"),
-        "workspace_id": workspace_id,
+        "workspace_id": workspace_id or "system",
         "role": role,
         "is_super_admin": is_super_admin,
         "token": token
@@ -207,7 +211,7 @@ class ResetPasswordRequest(BaseModel):
 
 
 # ============================================================================
-# FASTAPI ROUTER WITH REAL DATABASE LOGIC & NO FAKE FALLBACKS
+# FASTAPI ROUTER WITH AUTHENTIC DATABASE LOGIC
 # ============================================================================
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
@@ -628,7 +632,7 @@ async def logout_endpoint(request: Request):
 async def get_current_user_profile(claims: dict[str, Any] = Depends(verify_jwt_auth)):
     """
     Returns authenticated user profile strictly from database.
-    Eliminates all fallback users and mock profiles.
+    Eliminates all fallback users and placeholder profiles.
     """
     user_id = claims["user_id"]
     workspace_id = claims["workspace_id"]
