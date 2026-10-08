@@ -1,218 +1,174 @@
-# ShopMate AaaS — Enterprise Multi-Tenant E-Commerce AI Agent Platform
+# ShopMate AaaS — Enterprise Multi-Tenant E-Commerce AI Platform
 
 [![Next.js 15](https://img.shields.io/badge/Next.js-15.1.7-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Python_3.12-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React 19](https://img.shields.io/badge/React-19.0.0-blue?style=flat&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.x-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
-[![Sarvam AI](https://img.shields.io/badge/Sarvam_AI-105B_Conversations-orange?style=flat)](https://www.sarvam.ai/)
-[![AI Mode Tests](https://img.shields.io/badge/AI_Mode_Tests-61%2F61_Passing-brightgreen?style=flat)](scripts/test-ai-mode.ts)
-[![Security Audit](https://img.shields.io/badge/Security_Audit-Passing-brightgreen?style=flat)](scripts/security-audit.js)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-asyncpg-336791?style=flat&logo=postgresql)](https://www.postgresql.org/)
+[![SQLAlchemy 2.0](https://img.shields.io/badge/SQLAlchemy-2.0_async-red?style=flat)](https://www.sqlalchemy.org/)
+[![Pytest](https://img.shields.io/badge/Pytest-15%2F15_Passing-brightgreen?style=flat&logo=pytest)](python-backend/tests/)
+[![Gitleaks](https://img.shields.io/badge/Security-Gitleaks_Passed-brightgreen?style=flat)](.gitleaks.toml)
+[![DPDP Act 2023](https://img.shields.io/badge/Compliance-DPDP_Act_2023-blue?style=flat)](UPGRADE.md)
 
-A production-grade, hardened, multi-tenant enterprise **E-Commerce Agent-as-a-Service (AaaS)** platform. Features a unified Next.js 15 full-stack frontend with visual shopping chat widgets and an asynchronous Python 3.12 FastAPI intelligence engine powered by a 12-Stage Hybrid RAG pipeline, authoritative structured catalog search, dynamic intent classification, conversational state memory, and multi-LLM orchestration (Sarvam AI 105B, OpenAI, Anthropic, Ollama).
+A production-grade, hardened, multi-tenant enterprise **E-Commerce Agent-as-a-Service (AaaS)** platform. Features a pure Next.js 15 / React 19 UI frontend with interactive visual shopping widgets and a 100% Python 3.12 FastAPI backend powered by SQLAlchemy 2.0 (PostgreSQL/SQLite dual-driver), 12-Stage Hybrid RAG pipeline, multi-LLM orchestration with automatic fallbacks (Sarvam AI 105B, OpenAI, Anthropic, Ollama), Redis rate limiting & token revocation, and statutory DPDP Act compliance.
 
 ---
 
-## 🏗️ Agentic Commerce Architecture
+## 🏗️ System Architecture
 
 ```
                                   CUSTOMER
                                      │
                                      ▼
-                    ┌───────────────────────────────────┐
-                    │     AI Shopping Concierge         │
-                    │   (Sarvam 105B / Next.js Runtime) │
-                    └────────────────┬──────────────────┘
-                                     │
-           ┌─────────────────────────┴─────────────────────────┐
-           ▼                                                   ▼
-┌───────────────────────────────┐               ┌───────────────────────────────┐
-│     Structured Commerce Engine│               │   12-Stage Store Knowledge RAG │
-│  (AUTHORITATIVE SOURCE TRUTH) │               │   (POLICIES / FAQS / GUIDES)  │
-├───────────────────────────────┤               ├───────────────────────────────┤
-│ • Product IDs & SKUs          │               │ • Return & Refund Windows     │
-│ • Real-time Pricing & MRP     │               │ • Shipping Rates & Delivery   │
-│ • Live Variant Stock Levels   │               │ • Size Guides & Measurements  │
-│ • Color & Occasion Mappings   │               │ • Brand FAQs & Contact Info   │
-│ • Cart & Order State          │               │ • Material Care Instructions  │
-└───────────────────────────────┘               └───────────────────────────────┘
-           │                                                   │
-           └─────────────────────────┬─────────────────────────┘
-                                     │
-                                     ▼
-                    ┌───────────────────────────────────┐
-                    │     Context & State Resolver      │
-                    │  - Ordinals ("the second one")    │
-                    │  - Pronouns ("is this in stock?") │
-                    │  - Multi-Intent Query Unification │
-                    └────────────────┬──────────────────┘
-                                     │
-                                     ▼
-                    ┌───────────────────────────────────┐
-                    │    Clean Natural Dialogue (Prose) │
-                    │                +                  │
-                    │  Interactive UI Visual Component  │
-                    │ (PRODUCTS / CART / ORDER_TRACK)   │
-                    └───────────────────────────────────┘
+                     ┌───────────────────────────────────┐
+                     │     Next.js 15 React 19 UI        │
+                     │  (Client-only Frontend on :3000)  │
+                     └────────────────┬──────────────────┘
+                                      │  Typed SDK Client / Nginx
+                                      ▼
+                     ┌───────────────────────────────────┐
+                     │     Python 3.12 FastAPI Core      │
+                     │  (Stateless Service on :8000)     │
+                     └───────┬───────────────────┬───────┘
+                             │                   │
+            ┌────────────────┴──────┐     ┌──────┴────────────────┐
+            ▼                       ▼     ▼                       ▼
+ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
+ │ 12-Stage Hybrid RAG │ │  PostgreSQL 16 Async│ │ Redis & Background  │
+ │ • Dense Vector Emb  │ │ • SQLAlchemy 2.0    │ │ • Token Revocation  │
+ │ • Sparse BM25 / RRF │ │ • Compound Indexes  │ │ • Sliding Limits    │
+ │ • Grounding Checker │ │ • Row-Level Security│ │ • Catalog Sync Task │
+ └─────────────────────┘ └─────────────────────┘ └─────────────────────┘
 ```
 
 ---
 
 ## 💎 Source-of-Truth Separation Rule
 
-The platform strictly enforces the separation of product truth from conversational reasoning:
+The platform strictly separates authoritative transactional data from generative LLM reasoning:
 
 | Domain | Authoritative Provider | Role & Scope |
 |---|---|---|
-| **Product Discovery & Truth** | `LocalCommerceProvider` / `commerceEngine` | Product ID, SKU, title, category, price, discount, variant stock, images, product URLs. |
-| **Inventory & Availability** | `commerceEngine.getInventory` | Real-time stock counts, size-specific variant stock verification. |
-| **Cart Operations** | `commerceEngine.addToCart` / `removeFromCart` | Live basket calculation, subtotal, quantity updates, order line-items. |
-| **Order Tracking** | `commerceEngine.getOrder` | Real-time shipment status, carrier tracking numbers, delivery addresses. |
+| **Product Discovery & Truth** | SQLAlchemy `ProductModel` (Postgres / SQLite) | Product ID, SKU, title, category, price, discount, variant stock, images, product URLs. |
+| **Inventory & Availability** | Relational Database Models | Real-time stock counts, size-specific variant stock verification. |
+| **Cart Operations** | `CartModel` + Client Cache | Real-time basket calculation, subtotal, quantity updates, order line-items. |
+| **Order Tracking** | `OrderModel` (Indexed by tenant + number) | Real-time shipment status, carrier tracking numbers, delivery addresses. |
 | **Store Policies & FAQs** | 12-Stage Hybrid RAG Pipeline | Return/exchange windows, doorstep pickup terms, shipping times, brand info. |
-
----
-
-## 🎯 General-Purpose Agentic Intent Routing
-
-The agent dynamically determines customer intent without brittle hardcoding:
-
-1. **Occasion & Semantic Discovery**:
-   - *"Show me something good for a dinner"*
-   - *"I need a gift for my brother under ₹1500"*
-   - *"What would you recommend for a casual office day?"*
-2. **Demographic & Attribute Filtering**:
-   - *"Women's products"* (Strictly filters out male pieces, matches kurtas, sarees, dresses)
-   - *"Any red shirts?"* (Resolves color families: `red`, `wine`, `maroon`, `crimson`)
-3. **Multi-Product Comparison**:
-   - *"Which one is cheaper?"*
-   - *"Compare these two"* (Calculates price difference and styling suitability)
-4. **Contextual Pronouns & Ordinals**:
-   - *"Add the second one to my cart"*
-   - *"Is this available in size M?"*
-   - *"Show me something similar to the last product"*
-5. **Live Inventory Inquiries**:
-   - *"Is this in stock?"*
-   - *"Do you have size M available?"* (Queries live variant database)
-6. **Cart Actions**:
-   - *"Add to cart"*
-   - *"Remove that shirt"*
-   - *"What is in my bag?"*
-7. **Order Inquiries**:
-   - *"Where is my order #10482?"* (Requires customer identifier, displays tracking carrier)
-8. **Mixed Multi-Intent Support**:
-   - *"Show me a black shirt under ₹2000 and tell me if I can return it."*
-   - Concurrently executes structured product search + RAG policy lookup and provides a unified response.
+| **Compliance & Auditing** | `AuditLogModel` (Immutable Audit Ledger) | Administrative mutations, payment verifications, DPDP data exports and erasures. |
 
 ---
 
 ## ✨ Core Platform Capabilities
 
 ### 1. 12-Stage Advanced Hybrid RAG Engine
-- **Query Understanding & Entity Extraction**: Detects user intent and extracts parameters (size, color, price limits, ordinals).
+- **Intent Understanding & Entity Extraction**: Detects intent (`RETURN_OR_POLICY_INQUIRY`, `SHIPPING_LOGISTICS`, `SIZING_FIT`) and parameters.
 - **Query Rewriting & Semantic Expansion**: Expands queries with domain-specific fashion synonyms.
-- **Dense + Sparse Hybrid Search**: Combines high-dimensional semantic embeddings with BM25 keyword matching.
-- **Reciprocal Rank Fusion (RRF)**: Merges retrieval candidate lists using RRF ($k=60$).
-- **Cross-Encoder Scoring & Grounding Verification**: Verifies citations to guarantee factual confidence and prevent hallucinations.
+- **Dense + Sparse Hybrid Search**: Combines semantic embeddings with token matching.
+- **Reciprocal Rank Fusion (RRF)**: Merges retrieval candidates using RRF ($k=60$).
+- **Grounding Verification**: Requires factual statements to be supported by retrieved chunks, preventing hallucinations.
 
-### 2. Autonomous Multi-Page Store Crawler & Schema.org Ingestor
-- **Automated Policy Discovery**: Scrapes policies across root `/`, `/pages/shipping-policy`, `/pages/return-exchange-policy`, `/pages/contact-us`, `/pages/about-us`, and `/pages/faq`.
-- **Paginated Catalog Crawler**: Ingests up to 2,500 products per sync via `/products.json?limit=250&page=1..10`.
-- **Schema.org JSON-LD Parser**: Automatically extracts `<script type="application/ld+json">` product entities from HTML.
-- **Live Inventory Ingestion**: Imports pricing, compare-at MRPs, multi-variant stock levels, and high-res product photos.
+### 2. Multi-LLM Orchestration & Resilience
+- **Automatic Provider Fallback Chain**: `Sarvam AI 105B` ➔ `OpenAI` ➔ `Anthropic` ➔ `Ollama` ➔ `Deterministic Fallback`.
+- **Exponential Backoff & Retries**: Automatic backoff with jitter on transient network timeouts or rate limits.
+- **Per-Tenant Token Budgets**: Tracks prompt and completion tokens per workspace with quota thresholds.
 
-### 3. Visual Interactive Chat & Instant Cart Management
-- **Zero Fake Text Markers**: Complete elimination of fake markdown annotations like `[Product Card] ... — Add to Cart` from message prose.
-- **Interactive Visual Cards**: High-res product cards with live stock badges, pricing, zoomable photo inspect modal, and instant 1-click **Add to Cart**.
-- **Cart & Order Tracking**: Instant tracking lookup for active orders and real-time shopping bag calculations.
+### 3. Enterprise Security & Hardening
+- **Fail-Fast Configuration**: Enforced by `pydantic-settings`; aborts startup if keys are weak or default.
+- **JWT Lifecycle & Instant Revocation**: 15-minute access tokens, 7-day refresh tokens, and real-time revocation denylist.
+- **Sliding-Window Rate Limiting**: In-memory and Redis-backed rate limiting on auth, search, and chat endpoints.
+- **Razorpay Hardening**: Cryptographic HMAC-SHA256 signature verification, server-side catalog price recalculation, and `Idempotency-Key` tracking.
 
-### 4. Enterprise Security, Privacy & Guardrails
-- **Prompt Injection Boundaries**: All untrusted store catalog chunks are wrapped in `<<<UNTRUSTED_CATALOG_DATA>>>` delimiters to prevent prompt override attacks.
-- **SSRF & Metadata Protection**: Strict `SafeFetch` utility blocking AWS/GCP cloud metadata IPs (`169.254.169.254`), RFC 1918 private subnets, IPv6 loopbacks, and hex/dword evasion.
-- **Role-Based Access Control (RBAC)**: Tenant isolation across `OWNER`, `ADMIN`, `EDITOR`, and `VIEWER` roles.
-- **Zero-Hallucination Safe Fallbacks**: Fails closed and avoids inventing policies when knowledge chunks are absent.
+### 4. Enterprise Database & Multi-Tenancy
+- **PostgreSQL Asyncpg & SQLite**: Production PostgreSQL with connection pooling (`pool_size=20`, `max_overflow=10`) and SQLite for local development.
+- **Alembic Migrations**: Fully tracked schema migrations with version control.
+- **Tenant Isolation**: Mandatory `workspace_id` compound indexes on SKU, category, and order number; PostgreSQL Row-Level Security (RLS) policies.
+
+### 5. Observability & Reliability
+- **Structured JSON Logging**: Every request tagged with unique `X-Request-ID` correlation identifiers.
+- **Health & Readiness Probes**: Liveness (`GET /health`) and deep readiness probe (`GET /ready` verifying relational DB, vector engine, and LLM runtime).
+- **Automated Database Backups**: Automated snapshots with rotation pruning (`scripts/db_backup.py`).
+
+### 6. Statutory Compliance (DPDP Act 2023 & GDPR)
+- **Immutable Audit Logging**: Every administrative action, payment verification, and data mutation is recorded in `AuditLogModel` (`GET /api/v1/compliance/audit-logs`).
+- **Data Portability (`POST /api/v1/compliance/export`)**: Machine-readable JSON export of customer orders, items, and conversations.
+- **Right to Erasure (`POST /api/v1/compliance/erase`)**: Redacts customer PII while preserving financial accounting transaction ledgers.
 
 ---
 
 ## 🚀 Quick Start & Local Setup
 
 ### Prerequisites
-- Node.js 20+
-- npm 10+
-- Python 3.12+ (optional for local FastAPI service)
+- **Python 3.12+**
+- **Node.js 20+** & **npm 10+**
 
-### 1. Environment Configuration
-Create a `.env` file in the root directory:
+### 1. Backend Setup (Python FastAPI)
 
-```env
-APP_ENV=development
-NODE_ENV=development
+```bash
+# Navigate to backend directory
+cd python-backend
 
-# LLM Configuration (Sarvam AI / OpenAI / Anthropic / Ollama)
-SARVAM_API_KEY=your_sarvam_api_key_here
-LLM_PROVIDER=sarvam
-LLM_MODEL=sarvam-105b-conversations
+# Install dependencies
+pip install -r requirements.txt
 
-# Backend Service URLs
-PYTHON_BACKEND_URL=http://127.0.0.1:8000
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# Security Secrets (32+ chars)
-JWT_SECRET=your_super_secret_jwt_key_at_least_32_chars_long
-ENCRYPTION_KEY=your_encryption_key_at_least_32_chars_long
+# Start FastAPI development server
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 2. Install Dependencies & Run
+The backend is now live:
+- API Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- Health Probe: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+- Readiness Probe: [http://127.0.0.1:8000/ready](http://127.0.0.1:8000/ready)
+
+### 2. Frontend Setup (Next.js 15 UI)
+
 ```bash
-# Install Node packages
+# In the root repository directory
 npm install
 
 # Start Next.js development server
 npm run dev
 ```
 
+The UI is now accessible at [http://localhost:3000](http://localhost:3000).
+
 ---
 
-## 🧪 Comprehensive Verification & Test Suite
-
-The repository includes comprehensive automated test suites:
+## 🧪 Automated Testing & Verification
 
 ```bash
-# 1. Run AI Mode Verification Suite (61/61 tests across 8 suites)
-npm run test:ai-mode
+# 1. Run Python Pytest Suite (15/15 passing: Auth, Catalog, Compliance, RAG Evals)
+cd python-backend
+pytest -v
 
-# 2. Run Platform Security & Secrets Audit
-npm run check:security
-
-# 4. TypeScript Typecheck
+# 2. Frontend Strict TypeScript Check
 npx tsc --noEmit
 
-# 5. ESLint Check
+# 3. Frontend ESLint Linting
 npm run lint
 
-# 6. Production Build Test
+# 4. Next.js Production Build
 npm run build
 ```
 
 ---
 
-## 🌐 Production Deployment (Docker Compose / EC2)
+## 🌐 Production Deployment
 
-To deploy on AWS EC2 or any Linux VPS:
-
+### Multi-Worker Gunicorn Deployment (Python Backend)
 ```bash
-cd /var/www/AI-Native-Ecommerce
-git fetch origin
-git reset --hard origin/main
-npm install
-npm run build
-pm2 restart all
+cd python-backend
+gunicorn -c gunicorn_conf.py app.main:app
 ```
 
-Or via Docker Compose:
-
+### Docker Compose
 ```bash
-sudo docker compose up -d --build
+docker compose up -d --build
 ```
+
+---
+
+## 📖 Upgrade Guide & Documentation
+For a complete breakdown of enterprise modifications, environment variable references, database migration commands, and disaster recovery procedures, consult [`UPGRADE.md`](UPGRADE.md).
 
 ---
 
