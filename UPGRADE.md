@@ -106,8 +106,40 @@ This document tracks all architectural, database, security, and operational impr
 
 ---
 
-## Rollback & Emergency Procedures (Phase 1, 2 & 3)
-- If remote LLM providers experience an outage, the system will automatically fall back gracefully through the provider chain down to the deterministic fallback engine without crashing.
+## Phase 4: Observability & Reliability Upgrades
+
+### 1. Structured JSON Logging with Correlation IDs
+- Implemented [`StructuredLoggingMiddleware`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/app/middleware/logging_middleware.py) in FastAPI:
+  - Generates and propagates `X-Request-ID` across all inbound requests and outbound HTTP response headers.
+  - Formats output as structured JSON objects: `{"timestamp", "request_id", "workspace_id", "method", "path", "status_code", "latency_ms"}`.
+
+### 2. Proactive Health & Readiness Probes
+- Upgraded `GET /health` (liveness probe) to return service uptime, version, and server timestamp.
+- Upgraded `GET /ready` (readiness probe) to actively query the database connection (`SELECT 1`), verify vector engine state, and validate LLM runtime readiness before admitting traffic.
+
+### 3. Production Multi-Worker Process Manager
+- Created [`gunicorn_conf.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/gunicorn_conf.py) running Uvicorn workers (`uvicorn.workers.UvicornWorker`):
+  - Dynamic worker count (`min(cpu * 2 + 1, 8)`).
+  - Configured graceful worker restarts, request limits with jitter (to mitigate memory leaks), and timeout handling.
+
+### 4. Automated Database Backup & Restore Procedure
+- **Automated Backup Script**: [`scripts/db_backup.py`](file:///c:/Users/91730/Downloads/AI%20NATIVE%20SEARCH/python-backend/scripts/db_backup.py) snapshots the active database to `data/backups/aaas_enterprise_backup_<TIMESTAMP>.db` and prunes snapshots older than 7 iterations.
+- **PostgreSQL Production Backup**:
+  ```bash
+  # Take compressed snapshot
+  pg_dump -Fc -v --host=$PGHOST --username=$PGUSER $PGDATABASE > backup_$(date +%Y%m%d_%H%M%S).dump
+  ```
+- **Point-in-Time Restore Procedure**:
+  ```bash
+  # Restore snapshot into production cluster
+  pg_restore -v --clean --if-exists --no-owner --dbname=$DATABASE_URL backup_latest.dump
+  ```
+
+---
+
+## Rollback & Emergency Procedures (Phase 1, 2, 3 & 4)
+- If a bad release occurs, point traffic to the previous healthy container image; workers are fully stateless and state is confined to PostgreSQL/Redis.
 - In local development mode (`APP_ENV=development`), the system falls back to default 32-byte development secrets automatically.
+
 
 

@@ -53,7 +53,10 @@ app.add_middleware(
 )
 
 from .middleware.rate_limiter import EnterpriseRateLimiterMiddleware
+from .middleware.logging_middleware import StructuredLoggingMiddleware
+
 app.add_middleware(EnterpriseRateLimiterMiddleware)
+app.add_middleware(StructuredLoggingMiddleware)
 
 from .ai_mode import router as ai_mode_router
 from .catalog import router as catalog_router
@@ -65,18 +68,21 @@ app.include_router(catalog_router)
 def health_check():
     return {
         "status": "HEALTHY",
-        "service": "python-backend",
-        "uptime": "OK"
+        "service": "shopmate-python-backend",
+        "version": "2.0.0",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
 
 @app.get("/ready")
 async def readiness_check(session: AsyncSession = Depends(get_db_session)):
+    # 1. Verify Relational Database probe
     try:
         from sqlalchemy import text
         await session.execute(text("SELECT 1"))
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Database not ready: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"Database probe failed: {str(e)}")
 
+    # 2. Check LLM Runtime
     client = LLMClient()
     app_env = os.getenv("APP_ENV", "development").lower()
     if app_env != "development" and not client.is_configured():
@@ -89,7 +95,8 @@ async def readiness_check(session: AsyncSession = Depends(get_db_session)):
         "status": "READY",
         "database": "CONNECTED",
         "vector_engine": "ACTIVE",
-        "llm_runtime": "INITIALIZED" if client.is_configured() else "DEV_FALLBACK"
+        "llm_runtime": "INITIALIZED" if client.is_configured() else "DEV_FALLBACK",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
 
 @app.get("/api/v1/db/status")
