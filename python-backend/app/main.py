@@ -17,6 +17,17 @@ from .db.repository import DatabaseRepository
 from .auth import verify_service_jwt, require_admin_auth
 from .llm import LLMClient
 
+from dotenv import load_dotenv
+load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
+
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://bluetyga.com",
+    "*"
+]
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize Enterprise Database Schema & Seeding
@@ -34,13 +45,15 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Workspace-Id", "X-Request-Id"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 from .ai_mode import router as ai_mode_router
+from .catalog import router as catalog_router
 
 app.include_router(ai_mode_router)
+app.include_router(catalog_router)
 
 @app.get("/health")
 def health_check():

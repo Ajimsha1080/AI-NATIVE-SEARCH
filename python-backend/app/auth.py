@@ -2,6 +2,10 @@ import os
 import jwt
 from typing import Optional, Dict, Any
 from fastapi import Header, HTTPException, Depends
+from dotenv import load_dotenv
+
+load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 DISALLOWED_DEFAULT_SECRETS = [
     "super_secret_jwt_key_enterprise_grade_aaas_platform_2026",
