@@ -23,7 +23,6 @@ from .compliance import record_audit_event
 from .config import settings
 from .connectors import execute_sync_job
 from .db.database import async_session_factory
-from .redis_service import check_rate_limit
 from .db.models import (
     AIModeConfigModel,
     DeploymentModel,
@@ -36,6 +35,7 @@ from .db.models import (
     ProductModel,
     SyncJobModel,
 )
+from .redis_service import check_rate_limit
 
 logger = logging.getLogger("shopmate_catalog")
 
