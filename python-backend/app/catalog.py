@@ -6,22 +6,25 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
 from fastapi.responses import Response
 from sqlalchemy import func, select
 
 from .compliance import record_audit_event
 from .config import settings
+from .connectors import execute_sync_job
 from .db.database import async_session_factory
 from .db.models import (
     AIModeConfigModel,
     DeploymentModel,
+    IdempotencyKeyModel,
     IntegrationModel,
     KnowledgeChunkModel,
     KnowledgeDocModel,
     KnowledgeSourceModel,
     OrderModel,
     ProductModel,
+    SyncJobModel,
 )
 
 logger = logging.getLogger("shopmate_catalog")
@@ -454,8 +457,12 @@ async def razorpay_create_order(request: Request):
     """Creates a real Razorpay order with authoritative pricing from ProductModel."""
     body = await request.json()
     idempotency_key = request.headers.get("Idempotency-Key") or body.get("idempotency_key")
-    if idempotency_key and idempotency_key in _processed_idempotency_keys:
-        return _processed_idempotency_keys[idempotency_key]
+    if idempotency_key:
+        async with async_session_factory() as session:
+            ik_stmt = select(IdempotencyKeyModel).where(IdempotencyKeyModel.id == idempotency_key)
+            existing_key = (await session.execute(ik_stmt)).scalars().first()
+            if existing_key:
+                return existing_key.response_json
 
     product_id = body.get("productId") or body.get("product_id")
     variant_id = body.get("variantId") or body.get("variant_id")
@@ -519,7 +526,9 @@ async def razorpay_create_order(request: Request):
     }
 
     if idempotency_key:
-        _processed_idempotency_keys[idempotency_key] = res_data
+        async with async_session_factory() as session:
+            session.add(IdempotencyKeyModel(id=idempotency_key, response_json=res_data))
+            await session.commit()
 
     return res_data
 
@@ -773,9 +782,64 @@ async def run_sync(request: Request):
         "synced_orders": orders_count,
         "status": "SYNCED",
         "latency_ms": elapsed_ms,
-        "message": f"Database catalog synchronized: {prods_count} products and {orders_count} orders verified in {elapsed_ms}ms.",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
+
+
+@router.post("/commerce/sync/trigger")
+async def trigger_catalog_sync(request: Request, background_tasks: BackgroundTasks):
+    """Triggers background catalog sync for a real connector and tracks job state."""
+    body = await request.json()
+    workspace_id = body.get("workspace_id")
+    connector_type = body.get("connector_type")
+
+    if not workspace_id or not connector_type:
+        raise HTTPException(status_code=400, detail="workspace_id and connector_type are required")
+
+    job_id = f"job_{uuid.uuid4().hex[:12]}"
+    job = SyncJobModel(
+        id=job_id,
+        workspace_id=workspace_id,
+        connector_type=connector_type.lower(),
+        status="PENDING",
+    )
+    async with async_session_factory() as session:
+        session.add(job)
+        await session.commit()
+
+    background_tasks.add_task(execute_sync_job, job_id, workspace_id, connector_type.lower())
+
+    return {
+        "success": True,
+        "job_id": job_id,
+        "status": "PENDING",
+        "message": f"Sync job {job_id} for '{connector_type}' queued in background worker.",
+    }
+
+
+@router.get("/commerce/sync/jobs/{job_id}")
+async def get_sync_job_status(job_id: str):
+    """Fetches real-time status of a background catalog sync job."""
+    async with async_session_factory() as session:
+        stmt = select(SyncJobModel).where(SyncJobModel.id == job_id)
+        job = (await session.execute(stmt)).scalars().first()
+        if not job:
+            raise HTTPException(status_code=404, detail="Sync job not found")
+
+        return {
+            "success": True,
+            "job": {
+                "id": job.id,
+                "workspace_id": job.workspace_id,
+                "connector_type": job.connector_type,
+                "status": job.status,
+                "synced_items_count": job.synced_items_count,
+                "error_message": job.error_message,
+                "started_at": job.started_at.isoformat() if job.started_at else None,
+                "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+            },
+        }
+
 
 
 # ============================================================================

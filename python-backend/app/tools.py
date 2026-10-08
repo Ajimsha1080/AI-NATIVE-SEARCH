@@ -7,17 +7,8 @@ from sqlalchemy import select
 from .db.database import async_session_factory
 from .db.models import OrderModel, ProductModel
 
-# Valid Discount Codes configured per workspace
-DISCOUNT_RULES = {
-    "ws_acme_corp": {
-        "WELCOME10": {"type": "PERCENTAGE", "value": 10.0, "max_discount": 30.0, "min_subtotal": 50.0},
-        "SAVE20": {"type": "PERCENTAGE", "value": 20.0, "max_discount": 50.0, "min_subtotal": 100.0},
-        "FLAT15": {"type": "FIXED", "value": 15.0, "max_discount": 15.0, "min_subtotal": 60.0}
-    },
-    "ws_tech_store": {
-        "TECHNOVANEW": {"type": "PERCENTAGE", "value": 5.0, "max_discount": 100.0, "min_subtotal": 200.0}
-    }
-}
+# Valid Discount Codes configured dynamically per workspace
+DISCOUNT_RULES: dict[str, dict[str, Any]] = {}
 
 # ============================================================================
 # TOOL DEFINITIONS & JSON SCHEMAS FOR LLM FUNCTION CALLING
@@ -145,31 +136,34 @@ async def _fetch_order_db(workspace_id: str, order_number: str, customer_email: 
             if ord.customer_email.strip().lower() != clean_email:
                 continue
 
-            if clean_without_hash in ord.id or ord.id == clean_num or ord.id == f"ord_{clean_without_hash}":
+            matches_id = clean_without_hash in ord.id or ord.id == clean_num or ord.id == f"ord_{clean_without_hash}"
+            matches_number = ord.order_number == clean_num or ord.order_number == f"#{clean_without_hash}"
+
+            if matches_id or matches_number:
+                # Real order tracking: fetch from configured carrier or return 'tracking unavailable'
+                carrier = ord.carrier if ord.carrier and "unavailable" not in ord.carrier.lower() else "carrier unavailable"
+                tracking = ord.tracking_number if ord.tracking_number else "tracking unavailable"
+
+                items_list = []
+                for it in (ord.items_json or []):
+                    if isinstance(it, dict):
+                        title = it.get("title") or it.get("product_id") or "Item"
+                        qty = it.get("quantity", 1)
+                        items_list.append(f"{qty}x {title}")
+                    elif isinstance(it, str):
+                        items_list.append(it)
+
                 return {
-                    "order_number": clean_num if clean_num.startswith("#") else f"#{clean_num}",
+                    "order_number": ord.order_number or clean_num,
                     "workspace_id": workspace_id,
                     "customer_email": ord.customer_email,
                     "status": ord.status,
-                    "carrier": "Bluedart Express" if "acme" in workspace_id else "Delhivery Express",
-                    "tracking_number": "BD-8941039821-IN" if "acme" in workspace_id else "DL-9999999999-IN",
-                    "items": ["1x UPF 50+ Sunscreen Performance Jacket" if "acme" in workspace_id else "1x Stealth Matrix Hydro-Shell Hoodie"],
+                    "carrier": carrier,
+                    "tracking_number": tracking,
+                    "items": items_list or ["Order Items on File"],
                     "total_amount": float(ord.total_amount),
-                    "masked_address": "Flat 402, Green Glen Layout, Bellandur, Bengaluru, KA 560103" if "acme" in workspace_id else "Plot 12, Indiranagar, Bengaluru, KA 560038"
+                    "shipping_address": ord.shipping_address or "Address on file"
                 }
-            for it in (ord.items_json or []):
-                if isinstance(it, dict) and (it.get("order_number") == clean_num or it.get("order_number") == f"#{clean_num}"):
-                    return {
-                        "order_number": clean_num,
-                        "workspace_id": workspace_id,
-                        "customer_email": ord.customer_email,
-                        "status": ord.status,
-                        "carrier": it.get("carrier", "Standard Logistics"),
-                        "tracking_number": it.get("tracking_number", "N/A"),
-                        "items": it.get("items", []),
-                        "total_amount": float(ord.total_amount),
-                        "masked_address": "Confidential, Masked Destination"
-                    }
         return None
 
 def get_tenant_products_sync(workspace_id: str) -> list[dict[str, Any]]:

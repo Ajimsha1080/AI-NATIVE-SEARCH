@@ -262,7 +262,7 @@ class OrderModel(Base):
     fulfillment_status = Column(String(50), default="UNFULFILLED")
     shipping_address = Column(Text, nullable=True)
     tracking_number = Column(String(100), nullable=True)
-    carrier = Column(String(100), default="Bluedart Express")
+    carrier = Column(String(100), nullable=True)
     items_json = Column(JSON, default=list)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
@@ -401,3 +401,29 @@ class AuditLogModel(Base):
         Index("idx_audit_tenant_time", "workspace_id", "timestamp"),
         Index("idx_audit_tenant_action", "workspace_id", "action"),
     )
+
+
+class IdempotencyKeyModel(Base):
+    __tablename__ = "idempotency_keys"
+
+    id = Column(String(128), primary_key=True, index=True)
+    response_json = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+
+
+class SyncJobModel(Base):
+    __tablename__ = "sync_jobs"
+
+    id = Column(String(64), primary_key=True, index=True)
+    workspace_id = Column(String(64), ForeignKey("workspaces.id"), nullable=False, index=True)
+    connector_type = Column(String(64), nullable=False, index=True)
+    status = Column(String(32), default="PENDING", index=True)
+    synced_items_count = Column(Integer, default=0)
+    error_message = Column(Text, nullable=True)
+    started_at = Column(DateTime, default=utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("idx_sync_job_tenant", "workspace_id", "status"),
+    )
+
