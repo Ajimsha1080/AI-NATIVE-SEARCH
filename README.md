@@ -6,11 +6,11 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-asyncpg-336791?style=flat&logo=postgresql)](https://www.postgresql.org/)
 [![SQLAlchemy 2.0](https://img.shields.io/badge/SQLAlchemy-2.0_async-red?style=flat)](https://www.sqlalchemy.org/)
-[![Pytest](https://img.shields.io/badge/Pytest-15%2F15_Passing-brightgreen?style=flat&logo=pytest)](python-backend/tests/)
+[![Pytest](https://img.shields.io/badge/Pytest-35%2F35_Passing-brightgreen?style=flat&logo=pytest)](python-backend/tests/)
 [![Gitleaks](https://img.shields.io/badge/Security-Gitleaks_Passed-brightgreen?style=flat)](.gitleaks.toml)
 [![DPDP Act 2023](https://img.shields.io/badge/Compliance-DPDP_Act_2023-blue?style=flat)](UPGRADE.md)
 
-A production-grade, hardened, multi-tenant enterprise **E-Commerce Agent-as-a-Service (AaaS)** platform. Features a pure Next.js 15 / React 19 UI frontend with interactive visual shopping widgets and a 100% Python 3.12 FastAPI backend powered by SQLAlchemy 2.0 (PostgreSQL/SQLite dual-driver), 12-Stage Hybrid RAG pipeline, multi-LLM orchestration with automatic fallbacks (Sarvam AI 105B, OpenAI, Anthropic, Ollama), Redis rate limiting & token revocation, and statutory DPDP Act compliance.
+A production-grade, hardened, multi-tenant enterprise **E-Commerce Agent-as-a-Service (AaaS)** platform. Features a pure Next.js 15 / React 19 UI frontend with interactive visual shopping widgets, centralized auto-refreshing cookie client, Next.js route protection middleware, and a 100% Python 3.12 FastAPI backend powered by SQLAlchemy 2.0 (PostgreSQL Row-Level Security / SQLite dual-driver), 12-Stage Hybrid RAG pipeline, multi-LLM orchestration with automatic fallbacks (Sarvam AI 105B, OpenAI, Anthropic, Ollama), Redis rate limiting & token revocation, and statutory DPDP Act compliance.
 
 ---
 
@@ -136,7 +136,7 @@ The UI is now accessible at [http://localhost:3000](http://localhost:3000).
 ## 🧪 Automated Testing & Verification
 
 ```bash
-# 1. Run Python Pytest Suite (15/15 passing: Auth, Catalog, Compliance, RAG Evals)
+# 1. Run Python Pytest Suite (35/35 passing: Auth, Catalog, Compliance, Integrations, Contract, Tenant Isolation, RAG Evals)
 cd python-backend
 pytest -v
 
