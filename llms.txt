@@ -1,0 +1,37 @@
+# ShopMate AaaS (AI-Native E-Commerce Agent Platform)
+
+> Production-grade, hardened, multi-tenant enterprise E-Commerce Agent-as-a-Service (AaaS) platform.
+> Backend: 100% Python (FastAPI, SQLAlchemy 2.0 async, PostgreSQL/SQLite, PyJWT, HTTPX).
+> Frontend: Next.js 15 / React 19 / Tailwind CSS (pure UI client calling FastAPI).
+
+## Core Documentation
+- [README.md](README.md): Full platform overview, quickstart, setup, and testing commands.
+- [UPGRADE.md](UPGRADE.md): Enterprise architecture specification across all 6 phases (Security, Database, Architecture, Observability, Quality, Compliance).
+- [openapi.json](openapi.json): Full OpenAPI 3.1 REST API specification with all endpoints, schemas, and parameters.
+
+## Backend Architecture (Python 3.12 FastAPI)
+- [python-backend/app/main.py](python-backend/app/main.py): FastAPI application entrypoint, lifespan event handler, middleware registration, health probes (`/health`, `/ready`).
+- [python-backend/app/config.py](python-backend/app/config.py): Pydantic-settings configuration with fail-fast validation for JWT and encryption secrets.
+- [python-backend/app/auth.py](python-backend/app/auth.py): Enterprise JWT lifecycle (15m access token, 7d refresh token, real-time revocation denylist).
+- [python-backend/app/catalog.py](python-backend/app/catalog.py): Commerce catalog endpoints, server-side price recalculation, Razorpay cryptographic HMAC verification and idempotency tracking.
+- [python-backend/app/ai_mode.py](python-backend/app/ai_mode.py): AI Mode search, multi-constraint query understanding, and conversational shopping agent.
+- [python-backend/app/rag.py](python-backend/app/rag.py): 12-Stage Hybrid RAG pipeline (dense embeddings, sparse BM25 token scoring, RRF reciprocal rank fusion, grounding verification).
+- [python-backend/app/llm.py](python-backend/app/llm.py): Multi-LLM provider client with backoff and automatic fallback chain (Sarvam AI 105B -> OpenAI -> Anthropic -> Ollama -> Deterministic fallback) and per-tenant token tracking.
+- [python-backend/app/worker.py](python-backend/app/worker.py): Asynchronous background worker engine for crawling, indexing, and catalog sync.
+- [python-backend/app/compliance.py](python-backend/app/compliance.py): DPDP Act 2023 & GDPR customer data portability export (`POST /api/v1/compliance/export`), right-to-erasure (`POST /api/v1/compliance/erase`), and immutable audit logging.
+- [python-backend/app/db/database.py](python-backend/app/db/database.py): SQLAlchemy 2.0 async engine with PostgreSQL asyncpg connection pooling and SQLite development fallback.
+- [python-backend/app/db/models.py](python-backend/app/db/models.py): Relational database models with compound tenant indexes and pgvector support.
+
+## Frontend Architecture (Next.js 15 UI Client)
+- [src/lib/api-client.ts](src/lib/api-client.ts): Strictly typed TypeScript client for communicating with the Python FastAPI backend.
+- [src/app/page.tsx](src/app/page.tsx): Main landing page.
+- [src/app/products/page.tsx](src/app/products/page.tsx): Product catalog browsing UI with live filter and cart drawer.
+- [src/app/ai-mode/search/page.tsx](src/app/ai-mode/search/page.tsx): AI-powered natural language shopping search interface.
+- [src/app/ai-mode/knowledge/page.tsx](src/app/ai-mode/knowledge/page.tsx): Knowledge base management UI for policies and store documents.
+- [src/app/ai-mode/settings/page.tsx](src/app/ai-mode/settings/page.tsx): AI Mode configuration dashboard.
+
+## Tests & Quality
+- [python-backend/tests/test_auth.py](python-backend/tests/test_auth.py): Access/refresh token lifecycle and revocation tests.
+- [python-backend/tests/test_catalog.py](python-backend/tests/test_catalog.py): Health, readiness, catalog, and AI mode schema tests.
+- [python-backend/tests/test_compliance.py](python-backend/tests/test_compliance.py): Audit log and DPDP Act export/erasure tests.
+- [python-backend/tests/test_rag_evals.py](python-backend/tests/test_rag_evals.py): RAG retrieval accuracy, intent rewriting, and hallucination grounding tests.
