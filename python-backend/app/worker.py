@@ -49,3 +49,20 @@ class BackgroundTaskWorker:
 
 # Singleton background worker instance
 task_worker = BackgroundTaskWorker()
+
+if __name__ == "__main__":
+    async def _main():
+        await task_worker.start()
+        logger.info("Worker process initialized. Listening for tasks...")
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            await task_worker.stop()
+            logger.info("Worker process stopped.")
+
+    try:
+        asyncio.run(_main())
+    except KeyboardInterrupt:
+        pass
+

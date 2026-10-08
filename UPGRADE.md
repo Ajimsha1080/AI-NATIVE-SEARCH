@@ -120,7 +120,7 @@ ShopMate AaaS enforces tenant isolation at both the application layer and the Po
 
 ```sql
 -- 1. Create dedicated application role
-CREATE ROLE shopmate_app WITH LOGIN PASSWORD 'your_strong_app_password' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+CREATE ROLE shopmate_app WITH LOGIN PASSWORD 'your_strong_app_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
 
 -- 2. Grant table permissions
 GRANT CONNECT ON DATABASE shopmate_prod TO shopmate_app;

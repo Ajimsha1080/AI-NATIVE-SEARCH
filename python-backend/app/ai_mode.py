@@ -4,14 +4,20 @@ import re
 import time
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .auth import StorefrontContext, resolve_storefront_context
-from .db.database import async_session_factory
+from .auth import (
+    StorefrontContext,
+    get_storefront_tenant_db_session,
+    resolve_storefront_context,
+)
+from .db.database import get_session_factory, set_tenant_session_context
 from .db.models import ProductModel
 from .llm import LLMClient
+from .redis_service import check_rate_limit
 
 logger = logging.getLogger("shopmate_ai_mode")
 
@@ -345,75 +351,85 @@ def evaluate_product(product: AIModeProduct, plan: AIModeSearchPlan) -> bool:
 # -------------------------------------------------------------
 # Database Product Loader (SQLAlchemy Async strictly filtered by workspace)
 # -------------------------------------------------------------
-async def load_catalog_products(workspace_id: str | None = None) -> list[AIModeProduct]:
+async def load_catalog_products(
+    workspace_id: str | None = None,
+    session: AsyncSession | None = None
+) -> list[AIModeProduct]:
     db_products = []
     if not workspace_id:
         return db_products
 
-    async with async_session_factory() as session:
+    async def _fetch(sess: AsyncSession) -> list[ProductModel]:
         stmt = select(ProductModel).where(ProductModel.workspace_id == workspace_id)
-        res = await session.execute(stmt)
-        models = res.scalars().all()
+        res = await sess.execute(stmt)
+        return res.scalars().all()
 
-        for m in models:
-            variants_raw = m.variants_json or []
-            if isinstance(variants_raw, str):
-                try:
-                    variants_raw = json.loads(variants_raw)
-                except Exception:
-                    variants_raw = []
+    if session is not None:
+        models = await _fetch(session)
+    else:
+        async with get_session_factory()() as sess:
+            await set_tenant_session_context(sess, workspace_id)
+            models = await _fetch(sess)
 
-            variants = [
-                AIModeProductVariant(
-                    id=str(v.get("id", "")),
-                    title=v.get("title", "Default"),
-                    price=float(v.get("price", 0)),
-                    in_stock=(v.get("inventory_quantity", 1) or 1) > 0,
-                    attributes=v.get("attributes", {})
-                )
-                for v in variants_raw
-            ]
+    for m in models:
+        variants_raw = m.variants_json or []
+        if isinstance(variants_raw, str):
+            try:
+                variants_raw = json.loads(variants_raw)
+            except Exception:
+                variants_raw = []
 
-            images_list = m.images_json or []
-            if isinstance(images_list, str):
-                try:
-                    images_list = json.loads(images_list)
-                except Exception:
-                    images_list = []
-            if not images_list and m.image_url:
-                images_list = [m.image_url]
+        variants = [
+            AIModeProductVariant(
+                id=str(v.get("id", "")),
+                title=v.get("title", "Default"),
+                price=float(v.get("price", 0)),
+                in_stock=(v.get("inventory_quantity", 1) or 1) > 0,
+                attributes=v.get("attributes", {})
+            )
+            for v in variants_raw
+        ]
 
-            tags_list = m.tags_json or []
-            if isinstance(tags_list, str):
-                try:
-                    tags_list = json.loads(tags_list)
-                except Exception:
-                    tags_list = []
+        images_list = m.images_json or []
+        if isinstance(images_list, str):
+            try:
+                images_list = json.loads(images_list)
+            except Exception:
+                images_list = []
+        if not images_list and m.image_url:
+            images_list = [m.image_url]
 
-            attrs = m.attributes_json or {}
-            if isinstance(attrs, str):
-                try:
-                    attrs = json.loads(attrs)
-                except Exception:
-                    attrs = {}
+        tags_list = m.tags_json or []
+        if isinstance(tags_list, str):
+            try:
+                tags_list = json.loads(tags_list)
+            except Exception:
+                tags_list = []
 
-            db_products.append(AIModeProduct(
-                id=m.id,
-                title=m.title,
-                handle=m.id,
-                description=m.description or "",
-                price=float(m.price or 0),
-                sale_price=float(m.compare_at_price) if m.compare_at_price else None,
-                currency="INR",
-                category=m.category or "General",
-                subcategories=tags_list,
-                brand=attrs.get("brand", "Merchant"),
-                images=images_list,
-                in_stock=bool(m.in_stock),
-                variants=variants,
-                attributes=attrs,
-                source_url=m.source_url
-            ))
+        attrs = m.attributes_json or {}
+        if isinstance(attrs, str):
+            try:
+                attrs = json.loads(attrs)
+            except Exception:
+                attrs = {}
+
+        db_products.append(AIModeProduct(
+            id=m.id,
+            title=m.title,
+            handle=m.id,
+            description=m.description or "",
+            price=float(m.price or 0),
+            sale_price=float(m.compare_at_price) if m.compare_at_price else None,
+            currency="INR",
+            category=m.category or "General",
+            subcategories=tags_list,
+            brand=attrs.get("brand", "Merchant"),
+            images=images_list,
+            in_stock=bool(m.in_stock),
+            variants=variants,
+            attributes=attrs,
+            source_url=m.source_url
+        ))
 
     return db_products
 
@@ -423,8 +439,20 @@ async def load_catalog_products(workspace_id: str | None = None) -> list[AIModeP
 @router.post("/search", response_model=SearchResponse)
 async def ai_search_endpoint(
     req: SearchRequest,
-    storefront: StorefrontContext = Depends(resolve_storefront_context)
+    request: Request,
+    storefront: StorefrontContext = Depends(resolve_storefront_context),
+    session: AsyncSession = Depends(get_storefront_tenant_db_session)
 ):
+    dep_identifier = storefront.deployment_id or storefront.workspace_id
+    client_ip = request.client.host if request.client else "unknown_ip"
+    rate_key = f"public_search:{dep_identifier}:{client_ip}"
+    allowed, retry_after = await check_rate_limit(rate_key, max_requests=60, window_seconds=60)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded for search. Please retry in {retry_after} seconds."
+        )
+
     # Reject cross-tenant attempts if client explicitly requested a different workspace
     if req.workspace_id and req.workspace_id != storefront.workspace_id:
         raise HTTPException(
@@ -435,7 +463,7 @@ async def ai_search_endpoint(
     effective_workspace = storefront.workspace_id
     start_time = time.time()
     plan = parse_query(req.query)
-    all_products = await load_catalog_products(effective_workspace)
+    all_products = await load_catalog_products(effective_workspace, session=session)
 
     valid_candidates = []
     lexical_tokens = plan.lexical_query.lower().split() if plan.lexical_query else []
@@ -491,8 +519,20 @@ async def ai_search_endpoint(
 @router.post("/chat", response_model=ChatResponse)
 async def ai_chat_endpoint(
     req: ChatRequest,
-    storefront: StorefrontContext = Depends(resolve_storefront_context)
+    request: Request,
+    storefront: StorefrontContext = Depends(resolve_storefront_context),
+    session: AsyncSession = Depends(get_storefront_tenant_db_session)
 ):
+    dep_identifier = storefront.deployment_id or storefront.workspace_id
+    client_ip = request.client.host if request.client else "unknown_ip"
+    rate_key = f"public_chat:{dep_identifier}:{client_ip}"
+    allowed, retry_after = await check_rate_limit(rate_key, max_requests=30, window_seconds=60)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded for chat. Please retry in {retry_after} seconds."
+        )
+
     if req.workspace_id and req.workspace_id != storefront.workspace_id:
         raise HTTPException(
             status_code=403,
@@ -503,7 +543,9 @@ async def ai_chat_endpoint(
     plan = parse_query(req.user_message)
     search_res = await ai_search_endpoint(
         SearchRequest(query=req.user_message, workspace_id=effective_workspace),
-        storefront=storefront
+        request=request,
+        storefront=storefront,
+        session=session
     )
     products = search_res.products
 
@@ -512,7 +554,7 @@ async def ai_chat_endpoint(
     citations_list: list[CitationModel] = []
     try:
         from .rag import execute_rag_pipeline, fetch_tenant_chunks_from_db
-        chunks = await fetch_tenant_chunks_from_db(effective_workspace)
+        chunks = await fetch_tenant_chunks_from_db(effective_workspace, session=session)
         if chunks:
             rag_res = execute_rag_pipeline(req.user_message, workspace_id=effective_workspace, tenant_chunks=chunks, top_k=3)
             raw_citations = rag_res.get("citations") or []

@@ -103,3 +103,69 @@ jobs:
           SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
           JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
 
+  postgresql-rls-isolation:
+    name: PostgreSQL Service Container RLS Enforcement Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_ci_password
+          POSTGRES_DB: shopmate_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'python-backend/requirements-dev.txt'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python-backend/requirements-dev.txt
+
+      - name: Setup Non-Superuser Role & Run Alembic Migrations
+        working-directory: python-backend
+        env:
+          PGPASSWORD: postgres_ci_password
+        run: |
+          export DATABASE_URL="postgresql+asyncpg://postgres:postgres_ci_password@localhost:5432/shopmate_ci"
+          alembic upgrade head
+          psql -h localhost -U postgres -d shopmate_ci -c "
+            DO \$\$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'shopmate_app') THEN
+                CREATE ROLE shopmate_app WITH LOGIN PASSWORD 'shopmate_app_ci_pass' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+              END IF;
+            END
+            \$\$;
+            GRANT CONNECT ON DATABASE shopmate_ci TO shopmate_app;
+            GRANT USAGE ON SCHEMA public TO shopmate_app;
+            GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO shopmate_app;
+            GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO shopmate_app;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO shopmate_app;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO shopmate_app;
+          "
+
+      - name: Run RLS Isolation Tests as Non-Superuser
+        working-directory: python-backend
+        run: pytest tests/test_tenant_isolation.py -k "test_postgresql_rls_isolation_with_session_context" -v
+        env:
+          DATABASE_URL: "postgresql+asyncpg://shopmate_app:shopmate_app_ci_pass@localhost:5432/shopmate_ci"
+          APP_ENV: production
+          JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
+          SERVICE_JWT_SECRET: super_secure_ci_test_service_secret_32bytes_long!
+
+

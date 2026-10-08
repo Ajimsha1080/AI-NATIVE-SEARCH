@@ -112,8 +112,16 @@ async def set_tenant_session_context(session: AsyncSession, workspace_id: str):
             raise RuntimeError(f"Failed to set PostgreSQL RLS session context for workspace '{workspace_id}': {exc}") from exc
 
 
+async def get_system_db_session() -> AsyncSession:
+    """Explicit system session for unauthenticated operations (signup, login, refresh, webhook)
+    before workspace is known, keeping system database access minimal and isolated.
+    """
+    async with get_session_factory()() as session:
+        yield session
+
+
 async def get_db_session() -> AsyncSession:
-    """Dependency injector for general FastAPI endpoints."""
+    """Dependency injector for general FastAPI health/readiness endpoints."""
     async with get_session_factory()() as session:
         yield session
 
@@ -140,25 +148,35 @@ async def get_tenant_db_session(
 
 
 async def init_db():
-    """Initializes database schema and tables asynchronously"""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        # Migrate existing audit_logs columns if needed (SQLite compatibility)
-        try:
-            from sqlalchemy import text
-            await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN resource_type VARCHAR(64)"))
-        except Exception:
-            pass
-        try:
-            from sqlalchemy import text
-            await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN resource_id VARCHAR(128)"))
-        except Exception:
-            pass
-        try:
-            from sqlalchemy import text
-            await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN ip_address VARCHAR(64)"))
-        except Exception:
-            pass
+    """Initializes database schema and tables asynchronously.
+    Only runs Base.metadata.create_all inside automated tests or local SQLite fallback.
+    In production environments, schema migrations are driven strictly by Alembic (alembic upgrade head).
+    """
+    import sys
+    is_test = (
+        "pytest" in sys.modules
+        or os.getenv("TESTING", "").lower() == "true"
+        or os.getenv("APP_ENV", "").lower() == "test"
+        or "sqlite" in DATABASE_URL
+    )
+    if is_test:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+            try:
+                from sqlalchemy import text
+                await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN resource_type VARCHAR(64)"))
+            except Exception:
+                pass
+            try:
+                from sqlalchemy import text
+                await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN resource_id VARCHAR(128)"))
+            except Exception:
+                pass
+            try:
+                from sqlalchemy import text
+                await conn.execute(text("ALTER TABLE audit_logs ADD COLUMN ip_address VARCHAR(64)"))
+            except Exception:
+                pass
         # Migrate users columns if needed (SQLite compatibility)
         try:
             from sqlalchemy import text

@@ -4,7 +4,7 @@ from typing import Any
 
 from sqlalchemy import select
 
-from .db.database import async_session_factory
+from .db.database import get_session_factory, set_tenant_session_context
 from .db.models import OrderModel, ProductModel
 
 # Valid Discount Codes configured dynamically per workspace
@@ -103,7 +103,8 @@ TOOL_DEFINITIONS = [
 # ============================================================================
 
 async def _fetch_products_db(workspace_id: str) -> list[dict[str, Any]]:
-    async with async_session_factory() as session:
+    async with get_session_factory()() as session:
+        await set_tenant_session_context(session, workspace_id)
         stmt = select(ProductModel).where(ProductModel.workspace_id == workspace_id)
         res = await session.execute(stmt)
         prods = res.scalars().all()
@@ -128,7 +129,8 @@ async def _fetch_order_db(workspace_id: str, order_number: str, customer_email: 
     clean_without_hash = clean_num.replace("#", "")
     clean_email = customer_email.strip().lower()
 
-    async with async_session_factory() as session:
+    async with get_session_factory()() as session:
+        await set_tenant_session_context(session, workspace_id)
         stmt = select(OrderModel).where(OrderModel.workspace_id == workspace_id)
         res = await session.execute(stmt)
         orders = res.scalars().all()

@@ -264,10 +264,28 @@ async def test_postgresql_rls_isolation_with_session_context():
         bind = session.bind
         dialect_name = getattr(bind.dialect, "name", "") if bind else ""
         if dialect_name == "postgresql":
-            # Direct query without WHERE clause must be filtered by PostgreSQL RLS
+            # 1. With app.workspace_id = ws_a, selecting B's rows returns zero rows
             res = await session.execute(text("SELECT id, title, workspace_id FROM commerce_products WHERE workspace_id = :ws"), {"ws": ws_b})
             rows = res.fetchall()
             assert len(rows) == 0, "PostgreSQL RLS must return 0 rows of tenant B when context is tenant A"
+
+            # 2. Inserting a row with B's workspace_id while context is A must fail with RLS violation
+            with pytest.raises(Exception) as exc_info:
+                await session.execute(
+                    text("INSERT INTO commerce_products (id, workspace_id, title, price, category, stock, in_stock) VALUES (:id, :ws, :title, :price, :cat, :stock, :in_stock)"),
+                    {
+                        "id": f"prod_rls_illegal_{uuid.uuid4().hex[:6]}",
+                        "ws": ws_b,
+                        "title": "Illegal Cross-Tenant Product",
+                        "price": 99.0,
+                        "cat": "General",
+                        "stock": 10,
+                        "in_stock": True,
+                    }
+                )
+                await session.commit()
+            err_msg = str(exc_info.value).lower()
+            assert "row-level security" in err_msg or "violates" in err_msg or "policy" in err_msg or "check" in err_msg
         else:
             # Under SQLite / in-process, verify that set_tenant_session_context ran cleanly with bound parameter
             # and that standard filtered selection isolates Tenant B

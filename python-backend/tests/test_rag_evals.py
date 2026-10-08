@@ -99,7 +99,7 @@ import uuid
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 from app.db.database import async_session_factory
-from app.db.models import DeploymentModel, KnowledgeChunkModel, KnowledgeDocModel, KnowledgeSourceModel
+from app.db.models import DeploymentModel, KnowledgeChunkModel, KnowledgeDocModel, KnowledgeSourceModel, ProductModel
 from app.main import app
 
 client = TestClient(app)
@@ -182,4 +182,91 @@ async def test_chat_retrieves_store_policy_context_and_includes_in_prompt():
         assert "AI answers are not configured" in data_unconf["content"]
         assert "Returns accepted within 7 days" in data_unconf["content"]
         assert len(data_unconf["citations"]) > 0
+
+
+@pytest.mark.asyncio
+async def test_full_chat_path_product_and_policy_context_in_prompt():
+    """Verify Issue 6: Mocked-LLM test for the full chat path.
+    Proves that BOTH product context from catalog AND policy context from RAG
+    are composed into the prompt passed to the LLM.
+    """
+    ws = f"ws_fullchat_{uuid.uuid4().hex[:8]}"
+    dep_key = f"dep_fullchat_{uuid.uuid4().hex[:8]}"
+    source_id = f"src_fullchat_{uuid.uuid4().hex[:8]}"
+    doc_id = f"doc_fullchat_{uuid.uuid4().hex[:8]}"
+    chunk_id = f"chunk_fullchat_{uuid.uuid4().hex[:8]}"
+    prod_id = f"prod_fullchat_{uuid.uuid4().hex[:8]}"
+
+    async with async_session_factory() as session:
+        dep = DeploymentModel(
+            id=f"dep_{uuid.uuid4().hex[:8]}",
+            workspace_id=ws,
+            name="Full Chat Path Test",
+            status="LIVE",
+            public_key=dep_key
+        )
+        prod = ProductModel(
+            id=prod_id,
+            workspace_id=ws,
+            title="Premium Linen Shirt",
+            description="100% breathable organic linen shirt tailored for summer elegance.",
+            price=2499.0,
+            category="Clothing",
+            in_stock=True
+        )
+        source = KnowledgeSourceModel(
+            id=source_id,
+            workspace_id=ws,
+            name="Shipping & Delivery Guidelines",
+            type="MANUAL"
+        )
+        doc = KnowledgeDocModel(
+            id=doc_id,
+            source_id=source_id,
+            title="Express Shipping Policy",
+            content="Free express delivery on all orders over ₹2000 within 2 business days."
+        )
+        chunk = KnowledgeChunkModel(
+            id=chunk_id,
+            doc_id=doc_id,
+            workspace_id=ws,
+            text="Free express delivery on all orders over ₹2000 within 2 business days."
+        )
+        session.add_all([dep, prod, source, doc, chunk])
+        await session.commit()
+
+    captured_prompt = None
+
+    def mock_call_model(self, messages, tools=None):
+        nonlocal captured_prompt
+        captured_prompt = messages[0]["content"]
+        return {"response": "The Premium Linen Shirt qualifies for our free 2-day express shipping!"}
+
+    with patch("app.llm.LLMClient.is_configured", return_value=True), \
+         patch("app.llm.LLMClient.call_model", side_effect=mock_call_model, autospec=True):
+
+        res = client.post(
+            "/api/v1/ai-mode/chat",
+            headers={"X-Deployment-Key": dep_key},
+            json={"user_message": "linen shirt shipping"}
+        )
+
+        assert res.status_code == 200
+        data = res.json()
+
+        # 1. Product returned in response
+        assert len(data["products"]) > 0
+        assert any("Linen Shirt" in p["title"] for p in data["products"])
+
+        # 2. Policy citation returned in response
+        assert len(data["citations"]) > 0
+        assert any("Express Shipping Policy" in c["document_name"] for c in data["citations"])
+
+        # 3. Both product and policy context present in LLM prompt
+        assert captured_prompt is not None
+        assert "Premium Linen Shirt" in captured_prompt, "Product title must appear in LLM prompt"
+        assert "₹2499" in captured_prompt or "2499" in captured_prompt, "Product price must appear in LLM prompt"
+        assert "Free express delivery on all orders over ₹2000" in captured_prompt, "Retrieved policy must appear in LLM prompt"
+        assert "The Premium Linen Shirt qualifies" in data["content"]
+
 

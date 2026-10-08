@@ -65,6 +65,10 @@ class AppSettings(BaseSettings):
     RESEND_API_KEY: str | None = Field(default=None)
     FRONTEND_URL: str = Field(default="http://localhost:3000")
 
+    # Email Verification Enforcement
+    REQUIRE_EMAIL_VERIFICATION: bool = Field(default=True)
+    EMAIL_VERIFICATION_GRACE_PERIOD_HOURS: int = Field(default=0)
+
     # CORS
     ALLOWED_ORIGINS: list[str] = Field(default_factory=lambda: [
         "http://localhost:3000",

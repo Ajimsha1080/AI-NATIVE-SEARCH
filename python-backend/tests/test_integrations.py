@@ -217,3 +217,80 @@ async def test_order_tracking_never_invents_fake_carrier():
     # Carrier and tracking MUST NOT be invented fake values like 'Bluedart Express' or 'BD-...'
     assert ord_data["carrier"] == "carrier unavailable"
     assert ord_data["tracking_number"] == "tracking unavailable"
+
+
+def test_razorpay_payment_verification_signature_validation():
+    """Verify Issue 6: Razorpay payment verification endpoint signature validation.
+    Valid HMAC-SHA256 signature creates and completes the order.
+    Invalid or missing signature returns HTTP 400.
+    """
+    settings.RAZORPAY_KEY_SECRET = "test_key_secret_for_payment_verify_123"
+    ws_id = f"ws_payv_{uuid.uuid4().hex[:8]}"
+
+    # Create a product to purchase
+    prod_res = client.post(
+        "/api/v1/commerce/products",
+        headers=auth_header(ws_id),
+        json={
+            "title": "Verified Razorpay Item",
+            "price": 1499.0,
+            "inventory": 25
+        }
+    )
+    assert prod_res.status_code == 200
+    prod_id = prod_res.json()["product"]["id"]
+
+    rzp_order_id = f"order_{uuid.uuid4().hex[:14]}"
+    rzp_payment_id = f"pay_{uuid.uuid4().hex[:14]}"
+
+    payload_base = {
+        "razorpay_order_id": rzp_order_id,
+        "razorpay_payment_id": rzp_payment_id,
+        "productId": prod_id,
+        "quantity": 1,
+        "customerEmail": "buyer@teststore.org"
+    }
+
+    # 1. Missing signature -> 400
+    res_missing = client.post(
+        "/api/v1/commerce/razorpay/verify",
+        headers=auth_header(ws_id),
+        json=payload_base
+    )
+    assert res_missing.status_code == 400
+    assert "signature" in res_missing.json()["detail"].lower()
+
+    # 2. Invalid signature -> 400
+    payload_invalid = dict(payload_base)
+    payload_invalid["razorpay_signature"] = "invalid_hmac_hex_sig_999"
+    res_invalid = client.post(
+        "/api/v1/commerce/razorpay/verify",
+        headers=auth_header(ws_id),
+        json=payload_invalid
+    )
+    assert res_invalid.status_code == 400
+    assert "invalid" in res_invalid.json()["detail"].lower()
+
+    # 3. Valid signature -> 200 with verified=True and order created
+    sig_payload = f"{rzp_order_id}|{rzp_payment_id}"
+    valid_sig = hmac.new(
+        settings.RAZORPAY_KEY_SECRET.encode("utf-8"),
+        sig_payload.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
+
+    payload_valid = dict(payload_base)
+    payload_valid["razorpay_signature"] = valid_sig
+
+    res_valid = client.post(
+        "/api/v1/commerce/razorpay/verify",
+        headers=auth_header(ws_id),
+        json=payload_valid
+    )
+    assert res_valid.status_code == 200
+    data = res_valid.json()
+    assert data["verified"] is True
+    assert data["payment_id"] == rzp_payment_id
+    assert data["order"] is not None
+    assert data["order"]["workspace_id"] == ws_id
+

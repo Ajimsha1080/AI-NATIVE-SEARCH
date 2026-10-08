@@ -12,7 +12,7 @@ from app.auth import (
     verify_password,
 )
 from app.db.database import async_session_factory
-from app.db.models import AuthTokenModel
+from app.db.models import AuthTokenModel, UserModel
 from app.main import app
 
 client = TestClient(app)
@@ -77,8 +77,9 @@ def test_login_unknown_email_returns_401():
 import uuid
 
 
-def test_real_signup_and_login_flow():
-    """Verify real signup creates User, Workspace, OWNER WorkspaceMember and allows login."""
+@pytest.mark.asyncio
+async def test_real_signup_and_login_flow():
+    """Verify real signup creates User, Workspace, OWNER WorkspaceMember and enforces email verification before login."""
     uid = uuid.uuid4().hex[:8]
     signup_email = f"alex.founder_{uid}@realbrand.store"
     signup_pass = "EnterpriseSecret99!"
@@ -106,7 +107,29 @@ def test_real_signup_and_login_flow():
     })
     assert dup_res.status_code == 409
 
-    # Login with correct credentials -> must return 200 with real workspace and role
+    # 1. Login with correct credentials before email verification -> must return 403 Forbidden
+    unverified_res = client.post("/api/v1/auth/login", json={
+        "email": signup_email,
+        "password": signup_pass
+    })
+    assert unverified_res.status_code == 403
+    assert "not verified" in unverified_res.json()["detail"].lower()
+
+    # 2. Resend verification email endpoint works
+    resend_res = client.post("/api/v1/auth/resend-verification", json={
+        "email": signup_email
+    })
+    assert resend_res.status_code == 200
+    assert resend_res.json()["success"] is True
+
+    # 3. Mark user as verified in database to simulate verification link click
+    async with async_session_factory() as session:
+        stmt = select(UserModel).where(UserModel.email == signup_email)
+        user = (await session.execute(stmt)).scalar_one()
+        user.is_verified = True
+        await session.commit()
+
+    # 4. Login after verification -> must return 200 with real workspace and role
     login_res = client.post("/api/v1/auth/login", json={
         "email": signup_email,
         "password": signup_pass
@@ -116,7 +139,7 @@ def test_real_signup_and_login_flow():
     assert login_data["workspace_id"] == real_ws_id
     assert login_data["role"] == "OWNER"
 
-    # Login with wrong password -> must return 401
+    # 5. Login with wrong password -> must return 401
     wrong_res = client.post("/api/v1/auth/login", json={
         "email": signup_email,
         "password": "WrongPassword999!"
@@ -217,7 +240,7 @@ def test_token_auth_error_states_and_rbac_rejections():
     # 4. Expired token -> 401
     import time
 
-    from jose import jwt
+    import jwt
 
     from app.config import settings
     expired_payload = {

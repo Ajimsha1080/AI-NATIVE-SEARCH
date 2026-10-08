@@ -9,7 +9,6 @@ import httpx
 from sqlalchemy import select
 
 from .config import settings
-from .db.database import async_session_factory
 from .db.models import KnowledgeChunkModel, KnowledgeDocModel, KnowledgeSourceModel
 
 
@@ -108,19 +107,22 @@ def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
 # DYNAMIC DATABASE-BACKED KNOWLEDGE RETRIEVAL (STRICT TENANT ISOLATION)
 # ============================================================================
 
-async def fetch_tenant_chunks_from_db(workspace_id: str) -> list[dict[str, Any]]:
-    """Reads knowledge chunks and parent document titles directly from the SQL database."""
+async def fetch_tenant_chunks_from_db(
+    workspace_id: str,
+    session: AsyncSession | None = None
+) -> list[dict[str, Any]]:
+    """Reads knowledge chunks and parent document titles directly from the SQL database with RLS tenant context."""
     if not workspace_id:
         raise ValueError("workspace_id is mandatory and cannot be empty")
 
-    async with async_session_factory() as session:
+    async def _query(sess: AsyncSession):
         stmt = (
             select(KnowledgeChunkModel, KnowledgeDocModel.title)
             .join(KnowledgeDocModel, KnowledgeChunkModel.doc_id == KnowledgeDocModel.id)
             .join(KnowledgeSourceModel, KnowledgeDocModel.source_id == KnowledgeSourceModel.id)
             .where(KnowledgeSourceModel.workspace_id == workspace_id)
         )
-        res = await session.execute(stmt)
+        res = await sess.execute(stmt)
         rows = res.all()
 
         chunks = []
@@ -133,6 +135,14 @@ async def fetch_tenant_chunks_from_db(workspace_id: str) -> list[dict[str, Any]]
                 "embedding": chk.embedding or generate_embedding(chk.text)
             })
         return chunks
+
+    if session is not None:
+        return await _query(session)
+    else:
+        from .db.database import get_session_factory, set_tenant_session_context
+        async with get_session_factory()() as sess:
+            await set_tenant_session_context(sess, workspace_id)
+            return await _query(sess)
 
 def understand_query(question: str) -> dict[str, Any]:
     q = question.lower()
