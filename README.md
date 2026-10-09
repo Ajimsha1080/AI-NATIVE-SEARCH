@@ -5,8 +5,7 @@
 [![React 19](https://img.shields.io/badge/React-19.0.0-blue?style=flat&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-asyncpg-336791?style=flat&logo=postgresql)](https://www.postgresql.org/)
-[![SQLAlchemy 2.0](https://img.shields.io/badge/SQLAlchemy-2.0_async-red?style=flat)](https://www.sqlalchemy.org/)
-[![Pytest](https://img.shields.io/badge/Pytest-63%2F63_Passing-brightgreen?style=flat&logo=pytest)](python-backend/tests/)
+[![Pytest](https://img.shields.io/badge/Pytest-67%2F67_Passing-brightgreen?style=flat&logo=pytest)](python-backend/tests/)
 [![Gitleaks](https://img.shields.io/badge/Security-Gitleaks_Passed-brightgreen?style=flat)](.gitleaks.toml)
 [![DPDP Act 2023](https://img.shields.io/badge/Compliance-DPDP_Act_2023-blue?style=flat)](UPGRADE.md)
 
@@ -152,17 +151,25 @@ The UI is now accessible at [http://localhost:3000](http://localhost:3000).
 ## 🧪 Automated Testing & Verification
 
 ```bash
-# 1. Run Python Pytest Suite (63/63 passing)
+# 1. Run Python Pytest Suite (67/67 passing: RLS, quotas, billing, smoke, E2E)
 cd python-backend
 pytest -v
 
-# 2. Frontend Strict TypeScript Check
+# 2. Python Code Quality & Type Checks
+ruff check .
+mypy --config-file mypy.ini -p app.auth -p app.catalog -p app.billing
+
+# 3. Security Audits
+pip-audit -r requirements.txt
+npm audit --omit=dev
+
+# 4. Frontend Strict TypeScript Check
 npx tsc --noEmit
 
-# 3. Frontend ESLint Linting
+# 5. Frontend ESLint Linting
 npm run lint
 
-# 4. Next.js Production Build
+# 6. Next.js Production Build
 npm run build
 ```
 
