@@ -1,9 +1,12 @@
 import email.message
+import logging
 import smtplib
 
 import httpx
 
 from .config import settings
+
+logger = logging.getLogger("shopmate_email_service")
 
 
 async def send_email(
@@ -33,9 +36,11 @@ async def send_email(
             }
             async with httpx.AsyncClient(timeout=10.0) as client:
                 res = await client.post(url, json=payload, headers=headers)
+                if not res.is_success:
+                    logger.error("Resend dispatch returned non-200 (%s): %s", res.status_code, res.text)
                 return res.is_success
         except Exception as e:
-            print(f"[EMAIL SERVICE ERROR] Resend dispatch failed: {e}")
+            logger.exception("Resend dispatch failed to %s: %s", to_email, e)
             return False
 
     # 2. Try SMTP if configured
@@ -57,11 +62,11 @@ async def send_email(
             server.quit()
             return True
         except Exception as e:
-            print(f"[EMAIL SERVICE ERROR] SMTP dispatch failed: {e}")
+            logger.exception("SMTP dispatch failed to %s: %s", to_email, e)
             return False
 
     # Provider not configured
-    print(f"[EMAIL SERVICE NOTICE] Email provider not configured. Target: {to_email}, Subject: {subject}")
+    logger.info("Email provider not configured. Target: %s, Subject: %s", to_email, subject)
     return False
 
 

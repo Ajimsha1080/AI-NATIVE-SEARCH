@@ -5,22 +5,19 @@ Analytics & Conversation History Router for Merchants:
 """
 import re
 import time
-from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_auth_context, require_role
+from app.auth import require_role
 from app.db.database import get_tenant_db_session
 from app.db.models import (
     ConversationModel,
     MessageModel,
     OrderModel,
     UsageRecordModel,
-    utcnow,
 )
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["Analytics & Conversations"])

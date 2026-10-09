@@ -226,3 +226,53 @@ def test_storefront_order_lookup_redaction_and_security():
     assert m_order["customer_email"] == "alice@secret.org"
     assert m_order["shipping_address"] == "123 Classified St, Mumbai"
 
+
+def test_post_knowledge_and_retrieve_via_chat():
+    """Verify that posting knowledge saves it strictly under tenant auth context and RAG chat retrieves it."""
+    ws = f"ws_brand_{uuid.uuid4().hex[:8]}"
+
+    # 1. Create a deployment key so storefront chat can query this workspace
+    dep_res = client.post(
+        "/api/v1/ai-mode/deployments",
+        headers=auth_header(ws),
+        json={"name": "Test Storefront"}
+    )
+    assert dep_res.status_code == 200
+    dep_key = dep_res.json()["deployment"]["public_key"]
+
+    # 2. Add knowledge using POST /api/v1/ai-mode/knowledge
+    # Even if client tries to pass workspace_id="ws_hacker", the endpoint binds to auth.workspace_id (ws)
+    know_res = client.post(
+        "/api/v1/ai-mode/knowledge",
+        headers=auth_header(ws),
+        json={
+            "name": "Shipping and Returns Guide",
+            "content": "All orders ship with 48-hour delivery across Mumbai and Bangalore. Free returns within 14 days.",
+            "type": "DOCUMENTS",
+            "workspace_id": "ws_malicious_target"
+        }
+    )
+    assert know_res.status_code == 200
+    source = know_res.json()["source"]
+    assert source["workspace_id"] == ws
+    assert source["name"] == "Shipping and Returns Guide"
+
+    # 3. Chat with storefront key asking about returns
+    chat_res = client.post(
+        "/api/v1/ai-mode/chat",
+        headers={"X-Deployment-Key": dep_key},
+        json={
+            "user_message": "What is the return window for Mumbai?",
+            "workspace_id": ws
+        }
+    )
+    assert chat_res.status_code == 200
+    chat_data = chat_res.json()
+    assert chat_data["workspace_id"] == ws
+    # Check that citations retrieved the posted document
+    citations = chat_data.get("citations", [])
+    assert len(citations) > 0
+    assert any("Shipping and Returns Guide" in c["document_name"] for c in citations)
+    assert any("Free returns within 14 days" in c["chunk_text"] for c in citations)
+
+

@@ -56,7 +56,7 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
                 REQUEST_LATENCY.labels(
                     method=request.method,
                     endpoint=route_path
-                ).observe((time.time() - start_time))
+                ).observe(time.time() - start_time)
             except Exception:
                 pass
 

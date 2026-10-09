@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
 from .db.models import KnowledgeChunkModel, KnowledgeDocModel, KnowledgeSourceModel

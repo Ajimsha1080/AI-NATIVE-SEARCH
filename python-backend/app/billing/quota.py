@@ -1,10 +1,12 @@
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_auth_context
 from app.db.database import get_tenant_db_session
+
 from .metering import get_full_workspace_usage_summary
 
 

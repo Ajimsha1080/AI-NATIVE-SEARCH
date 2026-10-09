@@ -6,18 +6,17 @@ API Key Management Router:
 - Provides listing, rotation, and revocation endpoints.
 - Verifies workspace isolation and RBAC.
 """
-import hashlib
 import secrets
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_auth_context, hash_secure_token, require_role
+from app.auth import hash_secure_token, require_role
 from app.compliance import record_audit_event
 from app.db.database import get_tenant_db_session
 from app.db.models import ApiKeyModel, utcnow

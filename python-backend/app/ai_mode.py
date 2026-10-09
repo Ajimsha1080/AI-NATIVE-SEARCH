@@ -462,8 +462,8 @@ async def ai_search_endpoint(
 
     effective_workspace = storefront.workspace_id
 
-    from app.billing.quota import check_storefront_quota
     from app.billing.metering import increment_monthly_usage
+    from app.billing.quota import check_storefront_quota
 
     quota_allowed, quota_msg = await check_storefront_quota(session, effective_workspace)
     if not quota_allowed:
@@ -560,8 +560,8 @@ async def ai_chat_endpoint(
 
     effective_workspace = storefront.workspace_id
 
-    from app.billing.quota import check_storefront_quota
     from app.billing.metering import increment_monthly_usage
+    from app.billing.quota import check_storefront_quota
 
     quota_allowed, quota_msg = await check_storefront_quota(session, effective_workspace)
     if not quota_allowed:
@@ -630,11 +630,13 @@ async def ai_chat_endpoint(
             prompt_parts.append("Provide a warm, concise 1-2 sentence response guiding the customer accurately.")
 
             prompt = "\n\n".join(prompt_parts)
-            res = llm.call_model(
+            res = await llm.async_call_model(
                 messages=[{"role": "user", "content": prompt}],
                 tools=[]
             )
-            if res.get("response"):
+            if res.get("content"):
+                assistant_text = res["content"]
+            elif res.get("response"):
                 assistant_text = res["response"]
         except Exception as e:
             logger.exception("LLM generation failed: %s", e)

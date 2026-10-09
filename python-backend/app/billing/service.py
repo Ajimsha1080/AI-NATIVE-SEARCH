@@ -19,10 +19,9 @@ from app.db.models import (
 from app.email_service import (
     send_payment_failed_email,
     send_plan_changed_email,
-    send_trial_ending_email,
 )
-from .provider import get_billing_provider
 
+from .provider import get_billing_provider
 
 DEFAULT_PLANS = [
     {
@@ -127,13 +126,13 @@ async def ensure_plans_seeded(session: AsyncSession) -> None:
 async def list_plans(session: AsyncSession) -> list[dict[str, Any]]:
     """Returns all active billing plans."""
     res = await session.execute(
-        select(PlanModel).where(PlanModel.is_active == True).order_by(PlanModel.price.asc())
+        select(PlanModel).where(PlanModel.is_active.is_(True)).order_by(PlanModel.price.asc())
     )
     plans = res.scalars().all()
     if not plans:
         await ensure_plans_seeded(session)
         res = await session.execute(
-            select(PlanModel).where(PlanModel.is_active == True).order_by(PlanModel.price.asc())
+            select(PlanModel).where(PlanModel.is_active.is_(True)).order_by(PlanModel.price.asc())
         )
         plans = res.scalars().all()
 
@@ -242,13 +241,13 @@ async def create_checkout_session(
 ) -> dict[str, Any]:
     """Initiates a subscription checkout with the configured billing provider."""
     plan_res = await session.execute(
-        select(PlanModel).where(PlanModel.code == plan_code, PlanModel.is_active == True)
+        select(PlanModel).where(PlanModel.code == plan_code, PlanModel.is_active.is_(True))
     )
     plan = plan_res.scalars().first()
     if not plan:
         await ensure_plans_seeded(session)
         plan_res = await session.execute(
-            select(PlanModel).where(PlanModel.code == plan_code, PlanModel.is_active == True)
+            select(PlanModel).where(PlanModel.code == plan_code, PlanModel.is_active.is_(True))
         )
         plan = plan_res.scalars().first()
 

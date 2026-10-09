@@ -22,6 +22,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run NPM Audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run pip-audit on Backend Requirements
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          pip-audit -r python-backend/requirements.txt
+
   frontend-quality:
     name: Node.js Lint, Typecheck & Next.js Build
     runs-on: ubuntu-latest
@@ -91,10 +109,18 @@ jobs:
         run: python -c "import app.main; print('app.main imported cleanly without missing dependencies')"
 
       - name: Ruff Linting
-        run: ruff check python-backend/app
-        continue-on-error: true
+        working-directory: python-backend
+        run: ruff check app
 
-      - name: Run Pytest Test Matrix (Auth, Catalog, Compliance, RAG Evals)
+      - name: Mypy Static Type Checking
+        working-directory: python-backend
+        run: mypy --config-file mypy.ini -p app.auth -p app.catalog -p app.billing
+
+      - name: Run OpenAPI Smoke Test
+        working-directory: python-backend
+        run: pytest tests/test_smoke_openapi.py -v
+
+      - name: Run Pytest Test Matrix (Auth, Catalog, Compliance, RAG Evals, Security, Billing, Teams)
         working-directory: python-backend
         run: pytest -v
         env:

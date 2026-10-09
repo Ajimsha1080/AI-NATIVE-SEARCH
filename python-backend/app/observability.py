@@ -7,8 +7,6 @@ Production Observability, Prometheus Metrics, and Sentry Integration:
 - Sentry Error Tracking Initializer
 """
 import os
-import time
-from typing import Any
 
 from fastapi import APIRouter, Response
 from prometheus_client import (

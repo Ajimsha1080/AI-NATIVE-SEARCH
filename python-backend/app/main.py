@@ -68,9 +68,9 @@ from .auth import router as auth_router
 from .billing.router import router as billing_router
 from .catalog import router as catalog_router
 from .compliance import router as compliance_router
+from .observability import init_sentry
+from .observability import router as observability_router
 from .team_router import router as team_router
-
-from .observability import init_sentry, router as observability_router
 
 init_sentry()
 
@@ -254,6 +254,7 @@ async def ingest_knowledge_endpoint(
     }
 
 from .redis_service import check_rate_limit
+
 
 @app.get("/api/v1/orders/{order_number}")
 async def get_order_endpoint(

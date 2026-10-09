@@ -241,33 +241,58 @@ Rate limiting, token revocation, and tenant usage metering are managed by `app/r
 
 ## 9. Verification & Test Suite Summary
 
-- **Pytest Suite:** 63 tests passing cleanly in an isolated test database (`pytest -v`).
-  - Auth, account lockout, token denylist, email verification: 11 tests.
+- **Pytest Suite:** 67 tests passing cleanly in an isolated test database (`pytest -v`).
+  - Auth, account lockout, token denylist, email verification: 10 tests.
   - Billing, plans, subscriptions, idempotency, tenant isolation: 7 tests.
-  - Catalog, orders, commerce sync, storefront privacy: 7 tests.
+  - Catalog, orders, commerce sync, storefront privacy, knowledge chat retrieval: 8 tests.
   - Compliance, audit logging, DPDP export/erase: 4 tests.
   - Quotas, meters, cost caps, and limits enforcement: 5 tests.
-  - RAG evaluations, intent parsing, hybrid search: 6 tests.
+  - RAG evaluations, intent parsing, hybrid search, full mock-LLM context: 6 tests.
   - Security features (MFA, sessions, API keys): 3 tests.
   - Teams, seat limits, invitations, last owner protection: 6 tests.
   - PostgreSQL RLS session-context isolation: 5 tests.
+  - OpenAPI Smoke Test (GET & POST routes with valid/empty/invalid bodies): 3 tests.
   - End-to-End SaaS lifecycle (signup -> trial -> upgrade -> quota -> invite -> login): 1 test.
 - **Frontend Quality:**
   - `npx tsc --noEmit`: 0 errors.
   - `npm run lint`: 0 errors.
+  - `npm audit --omit=dev`: 0 vulnerabilities.
   - `npx next build`: 26/26 routes statically generated and optimized.
+- **Backend Quality:**
+  - `python -c "import app.main"`: 0 errors.
+  - `ruff check app`: 0 errors.
+  - `mypy --config-file mypy.ini -p app.auth -p app.catalog -p app.billing`: 0 issues.
+  - `pip-audit -r requirements.txt`: 0 known vulnerabilities.
 
-### Verified vs. Not Verified Live
-- **Verified via automated tests:**
-  - Complete SaaS subscription lifecycle with verified webhook payloads.
-  - Quota enforcement blocking with HTTP 402/429 and graceful widget responses.
-  - Multi-tenant PostgreSQL RLS boundaries across all tables.
-  - MFA TOTP generation, validation, recovery code consumption, and disable flow.
-  - Single session revocation and "Log out everywhere" denylisting.
-  - Full end-to-end user and workspace onboarding journey.
-- **Not Verified Live (Requires external production infrastructure):**
-  - Live third-party LLM completions (requires active paid Sarvam AI, OpenAI, or Anthropic credentials).
-  - Live Razorpay settlement webhook deliveries from the public internet (requires live webhook URL).
-  - Live external Sentry dashboard ingest (requires live `SENTRY_DSN`).
+---
+
+## 10. Database Role Setup & Non-Superuser RLS Enforcement
+
+In production, the application must connect using a least-privilege role (`shopmate_app`) without `SUPERUSER` or `BYPASSRLS` privileges to guarantee that PostgreSQL Row-Level Security policies are strictly enforced.
+
+Run the provided initialization script against your PostgreSQL instance:
+
+```bash
+# Execute init_db_role.sql
+psql -h localhost -U postgres -d shopmate_production -f scripts/init_db_role.sql
+```
+
+The script performs:
+1. Creates `shopmate_app` with `NOSUPERUSER NOBYPASSRLS`.
+2. Grants necessary table and sequence privileges.
+3. Applies `ALTER TABLE <table_name> FORCE ROW LEVEL SECURITY` on all tenant-isolated tables.
+4. Backend startup fails immediately in production if connected as a superuser or with `BYPASSRLS`.
+
+---
+
+## 11. Production Verification Boundaries (What Could Not Be Verified Locally)
+
+The following areas require live external services and credentials in your deployment environment:
+1. **Real LLM Answers**: Tested with mocked LLMs and deterministic fallback; requires live paid API keys (`SARVAM_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY`) for live generative completions.
+2. **Live Razorpay Gateway**: Tested cryptographically with signed webhook payloads and mock provider tests; live recurring charge debits require real test/production Razorpay credentials.
+3. **Real SMTP Email Delivery**: Tested with mocked email dispatches; live delivery requires active credentials (`RESEND_API_KEY` or `SMTP_HOST`).
+4. **Live Load Testing**: k6 load test script provided in `tests/load_test_search_chat.js`; execution against production ingress requires a staging/production server.
+5. **Live Sentry & Monitoring**: Tested local `/metrics` endpoint; external alert ingestion requires a live `SENTRY_DSN` and Prometheus scraper.
+
 
 

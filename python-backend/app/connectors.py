@@ -96,7 +96,9 @@ class WebCrawlerConnector:
 
 async def execute_sync_job(job_id: str, workspace_id: str, connector_type: str) -> None:
     """Background worker task that runs catalog synchronization and records job progress."""
+    from .db.database import set_tenant_session_context
     async with async_session_factory() as session:
+        await set_tenant_session_context(session, workspace_id)
         job = (await session.execute(select(SyncJobModel).where(SyncJobModel.id == job_id))).scalars().first()
         if not job:
             return

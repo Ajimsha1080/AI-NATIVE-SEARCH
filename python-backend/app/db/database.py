@@ -211,3 +211,25 @@ async def init_db():
         except Exception:
             pass
 
+    # In production with PostgreSQL, verify that the connected database role is not a superuser and does not have BYPASSRLS
+    if not is_test and "postgresql" in DATABASE_URL:
+        await verify_rls_role_privileges()
+
+
+async def verify_rls_role_privileges():
+    """Ensures production database connection is strictly non-superuser without BYPASSRLS privilege."""
+    from sqlalchemy import text
+    async with engine.connect() as conn:
+        res = await conn.execute(text("SELECT current_user, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user;"))
+        row = res.first()
+        if row:
+            user_name, is_super, bypass_rls = row
+            if is_super or bypass_rls:
+                raise RuntimeError(
+                    f"CRITICAL SECURITY CONFIGURATION ERROR: Connected database role '{user_name}' "
+                    f"has superuser={is_super} or bypassrls={bypass_rls}. "
+                    f"In production, application must connect via a least-privilege non-superuser role (e.g. shopmate_app) "
+                    f"to guarantee PostgreSQL Row-Level Security (RLS) enforcement."
+                )
+
+

@@ -1,14 +1,18 @@
+import base64
 import hashlib
 import re
 import secrets
 import time
 import uuid
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta
+from io import BytesIO
 from typing import Any
 
 import bcrypt
-from collections.abc import AsyncGenerator
 import jwt
+import pyotp
+import qrcode
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
@@ -21,7 +25,6 @@ from .db.database import (
     get_system_db_session,
     set_tenant_session_context,
 )
-from .redis_service import check_rate_limit
 from .db.models import (
     AuthTokenModel,
     SubscriptionModel,
@@ -31,11 +34,8 @@ from .db.models import (
     WorkspaceModel,
     utcnow,
 )
-import pyotp
-import qrcode
-from io import BytesIO
-import base64
 from .email_service import send_password_reset_email, send_verification_email
+from .redis_service import check_rate_limit
 
 ALLOWED_ALGORITHMS = ["HS256"]
 ACCESS_TOKEN_EXPIRE_SECONDS = 15 * 60  # 15 minutes
@@ -608,7 +608,7 @@ async def login_endpoint(
                 mfa_valid = True
                 saved_codes.remove(recovery_hash)
                 user.mfa_recovery_codes = saved_codes
-        
+
         if not mfa_valid:
             if not req.mfa_code and not req.recovery_code:
                 raise HTTPException(
@@ -1420,7 +1420,7 @@ async def list_active_sessions(
         select(UserSessionModel)
         .where(
             UserSessionModel.user_id == auth_ctx.user_id,
-            UserSessionModel.is_revoked == False,
+            UserSessionModel.is_revoked.is_(False),
             UserSessionModel.expires_at > utcnow()
         )
         .order_by(UserSessionModel.last_activity_at.desc())
@@ -1476,7 +1476,7 @@ async def revoke_all_sessions(
     """Log out everywhere: revokes all user sessions and blacklists active tokens."""
     stmt = select(UserSessionModel).where(
         UserSessionModel.user_id == auth_ctx.user_id,
-        UserSessionModel.is_revoked == False
+        UserSessionModel.is_revoked.is_(False)
     )
     res = await session.execute(stmt)
     active_sessions = res.scalars().all()

@@ -57,10 +57,14 @@ class RazorpayBillingProvider(BillingProvider):
 
     async def create_customer(self, name: str, email: str) -> str:
         import base64
+
         import httpx
 
+        is_production = settings.APP_ENV.lower() == "production"
+
         if not self.key_id or not self.key_secret:
-            # Fallback for dev / unconfigured environments
+            if is_production:
+                raise RuntimeError("Razorpay billing provider is missing API credentials (RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET) in production.")
             return f"cust_sim_{hashlib.md5(email.encode()).hexdigest()[:12]}"
 
         auth_header = base64.b64encode(f"{self.key_id}:{self.key_secret}".encode()).decode()
@@ -77,8 +81,11 @@ class RazorpayBillingProvider(BillingProvider):
                 )
                 if res.is_success:
                     return res.json().get("id", f"cust_{hashlib.md5(email.encode()).hexdigest()[:12]}")
-            except Exception:
-                pass
+                elif is_production:
+                    raise RuntimeError(f"Razorpay customer creation failed ({res.status_code}): {res.text}")
+            except Exception as exc:
+                if is_production:
+                    raise RuntimeError(f"Razorpay customer creation network failure: {exc}") from exc
         return f"cust_{hashlib.md5(email.encode()).hexdigest()[:12]}"
 
     async def create_subscription(
@@ -92,11 +99,15 @@ class RazorpayBillingProvider(BillingProvider):
     ) -> dict[str, Any]:
         import base64
         import uuid
+
         import httpx
 
+        is_production = settings.APP_ENV.lower() == "production"
         notes = notes or {}
-        # In a real environment with configured plan IDs or plan creation
+
         if not self.key_id or not self.key_secret:
+            if is_production:
+                raise RuntimeError("Razorpay billing provider credentials missing in production.")
             sub_id = f"sub_sim_{uuid.uuid4().hex[:14]}"
             return {
                 "id": sub_id,
@@ -114,8 +125,6 @@ class RazorpayBillingProvider(BillingProvider):
             "Content-Type": "application/json"
         }
 
-        # First, ensure a Razorpay Plan exists or create one dynamically for the requested amount
-        # Standard Razorpay subscriptions require a plan_id
         async with httpx.AsyncClient(timeout=10.0) as client:
             plan_payload = {
                 "period": "monthly",
@@ -133,11 +142,15 @@ class RazorpayBillingProvider(BillingProvider):
                 plan_res = await client.post(f"{self.base_url}/plans", headers=headers, json=plan_payload)
                 if plan_res.is_success:
                     rzp_plan_id = plan_res.json().get("id")
-            except Exception:
-                pass
+                elif is_production:
+                    raise RuntimeError(f"Razorpay plan creation failed ({plan_res.status_code}): {plan_res.text}")
+            except Exception as exc:
+                if is_production:
+                    raise RuntimeError(f"Razorpay plan API failure: {exc}") from exc
 
             if not rzp_plan_id:
-                # If plan creation is mocked or failed, simulate subscription id
+                if is_production:
+                    raise RuntimeError(f"Could not establish valid Razorpay plan for plan '{plan_code}'.")
                 sub_id = f"sub_{uuid.uuid4().hex[:14]}"
                 return {
                     "id": sub_id,
@@ -172,8 +185,14 @@ class RazorpayBillingProvider(BillingProvider):
                         "status": data.get("status", "created"),
                         "short_url": data.get("short_url") or f"https://rzp.io/i/{data.get('id')}",
                     }
-            except Exception:
-                pass
+                elif is_production:
+                    raise RuntimeError(f"Razorpay subscription creation failed ({sub_res.status_code}): {sub_res.text}")
+            except Exception as exc:
+                if is_production:
+                    raise RuntimeError(f"Razorpay subscription API failure: {exc}") from exc
+
+        if is_production:
+            raise RuntimeError("Failed to create subscription with Razorpay provider.")
 
         sub_id = f"sub_{uuid.uuid4().hex[:14]}"
         return {
@@ -192,9 +211,14 @@ class RazorpayBillingProvider(BillingProvider):
         cancel_at_cycle_end: bool = True
     ) -> dict[str, Any]:
         import base64
+
         import httpx
 
+        is_production = settings.APP_ENV.lower() == "production"
+
         if not self.key_id or not self.key_secret or subscription_id.startswith("sub_sim_"):
+            if is_production:
+                raise RuntimeError("Razorpay API credentials missing for subscription cancellation in production.")
             return {"id": subscription_id, "status": "cancelled", "cancel_at_cycle_end": cancel_at_cycle_end}
 
         auth_header = base64.b64encode(f"{self.key_id}:{self.key_secret}".encode()).decode()
@@ -208,8 +232,14 @@ class RazorpayBillingProvider(BillingProvider):
                 res = await client.post(f"{self.base_url}/subscriptions/{subscription_id}/cancel", headers=headers, json=payload)
                 if res.is_success:
                     return res.json()
-            except Exception:
-                pass
+                elif is_production:
+                    raise RuntimeError(f"Razorpay cancel subscription failed ({res.status_code}): {res.text}")
+            except Exception as exc:
+                if is_production:
+                    raise RuntimeError(f"Razorpay cancel subscription API failure: {exc}") from exc
+
+        if is_production:
+            raise RuntimeError(f"Failed to cancel subscription '{subscription_id}' in production.")
 
         return {"id": subscription_id, "status": "cancelled", "cancel_at_cycle_end": cancel_at_cycle_end}
 

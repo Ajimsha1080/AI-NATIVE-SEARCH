@@ -113,6 +113,21 @@ class LLMClient:
         logger.info("Falling back to deterministic reasoning engine.")
         return self._deterministic_fallback(messages, tools)
 
+    async def async_call_model(
+        self,
+        messages: list[dict[str, str]],
+        tools: list[dict[str, Any]],
+        system_prompt: str = SYSTEM_INJECTION_DEFENSE_PROMPT,
+        workspace_id: str = "default_workspace"
+    ) -> dict[str, Any]:
+        """Asynchronous, non-blocking model call executing call_model in a thread pool to avoid blocking the event loop."""
+        import asyncio
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: self.call_model(messages, tools)
+        )
+
     def _call_sarvam(self, messages: list[dict[str, str]], tools: list[dict[str, Any]], system_prompt: str) -> dict[str, Any]:
         model = self.default_model or "sarvam-105b-conversations"
         formatted_messages = [{"role": "system", "content": system_prompt}] + messages

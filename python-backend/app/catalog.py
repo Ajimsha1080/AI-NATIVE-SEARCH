@@ -16,7 +16,6 @@ from .auth import (
     AuthContext,
     get_auth_context,
     get_flexible_tenant_db_session,
-    get_storefront_tenant_db_session,
     get_system_db_session,
     get_tenant_db_session,
     require_admin_role,
@@ -1215,14 +1214,23 @@ async def get_ai_mode_knowledge(
     }
 
 
+class KnowledgeCreateRequest(BaseModel):
+    name: str | None = None
+    url: str | None = None
+    type: str = "DOCUMENTS"
+    content: str = ""
+    workspace_id: str | None = None
+
+
 @router.post("/ai-mode/knowledge")
 async def add_ai_mode_knowledge(
+    body: KnowledgeCreateRequest,
     request: Request,
     auth: AuthContext = Depends(require_admin_role),
     session: AsyncSession = Depends(get_tenant_db_session),
 ):
     """Creates a real knowledge source and document strictly scoped to tenant."""
-    target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
+    target_workspace = auth.workspace_id
 
     from app.billing.metering import get_full_workspace_usage_summary
     from app.billing.quota import QuotaExceededException
@@ -1237,7 +1245,7 @@ async def add_ai_mode_knowledge(
             upgrade_url=usage_sum.get("upgrade_url", "/ai-mode/billing")
         )
 
-    name = body.get("name") or body.get("url") or "Knowledge Document"
+    name = body.name or body.url or "Knowledge Document"
     source_id = f"ks_{uuid.uuid4().hex[:12]}"
     doc_id = f"doc_{uuid.uuid4().hex[:12]}"
 
@@ -1245,11 +1253,11 @@ async def add_ai_mode_knowledge(
         id=source_id,
         workspace_id=target_workspace,
         name=name,
-        type=body.get("type", "DOCUMENTS"),
+        type=body.type or "DOCUMENTS",
     )
     session.add(new_source)
 
-    content = body.get("content", "")
+    content = body.content or ""
     new_doc = KnowledgeDocModel(
         id=doc_id,
         source_id=source_id,
@@ -1278,7 +1286,7 @@ async def add_ai_mode_knowledge(
             "id": source_id,
             "workspace_id": target_workspace,
             "name": name,
-            "type": body.get("type", "DOCUMENTS"),
+            "type": body.type or "DOCUMENTS",
         },
     }
 
@@ -1467,7 +1475,8 @@ async def get_widget_script(
     host = request.headers.get("host") or "localhost:3000"
     proto = request.headers.get("x-forwarded-proto") or "http"
     host_url = f"{proto}://{host}"
-    pos = (dep.branding_json or {}).get("position", "bottom-right")
+    branding = dep.branding_json if isinstance(dep.branding_json, dict) else {}
+    pos = branding.get("position", "bottom-right") if branding else "bottom-right"
     pos_side = "left" if pos == "bottom-left" else "right"
 
     js = f"""(function() {{

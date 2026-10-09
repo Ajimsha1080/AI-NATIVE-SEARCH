@@ -1,4 +1,3 @@
-import datetime
 import logging
 import time
 import uuid
@@ -7,6 +6,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db.models import (
     KnowledgeSourceModel,
     ProductModel,
@@ -16,9 +16,9 @@ from app.db.models import (
     WorkspaceModel,
     utcnow,
 )
-from app.config import settings
 from app.email_service import send_cost_cap_alert_email
-from app.redis_service import get_redis_client, _inmemory_usage_tracking
+from app.redis_service import _inmemory_usage_tracking, get_redis_client
+
 from .service import get_subscription_details
 
 logger = logging.getLogger("shopmate_metering")
