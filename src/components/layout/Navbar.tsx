@@ -18,6 +18,8 @@ export default function Navbar() {
   const cachedUser = getClientCachedData<{ user: any }>('/api/auth/me');
   const [user, setUser] = useState<any>(() => cachedUser?.user || null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [wsMenuOpen, setWsMenuOpen] = useState(false);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
@@ -89,13 +91,85 @@ export default function Navbar() {
             <Menu className="w-4 h-4" />
           </button>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-medium text-zinc-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            <Building className="w-3.5 h-3.5 text-zinc-500" />
-            <span className="truncate max-w-[110px] sm:max-w-[150px] font-semibold text-zinc-900">{user?.workspaceName || 'Ajimsha M'}</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-200/80 text-zinc-600 font-medium hidden sm:inline">
-              {user?.role || 'OWNER'}
-            </span>
+          {/* Workspace Switcher */}
+          <div className="relative">
+            <button
+              onClick={async () => {
+                const nextState = !wsMenuOpen;
+                setWsMenuOpen(nextState);
+                if (nextState) {
+                  try {
+                    const res = await fetch('/api/v1/workspaces/mine', { credentials: 'include' });
+                    if (res.ok) {
+                      const d = await res.json();
+                      setWorkspaces(d.workspaces || []);
+                    }
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }
+              }}
+              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-lg bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-xs font-medium text-zinc-700 cursor-pointer transition"
+              title="Switch Workspace"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <Building className="w-3.5 h-3.5 text-zinc-500" />
+              <span className="truncate max-w-[110px] sm:max-w-[150px] font-semibold text-zinc-900">
+                {user?.workspaceName || 'My Store'}
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-200/80 text-zinc-600 font-medium hidden sm:inline">
+                {user?.role || 'OWNER'}
+              </span>
+              <ChevronDown className="w-3 h-3 text-zinc-400" />
+            </button>
+
+            {wsMenuOpen && (
+              <div className="absolute left-0 mt-2 w-64 bg-white border border-zinc-200 rounded-xl shadow-xl py-1 z-50 text-xs divide-y divide-zinc-100">
+                <div className="px-3 py-2 bg-zinc-50/50">
+                  <p className="font-bold text-[11px] text-zinc-500 uppercase tracking-wider">Your Workspaces</p>
+                </div>
+                <div className="py-1 max-h-48 overflow-y-auto">
+                  {workspaces.map((ws) => (
+                    <button
+                      key={ws.id}
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/v1/workspaces/switch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ workspace_id: ws.id }),
+                          });
+                          if (res.ok) {
+                            window.location.reload();
+                          }
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }}
+                      className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-zinc-50 cursor-pointer transition ${
+                        ws.is_current ? 'bg-indigo-50/40 text-indigo-900 font-bold' : 'text-zinc-700'
+                      }`}
+                    >
+                      <div className="truncate">
+                        <div className="truncate font-semibold">{ws.name}</div>
+                        <div className="text-[10px] text-zinc-400 font-mono">{ws.role}</div>
+                      </div>
+                      {ws.is_current && <span className="text-indigo-600 text-[10px] font-bold">ACTIVE</span>}
+                    </button>
+                  ))}
+                </div>
+                <div className="p-2">
+                  <Link
+                    href="/ai-mode/team"
+                    onClick={() => setWsMenuOpen(false)}
+                    className="block text-center py-1 text-indigo-600 hover:text-indigo-800 font-bold text-[11px]"
+                  >
+                    Manage Team &amp; Access &rarr;
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

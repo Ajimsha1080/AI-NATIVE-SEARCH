@@ -8,6 +8,7 @@ from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import Response
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +21,7 @@ from .auth import (
     get_tenant_db_session,
     require_admin_role,
     require_editor_role,
+    require_role,
     require_viewer_role,
     resolve_storefront_context,
     validate_workspace_access,
@@ -120,6 +122,19 @@ async def create_product(
     body = await request.json()
     title = body.get("title")
     target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
+
+    from app.billing.metering import get_full_workspace_usage_summary
+    from app.billing.quota import QuotaExceededException
+    usage_sum = await get_full_workspace_usage_summary(session, target_workspace)
+    prod_meter = usage_sum.get("meters", {}).get("products", {})
+    if prod_meter.get("exceeded"):
+        raise QuotaExceededException(
+            metric="products",
+            plan_name=usage_sum.get("plan_name", "Current"),
+            used=prod_meter.get("used", 0),
+            limit=prod_meter.get("limit", 0),
+            upgrade_url=usage_sum.get("upgrade_url", "/ai-mode/billing")
+        )
 
     if not title or not title.strip():
         raise HTTPException(status_code=400, detail="Product title is required")
@@ -304,6 +319,8 @@ async def get_orders(
     request: Request,
     order_number: str | None = None,
     customer_email: str | None = None,
+    status: str | None = None,
+    payment_status: str | None = None,
     workspace_id: str | None = None,
     authorization: str | None = Header(None),
     x_deployment_key: str | None = Header(None, alias="X-Deployment-Key"),
@@ -347,6 +364,10 @@ async def get_orders(
             )
 
     stmt = select(OrderModel).where(OrderModel.workspace_id == target_workspace)
+    if status and not is_storefront:
+        stmt = stmt.where(OrderModel.status == status.upper().strip())
+    if payment_status and not is_storefront:
+        stmt = stmt.where(OrderModel.payment_status == payment_status.upper().strip())
 
     if order_number:
         clean_num = order_number.strip()
@@ -430,6 +451,58 @@ async def get_orders(
             }
             for o in orders
         ]
+    }
+
+
+class UpdateOrderStatusRequest(BaseModel):
+    status: str | None = None
+    payment_status: str | None = None
+    fulfillment_status: str | None = None
+    tracking_number: str | None = None
+    carrier: str | None = None
+
+
+@router.patch("/commerce/orders/{order_id}")
+async def update_order_status(
+    order_id: str,
+    req: UpdateOrderStatusRequest,
+    auth_ctx: dict[str, Any] = Depends(require_role(["OWNER", "ADMIN", "EDITOR"])),
+    session: AsyncSession = Depends(get_flexible_tenant_db_session),
+):
+    """Updates order fulfillment, status, or tracking. Scoped to merchant workspace."""
+    ws_id = auth_ctx["workspace_id"]
+    res = await session.execute(
+        select(OrderModel).where(OrderModel.id == order_id, OrderModel.workspace_id == ws_id)
+    )
+    order = res.scalars().first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+
+    if req.status:
+        order.status = req.status.upper().strip()
+    if req.payment_status:
+        order.payment_status = req.payment_status.upper().strip()
+    if req.fulfillment_status:
+        order.fulfillment_status = req.fulfillment_status.upper().strip()
+    if req.tracking_number is not None:
+        order.tracking_number = req.tracking_number.strip() if req.tracking_number else None
+    if req.carrier is not None:
+        order.carrier = req.carrier.strip() if req.carrier else None
+
+    await session.commit()
+    await session.refresh(order)
+
+    return {
+        "success": True,
+        "order": {
+            "id": order.id,
+            "order_number": order.order_number,
+            "status": order.status,
+            "payment_status": order.payment_status,
+            "fulfillment_status": order.fulfillment_status,
+            "tracking_number": order.tracking_number,
+            "carrier": order.carrier,
+        }
     }
 
 
@@ -1149,8 +1222,20 @@ async def add_ai_mode_knowledge(
     session: AsyncSession = Depends(get_tenant_db_session),
 ):
     """Creates a real knowledge source and document strictly scoped to tenant."""
-    body = await request.json()
     target_workspace = validate_workspace_access(auth, body.get("workspace_id"))
+
+    from app.billing.metering import get_full_workspace_usage_summary
+    from app.billing.quota import QuotaExceededException
+    usage_sum = await get_full_workspace_usage_summary(session, target_workspace)
+    docs_meter = usage_sum.get("meters", {}).get("knowledge_docs", {})
+    if docs_meter.get("exceeded"):
+        raise QuotaExceededException(
+            metric="knowledge_docs",
+            plan_name=usage_sum.get("plan_name", "Current"),
+            used=docs_meter.get("used", 0),
+            limit=docs_meter.get("limit", 0),
+            upgrade_url=usage_sum.get("upgrade_url", "/ai-mode/billing")
+        )
 
     name = body.get("name") or body.get("url") or "Knowledge Document"
     source_id = f"ks_{uuid.uuid4().hex[:12]}"

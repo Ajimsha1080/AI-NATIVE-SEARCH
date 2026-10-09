@@ -43,6 +43,23 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
             else:
                 logger.info(json.dumps(log_entry))
 
+            # Record Prometheus Metrics
+            try:
+                from ..observability import REQUEST_COUNT, REQUEST_LATENCY
+                route_path = request.url.path
+                REQUEST_COUNT.labels(
+                    method=request.method,
+                    endpoint=route_path,
+                    status_code=str(response.status_code),
+                    workspace_id=workspace_id
+                ).inc()
+                REQUEST_LATENCY.labels(
+                    method=request.method,
+                    endpoint=route_path
+                ).observe((time.time() - start_time))
+            except Exception:
+                pass
+
             return response
         except Exception as exc:
             latency_ms = round((time.time() - start_time) * 1000, 2)

@@ -50,6 +50,11 @@ class AppSettings(BaseSettings):
     RAZORPAY_ME_URL: str | None = Field(default=None)
     RAZORPAY_WEBHOOK_SECRET: str | None = Field(default=None)
 
+    # Billing & Subscription Engine
+    BILLING_PROVIDER: str = Field(default="razorpay")
+    TRIAL_PERIOD_DAYS: int = Field(default=14)
+    PAYMENT_GRACE_PERIOD_DAYS: int = Field(default=3)
+
     # Embeddings Configuration
     EMBEDDING_PROVIDER: str = Field(default="openai")
     EMBEDDING_MODEL: str = Field(default="text-embedding-3-small")

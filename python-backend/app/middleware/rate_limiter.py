@@ -15,7 +15,7 @@ class EnterpriseRateLimiterMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         # Endpoint path prefix -> (requests_allowed, window_seconds)
         self.limits = {
-            "/api/v1/auth/": (20, 60),          # 20 requests per minute for auth
+            "/api/v1/auth/": (120, 60),         # 120 requests per minute for auth
             "/api/v1/ai-mode/search": (60, 60),  # 60 requests per minute for search
             "/api/v1/ai-mode/chat": (30, 60),    # 30 requests per minute for AI chat
         }

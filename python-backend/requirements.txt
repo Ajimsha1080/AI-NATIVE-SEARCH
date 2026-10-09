@@ -17,4 +17,7 @@ pydantic-settings>=2.14.1,<3.0
 python-dotenv>=1.0.1
 alembic>=1.14.0
 pgvector>=0.3.6
-
+pyotp>=2.9.0
+qrcode>=8.0
+prometheus-client>=0.20.0
+sentry-sdk>=2.0.0

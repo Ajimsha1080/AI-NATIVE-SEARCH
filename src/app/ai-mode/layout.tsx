@@ -9,8 +9,13 @@ import {
   Layers, 
   BookOpen, 
   Search, 
-  Code2, 
-  Settings
+  Code2,
+  CreditCard,
+  Users,
+  Settings,
+  ShoppingBag,
+  BarChart3,
+  MessageSquare
 } from 'lucide-react';
 
 export default function AIModeLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +25,12 @@ export default function AIModeLayout({ children }: { children: React.ReactNode }
     { name: 'Overview', href: '/ai-mode', icon: Layers, exact: true },
     { name: 'Knowledge', href: '/ai-mode/knowledge', icon: BookOpen },
     { name: 'AI Search', href: '/ai-mode/search', icon: Search },
+    { name: 'Orders', href: '/ai-mode/orders', icon: ShoppingBag },
+    { name: 'Analytics', href: '/ai-mode/analytics', icon: BarChart3 },
+    { name: 'Conversations', href: '/ai-mode/conversations', icon: MessageSquare },
     { name: 'Deployment', href: '/ai-mode/deployment', icon: Code2 },
+    { name: 'Billing', href: '/ai-mode/billing', icon: CreditCard },
+    { name: 'Team', href: '/ai-mode/team', icon: Users },
     { name: 'Settings', href: '/ai-mode/settings', icon: Settings },
   ];
 

@@ -1,0 +1,29 @@
+groups:
+  - name: shopmate_production_alerts
+    rules:
+      - alert: HighHttpErrorRate
+        expr: sum(rate(shopmate_http_requests_total{status_code=~"5.."}[5m])) / sum(rate(shopmate_http_requests_total[5m])) * 100 > 2.0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx error rate exceeded 2% across workspace APIs"
+          runbook_url: "https://docs.shopmate.ai/ops/runbooks#high-error-rate"
+
+      - alert: HighSearchAndChatLatency
+        expr: histogram_quantile(0.95, sum(rate(shopmate_http_request_duration_seconds_bucket{endpoint=~"/api/v1/ai-mode/.*"}[5m])) by (le)) > 2.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "95th percentile AI Search/Chat latency is higher than 2.5s"
+          runbook_url: "https://docs.shopmate.ai/ops/runbooks#latency"
+
+      - alert: LLMCostBudgetLimitExceeded
+        expr: rate(shopmate_llm_cost_estimated_usd_total[1h]) > 50.0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High LLM consumption spend velocity observed"
+          runbook_url: "https://docs.shopmate.ai/ops/runbooks#cost-caps"

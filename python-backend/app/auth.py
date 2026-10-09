@@ -22,7 +22,19 @@ from .db.database import (
     set_tenant_session_context,
 )
 from .redis_service import check_rate_limit
-from .db.models import AuthTokenModel, UserModel, WorkspaceMemberModel, WorkspaceModel
+from .db.models import (
+    AuthTokenModel,
+    SubscriptionModel,
+    UserModel,
+    UserSessionModel,
+    WorkspaceMemberModel,
+    WorkspaceModel,
+    utcnow,
+)
+import pyotp
+import qrcode
+from io import BytesIO
+import base64
 from .email_service import send_password_reset_email, send_verification_email
 
 ALLOWED_ALGORITHMS = ["HS256"]
@@ -71,7 +83,8 @@ def create_access_token(
     email: str,
     workspace_id: str,
     role: str = "OWNER",
-    is_super_admin: bool = False
+    is_super_admin: bool = False,
+    session_id: str | None = None
 ) -> str:
     now = int(time.time())
     payload = {
@@ -83,6 +96,7 @@ def create_access_token(
         "role": role,
         "is_super_admin": is_super_admin,
         "type": "access",
+        "jti": session_id or uuid.uuid4().hex,
         "iss": "shopmate-auth",
         "aud": "shopmate-api",
         "iat": now,
@@ -92,7 +106,8 @@ def create_access_token(
 
 def create_refresh_token(
     user_id: str,
-    workspace_id: str
+    workspace_id: str,
+    session_id: str | None = None
 ) -> str:
     now = int(time.time())
     payload = {
@@ -100,6 +115,7 @@ def create_refresh_token(
         "userId": user_id,
         "workspace_id": workspace_id,
         "type": "refresh",
+        "jti": session_id or uuid.uuid4().hex,
         "iss": "shopmate-auth",
         "aud": "shopmate-api",
         "iat": now,
@@ -146,6 +162,29 @@ def decode_token(token: str, expected_type: str = "access") -> dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {e!s}")
 
+
+def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    is_prod = (settings.APP_ENV == "production")
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite="lax",
+        secure=is_prod,
+        max_age=ACCESS_TOKEN_EXPIRE_SECONDS,
+        path="/"
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        samesite="lax",
+        secure=is_prod,
+        max_age=REFRESH_TOKEN_EXPIRE_SECONDS,
+        path="/"
+    )
+
+
 class AuthContext(BaseModel):
     user_id: str
     email: str
@@ -153,6 +192,7 @@ class AuthContext(BaseModel):
     role: str
     is_super_admin: bool = False
     token: str
+    session_id: str | None = None
 
     def __getitem__(self, item: str):
         return getattr(self, item)
@@ -194,6 +234,7 @@ async def get_auth_context(
         raise HTTPException(status_code=401, detail="Token missing workspace context")
 
     role = payload.get("role") or ("SUPERADMIN" if is_super_admin else "VIEWER")
+    session_id = payload.get("jti")
 
     ctx = AuthContext(
         user_id=str(user_id),
@@ -201,7 +242,8 @@ async def get_auth_context(
         workspace_id=workspace_id or "system",
         role=role,
         is_super_admin=is_super_admin,
-        token=token
+        token=token,
+        session_id=session_id
     )
     request.state.auth = ctx
     request.state.workspace_id = ctx.workspace_id
@@ -432,6 +474,8 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
     workspace_id: str | None = None
+    mfa_code: str | None = None
+    recovery_code: str | None = None
 
 class SelectWorkspaceRequest(BaseModel):
     workspace_id: str
@@ -460,6 +504,13 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
 
+class MFAVerifyRequest(BaseModel):
+    code: str
+
+class MFADisableRequest(BaseModel):
+    code: str
+    password: str
+
 
 # ============================================================================
 # FASTAPI ROUTER WITH AUTHENTIC DATABASE LOGIC
@@ -487,12 +538,12 @@ async def login_endpoint(
     - Sets httpOnly cookies for secure browser sessions.
     - Never logs passwords or sensitive credentials.
     """
+    clean_email = req.email.strip().lower()
     client_ip = request.client.host if request.client else "unknown_ip"
-    allowed, retry_after = await check_rate_limit(f"login:{client_ip}", max_requests=10, window_seconds=60)
+    allowed, retry_after = await check_rate_limit(f"login:{clean_email}:{client_ip}", max_requests=60, window_seconds=60)
     if not allowed:
         raise HTTPException(status_code=429, detail=f"Too many login attempts. Please retry in {retry_after} seconds.")
 
-    clean_email = req.email.strip().lower()
 
     # 1. Lookup user in database
     stmt = select(UserModel).where(UserModel.email == clean_email)
@@ -544,6 +595,31 @@ async def login_endpoint(
     user.failed_login_attempts = 0
     user.locked_until = None
 
+    # 4b. Multi-Factor Authentication (MFA/TOTP) enforcement
+    if getattr(user, "mfa_enabled", False):
+        mfa_valid = False
+        if req.mfa_code:
+            totp = pyotp.TOTP(user.mfa_secret or "")
+            mfa_valid = totp.verify(req.mfa_code.strip(), valid_window=1)
+        elif req.recovery_code:
+            recovery_hash = hash_secure_token(req.recovery_code.strip())
+            saved_codes = list(user.mfa_recovery_codes or [])
+            if recovery_hash in saved_codes:
+                mfa_valid = True
+                saved_codes.remove(recovery_hash)
+                user.mfa_recovery_codes = saved_codes
+        
+        if not mfa_valid:
+            if not req.mfa_code and not req.recovery_code:
+                raise HTTPException(
+                    status_code=403,
+                    detail="MFA_REQUIRED: Multi-factor authentication code or recovery code is required."
+                )
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid MFA verification code or recovery code."
+            )
+
     # 5. Look up real workspace memberships
     member_stmt = (
         select(WorkspaceMemberModel, WorkspaceModel)
@@ -577,6 +653,22 @@ async def login_endpoint(
     workspace_id = workspace.id
     role = member.role or "OWNER"
 
+    # Create active session in database
+    session_id = f"sess_{uuid.uuid4().hex}"
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    new_sess = UserSessionModel(
+        id=session_id,
+        user_id=user.id,
+        workspace_id=workspace_id,
+        ip_address=client_ip,
+        user_agent=user_agent,
+        is_revoked=False,
+        expires_at=utcnow() + timedelta(seconds=REFRESH_TOKEN_EXPIRE_SECONDS),
+        created_at=utcnow(),
+        last_activity_at=utcnow(),
+    )
+    session.add(new_sess)
     await session.commit()
 
     # 6. Issue access and refresh tokens
@@ -585,30 +677,16 @@ async def login_endpoint(
         email=user.email,
         workspace_id=workspace_id,
         role=role,
-        is_super_admin=(role in ["SUPERADMIN", "SUPER_ADMIN"])
+        is_super_admin=(role in ["SUPERADMIN", "SUPER_ADMIN"]),
+        session_id=session_id,
     )
-    refresh_token = create_refresh_token(user_id=user.id, workspace_id=workspace_id)
+    refresh_token = create_refresh_token(
+        user_id=user.id,
+        workspace_id=workspace_id,
+        session_id=session_id,
+    )
 
-    # Set secure httpOnly cookies
-    is_prod = (settings.APP_ENV == "production")
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        samesite="lax",
-        secure=is_prod,
-        max_age=ACCESS_TOKEN_EXPIRE_SECONDS,
-        path="/"
-    )
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        samesite="lax",
-        secure=is_prod,
-        max_age=REFRESH_TOKEN_EXPIRE_SECONDS,
-        path="/"
-    )
+    set_auth_cookies(response, access_token, refresh_token)
 
     return {
         "success": True,
@@ -782,6 +860,25 @@ async def signup_endpoint(
         role="OWNER"
     )
     session.add(new_member)
+
+    # Initialize 14-day free trial on the starter plan
+    trial_days = settings.TRIAL_PERIOD_DAYS
+    now_dt = utcnow()
+    trial_end_dt = now_dt + timedelta(days=trial_days)
+    new_sub = SubscriptionModel(
+        id=f"sub_{uuid.uuid4().hex[:14]}",
+        workspace_id=workspace_id,
+        plan_code="starter",
+        status="TRIALING",
+        current_period_start=now_dt,
+        current_period_end=trial_end_dt,
+        trial_end=trial_end_dt,
+        cancel_at_period_end=False,
+        provider=settings.BILLING_PROVIDER,
+        provider_customer_id=None,
+        provider_subscription_id=None,
+    )
+    session.add(new_sub)
 
     # Generate single-use email verification token
     raw_verify_token = generate_secure_token()
@@ -1160,34 +1257,241 @@ async def get_current_user_profile(
     if not user:
         raise HTTPException(status_code=401, detail="User profile not found in database.")
 
-        # Query user's workspace
-        ws_stmt = (
-            select(WorkspaceModel, WorkspaceMemberModel.role)
-            .join(WorkspaceMemberModel, WorkspaceModel.id == WorkspaceMemberModel.workspace_id)
-            .where(WorkspaceMemberModel.user_id == user.id)
-            .where(WorkspaceModel.id == workspace_id)
+    # Query user's workspace
+    ws_stmt = (
+        select(WorkspaceModel, WorkspaceMemberModel.role)
+        .join(WorkspaceMemberModel, WorkspaceModel.id == WorkspaceMemberModel.workspace_id)
+        .where(WorkspaceMemberModel.user_id == user.id)
+        .where(WorkspaceModel.id == workspace_id)
+    )
+    ws_res = await session.execute(ws_stmt)
+    ws_row = ws_res.first()
+
+    workspace = ws_row[0] if ws_row else None
+    role = ws_row[1] if ws_row else claims.get("role", "OWNER")
+
+    return {
+        "authenticated": True,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "is_verified": bool(user.is_verified),
+            "role": role,
+            "mfa_enabled": bool(getattr(user, "mfa_enabled", False)),
+            "workspace_id": workspace_id,
+            "workspace_name": workspace.name if workspace else "Primary Workspace"
+        },
+        "workspace": {
+            "id": workspace.id if workspace else workspace_id,
+            "name": workspace.name if workspace else "Primary Workspace",
+            "slug": workspace.slug if workspace else "primary"
+        } if workspace else None,
+        "role": role
+    }
+
+
+# ============================================================================
+# MULTI-FACTOR AUTHENTICATION (MFA / TOTP)
+# ============================================================================
+
+@router.post("/mfa/setup")
+async def setup_mfa(
+    auth_ctx: AuthContext = Depends(get_auth_context),
+    session: AsyncSession = Depends(get_system_db_session)
+):
+    """
+    Initializes TOTP MFA:
+    - Generates new base32 secret.
+    - Generates 10 single-use recovery codes.
+    - Returns otpauth URI, secret, recovery codes, and base64 PNG QR code.
+    """
+    stmt = select(UserModel).where(UserModel.id == auth_ctx.user_id)
+    res = await session.execute(stmt)
+    user = res.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    otpauth_uri = totp.provisioning_uri(name=user.email, issuer_name="ShopMate AaaS")
+
+    # Generate 10 plain recovery codes, store SHA-256 hashes
+    raw_recovery_codes = [secrets.token_hex(4).upper() for _ in range(10)]  # e.g., A1B2-C3D4
+    hashed_codes = [hash_secure_token(code) for code in raw_recovery_codes]
+
+    # Generate QR Code base64 image
+    qr = qrcode.QRCode(box_size=6, border=2)
+    qr.add_data(otpauth_uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    qr_base64 = f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode('utf-8')}"
+
+    # Stash pending secret & hashed codes temporarily on user
+    user.mfa_secret = secret
+    user.mfa_recovery_codes = hashed_codes
+    await session.commit()
+
+    return {
+        "success": True,
+        "secret": secret,
+        "otpauth_uri": otpauth_uri,
+        "qr_code": qr_base64,
+        "recovery_codes": raw_recovery_codes,
+        "message": "Scan the QR code in your authenticator app and verify with a 6-digit code to complete setup."
+    }
+
+
+@router.post("/mfa/verify")
+async def verify_mfa_setup(
+    req: MFAVerifyRequest,
+    auth_ctx: AuthContext = Depends(get_auth_context),
+    session: AsyncSession = Depends(get_system_db_session)
+):
+    """Verifies a TOTP token to confirm setup and activate MFA."""
+    stmt = select(UserModel).where(UserModel.id == auth_ctx.user_id)
+    res = await session.execute(stmt)
+    user = res.scalars().first()
+    if not user or not user.mfa_secret:
+        raise HTTPException(status_code=400, detail="MFA setup has not been initiated.")
+
+    totp = pyotp.TOTP(user.mfa_secret)
+    if not totp.verify(req.code.strip(), valid_window=1):
+        raise HTTPException(status_code=400, detail="Invalid verification code. Please check your authenticator clock.")
+
+    user.mfa_enabled = True
+    await session.commit()
+
+    return {
+        "success": True,
+        "mfa_enabled": True,
+        "message": "Two-factor authentication has been successfully enabled."
+    }
+
+
+@router.post("/mfa/disable")
+async def disable_mfa(
+    req: MFADisableRequest,
+    auth_ctx: AuthContext = Depends(get_auth_context),
+    session: AsyncSession = Depends(get_system_db_session)
+):
+    """Disables MFA after verifying current password and valid TOTP code."""
+    stmt = select(UserModel).where(UserModel.id == auth_ctx.user_id)
+    res = await session.execute(stmt)
+    user = res.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not user.password_hash or not verify_password(req.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid password.")
+
+    if not user.mfa_secret or not user.mfa_enabled:
+        raise HTTPException(status_code=400, detail="MFA is not enabled on this account.")
+
+    totp = pyotp.TOTP(user.mfa_secret)
+    if not totp.verify(req.code.strip(), valid_window=1):
+        raise HTTPException(status_code=400, detail="Invalid MFA verification code.")
+
+    user.mfa_enabled = False
+    user.mfa_secret = None
+    user.mfa_recovery_codes = []
+    await session.commit()
+
+    return {
+        "success": True,
+        "mfa_enabled": False,
+        "message": "Two-factor authentication has been disabled."
+    }
+
+
+# ============================================================================
+# ACTIVE SESSIONS & LOG OUT EVERYWHERE
+# ============================================================================
+
+@router.get("/sessions")
+async def list_active_sessions(
+    auth_ctx: AuthContext = Depends(get_auth_context),
+    session: AsyncSession = Depends(get_system_db_session)
+):
+    """Lists all active and recent sessions for the current user."""
+    stmt = (
+        select(UserSessionModel)
+        .where(
+            UserSessionModel.user_id == auth_ctx.user_id,
+            UserSessionModel.is_revoked == False,
+            UserSessionModel.expires_at > utcnow()
         )
-        ws_res = await session.execute(ws_stmt)
-        ws_row = ws_res.first()
+        .order_by(UserSessionModel.last_activity_at.desc())
+    )
+    res = await session.execute(stmt)
+    sessions = res.scalars().all()
 
-        workspace = ws_row[0] if ws_row else None
-        role = ws_row[1] if ws_row else claims.get("role", "OWNER")
+    current_session_id = auth_ctx.session_id
+    results = []
+    for s in sessions:
+        results.append({
+            "id": s.id,
+            "ip_address": s.ip_address,
+            "user_agent": s.user_agent,
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+            "last_activity_at": s.last_activity_at.isoformat() if s.last_activity_at else None,
+            "is_current": (s.id == current_session_id),
+        })
 
-        return {
-            "authenticated": True,
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "name": user.name,
-                "is_verified": bool(user.is_verified),
-                "role": role,
-                "workspace_id": workspace_id,
-                "workspace_name": workspace.name if workspace else "Primary Workspace"
-            },
-            "workspace": {
-                "id": workspace.id if workspace else workspace_id,
-                "name": workspace.name if workspace else "Primary Workspace",
-                "slug": workspace.slug if workspace else "primary"
-            } if workspace else None,
-            "role": role
-        }
+    return {"sessions": results}
+
+
+@router.post("/sessions/{session_id}/revoke")
+async def revoke_specific_session(
+    session_id: str,
+    auth_ctx: AuthContext = Depends(get_auth_context),
+    session: AsyncSession = Depends(get_system_db_session)
+):
+    """Revokes a specific session by ID and blacklists its token in Redis."""
+    stmt = select(UserSessionModel).where(
+        UserSessionModel.id == session_id,
+        UserSessionModel.user_id == auth_ctx.user_id
+    )
+    res = await session.execute(stmt)
+    target_session = res.scalars().first()
+    if not target_session:
+        raise HTTPException(status_code=404, detail="Session not found.")
+
+    target_session.is_revoked = True
+    await session.commit()
+
+    await redis_service.revoke_token(session_id)
+
+    return {"success": True, "message": "Session revoked."}
+
+
+@router.post("/sessions/revoke-all")
+async def revoke_all_sessions(
+    response: Response,
+    auth_ctx: AuthContext = Depends(get_auth_context),
+    session: AsyncSession = Depends(get_system_db_session)
+):
+    """Log out everywhere: revokes all user sessions and blacklists active tokens."""
+    stmt = select(UserSessionModel).where(
+        UserSessionModel.user_id == auth_ctx.user_id,
+        UserSessionModel.is_revoked == False
+    )
+    res = await session.execute(stmt)
+    active_sessions = res.scalars().all()
+
+    for s in active_sessions:
+        s.is_revoked = True
+        await redis_service.revoke_token(s.id)
+
+    await session.commit()
+
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
+
+    return {
+        "success": True,
+        "message": f"Successfully revoked {len(active_sessions)} sessions. You have been logged out everywhere."
+    }
+

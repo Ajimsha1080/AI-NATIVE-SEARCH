@@ -62,14 +62,27 @@ app.add_middleware(EnterpriseRateLimiterMiddleware)
 app.add_middleware(StructuredLoggingMiddleware)
 
 from .ai_mode import router as ai_mode_router
+from .analytics_router import router as analytics_router
+from .api_keys_router import router as api_keys_router
 from .auth import router as auth_router
+from .billing.router import router as billing_router
 from .catalog import router as catalog_router
 from .compliance import router as compliance_router
+from .team_router import router as team_router
+
+from .observability import init_sentry, router as observability_router
+
+init_sentry()
 
 app.include_router(auth_router)
 app.include_router(ai_mode_router)
 app.include_router(catalog_router)
 app.include_router(compliance_router)
+app.include_router(billing_router)
+app.include_router(team_router)
+app.include_router(api_keys_router)
+app.include_router(analytics_router)
+app.include_router(observability_router)
 
 @app.get("/health")
 def health_check():

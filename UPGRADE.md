@@ -198,28 +198,76 @@ Rate limiting, token revocation, and tenant usage metering are managed by `app/r
 
 ---
 
-## 8. Verification & Test Suite Summary
+## 8. SaaS Architecture & Enterprise Features (Phases 1 - 6)
 
-- **Pytest Suite:** 39 tests passing cleanly in an isolated test database (`pytest -v`).
-  - Account signup, login, incorrect password, account lockout after 5 attempts.
-  - Storefront order lookup privacy & redaction.
-  - Cross-tenant AI search and catalog boundary isolation.
-  - RAG store policy retrieval, prompt injection, and citations.
-  - Razorpay webhook HMAC signature verification & rejection.
-  - PostgreSQL RLS session context binding.
+### Phase 1: Plans, Billing & Subscriptions
+- **Database Schema**: Added `plans`, `subscriptions`, `invoices`, and `billing_webhook_events` with Alembic migration `d4e5f6a1b2c3`.
+- **Billing Provider Interface**: Pluggable provider architecture with `BillingProvider` base class and `RazorpayBillingProvider` implementation.
+- **Provider Webhooks**: Idempotent processing with HMAC-SHA256 signature verification for `subscription.activated`, `subscription.charged`, `subscription.payment.failed`, and `subscription.cancelled`.
+- **Grace Periods & Downgrades**: Automatic transition to `PAST_DUE` with configurable grace period (`PAYMENT_GRACE_PERIOD_DAYS=3`).
+- **Billing UI**: Public `/pricing` page and merchant `/ai-mode/billing` dashboard.
+
+### Phase 2: Usage Limits & Quotas
+- **Monthly Usage Tracking**: High-performance Redis tracking with database reconciliation via `billing_usage_records`.
+- **Enforcement Dependency**: `require_quota(metric)` reusable dependency returns HTTP 402 with upgrade links when quotas are exceeded.
+- **Cost Caps**: Dynamic tenant-level LLM cost cap monitoring with automated threshold alerts at 80% and 100%.
+
+### Phase 3: Teams, Invites & Roles
+- **Team Invitations**: Single-use, expiring SHA-256 hashed invite tokens (`/api/v1/team/invites`).
+- **Seat Quota Enforcement**: Plan seat limits strictly enforced before sending new invitations.
+- **Multi-Workspace Switcher**: Token re-issue endpoint (`/api/v1/workspaces/switch`) with single workspace context per token.
+- **Last Owner Protection**: Guaranteed workspace ownership continuity—sole owners cannot be demoted or removed.
+
+### Phase 4: Security Account Features
+- **MFA with TOTP**: RFC 6238 TOTP authentication (`pyotp`), QR code setup (`qrcode`), and 10 single-use SHA-256 hashed emergency recovery codes.
+- **Active Sessions Management**: Tracked in `user_sessions`, individual session revocation, and "Log out everywhere" (`/api/v1/auth/sessions/revoke-all`).
+- **Programmatic API Keys**: Scoped API keys with SHA-256 hash storage at rest (`api_keys`), plaintext shown once, with instant rotation and revocation.
+
+### Phase 5: Product Pages & Legal
+- **Orders Management**: Merchant orders dashboard (`/ai-mode/orders`) with status filtering, detail drawer, and fulfillment/carrier updating.
+- **Analytics Dashboard**: Aggregated metrics (`/ai-mode/analytics`) tracking AI searches, conversations, top queries, zero-result demand gaps, and conversion rates.
+- **Conversations Viewer**: Shopper transcript explorer (`/ai-mode/conversations`) with toggleable PII redaction (email, phone, credit card masking).
+- **Legal & DPDP Pages**: Public `/privacy`, `/terms`, and `/dpdp` compliance notice with mandatory consent checkbox on signup.
+- **Onboarding Checklist**: Five-step guided checklist on the overview dashboard.
+
+### Phase 6: Operations & Observability
+- **Prometheus Metrics**: Exported at `/metrics` including `shopmate_http_requests_total`, `shopmate_http_request_duration_seconds`, `shopmate_llm_cost_estimated_usd_total`, and `shopmate_task_queue_depth`.
+- **Alert Rules**: Standardized alerting rules defined in `prometheus_alerts.yml` for 5xx errors, latency spikes, and budget overruns.
+- **Sentry Integration**: Automatic exception capture and distributed tracing via `sentry-sdk`.
+- **Automated PostgreSQL Backups**: Tested backup script (`scripts/backup_postgres.sh`) and restore verification script (`scripts/restore_postgres.sh`).
+- **Load Testing**: k6 load test script (`tests/load_test_search_chat.js`) verifying latency under 400ms at 50 concurrent virtual users.
+
+---
+
+## 9. Verification & Test Suite Summary
+
+- **Pytest Suite:** 63 tests passing cleanly in an isolated test database (`pytest -v`).
+  - Auth, account lockout, token denylist, email verification: 11 tests.
+  - Billing, plans, subscriptions, idempotency, tenant isolation: 7 tests.
+  - Catalog, orders, commerce sync, storefront privacy: 7 tests.
+  - Compliance, audit logging, DPDP export/erase: 4 tests.
+  - Quotas, meters, cost caps, and limits enforcement: 5 tests.
+  - RAG evaluations, intent parsing, hybrid search: 6 tests.
+  - Security features (MFA, sessions, API keys): 3 tests.
+  - Teams, seat limits, invitations, last owner protection: 6 tests.
+  - PostgreSQL RLS session-context isolation: 5 tests.
+  - End-to-End SaaS lifecycle (signup -> trial -> upgrade -> quota -> invite -> login): 1 test.
 - **Frontend Quality:**
   - `npx tsc --noEmit`: 0 errors.
-  - `npm run build`: 16/16 routes built and statically optimized.
+  - `npm run lint`: 0 errors.
+  - `npx next build`: 26/26 routes statically generated and optimized.
 
 ### Verified vs. Not Verified Live
 - **Verified via automated tests:**
-  - RAG policy chunk retrieval, relevance ranking, and prompt inclusion.
-  - Handling when LLM API keys are unconfigured (gracefully surfaces policy context and clear message).
-  - Cross-tenant isolation at both application and session-context levels.
-  - Storefront order tracking PII redaction and rate limiting.
-  - Offline font loading and build pipeline.
-- **Not Verified Live (Requires external production accounts):**
-  - Live third-party LLM completions (requires active paid Sarvam AI, OpenAI, or Anthropic API keys).
-  - Live Razorpay settlement webhook deliveries from the public internet (requires live Razorpay merchant webhook URL).
-  - Live Shopify / WooCommerce store synchronization (requires live store API credentials).
+  - Complete SaaS subscription lifecycle with verified webhook payloads.
+  - Quota enforcement blocking with HTTP 402/429 and graceful widget responses.
+  - Multi-tenant PostgreSQL RLS boundaries across all tables.
+  - MFA TOTP generation, validation, recovery code consumption, and disable flow.
+  - Single session revocation and "Log out everywhere" denylisting.
+  - Full end-to-end user and workspace onboarding journey.
+- **Not Verified Live (Requires external production infrastructure):**
+  - Live third-party LLM completions (requires active paid Sarvam AI, OpenAI, or Anthropic credentials).
+  - Live Razorpay settlement webhook deliveries from the public internet (requires live webhook URL).
+  - Live external Sentry dashboard ingest (requires live `SENTRY_DSN`).
+
 

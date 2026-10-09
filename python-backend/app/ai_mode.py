@@ -461,6 +461,23 @@ async def ai_search_endpoint(
         )
 
     effective_workspace = storefront.workspace_id
+
+    from app.billing.quota import check_storefront_quota
+    from app.billing.metering import increment_monthly_usage
+
+    quota_allowed, quota_msg = await check_storefront_quota(session, effective_workspace)
+    if not quota_allowed:
+        return SearchResponse(
+            products=[],
+            total_matches=0,
+            page=1,
+            page_size=req.page_size or 48,
+            has_more=False,
+            applied_filters={},
+            search_plan=parse_query(req.query),
+            latency_ms=0.0
+        )
+
     start_time = time.time()
     plan = parse_query(req.query)
     all_products = await load_catalog_products(effective_workspace, session=session)
@@ -505,6 +522,8 @@ async def ai_search_endpoint(
     start_idx = (page - 1) * page_size
     paginated = valid_candidates[start_idx : start_idx + page_size]
 
+    await increment_monthly_usage(effective_workspace, searches=1)
+
     return SearchResponse(
         products=paginated,
         total_matches=len(valid_candidates),
@@ -540,6 +559,23 @@ async def ai_chat_endpoint(
         )
 
     effective_workspace = storefront.workspace_id
+
+    from app.billing.quota import check_storefront_quota
+    from app.billing.metering import increment_monthly_usage
+
+    quota_allowed, quota_msg = await check_storefront_quota(session, effective_workspace)
+    if not quota_allowed:
+        return ChatResponse(
+            conversation_id=req.conversation_id or f"conv_{int(time.time()*1000)}",
+            workspace_id=effective_workspace,
+            role="assistant",
+            content=quota_msg or "This storefront has temporarily reached its monthly conversational inquiry allowance.",
+            products=[],
+            recommendations=None,
+            citations=[],
+            created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        )
+
     plan = parse_query(req.user_message)
     search_res = await ai_search_endpoint(
         SearchRequest(query=req.user_message, workspace_id=effective_workspace),
@@ -608,6 +644,10 @@ async def ai_chat_endpoint(
             assistant_text = f"AI answers are not configured. Retrieved policy information:\n\n{rag_context}"
         elif len(products) == 0:
             assistant_text = "AI answers are not configured, and no matching products or policies were found."
+
+    tokens_in_est = max(10, len(req.user_message.split()) * 2)
+    tokens_out_est = max(10, len(assistant_text.split()) * 2)
+    await increment_monthly_usage(effective_workspace, chats=1, tokens_in=tokens_in_est, tokens_out=tokens_out_est)
 
     return ChatResponse(
         conversation_id=req.conversation_id or f"conv_{int(time.time()*1000)}",

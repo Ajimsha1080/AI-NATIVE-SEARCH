@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   Package, BookOpen, Layers, 
-  Search, Globe, Settings, Menu
+  Search, Globe, Settings, Menu, CreditCard, Users,
+  ShoppingBag, BarChart3, MessageSquare
 } from 'lucide-react';
 import { fetchWithCache } from '@/lib/client-cache';
 
@@ -85,6 +86,36 @@ export default function Sidebar() {
       href: '/ai-mode/deployment', 
       icon: Globe,
       isActive: (path: string) => path.startsWith('/ai-mode/deployment')
+    },
+    { 
+      name: 'Orders', 
+      href: '/ai-mode/orders', 
+      icon: ShoppingBag,
+      isActive: (path: string) => path.startsWith('/ai-mode/orders')
+    },
+    { 
+      name: 'Analytics', 
+      href: '/ai-mode/analytics', 
+      icon: BarChart3,
+      isActive: (path: string) => path.startsWith('/ai-mode/analytics')
+    },
+    { 
+      name: 'Conversations', 
+      href: '/ai-mode/conversations', 
+      icon: MessageSquare,
+      isActive: (path: string) => path.startsWith('/ai-mode/conversations')
+    },
+    { 
+      name: 'Billing & Plans', 
+      href: '/ai-mode/billing', 
+      icon: CreditCard,
+      isActive: (path: string) => path.startsWith('/ai-mode/billing')
+    },
+    { 
+      name: 'Team & Roles', 
+      href: '/ai-mode/team', 
+      icon: Users,
+      isActive: (path: string) => path.startsWith('/ai-mode/team')
     },
     { 
       name: 'Settings', 

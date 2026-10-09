@@ -18,7 +18,7 @@ from .database import Base
 
 
 def utcnow():
-    return datetime.datetime.now(datetime.UTC)
+    return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
 class WorkspaceModel(Base):
     __tablename__ = "workspaces"
@@ -47,6 +47,9 @@ class UserModel(Base):
     failed_login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime, nullable=True)
     role = Column(String(50), default="ADMIN")
+    mfa_enabled = Column(Boolean, default=False, nullable=False)
+    mfa_secret = Column(String(128), nullable=True)
+    mfa_recovery_codes = Column(JSON, default=list, nullable=False)
     created_at = Column(DateTime, default=utcnow)
 
 
@@ -433,3 +436,165 @@ class SyncJobModel(Base):
         Index("idx_sync_job_tenant", "workspace_id", "status"),
     )
 
+
+class PlanModel(Base):
+    __tablename__ = "billing_plans"
+
+    code = Column(String(64), primary_key=True)
+    name = Column(String(128), nullable=False)
+    price = Column(Float, nullable=False)
+    currency = Column(String(8), default="INR", nullable=False)
+    interval = Column(String(32), default="monthly", nullable=False)
+    description = Column(Text, nullable=True)
+    limits_json = Column(JSON, default=dict, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+
+class SubscriptionModel(Base):
+    __tablename__ = "billing_subscriptions"
+
+    id = Column(String(64), primary_key=True, index=True)
+    workspace_id = Column(String(64), ForeignKey("workspaces.id"), nullable=False, index=True)
+    plan_code = Column(String(64), ForeignKey("billing_plans.code"), nullable=False, index=True)
+    status = Column(String(32), default="TRIALING", index=True, nullable=False)
+    current_period_start = Column(DateTime, default=utcnow, nullable=False)
+    current_period_end = Column(DateTime, nullable=True)
+    trial_end = Column(DateTime, nullable=True)
+    cancel_at_period_end = Column(Boolean, default=False, nullable=False)
+    grace_period_end = Column(DateTime, nullable=True)
+    provider = Column(String(32), default="razorpay", nullable=False)
+    provider_customer_id = Column(String(128), nullable=True)
+    provider_subscription_id = Column(String(128), nullable=True, index=True)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_sub_workspace", "workspace_id"),
+        Index("idx_sub_tenant_status", "workspace_id", "status"),
+        Index("idx_sub_provider_id", "provider_subscription_id"),
+    )
+
+
+class InvoiceModel(Base):
+    __tablename__ = "billing_invoices"
+
+    id = Column(String(64), primary_key=True, index=True)
+    workspace_id = Column(String(64), ForeignKey("workspaces.id"), nullable=False, index=True)
+    subscription_id = Column(String(64), ForeignKey("billing_subscriptions.id"), nullable=True, index=True)
+    amount = Column(Float, nullable=False)
+    currency = Column(String(8), default="INR", nullable=False)
+    status = Column(String(32), default="PAID", index=True, nullable=False)
+    invoice_pdf_url = Column(String(512), nullable=True)
+    provider_invoice_id = Column(String(128), nullable=True, index=True)
+    provider_payment_id = Column(String(128), nullable=True)
+    paid_at = Column(DateTime, nullable=True)
+    billing_period_start = Column(DateTime, nullable=True)
+    billing_period_end = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_invoice_workspace", "workspace_id"),
+        Index("idx_invoice_tenant_date", "workspace_id", "created_at"),
+        Index("idx_invoice_provider_id", "provider_invoice_id"),
+    )
+
+
+class BillingWebhookEventModel(Base):
+    __tablename__ = "billing_webhook_events"
+
+    id = Column(String(64), primary_key=True)
+    provider = Column(String(32), nullable=False)
+    event_id = Column(String(128), unique=True, index=True, nullable=False)
+    event_type = Column(String(128), nullable=False, index=True)
+    payload_json = Column(JSON, nullable=False)
+    processed_at = Column(DateTime, default=utcnow, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_billing_wh_event_id", "event_id", unique=True),
+        Index("idx_billing_wh_type", "event_type"),
+    )
+
+
+class UsageRecordModel(Base):
+    __tablename__ = "billing_usage_records"
+
+    id = Column(String(64), primary_key=True, index=True)
+    workspace_id = Column(String(64), ForeignKey("workspaces.id"), nullable=False, index=True)
+    period_month = Column(String(7), nullable=False)  # 'YYYY-MM'
+    search_requests = Column(Integer, default=0, nullable=False)
+    chat_requests = Column(Integer, default=0, nullable=False)
+    tokens_in = Column(Integer, default=0, nullable=False)
+    tokens_out = Column(Integer, default=0, nullable=False)
+    estimated_cost_usd = Column(Float, default=0.0, nullable=False)
+    crawl_runs = Column(Integer, default=0, nullable=False)
+    alert_80_sent = Column(Boolean, default=False, nullable=False)
+    alert_100_sent = Column(Boolean, default=False, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_usage_workspace", "workspace_id"),
+        Index("idx_usage_ws_month", "workspace_id", "period_month", unique=True),
+    )
+
+
+class WorkspaceInvitationModel(Base):
+    __tablename__ = "workspace_invitations"
+
+    id = Column(String(64), primary_key=True, index=True)
+    workspace_id = Column(String(64), ForeignKey("workspaces.id"), nullable=False, index=True)
+    email = Column(String(255), nullable=False, index=True)
+    role = Column(String(32), default="VIEWER", nullable=False)
+    token_hash = Column(String(128), unique=True, index=True, nullable=False)
+    invited_by_user_id = Column(String(64), ForeignKey("users.id"), nullable=False)
+    status = Column(String(32), default="PENDING", nullable=False)  # PENDING, ACCEPTED, REVOKED, EXPIRED
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_invite_workspace", "workspace_id"),
+        Index("idx_invite_email", "email"),
+        Index("idx_invite_token_hash", "token_hash", unique=True),
+        Index("idx_invite_ws_status", "workspace_id", "status"),
+    )
+
+
+class ApiKeyModel(Base):
+    __tablename__ = "api_keys"
+
+    id = Column(String(64), primary_key=True, index=True)
+    workspace_id = Column(String(64), ForeignKey("workspaces.id"), nullable=False, index=True)
+    created_by_user_id = Column(String(64), ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    key_prefix = Column(String(16), nullable=False)
+    key_hash = Column(String(128), unique=True, index=True, nullable=False)
+    scopes = Column(JSON, default=list, nullable=False)
+    expires_at = Column(DateTime, nullable=True)
+    revoked_at = Column(DateTime, nullable=True)
+    last_used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_api_keys_workspace", "workspace_id"),
+        Index("idx_api_keys_hash", "key_hash", unique=True),
+    )
+
+
+class UserSessionModel(Base):
+    __tablename__ = "user_sessions"
+
+    id = Column(String(64), primary_key=True, index=True)
+    user_id = Column(String(64), ForeignKey("users.id"), nullable=False, index=True)
+    workspace_id = Column(String(64), ForeignKey("workspaces.id"), nullable=True, index=True)
+    ip_address = Column(String(64), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    is_revoked = Column(Boolean, default=False, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    last_activity_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_user_sessions_user", "user_id"),
+        Index("idx_user_sessions_active", "user_id", "is_revoked"),
+    )

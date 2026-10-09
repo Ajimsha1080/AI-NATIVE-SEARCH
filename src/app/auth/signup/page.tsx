@@ -125,6 +125,30 @@ export default function SignupPage() {
               </div>
             </div>
 
+            <div className="flex items-start gap-2 pt-1">
+              <input
+                id="legal-consent"
+                type="checkbox"
+                required
+                className="mt-0.5 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+              />
+              <label htmlFor="legal-consent" className="text-[11px] text-zinc-500 leading-tight">
+                I agree to the{' '}
+                <Link href="/terms" target="_blank" className="font-semibold text-zinc-800 underline hover:text-zinc-900">
+                  Terms of Service
+                </Link>
+                ,{' '}
+                <Link href="/privacy" target="_blank" className="font-semibold text-zinc-800 underline hover:text-zinc-900">
+                  Privacy Policy
+                </Link>
+                , and consent to data processing under the{' '}
+                <Link href="/dpdp" target="_blank" className="font-semibold text-zinc-800 underline hover:text-zinc-900">
+                  DPDP Notice
+                </Link>
+                .
+              </label>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
