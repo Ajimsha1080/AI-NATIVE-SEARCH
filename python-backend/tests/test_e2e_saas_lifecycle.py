@@ -8,19 +8,16 @@ Flow:
 5. Invite teammate -> Teammate accepts single-use invite -> Teammate logs in
 """
 import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.auth import create_access_token, hash_password, hash_secure_token
+from app.auth import create_access_token, hash_secure_token
 from app.config import settings
 from app.db.database import async_session_factory
 from app.db.models import (
-    SubscriptionModel,
-    UserModel,
     WorkspaceInvitationModel,
-    WorkspaceMemberModel,
-    WorkspaceModel,
 )
 from app.main import app
 
@@ -59,7 +56,6 @@ async def test_full_saas_lifecycle_e2e():
     signup_data = signup_res.json()
     assert signup_data["success"] is True
     ws_id = signup_data["workspace"]["id"]
-    owner_id = signup_data["user"]["id"]
     owner_token = signup_data["access_token"]
     owner_headers = {"Authorization": f"Bearer {owner_token}"}
 
@@ -71,8 +67,8 @@ async def test_full_saas_lifecycle_e2e():
     assert sub_data["status"] == "TRIALING"
 
     # 3. Simulate verified Razorpay Webhook upgrading workspace to 'pro'
-    import hmac
     import hashlib
+    import hmac
     import json
 
     evt_id = f"evt_e2e_{unique_id}"
@@ -127,7 +123,7 @@ async def test_full_saas_lifecycle_e2e():
     await increment_monthly_usage(ws_id, searches=51000)
 
     # Try creating a knowledge doc beyond plan limit
-    doc_res = client.post(
+    client.post(
         "/api/v1/ai-mode/knowledge/documents",
         headers=owner_headers,
         json={"name": "Excess Doc", "content": "Knowledge text here"}

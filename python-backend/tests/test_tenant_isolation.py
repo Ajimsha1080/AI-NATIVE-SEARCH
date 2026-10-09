@@ -234,8 +234,9 @@ async def test_postgresql_rls_isolation_with_session_context():
 
     setting app.workspace_id = ws_a ensures queries strictly isolate and zero rows of ws_b are returned.
     """
-    from app.db.database import set_tenant_session_context
     from sqlalchemy import text
+
+    from app.db.database import set_tenant_session_context
 
     ws_a = f"ws_rls_a_{uuid.uuid4().hex[:6]}"
     ws_b = f"ws_rls_b_{uuid.uuid4().hex[:6]}"

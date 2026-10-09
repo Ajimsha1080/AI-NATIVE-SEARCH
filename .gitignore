@@ -45,12 +45,14 @@ data/*.db-shm
 data/*.db-wal
 data/*.db-journal
 data/aaas.db.json
+data/backups/
 *.db
 *.db-shm
 *.db-wal
 *.db-journal
 *.sqlite
 *.sqlite3
+*.zip
 
 # Python (anchored paths so src/lib is never ignored)
 __pycache__/

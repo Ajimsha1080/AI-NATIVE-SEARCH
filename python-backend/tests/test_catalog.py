@@ -142,10 +142,10 @@ def test_commerce_sync_returns_real_metrics_and_not_configured():
 
 def test_storefront_order_lookup_redaction_and_security():
     """Verify storefront order lookups require email, return 404 on mismatch, and redact PII."""
+    import asyncio
+
     from app.db.database import async_session_factory
     from app.db.models import DeploymentModel
-    import pytest
-    import asyncio
 
     ws = f"ws_brand_{uuid.uuid4().hex[:8]}"
     dep_key = f"dep_key_{uuid.uuid4().hex[:8]}"

@@ -4,10 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.auth import create_access_token, hash_password
+from app.auth import create_access_token
 from app.db.database import async_session_factory
 from app.db.models import (
-    AuditLogModel,
     SubscriptionModel,
     UserModel,
     WorkspaceInvitationModel,

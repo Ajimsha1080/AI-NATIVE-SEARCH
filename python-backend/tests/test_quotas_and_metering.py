@@ -2,18 +2,16 @@ import uuid
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
 
 from app.auth import create_access_token
 from app.billing.metering import (
     current_month_str,
-    get_full_workspace_usage_summary,
     get_monthly_usage_totals,
     increment_monthly_usage,
     reconcile_usage_to_db,
 )
 from app.db.database import async_session_factory
-from app.db.models import DeploymentModel, PlanModel, ProductModel, SubscriptionModel, UsageRecordModel
+from app.db.models import DeploymentModel, ProductModel, SubscriptionModel, UsageRecordModel
 from app.main import app
 
 client = TestClient(app)

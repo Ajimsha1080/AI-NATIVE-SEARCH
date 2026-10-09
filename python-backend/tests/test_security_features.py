@@ -5,14 +5,15 @@ Tests for Phase 4 Security Account Features:
 3. API Keys management: create scoped keys, hash verification, rotation, revocation, tenant boundary.
 """
 import uuid
-import pytest
+
 import pyotp
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from app.auth import create_access_token, hash_password, hash_secure_token
 from app.db.database import async_session_factory
-from app.db.models import ApiKeyModel, UserModel, UserSessionModel, WorkspaceMemberModel, WorkspaceModel
+from app.db.models import ApiKeyModel, UserModel, WorkspaceMemberModel, WorkspaceModel
 from app.main import app
 
 client = TestClient(app)

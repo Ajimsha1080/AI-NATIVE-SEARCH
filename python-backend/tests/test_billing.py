@@ -10,7 +10,7 @@ from sqlalchemy import select
 from app.auth import create_access_token
 from app.config import settings
 from app.db.database import async_session_factory
-from app.db.models import InvoiceModel, PlanModel, SubscriptionModel
+from app.db.models import InvoiceModel, SubscriptionModel
 from app.main import app
 
 client = TestClient(app)

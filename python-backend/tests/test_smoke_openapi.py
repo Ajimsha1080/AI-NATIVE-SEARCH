@@ -6,7 +6,6 @@ asserting that:
 2. Handlers have all imported dependencies, typed models, and database sessions correctly wired.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.auth import create_access_token
@@ -52,7 +51,7 @@ def test_smoke_test_all_openapi_get_routes():
                 except Exception as exc:
                     errors.append(f"GET {path} raised exception: {exc}")
 
-    assert not errors, f"Smoke test encountered 5xx errors or unhandled exceptions:\n" + "\n".join(errors)
+    assert not errors, "Smoke test encountered 5xx errors or unhandled exceptions:\n" + "\n".join(errors)
 
 
 def test_smoke_test_openapi_post_routes_reject_safely():
@@ -86,4 +85,4 @@ def test_smoke_test_openapi_post_routes_reject_safely():
                 except Exception as exc:
                     errors.append(f"POST {path} with empty body raised exception: {exc}")
 
-    assert not errors, f"Smoke test encountered 5xx errors on POST routes:\n" + "\n".join(errors)
+    assert not errors, "Smoke test encountered 5xx errors on POST routes:\n" + "\n".join(errors)

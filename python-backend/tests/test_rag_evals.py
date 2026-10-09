@@ -97,7 +97,9 @@ def test_rag_tenant_isolation_boundary():
 
 import uuid
 from unittest.mock import patch
+
 from fastapi.testclient import TestClient
+
 from app.db.database import async_session_factory
 from app.db.models import DeploymentModel, KnowledgeChunkModel, KnowledgeDocModel, KnowledgeSourceModel, ProductModel
 from app.main import app
