@@ -74,7 +74,7 @@ export default function SignupPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Sarah Johnson"
+                  placeholder="Your full name"
                   className="w-full bg-white border border-zinc-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition"
                 />
               </div>
@@ -89,7 +89,7 @@ export default function SignupPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="sarah@yourbrand.com"
+                  placeholder="name@company.com"
                   className="w-full bg-white border border-zinc-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition"
                 />
               </div>
@@ -104,7 +104,7 @@ export default function SignupPage() {
                   required
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
-                  placeholder="Blue Tyga Store"
+                  placeholder="e.g. My Store"
                   className="w-full bg-white border border-zinc-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition"
                 />
               </div>

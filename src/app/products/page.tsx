@@ -523,7 +523,7 @@ export default function ProductsPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-zinc-950">Add Real-Time Product</h3>
-                  <p className="text-[11px] text-zinc-500 font-mono">Instant sync to Blue Tyga store &amp; AI Agent</p>
+                  <p className="text-[11px] text-zinc-500 font-mono">Instant sync to store &amp; AI Agent</p>
                 </div>
               </div>
               <button
