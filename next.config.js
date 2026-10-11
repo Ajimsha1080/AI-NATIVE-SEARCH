@@ -12,7 +12,7 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'clsx', 'tailwind-merge'],
   },
   async rewrites() {
-    const pythonBackend = process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:8000';
+    const pythonBackend = process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:8002';
     return [
       {
         source: '/api/:path*',
