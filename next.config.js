@@ -10,7 +10,6 @@ const nextConfig = {
 
   experimental: {
     optimizePackageImports: ['lucide-react', 'clsx', 'tailwind-merge'],
-    webpackBuildWorker: true,
   },
   async rewrites() {
     const pythonBackend = process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:8000';
