@@ -18,6 +18,12 @@ export default function SignupPage() {
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -29,12 +35,12 @@ export default function SignupPage() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const rawErr = data?.error || data?.message || 'Failed to create account';
+        const rawErr = data?.detail || data?.error?.message || data?.error || data?.message || 'Failed to create account';
         const errorMsg = typeof rawErr === 'object' ? (rawErr.message || JSON.stringify(rawErr)) : String(rawErr);
         throw new Error(errorMsg);
       }
 
-      window.location.href = '/dashboard';
+      window.location.href = '/ai-mode';
     } catch (err: any) {
       const msg = typeof err?.message === 'string' ? err.message : 'Signup failed. Please try again.';
       setError(msg);
@@ -118,9 +124,10 @@ export default function SignupPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
+                  placeholder="At least 8 characters"
                   className="w-full bg-white border border-zinc-200 rounded-xl pl-10 pr-10 py-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition"
                 />
                 <button
@@ -133,6 +140,7 @@ export default function SignupPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              <p className="text-[11px] text-zinc-400 mt-1">Must be at least 8 characters</p>
             </div>
 
             <div className="flex items-start gap-2 pt-1">

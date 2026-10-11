@@ -25,14 +25,14 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.error?.message || data.error || 'Invalid credentials');
+        throw new Error(data?.detail || data?.error?.message || data?.error || 'Invalid credentials');
       }
 
       const searchParams = new URLSearchParams(window.location.search);
       const redirectParam = searchParams.get('redirect');
-      const redirectUrl = redirectParam || (data.user?.is_super_admin ? '/admin' : '/dashboard');
+      const redirectUrl = redirectParam || '/ai-mode';
       window.location.href = redirectUrl;
     } catch (err: any) {
       setError(err.message || 'Login failed');
