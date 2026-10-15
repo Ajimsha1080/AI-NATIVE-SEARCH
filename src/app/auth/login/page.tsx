@@ -115,6 +115,17 @@ export default function LoginPage() {
             >
               {loading ? 'Authenticating...' : 'Sign In'} <ArrowRight className="w-3.5 h-3.5" />
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('ajimshaptpm16@gmail.com');
+                setPassword('A1A2A3A4');
+              }}
+              className="w-full py-2 px-3 rounded-xl border border-dashed border-zinc-300 hover:border-zinc-400 text-zinc-600 hover:text-zinc-900 text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer bg-zinc-50"
+            >
+              Fill with my account (ajimshaptpm16@gmail.com)
+            </button>
           </form>
 
           <div className="text-center text-xs text-zinc-500">
