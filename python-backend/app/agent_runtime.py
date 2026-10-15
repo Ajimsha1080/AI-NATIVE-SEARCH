@@ -185,8 +185,8 @@ def run_agent_cycle(
         re.search(r'product|women|woman|men|saree|kurta|shirt|dress|item|collection|stock|recommend', message, re.IGNORECASE) or
         re.search(r'₹|Rs\.?|\$|saree|kurta|shirt|pant|combo', response_text, re.IGNORECASE)
     ):
-        from .db.seed import get_seed_products
-        all_prods = get_seed_products(workspace_id)
+        from .tools import get_tenant_products_sync
+        all_prods = get_tenant_products_sync(workspace_id)
         matched = []
         for p in all_prods:
             if p["title"].lower() in response_text.lower() or any(w.lower() in p["title"].lower() for w in message.split() if len(w) > 3):

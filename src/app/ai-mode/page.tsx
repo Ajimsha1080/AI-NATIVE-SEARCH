@@ -83,7 +83,7 @@ export default function AIModeOverviewPage() {
 
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <Link
-            href="/ai-mode/preview"
+            href="/ai-mode/search"
             className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition shadow-xs flex items-center justify-center gap-2"
           >
             <span>Launch Live Preview</span>
