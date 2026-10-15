@@ -100,7 +100,6 @@ The platform strictly separates authoritative transactional data from generative
 - **Preconfigured Alert Rules**: Production-ready alert definitions (`prometheus_alerts.yml`).
 - **Sentry Integration**: Exception tracking and distributed traces across FastAPI and Next.js.
 - **Backup & Disaster Recovery**: Tested automated PostgreSQL backup (`scripts/backup_postgres.sh`) and restore verification (`scripts/restore_postgres.sh`).
-- **Load Testing**: Pre-configured k6 scenario script (`tests/load_test_search_chat.js`).
 
 ---
 

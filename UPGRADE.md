@@ -235,7 +235,6 @@ Rate limiting, token revocation, and tenant usage metering are managed by `app/r
 - **Alert Rules**: Standardized alerting rules defined in `prometheus_alerts.yml` for 5xx errors, latency spikes, and budget overruns.
 - **Sentry Integration**: Automatic exception capture and distributed tracing via `sentry-sdk`.
 - **Automated PostgreSQL Backups**: Tested backup script (`scripts/backup_postgres.sh`) and restore verification script (`scripts/restore_postgres.sh`).
-- **Load Testing**: k6 load test script (`tests/load_test_search_chat.js`) verifying latency under 400ms at 50 concurrent virtual users.
 
 ---
 
@@ -291,8 +290,7 @@ The following areas require live external services and credentials in your deplo
 1. **Real LLM Answers**: Tested with mocked LLMs and deterministic fallback; requires live paid API keys (`SARVAM_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY`) for live generative completions.
 2. **Live Razorpay Gateway**: Tested cryptographically with signed webhook payloads and mock provider tests; live recurring charge debits require real test/production Razorpay credentials.
 3. **Real SMTP Email Delivery**: Tested with mocked email dispatches; live delivery requires active credentials (`RESEND_API_KEY` or `SMTP_HOST`).
-4. **Live Load Testing**: k6 load test script provided in `tests/load_test_search_chat.js`; execution against production ingress requires a staging/production server.
-5. **Live Sentry & Monitoring**: Tested local `/metrics` endpoint; external alert ingestion requires a live `SENTRY_DSN` and Prometheus scraper.
+4. **Live Sentry & Monitoring**: Tested local `/metrics` endpoint; external alert ingestion requires a live `SENTRY_DSN` and Prometheus scraper.
 
 
 
