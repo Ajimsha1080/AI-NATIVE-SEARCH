@@ -832,7 +832,7 @@ async def signup_endpoint(
         email=clean_email,
         name=clean_name,
         password_hash=hashed_pw,
-        is_verified=True if (settings.APP_ENV == "development" and not settings.EMAIL_PROVIDER) else False,
+        is_verified=False,
         role="ADMIN"
     )
     session.add(new_user)

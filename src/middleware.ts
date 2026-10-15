@@ -10,12 +10,6 @@ export function middleware(request: NextRequest) {
 
   // 1. Allow public storefront, embedded widgets, auth pages, static assets, and API routes
   if (
-    pathname === '/' ||
-    pathname === '/products' ||
-    pathname === '/pricing' ||
-    pathname === '/privacy' ||
-    pathname === '/terms' ||
-    pathname === '/dpdp' ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
@@ -27,7 +21,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Check for httpOnly access_token or fallback aaas_token cookie
+  // 2. Allow direct UI browsing in development mode without authentication redirect
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.next();
+  }
+
+  // 3. Check for httpOnly access_token or fallback aaas_token cookie
   const accessToken = request.cookies.get('access_token')?.value || request.cookies.get('aaas_token')?.value;
 
   if (!accessToken) {

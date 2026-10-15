@@ -141,13 +141,17 @@ class ShopMateApiClient {
           } else {
             this.isRefreshing = false;
             if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
-              window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+              if (process.env.NODE_ENV === 'production') {
+                window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+              }
             }
           }
         } catch {
           this.isRefreshing = false;
           if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
-            window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            if (process.env.NODE_ENV === 'production') {
+              window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            }
           }
         }
       }
