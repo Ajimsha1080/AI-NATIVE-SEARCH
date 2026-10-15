@@ -10,6 +10,12 @@ export function middleware(request: NextRequest) {
 
   // 1. Allow public storefront, embedded widgets, auth pages, static assets, and API routes
   if (
+    pathname === '/' ||
+    pathname === '/products' ||
+    pathname === '/pricing' ||
+    pathname === '/privacy' ||
+    pathname === '/terms' ||
+    pathname === '/dpdp' ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
