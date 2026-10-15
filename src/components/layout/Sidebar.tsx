@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { 
   Package, BookOpen, Layers, 
   Search, Globe, Settings, Menu, CreditCard, Users,
-  ShoppingBag, BarChart3, MessageSquare
+  BarChart3, MessageSquare
 } from 'lucide-react';
 import { fetchWithCache } from '@/lib/client-cache';
 
@@ -86,12 +86,6 @@ export default function Sidebar() {
       href: '/ai-mode/deployment', 
       icon: Globe,
       isActive: (path: string) => path.startsWith('/ai-mode/deployment')
-    },
-    { 
-      name: 'Orders', 
-      href: '/ai-mode/orders', 
-      icon: ShoppingBag,
-      isActive: (path: string) => path.startsWith('/ai-mode/orders')
     },
     { 
       name: 'Analytics', 

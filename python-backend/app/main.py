@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -253,31 +253,6 @@ async def ingest_knowledge_endpoint(
         "workspace_id": target_ws
     }
 
-from .redis_service import check_rate_limit
-
-
-@app.get("/api/v1/orders/{order_number}")
-async def get_order_endpoint(
-    order_number: str,
-    request: Request,
-    customer_email: str = Query(..., description="Customer email for verification"),
-    claims: dict[str, Any] = Depends(verify_service_jwt)
-):
-    workspace_id = claims["workspace_id"]
-    client_ip = request.client.host if request.client else "unknown_ip"
-    rate_key = f"order_lookup:{workspace_id}:{client_ip}"
-    allowed, retry_after = await check_rate_limit(rate_key, max_requests=10, window_seconds=60)
-    if not allowed:
-        raise HTTPException(
-            status_code=429,
-            detail=f"Too many order lookup attempts. Please wait {retry_after} seconds before retrying."
-        )
-
-    from .tools import _fetch_order_db
-    order = await _fetch_order_db(workspace_id, order_number, customer_email)
-    if not order:
-        raise HTTPException(status_code=404, detail=f"Order '{order_number}' not found with the provided email address.")
-    return order
 
 if __name__ == "__main__":
     import uvicorn

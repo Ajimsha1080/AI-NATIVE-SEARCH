@@ -49,8 +49,6 @@ def test_frontend_backend_api_contract():
         ("GET", "/api/v1/commerce/products"),
         ("POST", "/api/v1/commerce/products"),
         ("DELETE", "/api/v1/commerce/products"),
-        ("GET", "/api/v1/commerce/orders"),
-        ("POST", "/api/v1/commerce/orders"),
         ("POST", "/api/v1/commerce/sync"),
         ("POST", "/api/v1/commerce/sync/trigger"),
         ("GET", "/api/v1/commerce/sync/jobs/{job_id}"),

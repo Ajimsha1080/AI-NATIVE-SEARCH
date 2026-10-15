@@ -13,7 +13,6 @@ import {
   CreditCard,
   Users,
   Settings,
-  ShoppingBag,
   BarChart3,
   MessageSquare
 } from 'lucide-react';
@@ -25,7 +24,6 @@ export default function AIModeLayout({ children }: { children: React.ReactNode }
     { name: 'Overview', href: '/ai-mode', icon: Layers, exact: true },
     { name: 'Knowledge', href: '/ai-mode/knowledge', icon: BookOpen },
     { name: 'AI Search', href: '/ai-mode/search', icon: Search },
-    { name: 'Orders', href: '/ai-mode/orders', icon: ShoppingBag },
     { name: 'Analytics', href: '/ai-mode/analytics', icon: BarChart3 },
     { name: 'Conversations', href: '/ai-mode/conversations', icon: MessageSquare },
     { name: 'Deployment', href: '/ai-mode/deployment', icon: Code2 },

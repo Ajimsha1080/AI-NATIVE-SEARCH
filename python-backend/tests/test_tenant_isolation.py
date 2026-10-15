@@ -14,7 +14,7 @@ from sqlalchemy import select
 
 from app.auth import create_access_token
 from app.db.database import async_session_factory
-from app.db.models import DeploymentModel, OrderModel, ProductModel
+from app.db.models import DeploymentModel, ProductModel
 from app.main import app
 
 client = TestClient(app)
@@ -92,30 +92,17 @@ async def test_tenant_cannot_read_or_delete_another_tenants_data():
             price=7999.0,
             stock=5
         )
-        ord_b = OrderModel(
-            id=f"ord_{uuid.uuid4().hex[:8]}",
-            workspace_id=ws_b,
-            order_number=f"#ORD-B-{uuid.uuid4().hex[:4]}",
-            customer_email="buyer@beta.org",
-            total_amount=7999.0,
-            status="PAID"
-        )
-        session.add_all([prod_b, ord_b])
+        session.add(prod_b)
         await session.commit()
 
     # Tenant A tries to delete Tenant B's product by ID -> 404 (not in Tenant A's workspace)
     del_res = client.delete(f"/api/v1/commerce/products?id={prod_b_id}", headers=auth_header(ws_a))
     assert del_res.status_code == 404
 
-    # Tenant A queries orders -> 0 orders from Tenant B
-    ord_res = client.get("/api/v1/commerce/orders", headers=auth_header(ws_a))
-    assert ord_res.status_code == 200
-    assert len(ord_res.json()["orders"]) == 0
-
-    # Tenant B queries orders -> sees order
-    ord_b_res = client.get("/api/v1/commerce/orders", headers=auth_header(ws_b))
-    assert ord_b_res.status_code == 200
-    assert len(ord_b_res.json()["orders"]) == 1
+    # Tenant A queries products -> 0 products from Tenant B
+    prod_res = client.get("/api/v1/commerce/products", headers=auth_header(ws_a))
+    assert prod_res.status_code == 200
+    assert len(prod_res.json()["products"]) == 0
 
 
 @pytest.mark.asyncio

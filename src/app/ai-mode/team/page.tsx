@@ -387,7 +387,7 @@ export default function TeamManagementPage() {
                   onChange={(e) => setInviteRole(e.target.value as any)}
                   className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white"
                 >
-                  <option value="VIEWER">VIEWER (Read-only search, catalog &amp; orders)</option>
+                  <option value="VIEWER">VIEWER (Read-only search &amp; catalog)</option>
                   <option value="EDITOR">EDITOR (Add/update products and store knowledge)</option>
                   <option value="ADMIN">ADMIN (Full access + billing &amp; teammate invites)</option>
                 </select>

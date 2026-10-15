@@ -20,7 +20,6 @@ from .auth import (
     get_tenant_db_session,
     require_admin_role,
     require_editor_role,
-    require_role,
     require_viewer_role,
     resolve_storefront_context,
     validate_workspace_access,
@@ -40,7 +39,6 @@ from .db.models import (
     ProductModel,
     SyncJobModel,
 )
-from .redis_service import check_rate_limit
 
 logger = logging.getLogger("shopmate_catalog")
 
@@ -309,210 +307,12 @@ async def delete_product(
     return {"success": True, "message": f"Product {id} deleted successfully"}
 
 
-# ============================================================================
-# COMMERCE ORDERS (/api/v1/commerce/orders)
-# ============================================================================
-
-@router.get("/commerce/orders")
-async def get_orders(
+async def _create_order_record(
     request: Request,
-    order_number: str | None = None,
-    customer_email: str | None = None,
-    status: str | None = None,
-    payment_status: str | None = None,
-    workspace_id: str | None = None,
-    authorization: str | None = Header(None),
-    x_deployment_key: str | None = Header(None, alias="X-Deployment-Key"),
-    session: AsyncSession = Depends(get_flexible_tenant_db_session),
+    authorization: str | None = None,
+    x_deployment_key: str | None = None,
+    session: AsyncSession = None,
 ):
-    """Retrieve orders from the database.
-    - Authenticated merchant role (JWT): Full order access including customer PII.
-    - Storefront (Deployment Key): Requires order_number AND customer_email, returns 404 on mismatch,
-      redacts customer PII (only status, items, tracking fields returned), and enforces rate limiting.
-    """
-    is_storefront = False
-    storefront_key = None
-    target_workspace = None
-
-    if authorization or "access_token" in request.cookies:
-        auth = await get_auth_context(request, authorization)
-        target_workspace = validate_workspace_access(auth, workspace_id)
-    elif x_deployment_key or request.query_params.get("deployment_key") or request.query_params.get("deployment_id"):
-        storefront = await resolve_storefront_context(request, x_deployment_key, authorization)
-        target_workspace = storefront.workspace_id
-        is_storefront = True
-        storefront_key = x_deployment_key or request.query_params.get("deployment_key") or request.query_params.get("deployment_id")
-    else:
-        raise HTTPException(status_code=401, detail="Authentication required to view orders")
-
-    if is_storefront:
-        # Rate limit storefront order lookups per IP and deployment key (max 10 requests per minute)
-        client_ip = request.client.host if request.client else "unknown_ip"
-        rate_key = f"order_lookup:{storefront_key}:{client_ip}"
-        allowed, retry_after = await check_rate_limit(rate_key, max_requests=10, window_seconds=60)
-        if not allowed:
-            raise HTTPException(
-                status_code=429,
-                detail=f"Rate limit exceeded for order tracking. Please retry in {retry_after} seconds."
-            )
-
-        if not order_number or not customer_email:
-            raise HTTPException(
-                status_code=400,
-                detail="Storefront order lookups require both order_number and customer_email"
-            )
-
-    stmt = select(OrderModel).where(OrderModel.workspace_id == target_workspace)
-    if status and not is_storefront:
-        stmt = stmt.where(OrderModel.status == status.upper().strip())
-    if payment_status and not is_storefront:
-        stmt = stmt.where(OrderModel.payment_status == payment_status.upper().strip())
-
-    if order_number:
-        clean_num = order_number.strip()
-        if not clean_num.startswith("#"):
-            clean_num = f"#{clean_num}"
-        stmt = stmt.where(OrderModel.order_number == clean_num)
-        res = await session.execute(stmt)
-        order = res.scalars().first()
-
-        if not order:
-            raise HTTPException(status_code=404, detail="Order not found with the provided details.")
-        if customer_email and order.customer_email.lower().strip() != customer_email.lower().strip():
-            raise HTTPException(status_code=404, detail="Order not found with the provided details.")
-
-        if is_storefront:
-            # Storefront redaction: exclude customer_name, customer_email, shipping_address
-            return {
-                "order": {
-                    "id": order.id,
-                    "workspace_id": order.workspace_id,
-                    "order_number": order.order_number,
-                    "total_amount": float(order.total_amount),
-                    "currency": order.currency,
-                    "status": order.status,
-                    "payment_status": order.payment_status,
-                    "fulfillment_status": order.fulfillment_status,
-                    "tracking_number": order.tracking_number,
-                    "carrier": order.carrier,
-                    "items": order.items_json or [],
-                    "created_at": order.created_at.isoformat() if order.created_at else None,
-                }
-            }
-
-        # Merchant view: full details
-        return {
-            "order": {
-                "id": order.id,
-                "workspace_id": order.workspace_id,
-                "order_number": order.order_number,
-                "customer_id": order.customer_id,
-                "customer_name": order.customer_name,
-                "customer_email": order.customer_email,
-                "total_amount": float(order.total_amount),
-                "currency": order.currency,
-                "status": order.status,
-                "payment_status": order.payment_status,
-                "fulfillment_status": order.fulfillment_status,
-                "shipping_address": order.shipping_address,
-                "tracking_number": order.tracking_number,
-                "carrier": order.carrier,
-                "items": order.items_json or [],
-                "created_at": order.created_at.isoformat() if order.created_at else None,
-            }
-        }
-
-    if is_storefront:
-        # Storefront callers cannot browse all orders
-        raise HTTPException(status_code=400, detail="Storefront lookup requires order_number and customer_email")
-
-    res = await session.execute(stmt)
-    orders = res.scalars().all()
-    return {
-        "orders": [
-            {
-                "id": o.id,
-                "workspace_id": o.workspace_id,
-                "order_number": o.order_number,
-                "customer_id": o.customer_id,
-                "customer_name": o.customer_name,
-                "customer_email": o.customer_email,
-                "total_amount": float(o.total_amount),
-                "currency": o.currency,
-                "status": o.status,
-                "payment_status": o.payment_status,
-                "fulfillment_status": o.fulfillment_status,
-                "shipping_address": o.shipping_address,
-                "tracking_number": o.tracking_number,
-                "carrier": o.carrier,
-                "items": o.items_json or [],
-                "created_at": o.created_at.isoformat() if o.created_at else None,
-            }
-            for o in orders
-        ]
-    }
-
-
-class UpdateOrderStatusRequest(BaseModel):
-    status: str | None = None
-    payment_status: str | None = None
-    fulfillment_status: str | None = None
-    tracking_number: str | None = None
-    carrier: str | None = None
-
-
-@router.patch("/commerce/orders/{order_id}")
-async def update_order_status(
-    order_id: str,
-    req: UpdateOrderStatusRequest,
-    auth_ctx: dict[str, Any] = Depends(require_role(["OWNER", "ADMIN", "EDITOR"])),
-    session: AsyncSession = Depends(get_flexible_tenant_db_session),
-):
-    """Updates order fulfillment, status, or tracking. Scoped to merchant workspace."""
-    ws_id = auth_ctx["workspace_id"]
-    res = await session.execute(
-        select(OrderModel).where(OrderModel.id == order_id, OrderModel.workspace_id == ws_id)
-    )
-    order = res.scalars().first()
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found.")
-
-    if req.status:
-        order.status = req.status.upper().strip()
-    if req.payment_status:
-        order.payment_status = req.payment_status.upper().strip()
-    if req.fulfillment_status:
-        order.fulfillment_status = req.fulfillment_status.upper().strip()
-    if req.tracking_number is not None:
-        order.tracking_number = req.tracking_number.strip() if req.tracking_number else None
-    if req.carrier is not None:
-        order.carrier = req.carrier.strip() if req.carrier else None
-
-    await session.commit()
-    await session.refresh(order)
-
-    return {
-        "success": True,
-        "order": {
-            "id": order.id,
-            "order_number": order.order_number,
-            "status": order.status,
-            "payment_status": order.payment_status,
-            "fulfillment_status": order.fulfillment_status,
-            "tracking_number": order.tracking_number,
-            "carrier": order.carrier,
-        }
-    }
-
-
-@router.post("/commerce/orders")
-async def create_order(
-    request: Request,
-    authorization: str | None = Header(None),
-    x_deployment_key: str | None = Header(None, alias="X-Deployment-Key"),
-    session: AsyncSession = Depends(get_flexible_tenant_db_session),
-):
-    """Create an order strictly within tenant workspace (via authenticated session or storefront key)."""
     body = await request.json()
     product_id = body.get("productId") or body.get("product_id")
     variant_id = body.get("variantId") or body.get("variant_id")
@@ -532,9 +332,8 @@ async def create_order(
         storefront = await resolve_storefront_context(request, x_deployment_key, authorization)
         target_ws = storefront.workspace_id
     else:
-        raise HTTPException(status_code=401, detail="Authentication or X-Deployment-Key required to create order")
+        raise HTTPException(status_code=401, detail="Authentication or X-Deployment-Key required to process checkout")
 
-    # Server-side authoritative product lookup scoped to tenant
     stmt = select(ProductModel).where(
         ProductModel.id == product_id,
         ProductModel.workspace_id == target_ws
@@ -545,7 +344,6 @@ async def create_order(
     if not product:
         raise HTTPException(status_code=404, detail=f"Product with ID '{product_id}' not found")
 
-    # Resolve authoritative price from database
     unit_price = float(product.price)
     if variant_id and product.variants_json:
         for v in product.variants_json:
@@ -613,7 +411,7 @@ async def checkout_commit(
     x_deployment_key: str | None = Header(None, alias="X-Deployment-Key"),
     session: AsyncSession = Depends(get_flexible_tenant_db_session),
 ):
-    return await create_order(request, authorization, x_deployment_key, session=session)
+    return await _create_order_record(request, authorization, x_deployment_key, session=session)
 
 
 # ============================================================================
@@ -839,7 +637,7 @@ async def razorpay_verify(
         if not hmac.compare_digest(generated_sig, rzp_signature):
             raise HTTPException(status_code=400, detail="Invalid payment signature. Verification failed.")
 
-    order_res = await create_order(request, authorization, x_deployment_key, session=session)
+    order_res = await _create_order_record(request, authorization, x_deployment_key, session=session)
     new_order = order_res.get("order")
     order_ws = new_order.get("workspace_id") if new_order else "unknown"
 
