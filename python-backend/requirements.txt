@@ -19,7 +19,7 @@ alembic>=1.14.0
 pgvector>=0.3.6
 pyotp>=2.9.0
 qrcode>=8.0
-pillow>=10.4.0
+pillow>=12.3.0
 prometheus-client>=0.20.0
 sentry-sdk>=2.0.0
 
