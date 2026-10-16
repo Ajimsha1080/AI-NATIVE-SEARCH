@@ -186,6 +186,7 @@ class PgVectorEmbedding(TypeDecorator):
     Uses pgvector Vector in PostgreSQL; falls back to JSON float list in SQLite/other dialects.
     """
     impl = JSON
+    comparator_factory = Vector.comparator_factory
     cache_ok = True
 
     def __init__(self, dim: int = 1536, *args, **kwargs):
@@ -215,6 +216,14 @@ class KnowledgeChunkModel(Base):
 
     __table_args__ = (
         Index("idx_chunk_tenant", "workspace_id", "id"),
+        Index("idx_chunk_tenant_workspace", "workspace_id"),
+        Index(
+            "idx_chunk_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )
 
 

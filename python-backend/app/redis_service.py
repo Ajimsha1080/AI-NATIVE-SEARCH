@@ -8,9 +8,11 @@ Includes graceful in-memory fallback for local environments without a running Re
 """
 
 import hashlib
+import json
 import logging
 import time
 from collections import defaultdict
+from typing import Any
 
 from .config import settings
 
@@ -25,13 +27,20 @@ _sync_redis_available: bool | None = None
 _inmemory_revoked_tokens: dict[str, float] = {}
 _inmemory_rate_limits: dict[str, list[float]] = defaultdict(list)
 _inmemory_usage_tracking: dict[str, int] = defaultdict(int)
+_inmemory_tenant_cache: dict[str, tuple[float, str]] = {}
+
+_last_redis_retry: float = 0.0
+_last_sync_redis_retry: float = 0.0
 
 
 async def get_redis_client():
-    """Initializes or returns singleton async Redis client."""
-    global _redis_client, _redis_available
+    """Initializes or returns singleton async Redis client with automatic reconnect retries."""
+    global _redis_client, _redis_available, _last_redis_retry
+    now = time.time()
     if _redis_available is False:
-        return None
+        if now - _last_redis_retry < 15.0:
+            return None
+        _redis_available = None  # Allow retry attempt
 
     if _redis_client is not None:
         return _redis_client
@@ -46,6 +55,7 @@ async def get_redis_client():
         logger.info("Connected to Redis at %s", redis_url)
         return _redis_client
     except Exception as e:
+        _last_redis_retry = now
         if settings.APP_ENV.lower() == "production":
             logger.critical("Fatal: Redis is required in production environment but failed to connect at %s: %s", redis_url, e)
             raise RuntimeError(f"Redis is required in production environment but failed to connect: {e}") from e
@@ -55,10 +65,13 @@ async def get_redis_client():
 
 
 def get_sync_redis_client():
-    """Initializes or returns singleton sync Redis client."""
-    global _sync_redis_client, _sync_redis_available
+    """Initializes or returns singleton sync Redis client with automatic reconnect retries."""
+    global _sync_redis_client, _sync_redis_available, _last_sync_redis_retry
+    now = time.time()
     if _sync_redis_available is False:
-        return None
+        if now - _last_sync_redis_retry < 15.0:
+            return None
+        _sync_redis_available = None
 
     if _sync_redis_client is not None:
         return _sync_redis_client
@@ -72,6 +85,7 @@ def get_sync_redis_client():
         _sync_redis_available = True
         return _sync_redis_client
     except Exception as e:
+        _last_sync_redis_retry = now
         if settings.APP_ENV.lower() == "production":
             logger.critical("Fatal: Redis is required in production environment but failed to connect at %s: %s", redis_url, e)
             raise RuntimeError(f"Redis is required in production environment but failed to connect: {e}") from e
@@ -94,9 +108,9 @@ async def revoke_token(token: str, ttl_seconds: int = 86400) -> None:
     client = await get_redis_client()
     if client:
         try:
-            await client.setex(f"revoked_token:{h}", ttl_seconds, "1")
+            await client.set(f"revoked_token:{h}", "1", ex=ttl_seconds)
         except Exception as e:
-            logger.error("Redis setex failed: %s", e)
+            logger.error("Redis set failed: %s", e)
 
 
 def revoke_token_sync(token: str, ttl_seconds: int = 86400) -> None:
@@ -106,9 +120,9 @@ def revoke_token_sync(token: str, ttl_seconds: int = 86400) -> None:
     client = get_sync_redis_client()
     if client:
         try:
-            client.setex(f"revoked_token:{h}", ttl_seconds, "1")
+            client.set(f"revoked_token:{h}", "1", ex=ttl_seconds)
         except Exception as e:
-            logger.error("Sync Redis setex failed: %s", e)
+            logger.error("Sync Redis set failed: %s", e)
 
 
 async def is_token_revoked(token: str) -> bool:
@@ -224,3 +238,98 @@ async def get_workspace_usage(workspace_id: str, metric: str = "api_requests") -
             logger.error("Redis usage query failed: %s", e)
 
     return _inmemory_usage_tracking.get(key, 0)
+
+
+# ============================================================================
+# MULTI-TENANT ISOLATED CACHING & INVALIDATION
+# ============================================================================
+
+async def tenant_cache_set(workspace_id: str, key: str, value: Any, ttl_seconds: int = 300) -> bool:
+    """Sets a tenant-isolated cache key with TTL. Prevents cross-tenant leaks."""
+    if not workspace_id:
+        raise ValueError("workspace_id is mandatory to prevent cross-tenant cache leaks")
+
+    namespaced_key = f"cache:ws:{workspace_id}:{key}"
+    serialized = json.dumps(value)
+    client = await get_redis_client()
+    if client:
+        try:
+            await client.set(namespaced_key, serialized, ex=ttl_seconds)
+            return True
+        except Exception as e:
+            logger.error("Redis cache set failed: %s", e)
+
+    # In-memory fallback
+    _inmemory_tenant_cache[namespaced_key] = (time.time() + ttl_seconds, serialized)
+    return True
+
+
+async def tenant_cache_get(workspace_id: str, key: str) -> Any | None:
+    """Gets a tenant-isolated cache value, verifying expiration."""
+    if not workspace_id:
+        raise ValueError("workspace_id is mandatory to prevent cross-tenant cache leaks")
+
+    namespaced_key = f"cache:ws:{workspace_id}:{key}"
+    client = await get_redis_client()
+    if client:
+        try:
+            val = await client.get(namespaced_key)
+            if val is not None:
+                return json.loads(val)
+        except Exception as e:
+            logger.error("Redis cache get failed: %s", e)
+
+    # In-memory fallback
+    item = _inmemory_tenant_cache.get(namespaced_key)
+    if item:
+        exp, serialized = item
+        if time.time() < exp:
+            return json.loads(serialized)
+        else:
+            del _inmemory_tenant_cache[namespaced_key]
+    return None
+
+
+async def tenant_cache_delete(workspace_id: str, key: str) -> bool:
+    """Deletes a specific tenant cache key."""
+    if not workspace_id:
+        raise ValueError("workspace_id is mandatory")
+
+    namespaced_key = f"cache:ws:{workspace_id}:{key}"
+    client = await get_redis_client()
+    if client:
+        try:
+            await client.delete(namespaced_key)
+        except Exception as e:
+            logger.error("Redis cache delete failed: %s", e)
+
+    if namespaced_key in _inmemory_tenant_cache:
+        del _inmemory_tenant_cache[namespaced_key]
+    return True
+
+
+async def tenant_cache_invalidate(workspace_id: str) -> int:
+    """Invalidates all cached keys for a specific tenant workspace."""
+    if not workspace_id:
+        raise ValueError("workspace_id is mandatory")
+
+    prefix = f"cache:ws:{workspace_id}:"
+    deleted_count = 0
+    client = await get_redis_client()
+    if client:
+        try:
+            keys = []
+            async for k in client.scan_iter(match=f"{prefix}*"):
+                keys.append(k)
+            if keys:
+                deleted_count = await client.delete(*keys)
+        except Exception as e:
+            logger.error("Redis tenant cache invalidation failed: %s", e)
+
+    inmem_keys = [k for k in _inmemory_tenant_cache if k.startswith(prefix)]
+    for k in inmem_keys:
+        del _inmemory_tenant_cache[k]
+        deleted_count += 1
+
+    return deleted_count
+

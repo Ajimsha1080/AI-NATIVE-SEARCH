@@ -79,8 +79,11 @@ __pycache__/
 /python-backend/.installed.cfg
 /python-backend/*.egg
 
-# IDE
+# IDE & Caches
 .vscode/
 .idea/
 *.swp
 *.swo
+.ruff_cache/
+.mypy_cache/
+

@@ -189,6 +189,130 @@ def rewrite_query(question: str, understanding: dict[str, Any]) -> dict[str, Any
         "expansion_terms": expansion_terms
     }
 
+async def search_chunks_from_db(
+    query: str,
+    workspace_id: str,
+    session: AsyncSession | None = None,
+    top_k: int = 5,
+    metadata_filter: dict[str, Any] | None = None
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Database-side vector retrieval and sparse matching with strict tenant isolation.
+    Uses pgvector (<=>) on PostgreSQL and bounded fallback on SQLite.
+    """
+    if not workspace_id:
+        raise ValueError("workspace_id is mandatory and cannot be empty")
+
+    dense_vec = generate_embedding(query)
+    sparse_tokens = [w for w in re.sub(r'[^a-z0-9\s]', ' ', query.lower()).split() if len(w) > 2]
+
+    async def _search(sess: AsyncSession):
+        bind = sess.bind
+        dialect_name = getattr(bind.dialect, "name", "") if bind else ""
+
+        if dialect_name == "postgresql":
+            # True database-side vector similarity search using pgvector cosine_distance
+            stmt = (
+                select(
+                    KnowledgeChunkModel.id,
+                    KnowledgeChunkModel.text,
+                    KnowledgeChunkModel.metadata_json,
+                    KnowledgeDocModel.title.label("doc_title"),
+                    KnowledgeChunkModel.embedding.cosine_distance(dense_vec).label("distance")
+                )
+                .join(KnowledgeDocModel, KnowledgeChunkModel.doc_id == KnowledgeDocModel.id)
+                .where(KnowledgeChunkModel.workspace_id == workspace_id)
+            )
+            if metadata_filter:
+                for k, v in metadata_filter.items():
+                    stmt = stmt.where(KnowledgeChunkModel.metadata_json[k].as_string() == str(v))
+
+            stmt = stmt.order_by("distance").limit(top_k * 3)
+            res = await sess.execute(stmt)
+            rows = res.all()
+
+            dense_hits = []
+            sparse_hits = []
+            for r in rows:
+                dist = float(r.distance) if r.distance is not None else 1.0
+                sim = max(0.0, min(1.0, 1.0 - dist))
+                chunk_obj = {
+                    "chunk_id": r.id,
+                    "workspace_id": workspace_id,
+                    "doc_name": r.doc_title,
+                    "content": r.text,
+                    "metadata": r.metadata_json or {}
+                }
+                dense_hits.append({
+                    "chunk_id": r.id,
+                    "score": sim,
+                    "chunk": chunk_obj
+                })
+                c_words = r.text.lower().split()
+                sp_score = sum(1.0 for t in sparse_tokens if any(t in w for w in c_words))
+                sparse_hits.append({
+                    "chunk_id": r.id,
+                    "score": sp_score,
+                    "chunk": chunk_obj
+                })
+
+            dense_hits.sort(key=lambda x: x["score"], reverse=True)
+            sparse_hits.sort(key=lambda x: x["score"], reverse=True)
+            return dense_hits[:top_k], sparse_hits[:top_k]
+
+        else:
+            # SQLite bounded fallback
+            stmt = (
+                select(KnowledgeChunkModel, KnowledgeDocModel.title.label("doc_title"))
+                .join(KnowledgeDocModel, KnowledgeChunkModel.doc_id == KnowledgeDocModel.id)
+                .where(KnowledgeChunkModel.workspace_id == workspace_id)
+                .limit(500)
+            )
+            res = await sess.execute(stmt)
+            rows = res.all()
+
+            dense_hits = []
+            sparse_hits = []
+            for chk, doc_title in rows:
+                meta = chk.metadata_json or {}
+                if metadata_filter and not all(meta.get(k) == v for k, v in metadata_filter.items()):
+                    continue
+
+                chunk_obj = {
+                    "chunk_id": chk.id,
+                    "workspace_id": workspace_id,
+                    "doc_name": doc_title,
+                    "content": chk.text,
+                    "metadata": meta
+                }
+                emb = chk.embedding or generate_embedding(chk.text)
+                sim = cosine_similarity(dense_vec, emb)
+                dense_hits.append({
+                    "chunk_id": chk.id,
+                    "score": float(sim),
+                    "chunk": chunk_obj
+                })
+
+                c_words = chk.text.lower().split()
+                sp_score = sum(1.0 for t in sparse_tokens if any(t in w for w in c_words))
+                sparse_hits.append({
+                    "chunk_id": chk.id,
+                    "score": sp_score,
+                    "chunk": chunk_obj
+                })
+
+            dense_hits.sort(key=lambda x: x["score"], reverse=True)
+            sparse_hits.sort(key=lambda x: x["score"], reverse=True)
+            return dense_hits[:top_k], sparse_hits[:top_k]
+
+    if session is not None:
+        return await _search(session)
+    else:
+        from .db.database import get_session_factory, set_tenant_session_context
+        async with get_session_factory()() as sess:
+            await set_tenant_session_context(sess, workspace_id)
+            return await _search(sess)
+
+
 def hybrid_retrieve(query: str, workspace_id: str, tenant_chunks: list[dict[str, Any]], top_k: int = 5):
     """Hybrid dense vector and sparse token retrieval strictly scoped to tenant_chunks."""
     if not workspace_id:
@@ -409,3 +533,78 @@ def execute_rag_pipeline(question: str, workspace_id: str, tenant_chunks: list[d
         "natural_answer": natural_answer,
         "citations": citations
     }
+
+
+async def run_rag_pipeline_async(
+    question: str,
+    workspace_id: str,
+    session: AsyncSession | None = None,
+    top_k: int = 3,
+    metadata_filter: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Asynchronous database-driven 12-stage RAG pipeline with pgvector similarity retrieval."""
+    if not workspace_id:
+        raise ValueError("workspace_id is mandatory and cannot be empty for RAG execution")
+
+    # 1. Understanding
+    understanding = understand_query(question)
+    # 2. Rewrite
+    rewrite = rewrite_query(question, understanding)
+    # 3. Database-backed Vector & Hybrid Retrieval
+    dense_hits, sparse_hits = await search_chunks_from_db(
+        rewrite["rewritten_query"],
+        workspace_id=workspace_id,
+        session=session,
+        top_k=top_k * 2,
+        metadata_filter=metadata_filter
+    )
+    # 4. RRF
+    fused = reciprocal_rank_fusion(dense_hits, sparse_hits, k=60)
+    # 5. Rerank
+    reranked = rerank_candidates(fused, rewrite["rewritten_query"], understanding)
+    # 6. Context Assembly with Prompt-Injection Delimiters
+    context = assemble_context(reranked, top_k=top_k)
+
+    # 7. Answer Synthesis - Grounded Strictly in Tenant Knowledge
+    if reranked and (len(dense_hits) > 0 or len(sparse_hits) > 0):
+        natural_answer = reranked[0]["chunk_text"]
+        has_chunks = True
+    else:
+        natural_answer = "I do not have store policy documents on file for this workspace. Please contact customer support for assistance."
+        has_chunks = False
+
+    # 8. Grounding Verification
+    grounding = verify_grounding(natural_answer, context["assembled_context"], has_retrieved_chunks=has_chunks)
+
+    citations = [
+        {
+            "document_name": c["document_name"],
+            "chunk_text": c["chunk_text"],
+            "relevance_score": c["score"],
+            "is_verified": grounding["is_grounded"]
+        } for c in reranked[:top_k]
+    ] if has_chunks else []
+
+    return {
+        "raw_question": question,
+        "workspace_id": workspace_id,
+        "query_understanding": understanding,
+        "query_rewrite": rewrite,
+        "hybrid_retrieval": {
+            "dense_hits": len(dense_hits),
+            "sparse_hits": len(sparse_hits)
+        },
+        "rrf_fusion": {
+            "fused_candidates": len(fused),
+            "rrf_constant": 60
+        },
+        "reranking": {
+            "candidates_scored": len(reranked),
+            "top_score": reranked[0]["score"] if reranked else 0.0
+        },
+        "context_assembly": context,
+        "grounding_verification": grounding,
+        "natural_answer": natural_answer,
+        "citations": citations
+    }
+

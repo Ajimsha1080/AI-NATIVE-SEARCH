@@ -670,7 +670,7 @@ curl -X POST ${origin}/api/ai-mode/search \\
 
                   {activeSnippet === 'react' && (
                     <>
-                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">1</span><span className="text-zinc-500 italic">// Next.js / React (App Router or Pages Router)</span></div>
+                      <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">1</span><span className="text-zinc-500 italic">{"// Next.js / React (App Router or Pages Router)"}</span></div>
                       <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">2</span><span><span className="text-purple-400 font-bold">import </span><span className="text-cyan-300 font-bold">Script </span><span className="text-purple-400 font-bold">from </span><span className="text-emerald-300 font-semibold">'next/script'</span>;</span></div>
                       <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">3</span><span></span></div>
                       <div className="flex items-start gap-3"><span className="w-5 text-right text-zinc-600 select-none text-[11px]">4</span><span><span className="text-purple-400 font-bold">export default function </span><span className="text-amber-300 font-bold">StoreLayout</span>({`{ children }: { children: `}<span className="text-cyan-300 font-bold">React</span>.<span className="text-cyan-300 font-bold">ReactNode</span>{` }`}) {`{`}</span></div>

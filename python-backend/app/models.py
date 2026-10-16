@@ -22,6 +22,17 @@ class KnowledgeIngestRequest(BaseModel):
     workspace_id: str | None = None
     metadata: dict[str, Any] | None = None
 
+class KnowledgeDocUpdateRequest(BaseModel):
+    title: str | None = None
+    content: str | None = None
+    metadata: dict[str, Any] | None = None
+
+class KnowledgeSearchRequest(BaseModel):
+    query: str = Field(..., description="Vector similarity search query")
+    top_k: int = Field(5, ge=1, le=100)
+    metadata_filter: dict[str, Any] | None = None
+    workspace_id: str | None = None
+
 class Citation(BaseModel):
     document_name: str
     chunk_text: str

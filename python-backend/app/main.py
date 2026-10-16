@@ -16,8 +16,15 @@ from .auth import require_admin_auth, verify_service_jwt
 from .db.database import get_db_session, init_db
 from .db.repository import DatabaseRepository
 from .llm import LLMClient
-from .models import ChatRequest, ChatResponse, KnowledgeIngestRequest, RAGQueryRequest
-from .rag import execute_rag_pipeline
+from .models import (
+    ChatRequest,
+    ChatResponse,
+    KnowledgeDocUpdateRequest,
+    KnowledgeIngestRequest,
+    KnowledgeSearchRequest,
+    RAGQueryRequest,
+)
+from .rag import generate_embedding, run_rag_pipeline_async
 
 load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
@@ -200,16 +207,21 @@ async def chat_agent_stream(
 @app.post("/api/v1/rag/query")
 async def query_rag_pipeline(
     req: RAGQueryRequest,
-    claims: dict[str, Any] = Depends(verify_service_jwt)
+    claims: dict[str, Any] = Depends(verify_service_jwt),
+    session: AsyncSession = Depends(get_db_session)
 ):
     token_workspace_id = claims["workspace_id"]
     if req.workspace_id and req.workspace_id != token_workspace_id and claims.get("role") != "SUPER_ADMIN":
         raise HTTPException(status_code=403, detail="Forbidden: Cross-tenant workspace mismatch")
 
+    target_ws = req.workspace_id or token_workspace_id
     try:
-        from .rag import fetch_tenant_chunks_from_db
-        chunks = await fetch_tenant_chunks_from_db(token_workspace_id)
-        return execute_rag_pipeline(req.question, workspace_id=token_workspace_id, tenant_chunks=chunks, top_k=req.top_k or 3)
+        return await run_rag_pipeline_async(
+            question=req.question,
+            workspace_id=target_ws,
+            session=session,
+            top_k=req.top_k or 3
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -230,11 +242,13 @@ async def ingest_knowledge_endpoint(
     if not raw_chunks:
         raw_chunks = [req.content]
 
+    # Generate genuine high-dimensional embeddings (1536-dim)
     chunks_data = []
     for rc in raw_chunks:
+        emb = generate_embedding(rc)
         chunks_data.append({
             "text": rc,
-            "embedding": [0.0] * 128,
+            "embedding": emb,
             "metadata": req.metadata or {}
         })
 
@@ -251,6 +265,117 @@ async def ingest_knowledge_endpoint(
         "title": doc.title,
         "chunks_created": len(chunks_data),
         "workspace_id": target_ws
+    }
+
+@app.get("/api/v1/knowledge/documents")
+async def list_knowledge_documents_endpoint(
+    limit: int = 50,
+    offset: int = 0,
+    claims: dict[str, Any] = Depends(verify_service_jwt),
+    session: AsyncSession = Depends(get_db_session)
+):
+    target_ws = claims["workspace_id"]
+    repo = DatabaseRepository(session)
+    docs = await repo.list_knowledge_docs(workspace_id=target_ws, limit=limit, offset=offset)
+    return {"documents": docs, "limit": limit, "offset": offset, "workspace_id": target_ws}
+
+@app.get("/api/v1/knowledge/documents/{doc_id}")
+async def get_knowledge_document_endpoint(
+    doc_id: str,
+    claims: dict[str, Any] = Depends(verify_service_jwt),
+    session: AsyncSession = Depends(get_db_session)
+):
+    target_ws = claims["workspace_id"]
+    repo = DatabaseRepository(session)
+    doc = await repo.get_knowledge_doc(workspace_id=target_ws, doc_id=doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found or access denied")
+    return {
+        "id": doc.id,
+        "title": doc.title,
+        "content": doc.content,
+        "chunks": [
+            {
+                "id": c.id,
+                "chunk_index": c.chunk_index,
+                "text": c.text,
+                "metadata": c.metadata_json or {}
+            }
+            for c in (doc.chunks or [])
+        ]
+    }
+
+@app.put("/api/v1/knowledge/documents/{doc_id}")
+async def update_knowledge_document_endpoint(
+    doc_id: str,
+    req: KnowledgeDocUpdateRequest,
+    claims: dict[str, Any] = Depends(verify_service_jwt),
+    session: AsyncSession = Depends(get_db_session)
+):
+    target_ws = claims["workspace_id"]
+    repo = DatabaseRepository(session)
+
+    chunks_data = None
+    if req.content is not None:
+        raw_chunks = [c.strip() for c in req.content.split("\n\n") if c.strip()]
+        if not raw_chunks:
+            raw_chunks = [req.content]
+        chunks_data = [
+            {
+                "text": rc,
+                "embedding": generate_embedding(rc),
+                "metadata": req.metadata or {}
+            }
+            for rc in raw_chunks
+        ]
+
+    updated = await repo.update_knowledge_doc(
+        workspace_id=target_ws,
+        doc_id=doc_id,
+        title=req.title,
+        content=req.content,
+        chunks=chunks_data
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Document not found or access denied")
+    return {"success": True, "document_id": updated.id, "title": updated.title}
+
+@app.delete("/api/v1/knowledge/documents/{doc_id}")
+async def delete_knowledge_document_endpoint(
+    doc_id: str,
+    claims: dict[str, Any] = Depends(verify_service_jwt),
+    session: AsyncSession = Depends(get_db_session)
+):
+    target_ws = claims["workspace_id"]
+    repo = DatabaseRepository(session)
+    deleted = await repo.delete_knowledge_doc(workspace_id=target_ws, doc_id=doc_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Document not found or access denied")
+    return {"success": True, "deleted_doc_id": doc_id}
+
+@app.post("/api/v1/knowledge/search")
+async def search_knowledge_endpoint(
+    req: KnowledgeSearchRequest,
+    claims: dict[str, Any] = Depends(verify_service_jwt),
+    session: AsyncSession = Depends(get_db_session)
+):
+    token_workspace_id = claims["workspace_id"]
+    if req.workspace_id and req.workspace_id != token_workspace_id and claims.get("role") != "SUPER_ADMIN":
+        raise HTTPException(status_code=403, detail="Forbidden: Cross-tenant workspace mismatch")
+
+    target_ws = req.workspace_id or token_workspace_id
+    repo = DatabaseRepository(session)
+    query_vector = generate_embedding(req.query)
+    results = await repo.vector_similarity_search(
+        workspace_id=target_ws,
+        query_vector=query_vector,
+        top_k=req.top_k,
+        metadata_filter=req.metadata_filter
+    )
+    return {
+        "query": req.query,
+        "workspace_id": target_ws,
+        "results": results
     }
 
 
