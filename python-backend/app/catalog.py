@@ -53,6 +53,7 @@ _processed_idempotency_keys: dict[str, Any] = {}
 # ============================================================================
 
 @router.get("/commerce/products")
+@router.get("/products")
 async def get_products(
     workspace_id: str | None = None,
     category: str | None = None,
@@ -110,6 +111,7 @@ async def get_products(
 
 
 @router.post("/commerce/products")
+@router.post("/products")
 async def create_product(
     request: Request,
     auth: AuthContext = Depends(require_admin_role),
@@ -207,7 +209,9 @@ async def create_product(
 
 
 @router.put("/commerce/products")
+@router.put("/products")
 @router.patch("/commerce/products")
+@router.patch("/products")
 async def update_product(
     request: Request,
     auth: AuthContext = Depends(require_editor_role),
@@ -280,6 +284,7 @@ async def update_product(
 
 
 @router.delete("/commerce/products")
+@router.delete("/products")
 async def delete_product(
     id: str | None = Query(None),
     workspace_id: str | None = Query(None),
@@ -719,6 +724,7 @@ async def razorpay_webhook(
 # ============================================================================
 
 @router.get("/commerce/sync")
+@router.get("/sync")
 async def get_sync_status(
     workspace_id: str | None = None,
     auth: AuthContext = Depends(require_viewer_role),
@@ -777,6 +783,7 @@ async def get_sync_status(
 
 
 @router.post("/commerce/sync")
+@router.post("/sync")
 async def run_sync(
     request: Request,
     auth: AuthContext = Depends(require_admin_role),

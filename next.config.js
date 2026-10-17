@@ -15,6 +15,10 @@ const nextConfig = {
     const pythonBackend = process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:8002';
     return [
       {
+        source: '/api/v1/:path*',
+        destination: `${pythonBackend}/api/v1/:path*`,
+      },
+      {
         source: '/api/:path*',
         destination: `${pythonBackend}/api/v1/:path*`,
       },

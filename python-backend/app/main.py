@@ -92,6 +92,7 @@ app.include_router(analytics_router)
 app.include_router(observability_router)
 
 @app.get("/health")
+@app.get("/api/v1/health")
 def health_check():
     return {
         "status": "HEALTHY",
@@ -101,6 +102,7 @@ def health_check():
     }
 
 @app.get("/ready")
+@app.get("/api/v1/ready")
 async def readiness_check(session: AsyncSession = Depends(get_db_session)):
     # 1. Verify Relational Database probe
     try:

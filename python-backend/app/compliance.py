@@ -146,6 +146,7 @@ async def get_audit_logs(
 
 
 @router.post("/export")
+@router.post("/dpdp/export")
 async def export_customer_data(
     req: DPDPExportRequest,
     request: Request,
@@ -239,6 +240,7 @@ async def export_customer_data(
 
 
 @router.post("/erase")
+@router.post("/dpdp/erase")
 async def erase_customer_data(
     req: DPDPErasureRequest,
     request: Request,
