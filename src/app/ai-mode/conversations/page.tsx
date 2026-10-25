@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   MessageSquare, ShieldCheck, ShieldAlert, User, Bot, 
   Search, RefreshCw, Eye, EyeOff, Calendar, AlertCircle
@@ -29,7 +29,7 @@ export default function ConversationsViewerPage() {
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
 
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/v1/analytics/conversations?redact_pii=${redactPII}`, { credentials: 'include' });
@@ -46,11 +46,11 @@ export default function ConversationsViewerPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [redactPII, selectedConv]);
 
   useEffect(() => {
     fetchConversations();
-  }, [redactPII]);
+  }, [fetchConversations]);
 
   const filtered = conversations.filter(c => {
     if (!searchFilter) return true;

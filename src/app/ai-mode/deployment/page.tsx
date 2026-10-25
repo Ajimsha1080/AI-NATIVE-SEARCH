@@ -85,6 +85,7 @@ export default function AIModeDeploymentPage() {
 
   useEffect(() => {
     loadDeployments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadDeployments() {

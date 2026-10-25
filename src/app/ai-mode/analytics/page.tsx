@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   BarChart3, TrendingUp, Search, MessageSquare, ShoppingCart, 
   ArrowUpRight, Percent, RefreshCw, Calendar
@@ -11,7 +11,7 @@ export default function AnalyticsDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState('30d');
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/v1/analytics/summary?range=${range}`, { credentials: 'include' });
@@ -24,11 +24,11 @@ export default function AnalyticsDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [range]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [range]);
+  }, [fetchAnalytics]);
 
   const metrics = data?.metrics || { searches: 0, chats: 0, orders: 0, revenue: 0, conversion_rate_percent: 0 };
   const topQueries = data?.top_queries || [];
